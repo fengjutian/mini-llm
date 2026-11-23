@@ -13,7 +13,7 @@ const pad = (value: number) => String(value).padStart(2, '0');
 
 <BaseLayout
   title="文档"
-  description="mini-llm 的引擎系列与项目文档：从数学基础、Tensor、Autograd、Transformer，到 Decoder、训练与评估。"
+  description="mini-llm 的引擎系列与项目文档：从数学基础、Tensor、Autograd、Transformer，到训练、评估与内部表征。"
 >
   <div class="shell docs docs--index">
     <details class="docs__sidebar" open data-doc-nav>
@@ -42,7 +42,7 @@ const pad = (value: number) => String(value).padStart(2, '0');
           <div>
             <h2 id="series-title">{seriesTitle}</h2>
             <p>
-              {engine.length} 个部分 · 约 {Math.round(totalMinutes / 60)} 小时阅读 · 从数学到训练与评估
+              {engine.length} 个部分 · 约 {Math.round(totalMinutes / 60)} 小时阅读 · 从数学到内部表征
             </p>
           </div>
           <a class="series-band__start" href={`/docs/${engine[0]?.id}`}>

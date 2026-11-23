@@ -24,27 +24,29 @@ pnpm preview   # serve dist/
 pnpm sync      # only regenerate src/content/docs
 ```
 
-`publish` / `dev` / `build` run `scripts/sync-docs.mjs` first.
+`sync` / `dev` / `build` run `scripts/sync-docs.mjs` first.
 
 ## How the docs are synced
 
-`docs/*.md` at the repository root is the single source of truth. The sync script:
+`docs/*.md` at the repository root is the single source of truth. Every run:
 
-1. adds frontmatter (`title`, `description`, `section`, `order`, `source`) from
-   the `DOCS` table in `scripts/sync-docs.mjs`;
-2. drops the document's leading H1, because the page layout renders the title;
-3. converts the escaped LaTeX dialect used in these documents
+1. discovers `docs/*.md` automatically, so a new document becomes a route without
+   editing the site;
+2. writes frontmatter: curated `title` / `description` / `section` / `series` /
+   `part` / `short` from the `KNOWN` table, plus a computed reading time
+   (`minutes`) and the source path;
+3. drops the document's leading H1, because the page layout renders the title;
+4. converts the escaped LaTeX dialect used in these documents
    (`\\[ ... \\]`, `\\( ... \\)`, `\\\` matrix row separators, `\\|`) into the
    `$` / `$$` delimiters that remark-math understands, and puts `$$` fences on
    their own lines so equations become display math;
-4. writes the result to `src/content/docs/`, which is git-ignored and pruned of
+5. writes the result to `src/content/docs/`, which is git-ignored and pruned of
    stale pages on every run.
 
-To add a document, drop it into `docs/`: the script discovers `*.md` automatically
-and derives the title from the leading H1. Add an entry to `KNOWN` in
-`scripts/sync-docs.mjs` when you want a curated sidebar title, description,
-section, or ordering (the groups are rendered in the order in which they first
-appear).
+`KNOWN` is optional metadata. Documents missing from it still render (title from
+the leading H1, `section: '其他'`), but they get no part number and appear after
+the curated ones. The engine series uses `part` to show `Part 01 … 09` in the
+sidebar, the docs index, and the previous/next links.
 
 ## Structure
 
@@ -72,8 +74,13 @@ web/
 - The theme follows the OS by default and can be toggled in the header, or forced
   with `?theme=dark` / `?theme=light` (the choice is persisted).
 - The docs table of contents is generated from the Markdown headings by
-  `render()`. Documents with more than ten level-2 headings fall back to the
-  section level so the list stays usable.
+  `render()`. Numbered headings are kept and figure captions are filtered out;
+  documents with more than ten level-2 headings fall back to the chapter level so
+  the list stays usable.
+- Each docs page renders a thin reading-progress bar and turns section headings
+  into hover/focus anchor links.
+- The docs index shows the engine series as a numbered path plus cards; the
+  landing page reuses the same collection to render the series.
 - Equations for the lessons are written as inline HTML (`<sub>`, `<sup>`) on
   purpose: they are short, and it keeps KaTeX CSS off those pages.
 

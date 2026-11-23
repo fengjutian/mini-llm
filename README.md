@@ -44,12 +44,15 @@ code easier to grasp:
 - `/learn/softmax` — logits, temperature, entropy and the probability distribution
 - `/learn/attention` — scores, row-wise softmax, weighted values and a causal-mask preview
 - `/docs` — the Markdown files in `docs/`, rendered with LaTeX support
+- `/docs` also presents the nine-part **engine series** (math, tensor, autograd,
+  neural network, Transformer, block, decoder, training, evaluation) as a numbered
+  reading path, with per-document reading time and prev/next navigation
 
 The site is a presentation layer only; it does not train or run the model. The
 `docs/*.md` files remain the single source of truth: `web/scripts/sync-docs.mjs`
-copies them into the Astro content collection before `dev` and `build`, adds the
-frontmatter, strips the duplicated H1, and normalizes the escaped LaTeX dialect
-used in those documents.
+discovers them, adds the frontmatter (including series position and reading
+time), strips the duplicated H1, and normalizes the escaped LaTeX dialect used in
+those documents. New documents appear automatically.
 
 Requirements: Node.js 22+ and pnpm.
 

@@ -134,13 +134,24 @@ const KNOWN = [
     order: 90,
   },
   {
+    file: 'REPRESENTATION_ENGINE.md',
+    slug: 'representation-engine',
+    title: 'Representation Engine 深度解析',
+    short: 'Representation',
+    description: '从 Embedding Space、语义几何到 Feature 与概念：模型内部如何表示语言与世界。',
+    section: ENGINE_SERIES,
+    series: ENGINE_SERIES,
+    part: 10,
+    order: 100,
+  },
+  {
     file: 'ARCHITECTURE.md',
     slug: 'architecture',
     title: '系统架构',
     short: '系统架构',
     description: 'crate 职责、依赖方向、Tensor 不变量与训练可观测性的设计约定。',
     section: DESIGN_SERIES,
-    order: 100,
+    order: 200,
   },
   {
     file: 'PRD.md',
@@ -149,7 +160,7 @@ const KNOWN = [
     short: 'PRD',
     description: '目标用户、MVP 范围、验收标准与关键风险。',
     section: DESIGN_SERIES,
-    order: 110,
+    order: 210,
   },
   {
     file: 'ROADMAP.md',
@@ -158,7 +169,7 @@ const KNOWN = [
     short: '路线图',
     description: '从可运行骨架到 Autograd、Tiny GPT、现代 LLM 与可观测研究环境的里程碑。',
     section: DESIGN_SERIES,
-    order: 120,
+    order: 220,
   },
 ];
 
@@ -275,7 +286,7 @@ const documents = files.map((file, index) => {
       section: '其他',
       series: null,
       part: null,
-      order: 200 + index,
+      order: 300 + index,
     }
   );
 });
