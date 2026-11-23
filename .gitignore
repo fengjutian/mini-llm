@@ -1,0 +1,8 @@
+/target
+/models
+/datasets
+/checkpoints
+*.safetensors
+*.bin
+.env
+.DS_Store

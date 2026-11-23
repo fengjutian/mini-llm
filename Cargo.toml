@@ -1,0 +1,17 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/mini-llm-tensor",
+    "crates/mini-llm-model",
+    "crates/mini-llm-cli",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+authors = ["mini-llm contributors"]
+
+[workspace.dependencies]
+mini-llm-tensor = { path = "crates/mini-llm-tensor" }
+mini-llm-model = { path = "crates/mini-llm-model" }

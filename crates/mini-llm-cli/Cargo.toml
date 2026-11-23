@@ -1,0 +1,9 @@
+[package]
+name = "mini-llm-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+mini-llm-tensor.workspace = true
+mini-llm-model.workspace = true
