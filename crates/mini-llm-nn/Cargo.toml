@@ -1,0 +1,9 @@
+[package]
+name = "mini-llm-nn"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+mini-llm-tensor.workspace = true
+mini-llm-autograd.workspace = true

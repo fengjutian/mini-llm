@@ -28,11 +28,15 @@ impl Default for ModelConfig {
 
 impl ModelConfig {
     pub fn validate(&self) -> Result<(), ConfigError> {
-        if self.vocab_size == 0 || self.hidden_size == 0 || self.num_layers == 0
-            || self.num_heads == 0 || self.max_seq_len == 0 {
+        if self.vocab_size == 0
+            || self.hidden_size == 0
+            || self.num_layers == 0
+            || self.num_heads == 0
+            || self.max_seq_len == 0
+        {
             return Err(ConfigError::ZeroDimension);
         }
-        if self.hidden_size % self.num_heads != 0 {
+        if !self.hidden_size.is_multiple_of(self.num_heads) {
             return Err(ConfigError::HiddenSizeNotDivisible {
                 hidden_size: self.hidden_size,
                 num_heads: self.num_heads,
@@ -45,15 +49,24 @@ impl ModelConfig {
 #[derive(Debug, Clone, PartialEq)]
 pub enum ConfigError {
     ZeroDimension,
-    HiddenSizeNotDivisible { hidden_size: usize, num_heads: usize },
+    HiddenSizeNotDivisible {
+        hidden_size: usize,
+        num_heads: usize,
+    },
 }
 
 impl Display for ConfigError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::ZeroDimension => write!(f, "model dimensions must all be greater than zero"),
-            Self::HiddenSizeNotDivisible { hidden_size, num_heads } =>
-                write!(f, "hidden_size ({}) must be divisible by num_heads ({})", hidden_size, num_heads),
+            Self::HiddenSizeNotDivisible {
+                hidden_size,
+                num_heads,
+            } => write!(
+                f,
+                "hidden_size ({}) must be divisible by num_heads ({})",
+                hidden_size, num_heads
+            ),
         }
     }
 }
@@ -78,7 +91,9 @@ impl Display for AttentionError {
 impl Error for AttentionError {}
 
 impl From<TensorError> for AttentionError {
-    fn from(value: TensorError) -> Self { Self::Tensor(value) }
+    fn from(value: TensorError) -> Self {
+        Self::Tensor(value)
+    }
 }
 
 /// Computes single-head scaled dot-product attention.

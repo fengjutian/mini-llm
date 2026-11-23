@@ -3,9 +3,17 @@
 version = 4
 
 [[package]]
+name = "mini-llm-autograd"
+version = "0.1.0"
+dependencies = [
+ "mini-llm-tensor",
+]
+
+[[package]]
 name = "mini-llm-cli"
 version = "0.1.0"
 dependencies = [
+ "mini-llm-autograd",
  "mini-llm-model",
  "mini-llm-tensor",
 ]

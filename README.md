@@ -17,13 +17,14 @@ mini-llm is inspired by the educational approach of MiniMind, but is designed as
 This repository is an initial scaffold:
 
 - Rust Cargo workspace
-- CPU tensor foundation with shape validation, addition, matrix multiplication, ReLU, and softmax
+- CPU tensor foundation with shape validation, broadcasting, addition, matrix multiplication, ReLU, and softmax
+- `mini-llm-autograd`: a reverse-mode autodiff engine (computation graph, reverse topological backward pass, gradient accumulation)
 - Small model crate with configuration and a transparent scaled dot-product attention implementation
-- CLI demo
+- CLI demos, including a hand-checked `y = wx + b` gradient example and a linear-regression training loop
 - Astro site in `web/`: three interactive concept lessons plus the repository docs
 - Product requirements and architecture documents
 
-The initial tensor implementation is deliberately simple and uses `f32` plus `Vec<f32>`. It is an educational baseline, not a high-performance tensor library. Automatic differentiation, tokenization, complete Transformer blocks, training, and GPU acceleration are planned milestones, not yet implemented.
+The initial tensor implementation is deliberately simple and uses `f32` plus `Vec<f32>`. It is an educational baseline, not a high-performance tensor library. Tokenization, complete Transformer blocks, training infrastructure, GPU acceleration, and higher-order gradients are planned milestones, not yet implemented.
 
 ## Quick start
 
@@ -33,7 +34,43 @@ Requirements: Rust stable toolchain.
 cargo test
 cargo run -p mini-llm-cli -- demo
 cargo run -p mini-llm-cli -- inspect-config
+cargo run -p mini-llm-cli -- autograd    # graph + gradients for y = wx + b
+cargo run -p mini-llm-cli -- train-line  # fit y = 2x - 1 with manual SGD
 ```
+
+## Autograd engine
+
+`crates/mini-llm-autograd` implements reverse-mode differentiation on top of the
+tensor engine. Every operation records its inputs and a closure that maps the
+upstream gradient to the gradients of those inputs; `backward()` walks the graph
+in reverse topological order and accumulates gradients into the leaves that
+require them.
+
+```rust
+use mini_llm_autograd::TensorValue;
+
+let x = TensorValue::constant(vec![2.0], vec![1, 1]).unwrap();
+let w = TensorValue::parameter(vec![3.0], vec![1, 1]).unwrap();
+let b = TensorValue::parameter(vec![1.0], vec![1]).unwrap();
+let target = TensorValue::constant(vec![10.0], vec![1]).unwrap();
+
+let y = x.matmul(&w).unwrap().add(&b).unwrap();
+let loss = y.sub(&target).unwrap().powf(2.0).unwrap().mean().unwrap();
+
+loss.backward().unwrap();
+assert!((w.grad().unwrap().data()[0] + 12.0).abs() < 1e-4); // dL/dw = -12
+assert!((b.grad().unwrap().data()[0] + 6.0).abs() < 1e-4);  // dL/db = -6
+```
+
+Supported operations: `add`, `sub`, `mul`, `matmul`, `transpose`, `relu`,
+`softmax_rows`, `scale`, `add_scalar`, `powf`, `sum`, `mean`, `mse`, and
+`cross_entropy`. Binary operations follow NumPy-style right-aligned
+broadcasting, and gradients are summed back to the original shape. Every
+analytic gradient is verified against central finite differences in
+`crates/mini-llm-autograd/tests/gradients.rs`.
+
+Known limitations: `f32` only, single-threaded, no in-place updates, no
+`no_grad` region, no higher-order gradients.
 
 ## Web site (Astro)
 
@@ -94,9 +131,10 @@ mini-llm/
 │   ├── ARCHITECTURE.md
 │   └── ROADMAP.md
 ├── crates/
-│   ├── mini-llm-tensor/  # transparent CPU tensor operations
-│   ├── mini-llm-model/   # model configuration and attention primitives
-│   └── mini-llm-cli/     # command-line entry point
+│   ├── mini-llm-tensor/   # transparent CPU tensor operations
+│   ├── mini-llm-autograd/ # reverse-mode autodiff over the tensor engine
+│   ├── mini-llm-model/    # model configuration and attention primitives
+│   └── mini-llm-cli/      # command-line entry point
 └── web/                  # Astro concept site and rendered docs
 ```
 

@@ -2,6 +2,8 @@
 resolver = "2"
 members = [
     "crates/mini-llm-tensor",
+    "crates/mini-llm-autograd",
+    "crates/mini-llm-nn",
     "crates/mini-llm-model",
     "crates/mini-llm-cli",
 ]
@@ -14,4 +16,6 @@ authors = ["mini-llm contributors"]
 
 [workspace.dependencies]
 mini-llm-tensor = { path = "crates/mini-llm-tensor" }
+mini-llm-autograd = { path = "crates/mini-llm-autograd" }
+mini-llm-nn = { path = "crates/mini-llm-nn" }
 mini-llm-model = { path = "crates/mini-llm-model" }

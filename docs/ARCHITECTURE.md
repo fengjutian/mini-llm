@@ -34,6 +34,7 @@ CLI / Future Research Studio
 | Crate | 责任 | 不应负责 |
 |---|---|---|
 | mini-llm-tensor | CPU Tensor 与基础算子 | 训练任务管理 |
+| mini-llm-autograd | 计算图、反向传播、梯度累积 | 优化器状态、模型结构 |
 | mini-llm-model | 模型配置、Attention 等模型原语 | 文件持久化、UI |
 | mini-llm-training（planned） | 训练循环与优化器 | GPU 驱动细节 |
 | mini-llm-data（planned） | Dataset、Batch、Tokenizer 适配 | 模型结构 |
@@ -51,7 +52,12 @@ MVP Tensor 使用连续 row-major `Vec<f32>` 存储。
 - 标量可用空 shape 表示（后续确定是否支持）。
 - MVP 首先支持二维矩阵运算。
 - 非法维度通过 `Result` 返回错误。
-- 不在算子内部静默广播；广播规则在单独版本明确设计。
+- 逐元素算子采用 NumPy 风格的右对齐广播：维度相等或其中一个为 1 时兼容，
+  否则返回 `ShapeMismatch`；反向传播用 `sum_to` 把梯度归约回原形状。
+
+Autograd 只依赖 tensor：节点保存 `value`、`requires_grad`、可选 `grad`、
+父节点以及一个 `Fn(&Tensor) -> Vec<Tensor>` 的 backward 闭包。图按需构建，
+没有全局 tape；`backward()` 每次做拓扑排序，因此共享子表达式会正确累积梯度。
 
 ## 5. Attention 数据约定
 
@@ -90,11 +96,11 @@ MVP 采用单头 scaled dot-product attention：
 
 ## 8. 依赖方向
 
-`cli -> model -> tensor`
+`cli -> model -> tensor`，`cli -> autograd -> tensor`
 
 后续建议：
 
-- `training -> model + backend + data`
+- `training -> model + autograd + backend + data`
 - `inspector -> trace protocol`
 - `backend -> tensor abstraction`
 - `model` 不应反向依赖 `cli` 或 UI。
