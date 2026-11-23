@@ -44,9 +44,14 @@ pnpm sync      # only regenerate src/content/docs
    stale pages on every run.
 
 `KNOWN` is optional metadata. Documents missing from it still render (title from
-the leading H1, `section: '其他'`), but they get no part number and appear after
-the curated ones. The engine series uses `part` to show `Part 01 …` in the
-sidebar, the docs index, and the previous/next links.
+the leading H1, `section: '扩展阅读'`), but they get no part number and appear
+after the curated ones.
+
+The docs are grouped into knowledge tracks: `实现引擎`, `认知与知识`,
+`规划与学习`, `智能体`, `项目设计`, and `扩展阅读`. `part` numbers a document
+inside its track. The sync script also extracts up to five structural H2 headings
+as `concepts`, which the docs index shows as knowledge-point chips and uses for
+client-side search. Bump `part`/`order` to slot a new document into a track.
 
 ## Structure
 
@@ -73,6 +78,8 @@ web/
   `src/styles/global.css`; the theme is a `data-theme` attribute on `<html>`.
 - The theme follows the OS by default and can be toggled in the header, or forced
   with `?theme=dark` / `?theme=light` (the choice is persisted).
+- The docs index is a searchable knowledge map: six tracks, numbered parts,
+  reading time per document, and concept chips extracted from each document.
 - The docs table of contents is generated from the Markdown headings by
   `render()`. Numbered headings are kept and figure captions are filtered out;
   documents with more than ten level-2 headings fall back to the chapter level so

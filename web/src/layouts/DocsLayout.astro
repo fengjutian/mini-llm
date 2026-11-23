@@ -14,10 +14,22 @@ interface Props {
   minutes: number;
   source: string;
   current: string;
+  concepts?: string[];
   headings?: { depth: number; slug: string; text: string }[];
 }
 
-const { title, description, section, series, part, minutes, source, current, headings = [] } = Astro.props;
+const {
+  title,
+  description,
+  section,
+  series,
+  part,
+  minutes,
+  source,
+  current,
+  concepts = [],
+  headings = [],
+} = Astro.props;
 
 const entries = (await getCollection('docs')).sort((a, b) => a.data.order - b.data.order);
 
@@ -60,6 +72,14 @@ const partLabel = part ? `第 ${String(part).padStart(2, '0')} 部分` : null;
         </div>
         <h1>{title}</h1>
         <p class="doc-head__desc">{description}</p>
+        {concepts.length > 0 && (
+          <div class="doc-head__knowledge">
+            <span class="doc-head__knowledge-label">知识点</span>
+            <ul class="doc-head__concepts">
+              {concepts.slice(0, 5).map((concept) => <li>{concept}</li>)}
+            </ul>
+          </div>
+        )}
       </header>
 
       <article class="prose" data-article>

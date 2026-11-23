@@ -2,18 +2,43 @@
 import { getCollection } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import DocsSidebar from '../../components/DocsSidebar.astro';
+import { DOC_TRACKS } from '../../data/site';
 
 const entries = (await getCollection('docs')).sort((a, b) => a.data.order - b.data.order);
-const engine = entries.filter((entry) => entry.data.part);
-const design = entries.filter((entry) => !entry.data.part);
-const seriesTitle = engine[0]?.data.series ?? '引擎系列';
-const totalMinutes = engine.reduce((sum, entry) => sum + entry.data.minutes, 0);
+
+const groups = new Map<string, typeof entries>();
+for (const entry of entries) {
+  if (!groups.has(entry.data.section)) groups.set(entry.data.section, []);
+  groups.get(entry.data.section)!.push(entry);
+}
+
+const trackBySection = new Map(DOC_TRACKS.map((track) => [track.section, track]));
+const anchorFor = (section: string) =>
+  trackBySection.get(section)?.anchor ??
+  `track-${section.replace(/[^\p{Letter}\p{Number}]+/gu, '-').toLowerCase()}`;
+
+const sections = [...groups.entries()]
+  .map(([section, items]) => ({
+    section,
+    items,
+    anchor: anchorFor(section),
+    blurb: trackBySection.get(section)?.blurb ?? '仓库中尚未归入主线的文档。',
+    minutes: items.reduce((sum, entry) => sum + entry.data.minutes, 0),
+  }))
+  .sort((a, b) => a.items[0].data.order - b.items[0].data.order);
+
+const totalMinutes = entries.reduce((sum, entry) => sum + entry.data.minutes, 0);
+const knowledgeSections = sections.filter(
+  (group) => group.section !== '项目设计' && group.section !== '扩展阅读',
+);
+const humanDuration = (minutes: number) =>
+  minutes < 60 ? `约 ${minutes} 分钟` : `约 ${(minutes / 60).toFixed(1).replace(/\.0$/, '')} 小时`;
 const pad = (value: number) => String(value).padStart(2, '0');
 ---
 
 <BaseLayout
-  title="文档"
-  description="mini-llm 的引擎系列与项目文档：从数学基础、Tensor、Autograd、Transformer，到训练、评估、内部表征与世界模型。"
+  title="知识地图"
+  description="mini-llm 的知识地图：从数学、Tensor、Transformer 到训练与评估，再到认知、记忆、因果、规划、决策与智能体。"
 >
   <div class="shell docs docs--index">
     <details class="docs__sidebar" open data-doc-nav>
@@ -24,89 +49,96 @@ const pad = (value: number) => String(value).padStart(2, '0');
     <div>
       <header class="doc-head">
         <div class="doc-head__kicker">
-          <span>仓库文档</span>
+          <span>知识地图</span>
           <span class="sep" aria-hidden="true">/</span>
           <span>docs/</span>
           <span class="doc-head__spacer"></span>
           <span>{entries.length} 篇</span>
         </div>
-        <h1>从内核到设计决策</h1>
+        <h1>从实现，到会行动的智能体</h1>
         <p class="doc-head__desc">
-          引擎系列是一条完整的实现路径：先补数学，再实现张量、自动微分、网络层、Transformer 与训练循环，
-          最后讨论评估、内部表征与世界模型。每一页都直接来自仓库的 <code>docs/*.md</code>，与代码一起演进。
+          文档按 {knowledgeSections.length} 条知识主线组织：先实现一个能训练的小模型，再往上讨论表征、记忆、
+          知识与因果，最后是规划、决策、学习和 Agent。每张卡片标出了部分编号、阅读时长与核心知识点，
+          下面的搜索框可以直接过滤知识点。
         </p>
       </header>
 
-      <section class="series-band" aria-labelledby="series-title">
-        <div class="series-band__head">
-          <div>
-            <h2 id="series-title">{seriesTitle}</h2>
-            <p>
-              {engine.length} 个部分 · 约 {Math.round(totalMinutes / 60)} 小时阅读 · 从数学到世界模型
-            </p>
-          </div>
-          <a class="series-band__start" href={`/docs/${engine[0]?.id}`}>
-            从第一部分开始 <span class="arrow" aria-hidden="true">→</span>
-          </a>
-        </div>
+      <div class="docs-tools">
+        <label class="docs-search">
+          <span class="visually-hidden">搜索文档或知识点</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="6.5"></circle>
+            <path d="m16 16 4 4"></path>
+          </svg>
+          <input type="search" placeholder="搜索文档或知识点…" data-docs-search />
+        </label>
+        <span class="docs-tools__meta">
+          <strong>{humanDuration(totalMinutes)}</strong> · {knowledgeSections.length} 条主线
+        </span>
+      </div>
 
-        <ol class="series-path">
-          {engine.map((entry) => (
-            <li>
-              <a href={`/docs/${entry.id}`}>
-                <span class="series-path__num">{pad(entry.data.part ?? 0)}</span>
-                <span class="series-path__title">{entry.data.short ?? entry.data.title}</span>
-              </a>
-            </li>
-          ))}
-        </ol>
-      </section>
-
-      <div class="docs-cards docs-cards--engine">
-        {engine.map((entry) => (
-          <a class="doc-tile doc-tile--part" href={`/docs/${entry.id}`}>
-            <div class="doc-tile__top">
-              <span class="doc-tile__part">Part {pad(entry.data.part ?? 0)}</span>
-              <span class="doc-tile__meta">
-                {entry.data.minutes} 分钟
-                <span aria-hidden="true">·</span>
-                {entry.data.source.replace('docs/', '')}
+      <div class="tracks">
+        {sections.map((group) => (
+          <section class="track" id={group.anchor} data-doc-section>
+            <header class="track__head">
+              <div>
+                <h2>{group.section}</h2>
+                <p>{group.blurb}</p>
+              </div>
+              <span class="track__meta">
+                {group.items.length} 篇 · {humanDuration(group.minutes)}
               </span>
+            </header>
+
+            <div class="docs-cards">
+              {group.items.map((entry) => (
+                <a
+                  class="doc-tile"
+                  href={`/docs/${entry.id}`}
+                  data-doc-card
+                  data-search={`${entry.data.title} ${entry.data.description} ${(entry.data.concepts ?? []).join(' ')} ${entry.data.short ?? ''}`}
+                >
+                  <div class="doc-tile__top">
+                    {entry.data.part ? (
+                      <span class="doc-tile__part">Part {pad(entry.data.part)}</span>
+                    ) : (
+                      <span class="doc-tile__part doc-tile__part--plain">文档</span>
+                    )}
+                    <span class="doc-tile__meta">
+                      {entry.data.minutes} 分钟
+                      <span aria-hidden="true">·</span>
+                      {entry.data.source.replace('docs/', '')}
+                    </span>
+                  </div>
+
+                  <h3>{entry.data.title}</h3>
+                  <p>{entry.data.description}</p>
+
+                  {(entry.data.concepts ?? []).length > 0 && (
+                    <ul class="concepts" aria-label="知识点">
+                      {entry.data.concepts.slice(0, 3).map((concept) => (
+                        <li>{concept}</li>
+                      ))}
+                    </ul>
+                  )}
+
+                  <span class="doc-tile__more">
+                    阅读 <span class="arrow" aria-hidden="true">→</span>
+                  </span>
+                </a>
+              ))}
             </div>
-            <h3>{entry.data.title}</h3>
-            <p>{entry.data.description}</p>
-            <span class="doc-tile__more">
-              阅读 <span class="arrow" aria-hidden="true">→</span>
-            </span>
-          </a>
+          </section>
         ))}
       </div>
 
-      <section class="docs-group docs-group--design">
-        <h2 class="docs-group__label">项目设计</h2>
-        <div class="docs-cards">
-          {design.map((entry) => (
-            <a class="doc-tile" href={`/docs/${entry.id}`}>
-              <span class="doc-tile__meta">
-                {entry.data.source.replace('docs/', '')}
-                <span aria-hidden="true">·</span>
-                {entry.data.minutes} 分钟
-              </span>
-              <h3>{entry.data.title}</h3>
-              <p>{entry.data.description}</p>
-              <span class="doc-tile__more">
-                阅读 <span class="arrow" aria-hidden="true">→</span>
-              </span>
-            </a>
-          ))}
-        </div>
-      </section>
+      <p class="docs-empty" data-search-empty hidden>没有匹配的文档。试试更短的关键词，例如「注意力」「记忆」。</p>
 
       <div class="note docs-note">
         <strong>同步方式</strong>
-        文档页由 <code>web/scripts/sync-docs.mjs</code> 在 <code>dev</code> / <code>build</code> 前生成：
-        自动发现 <code>docs/*.md</code>、补上标题摘要与阅读时长、把 <code>\[ ... \]</code> 公式转换成标准
-        LaTeX 分隔符，并去掉重复的一级标题。新增文档不用改页面代码。
+        文档由 <code>web/scripts/sync-docs.mjs</code> 在 <code>dev</code> / <code>build</code> 前生成：自动发现
+        <code>docs/*.md</code>，识别所属主线与编号，提取知识点，补上阅读时长，并把
+        <code>\[ ... \]</code> 公式归一化为 LaTeX。新增文档不需要改页面代码。
       </div>
     </div>
   </div>
@@ -117,106 +149,116 @@ const pad = (value: number) => String(value).padStart(2, '0');
     grid-template-columns: 216px minmax(0, 1fr);
   }
 
-  /* Series band ------------------------------------------------------------ */
+  /* Search ----------------------------------------------------------------- */
 
-  .series-band {
-    margin-top: 30px;
-    padding: 22px 24px 20px;
-    border: 1px solid var(--line);
-    border-radius: var(--radius-md);
-    background:
-      radial-gradient(circle at 1px 1px, var(--dot) 1px, transparent 0) 0 0 / 18px 18px,
-      var(--paper-2);
-  }
-
-  .series-band__head {
+  .docs-tools {
     display: flex;
     flex-wrap: wrap;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
-    gap: 14px;
+    gap: 12px;
+    margin: 22px 0 8px;
   }
 
-  .series-band__head h2 {
-    margin: 0;
-    font-size: 15px;
-    font-weight: 620;
-    letter-spacing: -0.01em;
+  .docs-search {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    flex: 1;
+    min-width: 240px;
+    max-width: 520px;
+    padding: 9px 13px;
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    background: var(--paper-2);
+    transition: border-color 0.15s var(--ease), box-shadow 0.15s var(--ease);
   }
 
-  .series-band__head p {
-    margin: 5px 0 0;
+  .docs-search:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-wash);
+  }
+
+  .docs-search svg {
+    width: 15px;
+    height: 15px;
+    flex: none;
+    color: var(--ink-faint);
+  }
+
+  .docs-search input {
+    width: 100%;
+    border: 0;
+    background: transparent;
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 13.5px;
+    outline: none;
+  }
+
+  .docs-search input::placeholder {
+    color: var(--ink-faint);
+  }
+
+  .docs-tools__meta {
     font-family: var(--font-mono);
     font-size: 10.5px;
     letter-spacing: 0.02em;
     color: var(--ink-faint);
   }
 
-  .series-band__start {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-family: var(--font-mono);
-    font-size: 11px;
-    color: var(--accent-ink);
+  .docs-tools__meta strong {
+    color: var(--ink);
+    font-weight: 600;
   }
 
-  .series-band__start .arrow {
-    transition: transform 0.16s var(--ease);
+  /* Tracks ----------------------------------------------------------------- */
+
+  .tracks {
+    display: grid;
+    gap: 44px;
+    margin-top: 26px;
   }
 
-  .series-band__start:hover .arrow {
-    transform: translateX(3px);
+  .track {
+    scroll-margin-top: calc(var(--header-h) + 24px);
   }
 
-  .series-path {
+  .track[hidden] {
+    display: none;
+  }
+
+  .track__head {
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
-    gap: 6px 0;
-    margin: 18px 0 0;
-    padding: 0;
-    list-style: none;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 10px 20px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--line);
   }
 
-  .series-path li {
-    display: flex;
-    align-items: center;
+  .track__head h2 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 640;
+    letter-spacing: -0.02em;
   }
 
-  .series-path li + li::before {
-    content: "→";
-    margin: 0 6px;
-    font-family: var(--font-mono);
-    font-size: 10px;
-    color: var(--line-strong);
-  }
-
-  .series-path a {
-    display: inline-flex;
-    align-items: baseline;
-    gap: 6px;
-    padding: 5px 9px;
-    border: 1px solid var(--line);
-    border-radius: 6px;
-    background: var(--paper);
-    transition: border-color 0.14s var(--ease), color 0.14s var(--ease);
-  }
-
-  .series-path a:hover {
-    border-color: var(--accent);
-    color: var(--accent-ink);
-  }
-
-  .series-path__num {
-    font-family: var(--font-mono);
-    font-size: 9.5px;
-    color: var(--accent);
-  }
-
-  .series-path__title {
-    font-size: 12.5px;
+  .track__head p {
+    margin: 6px 0 0;
+    max-width: 60ch;
+    font-size: 13px;
+    line-height: 1.65;
     color: var(--ink-soft);
+  }
+
+  .track__meta {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--ink-faint);
+    white-space: nowrap;
   }
 
   /* Cards ------------------------------------------------------------------ */
@@ -227,20 +269,20 @@ const pad = (value: number) => String(value).padStart(2, '0');
     gap: 14px;
   }
 
-  .docs-cards--engine {
-    margin-top: 16px;
-  }
-
   .doc-tile {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 9px;
     padding: 20px;
     border: 1px solid var(--line);
     border-radius: 12px;
     background: var(--paper-2);
     transition: border-color 0.16s var(--ease), transform 0.16s var(--ease),
       box-shadow 0.16s var(--ease);
+  }
+
+  .doc-tile[hidden] {
+    display: none;
   }
 
   .doc-tile:hover {
@@ -265,6 +307,10 @@ const pad = (value: number) => String(value).padStart(2, '0');
     color: var(--accent);
   }
 
+  .doc-tile__part--plain {
+    color: var(--ink-faint);
+  }
+
   .doc-tile__meta {
     display: flex;
     flex-wrap: wrap;
@@ -284,14 +330,39 @@ const pad = (value: number) => String(value).padStart(2, '0');
 
   .doc-tile p {
     margin: 0;
-    flex: 1;
     font-size: 13.5px;
     line-height: 1.7;
     color: var(--ink-soft);
   }
 
+  .concepts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .concepts li {
+    padding: 3px 7px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: var(--paper);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    line-height: 1.5;
+    color: var(--ink-faint);
+  }
+
+  .doc-tile:hover .concepts li {
+    border-color: var(--line-strong);
+    color: var(--ink-soft);
+  }
+
   .doc-tile__more {
-    margin-top: 6px;
+    margin-top: auto;
+    padding-top: 4px;
     font-family: var(--font-mono);
     font-size: 11px;
     color: var(--accent-ink);
@@ -302,24 +373,14 @@ const pad = (value: number) => String(value).padStart(2, '0');
     transform: translateX(3px);
   }
 
-  /* Design docs ------------------------------------------------------------ */
-
-  .docs-group--design {
-    margin-top: 40px;
-  }
-
-  .docs-group__label {
-    margin: 0 0 12px;
-    font-family: var(--font-mono);
-    font-size: 10px;
-    font-weight: 500;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
+  .docs-empty {
+    margin: 30px 0;
+    font-size: 14px;
     color: var(--ink-faint);
   }
 
   .docs-note {
-    margin-top: 36px;
+    margin-top: 40px;
   }
 
   @media (max-width: 1120px) {
@@ -339,13 +400,45 @@ const pad = (value: number) => String(value).padStart(2, '0');
       grid-template-columns: minmax(0, 1fr);
     }
 
-    .series-path li + li::before {
-      content: "";
-      margin: 0;
-    }
-
-    .series-path {
-      gap: 6px;
+    .track__head {
+      align-items: flex-start;
     }
   }
 </style>
+
+<script>
+  const input = document.querySelector<HTMLInputElement>('[data-docs-search]');
+  const empty = document.querySelector<HTMLElement>('[data-search-empty]');
+  const cards = [...document.querySelectorAll<HTMLElement>('[data-doc-card]')];
+  const sections = [...document.querySelectorAll<HTMLElement>('[data-doc-section]')];
+
+  if (input) {
+    const apply = () => {
+      const query = input.value.trim().toLowerCase();
+      let matches = 0;
+
+      cards.forEach((card) => {
+        const hit = query.length === 0 || (card.dataset.search ?? '').toLowerCase().includes(query);
+        card.hidden = !hit;
+        if (hit) matches += 1;
+      });
+
+      sections.forEach((section) => {
+        section.hidden = ![...section.querySelectorAll<HTMLElement>('[data-doc-card]')].some(
+          (card) => !card.hidden,
+        );
+      });
+
+      if (empty) empty.hidden = matches > 0;
+    };
+
+    input.addEventListener('input', apply);
+    input.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        input.value = '';
+        apply();
+        input.blur();
+      }
+    });
+  }
+</script>

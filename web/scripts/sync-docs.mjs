@@ -3,8 +3,8 @@
  * Sync the repository's `docs/*.md` into the Astro content collection.
  *
  * The documents under `docs/` are the single source of truth. New files are
- * picked up automatically; `KNOWN` only supplies the nicer sidebar metadata.
- * Three quirks are fixed up here:
+ * picked up automatically; `KNOWN` only supplies the nicer sidebar metadata
+ * (track, position, description). The script also fixes three quirks:
  *
  *   1. the documents carry no frontmatter, so title/description/order are
  *      derived (or taken from `KNOWN`) and written as YAML frontmatter;
@@ -13,6 +13,9 @@
  *      remark-math can parse them;
  *   3. each document starts with an H1 that duplicates the page title, which
  *      is removed because the layout renders the title itself.
+ *
+ * It also extracts a few "knowledge points" (structural H2 headings) per
+ * document so the docs index can show and search them.
  *
  * Run through `pnpm run sync` (also invoked by `dev` and `build`).
  */
@@ -27,21 +30,29 @@ const docsDir = path.join(repoRoot, 'docs');
 const outDir = path.join(webRoot, 'src', 'content', 'docs');
 
 /**
- * Curated sidebar metadata. `order` controls the navigation order; `part`
- * numbers the "engine" series so the site can show progress through it.
+ * The docs are organised into tracks. `section` groups them in the sidebar and
+ * the docs index; `part` numbers them inside the track. `order` is global and
+ * leaves room for new documents in each track.
  */
-const ENGINE_SERIES = '引擎系列';
-const DESIGN_SERIES = '项目设计';
+const TRACKS = {
+  implementation: '实现引擎',
+  cognition: '认知与知识',
+  planning: '规划与学习',
+  agent: '智能体',
+  design: '项目设计',
+  extra: '扩展阅读',
+};
 
 const KNOWN = [
+  // 01 · 实现引擎 -----------------------------------------------------------
   {
     file: 'MATH_FOUNDATIONS.md',
     slug: 'math-foundations',
     title: '数学基础与神经网络原理',
     short: '数学基础',
     description: '线性代数、微积分、概率、优化与神经网络数学：LLM 背后那套可推导的直觉。',
-    section: ENGINE_SERIES,
-    series: ENGINE_SERIES,
+    section: TRACKS.implementation,
+    series: TRACKS.implementation,
     part: 1,
     order: 10,
   },
@@ -51,8 +62,8 @@ const KNOWN = [
     title: 'Tensor Engine 深度解析',
     short: 'Tensor Engine',
     description: '从内存布局、Shape、Stride 到矩阵乘法，拆开一个教学用张量引擎的内部结构。',
-    section: ENGINE_SERIES,
-    series: ENGINE_SERIES,
+    section: TRACKS.implementation,
+    series: TRACKS.implementation,
     part: 2,
     order: 20,
   },
@@ -62,8 +73,8 @@ const KNOWN = [
     title: 'Autograd Engine 深度解析',
     short: 'Autograd Engine',
     description: '从计算图、链式法则到反向传播：梯度是怎样被自动算出来的。',
-    section: ENGINE_SERIES,
-    series: ENGINE_SERIES,
+    section: TRACKS.implementation,
+    series: TRACKS.implementation,
     part: 3,
     order: 30,
   },
@@ -73,8 +84,8 @@ const KNOWN = [
     title: 'Neural Network Engine 深度解析',
     short: 'Neural Network',
     description: '从 Linear、MLP 到 Loss、Optimizer：把算子、梯度与损失串成可训练的网络。',
-    section: ENGINE_SERIES,
-    series: ENGINE_SERIES,
+    section: TRACKS.implementation,
+    series: TRACKS.implementation,
     part: 4,
     order: 40,
   },
@@ -84,8 +95,8 @@ const KNOWN = [
     title: 'Transformer Engine 深度解析',
     short: 'Transformer Engine',
     description: '从 Embedding、位置编码到 Self-Attention 与 Multi-Head：Transformer 的计算核心。',
-    section: ENGINE_SERIES,
-    series: ENGINE_SERIES,
+    section: TRACKS.implementation,
+    series: TRACKS.implementation,
     part: 5,
     order: 50,
   },
@@ -95,8 +106,8 @@ const KNOWN = [
     title: 'Transformer Block 深度解析',
     short: 'Transformer Block',
     description: '从 FFN、残差连接、LayerNorm 到 Pre-Norm 与 GQA：一个 Block 里到底有什么。',
-    section: ENGINE_SERIES,
-    series: ENGINE_SERIES,
+    section: TRACKS.implementation,
+    series: TRACKS.implementation,
     part: 6,
     order: 60,
   },
@@ -106,8 +117,8 @@ const KNOWN = [
     title: 'Decoder Engine 深度解析',
     short: 'Decoder Engine',
     description: '从 Transformer Stack、LM Head 到采样与 KV Cache：GPT 如何逐 token 生成文本。',
-    section: ENGINE_SERIES,
-    series: ENGINE_SERIES,
+    section: TRACKS.implementation,
+    series: TRACKS.implementation,
     part: 7,
     order: 70,
   },
@@ -117,8 +128,8 @@ const KNOWN = [
     title: 'Training Engine 深度解析',
     short: 'Training Engine',
     description: '从 Dataset、滑动窗口到 Cross Entropy、AdamW 与 checkpoint：把模型真正训练起来。',
-    section: ENGINE_SERIES,
-    series: ENGINE_SERIES,
+    section: TRACKS.implementation,
+    series: TRACKS.implementation,
     part: 8,
     order: 80,
   },
@@ -128,21 +139,56 @@ const KNOWN = [
     title: 'Evaluation Engine 深度解析',
     short: 'Evaluation Engine',
     description: '从 Validation Loss、Perplexity 到 Benchmark：训练之后如何判断模型真正学会了什么。',
-    section: ENGINE_SERIES,
-    series: ENGINE_SERIES,
+    section: TRACKS.implementation,
+    series: TRACKS.implementation,
     part: 9,
     order: 90,
   },
+
+  // 02 · 认知与知识 ---------------------------------------------------------
   {
     file: 'REPRESENTATION_ENGINE.md',
     slug: 'representation-engine',
     title: 'Representation Engine 深度解析',
     short: 'Representation',
     description: '从 Embedding Space、语义几何到 Feature 与概念：模型内部如何表示语言与世界。',
-    section: ENGINE_SERIES,
-    series: ENGINE_SERIES,
-    part: 10,
-    order: 100,
+    section: TRACKS.cognition,
+    series: TRACKS.cognition,
+    part: 1,
+    order: 110,
+  },
+  {
+    file: 'MEMORY_ARCHITECTURE.md',
+    slug: 'memory-architecture',
+    title: 'Memory Architecture 深度解析',
+    short: 'Memory',
+    description: '短期、情景、语义与长期记忆，以及巩固和遗忘：记忆系统如何设计。',
+    section: TRACKS.cognition,
+    series: TRACKS.cognition,
+    part: 2,
+    order: 120,
+  },
+  {
+    file: 'KNOWLEDGE_ARCHITECTURE.md',
+    slug: 'knowledge-architecture',
+    title: 'Knowledge Architecture 深度解析',
+    short: 'Knowledge',
+    description: '知识表示、本体、知识图谱与神经符号：事实、概念和关系如何组织。',
+    section: TRACKS.cognition,
+    series: TRACKS.cognition,
+    part: 3,
+    order: 130,
+  },
+  {
+    file: 'CAUSAL_REASONING_ENGINE.md',
+    slug: 'causal-reasoning-engine',
+    title: 'Causal Reasoning Engine 深度解析',
+    short: 'Causal Reasoning',
+    description: '因果图、结构因果模型、干预与反事实：从相关走到因果。',
+    section: TRACKS.cognition,
+    series: TRACKS.cognition,
+    part: 4,
+    order: 140,
   },
   {
     file: 'WORLD_MODEL_ENGINE.md',
@@ -150,19 +196,102 @@ const KNOWN = [
     title: 'World Model Engine 深度解析',
     short: 'World Model',
     description: '从状态表示、状态转移到预测与规划：模型如何不只理解语言，还能推演世界的变化。',
-    section: ENGINE_SERIES,
-    series: ENGINE_SERIES,
-    part: 11,
-    order: 110,
+    section: TRACKS.cognition,
+    series: TRACKS.cognition,
+    part: 5,
+    order: 150,
   },
+  {
+    file: 'COGNITIVE_ARCHITECTURE.md',
+    slug: 'cognitive-architecture',
+    title: 'Cognitive Architecture 深度解析',
+    short: 'Cognitive Arch.',
+    description: '工作记忆、信念系统、元认知与执行控制：一个认知循环由什么组成。',
+    section: TRACKS.cognition,
+    series: TRACKS.cognition,
+    part: 6,
+    order: 160,
+  },
+
+  // 03 · 规划与学习 ---------------------------------------------------------
+  {
+    file: 'PLANNING_ENGINE.md',
+    slug: 'planning-engine',
+    title: 'Planning Engine 深度解析',
+    short: 'Planning',
+    description: '目标拆解、搜索、分层规划、MCTS 与 MPC：从目标到可执行计划。',
+    section: TRACKS.planning,
+    series: TRACKS.planning,
+    part: 1,
+    order: 210,
+  },
+  {
+    file: 'DECISION_ENGINE.md',
+    slug: 'decision-engine',
+    title: 'Decision Engine 深度解析',
+    short: 'Decision',
+    description: '效用函数、期望效用、贝叶斯决策与风险敏感规划：如何在不确定性下做选择。',
+    section: TRACKS.planning,
+    series: TRACKS.planning,
+    part: 2,
+    order: 220,
+  },
+  {
+    file: 'LEARNING_ENGINE.md',
+    slug: 'learning-engine',
+    title: 'Learning Engine 深度解析',
+    short: 'Learning',
+    description: '反馈、经验回放、在线学习与强化学习：系统如何从经验中持续改进。',
+    section: TRACKS.planning,
+    series: TRACKS.planning,
+    part: 3,
+    order: 230,
+  },
+
+  // 04 · 智能体 -------------------------------------------------------------
+  {
+    file: 'AGENT_ENGINE.md',
+    slug: 'agent-engine',
+    title: 'Agent Engine 深度解析',
+    short: 'Agent',
+    description: '目标表示、任务规划到工具调用与自主执行：模型如何变成能完成任务的 Agent。',
+    section: TRACKS.agent,
+    series: TRACKS.agent,
+    part: 1,
+    order: 310,
+  },
+  {
+    file: 'AGENT_ENGINE_RUNTIME.md',
+    slug: 'agent-engine-runtime',
+    title: 'Agent Engine Runtime 深度解析',
+    short: 'Agent Runtime',
+    description: 'Agent Loop、工具调用、运行时与多智能体：让 Agent 稳定跑起来的工程结构。',
+    section: TRACKS.agent,
+    series: TRACKS.agent,
+    part: 2,
+    order: 320,
+  },
+  {
+    file: 'AGENT_LEARNING_ENGINE.md',
+    slug: 'agent-learning-engine',
+    title: 'Agent Learning Engine 深度解析',
+    short: 'Agent Learning',
+    description: '经验回放、信用分配、策略优化与持续学习：Agent 如何从执行中变强。',
+    section: TRACKS.agent,
+    series: TRACKS.agent,
+    part: 3,
+    order: 330,
+  },
+
+  // 05 · 项目设计 -----------------------------------------------------------
   {
     file: 'ARCHITECTURE.md',
     slug: 'architecture',
     title: '系统架构',
     short: '系统架构',
     description: 'crate 职责、依赖方向、Tensor 不变量与训练可观测性的设计约定。',
-    section: DESIGN_SERIES,
-    order: 200,
+    section: TRACKS.design,
+    order: 410,
   },
   {
     file: 'PRD.md',
@@ -170,8 +299,8 @@ const KNOWN = [
     title: '产品需求文档（PRD）',
     short: 'PRD',
     description: '目标用户、MVP 范围、验收标准与关键风险。',
-    section: DESIGN_SERIES,
-    order: 210,
+    section: TRACKS.design,
+    order: 420,
   },
   {
     file: 'ROADMAP.md',
@@ -179,10 +308,76 @@ const KNOWN = [
     title: '开发路线图',
     short: '路线图',
     description: '从可运行骨架到 Autograd、Tiny GPT、现代 LLM 与可观测研究环境的里程碑。',
-    section: DESIGN_SERIES,
-    order: 220,
+    section: TRACKS.design,
+    order: 430,
+  },
+
+  // 99 · 扩展阅读 -----------------------------------------------------------
+  {
+    file: 'WORLD_MODEL_ENGINE_CAUSAL_REASONING.md',
+    slug: 'world-model-engine-causal-reasoning',
+    title: 'World Model × Causal Reasoning',
+    short: 'World Model 扩展',
+    description: 'World Model 的扩展版：把状态表示、动力学、规划与因果推理放在同一条链上。',
+    section: TRACKS.extra,
+    order: 500,
   },
 ];
+
+/** Structural heading prefixes used to pick "knowledge points". */
+const structuralHeading =
+  /^([一二三四五六七八九十百]+、|\d+(\.\d+)*[.、]?\s|第[一二三四五六七八九十百\d]+[章部]|Milestone\s|V\d+[：:]|Step\s\d)/;
+const closingHeading = /^(结语|小结|本章小结|总结|参考资料|附录|后记|Definition of Done|下一篇)/;
+
+function cleanHeading(text) {
+  return text
+    .replace(/\*\*/g, '')
+    .replace(/^[一二三四五六七八九十百]+、\s*/, '')
+    .replace(/^第[一二三四五六七八九十百\d]+[章部][：:]?\s*/, '')
+    .replace(/^\d+(\.\d+)*[.、]?\s+/, '')
+    .replace(/^[（(]\d+[)）]\s*/, '')
+    .replace(/^[：:]\s*/, '')
+    .replace(/[？?！!。.]+$/, '')
+    .trim();
+}
+
+/** Pull a handful of structural headings to show as knowledge-point chips. */
+function extractConcepts(markdown, limit = 5) {
+  const lines = markdown.split('\n');
+  let fence = null;
+  const levelTwo = [];
+  const levelThree = [];
+
+  for (const line of lines) {
+    const fenceMatch = /^\s*(```|~~~)/.exec(line);
+    if (fenceMatch) {
+      if (!fence) fence = fenceMatch[1];
+      else if (fenceMatch[1] === fence) fence = null;
+      continue;
+    }
+    if (fence) continue;
+
+    const match = /^(#{2,3})\s+(.*)$/.exec(line.trim());
+    if (!match) continue;
+    const text = match[2].trim().replace(/\*\*/g, '').trim();
+    if (!structuralHeading.test(text) || closingHeading.test(text)) continue;
+    const depth = match[1].length;
+    (depth === 2 ? levelTwo : levelThree).push(text);
+  }
+
+  const source = levelTwo.length >= 3 ? levelTwo : [...levelTwo, ...levelThree];
+  const seen = new Set();
+  const concepts = [];
+  for (const heading of source) {
+    if (/^(引言|前言|副标题)[：:]?/.test(heading)) continue;
+    const concept = cleanHeading(heading);
+    if (concept.length < 3 || seen.has(concept)) continue;
+    seen.add(concept);
+    concepts.push(concept.length > 26 ? `${concept.slice(0, 26)}…` : concept);
+    if (concepts.length >= limit) break;
+  }
+  return concepts;
+}
 
 /**
  * Rough reading time for technical Chinese prose: characters and Latin words at
@@ -312,10 +507,10 @@ const documents = files.map((file, index) => {
       slug: slugify(file),
       title: null,
       description: `来自 docs/${file} 的仓库文档。`,
-      section: '其他',
+      section: TRACKS.extra,
       series: null,
       part: null,
-      order: 300 + index,
+      order: 900 + index,
     }
   );
 });
@@ -332,6 +527,7 @@ for (const doc of documents) {
 
   const title = doc.title ?? heading ?? doc.slug;
   const minutes = estimateMinutes(raw);
+  const concepts = extractConcepts(markdown);
   const frontmatter = [
     '---',
     `title: ${yamlString(title)}`,
@@ -340,6 +536,7 @@ for (const doc of documents) {
     ...(doc.series ? [`series: ${yamlString(doc.series)}`] : []),
     ...(doc.part ? [`part: ${doc.part}`] : []),
     ...(doc.short ? [`short: ${yamlString(doc.short)}`] : []),
+    `concepts: ${yamlString(concepts)}`,
     `minutes: ${minutes}`,
     `order: ${doc.order}`,
     `source: ${yamlString(`docs/${doc.file}`)}`,
@@ -350,7 +547,7 @@ for (const doc of documents) {
   await writeFile(path.join(outDir, `${doc.slug}.md`), `${frontmatter}${markdown.trimEnd()}\n`, 'utf8');
   written += 1;
   report.push(
-    `  sync  docs/${doc.file} -> src/content/docs/${doc.slug}.md (${normalized.converted} lines with math)`,
+    `  sync  docs/${doc.file} -> src/content/docs/${doc.slug}.md (${normalized.converted} math lines, ${concepts.length} concepts)`,
   );
 }
 

@@ -44,9 +44,9 @@ code easier to grasp:
 - `/learn/softmax` — logits, temperature, entropy and the probability distribution
 - `/learn/attention` — scores, row-wise softmax, weighted values and a causal-mask preview
 - `/docs` — the Markdown files in `docs/`, rendered with LaTeX support
-- `/docs` also presents the **engine series** (math, tensor, autograd, neural
-  network, Transformer, block, decoder, training, evaluation, representation,
-  world model) as a numbered reading path, with per-document reading time and
+- `/docs` is also a searchable **knowledge map**: four knowledge tracks
+  (implementation, cognition, planning/learning, agents) plus project design,
+  numbered parts, per-document reading time, extracted knowledge points, and
   prev/next navigation
 
 The site is a presentation layer only; it does not train or run the model. The

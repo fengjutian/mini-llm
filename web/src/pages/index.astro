@@ -3,13 +3,24 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import LessonCard from '../components/LessonCard.astro';
 import { Code } from 'astro:components';
 import { getCollection } from 'astro:content';
-import { LESSONS, PRINCIPLES, ROADMAP } from '../data/site';
+import { DOC_TRACKS, LESSONS, PRINCIPLES, ROADMAP } from '../data/site';
 
-const engineDocs = (await getCollection('docs'))
-  .filter((entry) => entry.data.part)
-  .sort((a, b) => (a.data.part ?? 0) - (b.data.part ?? 0));
+const docs = await getCollection('docs');
+const tracks = DOC_TRACKS.filter((track) => track.section !== '项目设计').map((track) => {
+  const items = docs
+    .filter((entry) => entry.data.section === track.section)
+    .sort((a, b) => a.data.order - b.data.order);
+  return {
+    ...track,
+    items,
+    minutes: items.reduce((sum, entry) => sum + entry.data.minutes, 0),
+  };
+});
 
-const engineMinutes = engineDocs.reduce((sum, entry) => sum + entry.data.minutes, 0);
+const knowledgeDocs = docs.filter((entry) => entry.data.part);
+const knowledgeMinutes = knowledgeDocs.reduce((sum, entry) => sum + entry.data.minutes, 0);
+const humanDuration = (minutes: number) =>
+  minutes < 60 ? `${minutes} 分钟` : `${(minutes / 60).toFixed(1).replace(/\.0$/, '')} 小时`;
 const pad = (value: number) => String(value).padStart(2, '0');
 
 const snippet = `// crates/mini-llm-tensor/src/lib.rs
@@ -44,7 +55,7 @@ assert_eq!(output.shape(), &[2, 2]);`;
         </div>
         <div class="hero__facts">
           <span><b>3</b> 个 crate</span>
-          <span><b>{engineDocs.length}</b> 篇引擎文档</span>
+          <span><b>{knowledgeDocs.length}</b> 篇知识笔记</span>
           <span><b>0</b> unsafe</span>
           <span><b>f32</b> row-major</span>
           <span>M0 骨架已完成</span>
@@ -168,32 +179,41 @@ assert_eq!(output.shape(), &[2, 2]);`;
     <div class="shell">
       <div class="section-head">
         <div>
-          <p class="eyebrow">03 · 引擎系列</p>
-          <h2 class="section-title">从数学基础，到会推演世界的模型</h2>
+          <p class="eyebrow">03 · 知识地图</p>
+          <h2 class="section-title">四条主线，一张可以按图索骥的地图</h2>
         </div>
         <p class="section-note">
-          {engineDocs.length} 篇深度解析，约 {Math.round(engineMinutes / 60)} 小时。按顺序读是一条完整的实现路径，拆开读也各自独立。
+          {knowledgeDocs.length} 篇笔记，约 {humanDuration(knowledgeMinutes)}。每条主线内部有编号，可以顺着读，也可以按知识点跳着读。
         </p>
       </div>
 
-      <ol class="engine-grid">
-        {engineDocs.map((entry) => (
-          <li>
-            <a href={`/docs/${entry.id}`}>
-              <span class="engine-num">{pad(entry.data.part ?? 0)}</span>
-              <span class="engine-main">
-                <span class="engine-title">{entry.data.short ?? entry.data.title}</span>
-                <span class="engine-desc">{entry.data.description}</span>
-              </span>
-              <span class="engine-time">{entry.data.minutes} min</span>
-            </a>
-          </li>
+      <div class="track-grid">
+        {tracks.map((track) => (
+          <a class="track-card" href={`/docs#${track.anchor}`}>
+            <div class="track-card__top">
+              <h3>{track.section}</h3>
+              <span>{track.items.length} 篇 · {humanDuration(track.minutes)}</span>
+            </div>
+            <p>{track.blurb}</p>
+            <ol class="track-card__list">
+              {track.items.slice(0, 4).map((entry) => (
+                <li>
+                  <span class="track-card__num">{pad(entry.data.part ?? 0)}</span>
+                  <span>{entry.data.short ?? entry.data.title}</span>
+                </li>
+              ))}
+              {track.items.length > 4 && <li class="track-card__more">还有 {track.items.length - 4} 篇</li>}
+            </ol>
+            <span class="track-card__link">
+              进入主线 <span class="arrow" aria-hidden="true">→</span>
+            </span>
+          </a>
         ))}
-      </ol>
+      </div>
 
       <div class="engine-foot">
-        <a href="/docs">全部文档与阅读顺序 <span class="arrow" aria-hidden="true">→</span></a>
-        <span class="engine-foot__note">docs/*.md → 构建时同步 → /docs/*</span>
+        <a href="/docs">完整知识地图与搜索 <span class="arrow" aria-hidden="true">→</span></a>
+        <span class="engine-foot__note">{docs.length} 篇文档 · 构建时从 docs/*.md 同步</span>
       </div>
     </div>
   </section>
@@ -513,68 +533,103 @@ assert_eq!(output.shape(), &[2, 2]);`;
     color: var(--ink-faint);
   }
 
-  /* engine series */
+  /* knowledge tracks */
 
-  .engine-grid {
+  .track-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0 44px;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    border-top: 1px solid var(--line);
+    gap: 16px;
   }
 
-  .engine-grid li {
-    border-bottom: 1px solid var(--line);
-  }
-
-  .engine-grid a {
-    display: grid;
-    grid-template-columns: 24px minmax(0, 1fr) auto;
-    gap: 12px;
-    align-items: start;
-    padding: 18px 0;
-  }
-
-  .engine-num {
-    padding-top: 3px;
-    font-family: var(--font-mono);
-    font-size: 10.5px;
-    color: var(--accent);
-    font-variant-numeric: tabular-nums;
-  }
-
-  .engine-main {
+  .track-card {
     display: flex;
     flex-direction: column;
-    gap: 5px;
-    min-width: 0;
+    gap: 10px;
+    padding: 22px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--paper-2);
+    transition: border-color 0.16s var(--ease), transform 0.16s var(--ease),
+      box-shadow 0.16s var(--ease);
   }
 
-  .engine-title {
-    font-size: 15px;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-    transition: color 0.14s var(--ease);
+  .track-card:hover {
+    border-color: var(--line-strong);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
   }
 
-  .engine-grid a:hover .engine-title {
-    color: var(--accent-ink);
+  .track-card__top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 6px 12px;
   }
 
-  .engine-desc {
-    font-size: 12.5px;
-    line-height: 1.65;
-    color: var(--ink-faint);
+  .track-card__top h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 620;
+    letter-spacing: -0.015em;
   }
 
-  .engine-time {
-    padding-top: 4px;
+  .track-card__top span {
     font-family: var(--font-mono);
     font-size: 10px;
     color: var(--ink-faint);
     white-space: nowrap;
+  }
+
+  .track-card p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--ink-soft);
+  }
+
+  .track-card__list {
+    display: grid;
+    gap: 5px;
+    margin: 2px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .track-card__list li {
+    display: grid;
+    grid-template-columns: 20px minmax(0, 1fr);
+    gap: 8px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--ink-faint);
+  }
+
+  .track-card__num {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .track-card__list li.track-card__more {
+    display: block;
+    padding-left: 28px;
+    font-size: 11px;
+    color: var(--ink-faint);
+  }
+
+  .track-card__link {
+    margin-top: auto;
+    padding-top: 6px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--accent-ink);
+  }
+
+  .track-card:hover .arrow {
+    display: inline-block;
+    transform: translateX(3px);
   }
 
   .engine-foot {
@@ -583,7 +638,7 @@ assert_eq!(output.shape(), &[2, 2]);`;
     align-items: center;
     justify-content: space-between;
     gap: 10px;
-    margin-top: 20px;
+    margin-top: 22px;
     font-family: var(--font-mono);
     font-size: 11px;
   }
@@ -597,7 +652,7 @@ assert_eq!(output.shape(), &[2, 2]);`;
   }
 
   @media (max-width: 760px) {
-    .engine-grid {
+    .track-grid {
       grid-template-columns: minmax(0, 1fr);
     }
 

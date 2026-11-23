@@ -14,6 +14,7 @@ const docs = defineCollection({
     series: z.string().optional(),
     part: z.number().optional(),
     short: z.string().optional(),
+    concepts: z.array(z.string()).default([]),
     minutes: z.number(),
     order: z.number(),
     source: z.string(),

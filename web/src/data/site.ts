@@ -11,7 +11,7 @@ export const SITE = {
 export const NAV = [
   { href: '/', label: '概览' },
   { href: '/learn', label: '概念图解' },
-  { href: '/docs', label: '文档' },
+  { href: '/docs', label: '知识地图' },
 ] as const;
 
 export type LessonVisual = 'tensor' | 'softmax' | 'attention';
@@ -110,6 +110,44 @@ export const ROADMAP: RoadmapItem[] = [
     title: '加速与可观测',
     state: 'planned',
     text: 'Candle 后端、CPU/GPU 数值对照、训练事件协议与内部状态可视化。',
+  },
+];
+
+export type DocTrack = {
+  section: string;
+  anchor: string;
+  blurb: string;
+};
+
+/**
+ * Knowledge tracks for the docs. The `section` matches the frontmatter written
+ * by `scripts/sync-docs.mjs`; `anchor` is used by the docs index headings.
+ */
+export const DOC_TRACKS: DocTrack[] = [
+  {
+    section: '实现引擎',
+    anchor: 'track-implementation',
+    blurb: '从第一性原理实现一个能训练、能生成的模型。',
+  },
+  {
+    section: '认知与知识',
+    anchor: 'track-cognition',
+    blurb: '模型如何表示世界、保存记忆、组织知识并理解因果。',
+  },
+  {
+    section: '规划与学习',
+    anchor: 'track-planning',
+    blurb: '在不确定性下规划与决策，并从经验中持续学习。',
+  },
+  {
+    section: '智能体',
+    anchor: 'track-agent',
+    blurb: '把模型变成能调用工具、循环执行并自我改进的 Agent。',
+  },
+  {
+    section: '项目设计',
+    anchor: 'track-design',
+    blurb: 'crate 边界、MVP 范围与工程里程碑。',
   },
 ];
 
