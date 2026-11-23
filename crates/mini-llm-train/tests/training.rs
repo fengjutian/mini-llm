@@ -1,0 +1,126 @@
+//! Training-loop and checkpoint tests.
+
+use std::path::PathBuf;
+
+use mini_llm_data::{CharTokenizer, TextDataset};
+use mini_llm_model::{ModelConfig, TinyGpt};
+use mini_llm_nn::Rng;
+use mini_llm_train::{load_checkpoint, save_checkpoint, TrainConfig, TrainError, Trainer};
+
+fn tokenizer() -> CharTokenizer {
+    CharTokenizer::from_text("abcde")
+}
+
+fn config(vocab_size: usize) -> ModelConfig {
+    ModelConfig {
+        vocab_size,
+        hidden_size: 16,
+        num_layers: 1,
+        num_heads: 2,
+        max_seq_len: 8,
+    }
+}
+
+fn dataset() -> TextDataset {
+    let text = "abcdeabcdeabcdeabcdeabcdeabcde";
+    let tokens = tokenizer().encode(text).unwrap();
+    TextDataset::new(tokens, 8).unwrap()
+}
+
+fn trainer(seed: u64) -> Trainer {
+    let model = TinyGpt::new(config(5), &mut Rng::new(seed)).unwrap();
+    let train_config = TrainConfig {
+        steps: 0,
+        batch_size: 2,
+        learning_rate: 0.01,
+        weight_decay: 0.0,
+        seed: 3,
+    };
+    Trainer::new(model, dataset(), train_config)
+}
+
+fn temp_path(name: &str) -> PathBuf {
+    std::env::temp_dir().join(format!("mini-llm-{}-{}.bin", std::process::id(), name))
+}
+
+#[test]
+fn training_reduces_the_loss() {
+    let mut trainer = trainer(1);
+    let mut losses = Vec::new();
+    trainer
+        .train(20, |report| losses.push(report.loss))
+        .unwrap();
+
+    let first: f32 = losses.iter().take(5).sum::<f32>() / 5.0;
+    let last: f32 = losses.iter().rev().take(5).sum::<f32>() / 5.0;
+    assert!(last < first, "loss did not decrease: {first} -> {last}");
+}
+
+#[test]
+fn training_is_reproducible_for_a_seed() {
+    let mut first = trainer(7);
+    let mut second = trainer(7);
+    first.train(5, |_| {}).unwrap();
+    second.train(5, |_| {}).unwrap();
+
+    let a = first.model().parameters();
+    let b = second.model().parameters();
+    assert_eq!(a.len(), b.len());
+    for (left, right) in a.iter().zip(b.iter()) {
+        assert_eq!(left.data(), right.data());
+    }
+}
+
+#[test]
+fn checkpoint_roundtrip_preserves_parameters() {
+    let mut trainer = trainer(11);
+    trainer.train(3, |_| {}).unwrap();
+    let path = temp_path("roundtrip");
+
+    save_checkpoint(&path, trainer.model(), &tokenizer()).unwrap();
+    let (loaded, loaded_tokenizer) = load_checkpoint(&path).unwrap();
+    std::fs::remove_file(&path).ok();
+
+    assert_eq!(loaded_tokenizer.characters(), tokenizer().characters());
+    assert_eq!(loaded.config().hidden_size, 16);
+    let original = trainer.model().parameters();
+    let restored = loaded.parameters();
+    assert_eq!(original.len(), restored.len());
+    for (left, right) in original.iter().zip(restored.iter()) {
+        assert_eq!(left.data(), right.data());
+    }
+}
+
+#[test]
+fn checkpoint_rejects_foreign_files() {
+    let path = temp_path("garbage");
+    std::fs::write(&path, b"not a checkpoint").unwrap();
+    let result = load_checkpoint(&path);
+    std::fs::remove_file(&path).ok();
+    assert!(matches!(result, Err(TrainError::BadMagic)));
+}
+
+#[test]
+fn checkpoint_rejects_truncated_files() {
+    let mut trainer = trainer(13);
+    trainer.train(1, |_| {}).unwrap();
+    let path = temp_path("truncated");
+    save_checkpoint(&path, trainer.model(), &tokenizer()).unwrap();
+    let bytes = std::fs::read(&path).unwrap();
+    std::fs::write(&path, &bytes[..bytes.len() / 2]).unwrap();
+    let result = load_checkpoint(&path);
+    std::fs::remove_file(&path).ok();
+    assert!(
+        matches!(result, Err(TrainError::Truncated)),
+        "unexpected: {:?}",
+        result.err()
+    );
+}
+
+#[test]
+fn evaluate_returns_a_finite_loss() {
+    let mut trainer = trainer(17);
+    let loss = trainer.evaluate(2).unwrap();
+    assert!(loss.is_finite());
+    assert!(loss > 0.0);
+}

@@ -1,5 +1,19 @@
 //! Model primitives for mini-llm.
-//! The first release intentionally implements a single-head attention primitive.
+//!
+//! - [`TinyGpt`]: a decoder-only Transformer language model built from autograd
+//!   ops, [`TransformerBlock`]s and causal multi-head attention.
+//! - [`scaled_dot_product_attention`]: the original transparent single-head
+//!   primitive used by the CLI demo and the concept lessons on the web site.
+
+mod attention;
+mod block;
+mod error;
+mod gpt;
+
+pub use attention::{causal_batch_mask, CausalSelfAttention};
+pub use block::{Mlp, TransformerBlock};
+pub use error::ModelError;
+pub use gpt::TinyGpt;
 
 use mini_llm_tensor::{Tensor, TensorError};
 use std::error::Error;
@@ -27,6 +41,17 @@ impl Default for ModelConfig {
 }
 
 impl ModelConfig {
+    /// A small, trainable configuration for character-level experiments.
+    pub fn tiny(vocab_size: usize) -> Self {
+        Self {
+            vocab_size,
+            hidden_size: 64,
+            num_layers: 2,
+            num_heads: 4,
+            max_seq_len: 32,
+        }
+    }
+
     pub fn validate(&self) -> Result<(), ConfigError> {
         if self.vocab_size == 0
             || self.hidden_size == 0

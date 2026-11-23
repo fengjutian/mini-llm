@@ -1,0 +1,8 @@
+[package]
+name = "mini-llm-data"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+mini-llm-nn.workspace = true

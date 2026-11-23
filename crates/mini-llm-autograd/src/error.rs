@@ -16,6 +16,13 @@ pub enum AutogradError {
     TargetCountMismatch { logits_rows: usize, targets: usize },
     /// `set_value` was called on a value that is not a learnable parameter.
     NotAParameter,
+    /// A row/column slice extends past the tensor bounds.
+    SliceOutOfBounds {
+        axis: &'static str,
+        start: usize,
+        len: usize,
+        size: usize,
+    },
 }
 
 impl Display for AutogradError {
@@ -40,6 +47,19 @@ impl Display for AutogradError {
                 logits_rows, logits_rows, targets
             ),
             Self::NotAParameter => write!(f, "only learnable parameters can be updated in place"),
+            Self::SliceOutOfBounds {
+                axis,
+                start,
+                len,
+                size,
+            } => write!(
+                f,
+                "{} slice [{}, {}) is out of bounds for size {}",
+                axis,
+                start,
+                start + len,
+                size
+            ),
         }
     }
 }

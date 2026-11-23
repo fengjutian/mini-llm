@@ -14,18 +14,23 @@ mini-llm is inspired by the educational approach of MiniMind, but is designed as
 
 ## Current status
 
-This repository is an initial scaffold:
+This repository is a working learning stack, not a production framework:
 
 - Rust Cargo workspace
 - CPU tensor foundation with shape validation, broadcasting, addition, matrix multiplication, ReLU, and softmax
 - `mini-llm-autograd`: a reverse-mode autodiff engine (computation graph, reverse topological backward pass, gradient accumulation)
 - `mini-llm-nn`: `Linear`, `Embedding`, `LayerNorm`, activations, a `Sequential` container, SGD and AdamW
-- Small model crate with configuration and a transparent scaled dot-product attention implementation
-- CLI demos: hand-checked `y = wx + b` gradients, linear regression, XOR, and a 2D classifier
+- `mini-llm-model`: causal multi-head attention, a pre-norm Transformer block, and `TinyGpt`
+- `mini-llm-data`: character tokenizer and next-token window sampling
+- `mini-llm-train`: training loop and a self-describing binary checkpoint format
+- CLI demos: hand-checked gradients, linear regression, XOR, a 2D classifier, and Tiny GPT training plus text generation
 - Astro site in `web/`: three interactive concept lessons plus the repository docs
 - Product requirements and architecture documents
 
-The initial tensor implementation is deliberately simple and uses `f32` plus `Vec<f32>`. It is an educational baseline, not a high-performance tensor library. Tokenization, complete Transformer blocks, training infrastructure, GPU acceleration, and higher-order gradients are planned milestones, not yet implemented.
+The tensor implementation is deliberately simple: `f32` plus `Vec<f32>`, scalar
+loops, single-threaded. It is an educational baseline, not a high-performance
+library. Modern LLM components (RoPE, RMSNorm, SwiGLU, GQA, KV cache), GPU
+acceleration and higher-order gradients are still planned milestones.
 
 ## Quick start
 
@@ -39,7 +44,12 @@ cargo run -p mini-llm-cli -- autograd    # graph + gradients for y = wx + b
 cargo run -p mini-llm-cli -- train-line  # fit y = 2x - 1 with manual SGD
 cargo run -p mini-llm-cli -- xor         # Linear + Tanh MLP trained with AdamW
 cargo run -p mini-llm-cli -- classify    # softmax + cross-entropy on two blobs
+cargo run -p mini-llm-cli -- train 800   # train Tiny GPT on the built-in corpus
+cargo run -p mini-llm-cli -- generate "The model " 120 0.7
 ```
+
+`train` writes `checkpoints/tiny-gpt.bin`; `generate` loads it. A full 800-step
+run takes roughly ten seconds on a laptop CPU.
 
 ## Autograd engine
 
@@ -110,8 +120,63 @@ let mut optimizer = AdamW::new(0.02);
 initialization. Layer normalization, embedding lookups, optimizer updates and XOR
 convergence are covered in `crates/mini-llm-nn/tests/modules.rs`.
 
-Known limitations: no dropout, no fused kernels, no learning-rate schedule, no
-save/load of parameters yet.
+Known limitations: no dropout, no fused kernels, no learning-rate schedule.
+
+## Tiny GPT
+
+`mini-llm-model` contains a decoder-only Transformer that trains end to end on a
+CPU:
+
+```text
+tokens ──► token embedding ─┐
+                            ├─► [+ position embedding] ─► block × N ─► LayerNorm ─► lm head ─► logits
+positions ─► position embed ┘
+```
+
+Each block is pre-norm with residual connections:
+
+```text
+x = x + MultiHeadCausalAttention(LayerNorm(x))
+x = x + Linear(4·C → C)(ReLU(Linear(C → 4·C)(LayerNorm(x))))
+```
+
+Attention flattens the batch to `[batch·seq, hidden]` and applies a **block-diagonal
+causal mask** of shape `[batch·seq, batch·seq]`, so a token can attend only to
+earlier tokens of its own sample. The mask is a constant tensor, which makes the
+"no future leakage" property easy to test — see
+`crates/mini-llm-model/tests/gpt.rs`.
+
+The training stack:
+
+| Crate | Role |
+| --- | --- |
+| `mini-llm-data` | `CharTokenizer` (sorted, deterministic vocabulary) and `TextDataset` (random windows, targets shifted by one) |
+| `mini-llm-train` | `Trainer` (sample → forward → cross-entropy → backward → AdamW) and checkpoint save/load |
+
+Checkpoints are a dependency-free little-endian format:
+
+```text
+magic "MINILLM1" | version u32 | 5 config u32s
+vocab_size u32 | vocab_size × (char as u32)
+parameter_count u32 | parameter_count × { rank u32 | dims | f32 data }
+```
+
+A 420-character corpus, 31-character vocabulary, 2 layers, 4 heads, hidden size 48
+and a 16-token context give a ~60k-parameter model. After 800 steps (about 12 s)
+it reproduces the corpus almost verbatim:
+
+```text
+The models can stilll surprprise you: they learn rhythm before meaning,
+and grammmmmar before grace. Training is cheap heces the next leter ...
+```
+
+Known limitations: no KV cache (each generated token recomputes the whole window),
+no dropout, no learning-rate schedule, byte-level fallback for unknown characters
+is not implemented.
+
+> Note: because the kernels are scalar loops, the workspace sets
+> `[profile.dev] opt-level = 2`. Without it the Tiny GPT demo is roughly an order
+> of magnitude slower.
 
 ## Web site (Astro)
 
@@ -175,7 +240,9 @@ mini-llm/
 │   ├── mini-llm-tensor/   # transparent CPU tensor operations
 │   ├── mini-llm-autograd/ # reverse-mode autodiff over the tensor engine
 │   ├── mini-llm-nn/       # layers, activations and optimizers
-│   ├── mini-llm-model/    # model configuration and attention primitives
+│   ├── mini-llm-data/     # char tokenizer and batch sampling
+│   ├── mini-llm-model/    # Tiny GPT: causal attention, blocks, generation
+│   ├── mini-llm-train/    # training loop and checkpoints
 │   └── mini-llm-cli/      # command-line entry point
 └── web/                  # Astro concept site and rendered docs
 ```

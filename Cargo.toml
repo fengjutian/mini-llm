@@ -4,6 +4,8 @@ members = [
     "crates/mini-llm-tensor",
     "crates/mini-llm-autograd",
     "crates/mini-llm-nn",
+    "crates/mini-llm-data",
+    "crates/mini-llm-train",
     "crates/mini-llm-model",
     "crates/mini-llm-cli",
 ]
@@ -14,8 +16,18 @@ edition = "2021"
 license = "Apache-2.0"
 authors = ["mini-llm contributors"]
 
+# The tensor kernels are plain scalar loops; without optimization the CPU demos
+# are an order of magnitude slower. Keep debug info but optimize the math.
+[profile.dev]
+opt-level = 2
+
+[profile.test]
+opt-level = 2
+
 [workspace.dependencies]
 mini-llm-tensor = { path = "crates/mini-llm-tensor" }
 mini-llm-autograd = { path = "crates/mini-llm-autograd" }
 mini-llm-nn = { path = "crates/mini-llm-nn" }
+mini-llm-data = { path = "crates/mini-llm-data" }
+mini-llm-train = { path = "crates/mini-llm-train" }
 mini-llm-model = { path = "crates/mini-llm-model" }

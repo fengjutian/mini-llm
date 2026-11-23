@@ -327,6 +327,64 @@ impl TensorValue {
         self.unary("transpose", value, |g| Ok(g.transpose_2d()?))
     }
 
+    /// Selects `len` consecutive rows starting at `start` (rank-2 only).
+    ///
+    /// This is the primitive used to split a batch into per-head projections
+    /// along the feature axis, and to slice projection weights per head.
+    pub fn slice_rows(&self, start: usize, len: usize) -> Result<TensorValue, AutogradError> {
+        let source = self.value();
+        let (rows, cols) = matrix_shape(&source)?;
+        if start + len > rows {
+            return Err(AutogradError::SliceOutOfBounds {
+                axis: "row",
+                start,
+                len,
+                size: rows,
+            });
+        }
+        let value = Tensor::new(
+            source.data()[start * cols..(start + len) * cols].to_vec(),
+            vec![len, cols],
+        )?;
+        self.unary("slice_rows", value, move |g| {
+            let mut out = vec![0.0f32; rows * cols];
+            let begin = start * cols;
+            out[begin..begin + len * cols].copy_from_slice(g.data());
+            Ok(Tensor::new(out, vec![rows, cols])?)
+        })
+    }
+
+    /// Selects `len` consecutive columns starting at `start` (rank-2 only).
+    pub fn slice_cols(&self, start: usize, len: usize) -> Result<TensorValue, AutogradError> {
+        let source = self.value();
+        let (rows, cols) = matrix_shape(&source)?;
+        if start + len > cols {
+            return Err(AutogradError::SliceOutOfBounds {
+                axis: "column",
+                start,
+                len,
+                size: cols,
+            });
+        }
+        let input = source.data();
+        let mut data = Vec::with_capacity(rows * len);
+        for row in 0..rows {
+            let base = row * cols + start;
+            data.extend_from_slice(&input[base..base + len]);
+        }
+        let value = Tensor::new(data, vec![rows, len])?;
+        self.unary("slice_cols", value, move |g| {
+            let upstream = g.data();
+            let mut out = vec![0.0f32; rows * cols];
+            for row in 0..rows {
+                let source = row * len;
+                let target = row * cols + start;
+                out[target..target + len].copy_from_slice(&upstream[source..source + len]);
+            }
+            Ok(Tensor::new(out, vec![rows, cols])?)
+        })
+    }
+
     pub fn relu(&self) -> Result<TensorValue, AutogradError> {
         let x = self.value();
         let value = x.relu()?;
@@ -537,6 +595,19 @@ impl TensorValue {
             Ok(Tensor::new(out, vec![rows, cols])?)
         })
     }
+}
+
+/// Returns `(rows, cols)` for a rank-2 tensor, or an `ExpectedRank` error.
+fn matrix_shape(tensor: &Tensor) -> Result<(usize, usize), AutogradError> {
+    if tensor.rank() != 2 {
+        return Err(AutogradError::Tensor(
+            mini_llm_tensor::TensorError::ExpectedRank {
+                expected: 2,
+                actual: tensor.rank(),
+            },
+        ));
+    }
+    Ok((tensor.shape()[0], tensor.shape()[1]))
 }
 
 fn collect_topological(

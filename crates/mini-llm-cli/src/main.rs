@@ -1,20 +1,35 @@
 use mini_llm_autograd::TensorValue;
-use mini_llm_model::{scaled_dot_product_attention, ModelConfig};
+use mini_llm_data::{CharTokenizer, TextDataset};
+use mini_llm_model::{scaled_dot_product_attention, ModelConfig, TinyGpt};
 use mini_llm_nn::{AdamW, Linear, Module, Optimizer, Relu, Rng, Sequential, Tanh};
 use mini_llm_tensor::Tensor;
+use mini_llm_train::{load_checkpoint, save_checkpoint, TrainConfig, Trainer};
+
+const CHECKPOINT_PATH: &str = "checkpoints/tiny-gpt.bin";
+
+/// A short public-domain-style paragraph used for the character-level demo.
+const TINY_CORPUS: &str = "\
+The little language model learns one character at a time. It reads a short story, \
+predicts the next letter, and slowly discovers words, spaces and punctuation. \
+Small models can still surprise you: they learn rhythm before meaning, and grammar \
+before grace. Training is cheap here, so experiments are fast. The model does not \
+know what a word is; it only knows which letter tends to follow which. That is \
+enough to begin.";
 
 fn main() {
-    let command = std::env::args()
-        .nth(1)
-        .unwrap_or_else(|| "demo".to_string());
+    let arguments: Vec<String> = std::env::args().skip(1).collect();
+    let command = arguments.first().map(String::as_str).unwrap_or("demo");
+    let rest = arguments.get(1..).unwrap_or(&[]);
 
-    match command.as_str() {
+    match command {
         "demo" => demo(),
         "inspect-config" => inspect_config(),
         "autograd" => autograd_demo(),
         "train-line" => fit_line(),
         "xor" => xor_demo(),
         "classify" => classify_demo(),
+        "train" => train_tiny_gpt(rest),
+        "generate" => generate_text(rest),
         "help" | "--help" | "-h" => usage(),
         other => {
             eprintln!("Unknown command: {other}");
@@ -25,16 +40,19 @@ fn main() {
 }
 
 fn usage() {
-    println!("Usage: cargo run -p mini-llm-cli -- <command>");
+    println!("Usage: cargo run -p mini-llm-cli -- <command> [args]");
     println!();
     println!("Commands:");
-    println!("  demo            scaled dot-product attention walkthrough");
-    println!("  inspect-config  validate the default model configuration");
-    println!("  autograd        computation graph + gradients for y = wx + b");
-    println!("  train-line      fit y = 2x - 1 with manual SGD");
-    println!("  xor             train a small MLP on XOR (Linear + Tanh + AdamW)");
-    println!("  classify        train a 2D two-blob classifier with softmax + cross-entropy");
-    println!("  help            show this message");
+    println!("  demo                 scaled dot-product attention walkthrough");
+    println!("  inspect-config       validate the default model configuration");
+    println!("  autograd             computation graph + gradients for y = wx + b");
+    println!("  train-line           fit y = 2x - 1 with manual SGD");
+    println!("  xor                  train a small MLP on XOR (Linear + Tanh + AdamW)");
+    println!("  classify             train a 2D two-blob classifier with softmax + cross-entropy");
+    println!("  train [steps]        train Tiny GPT on the built-in corpus ({CHECKPOINT_PATH})");
+    println!("  generate [prompt] [tokens] [temp]");
+    println!("                       sample text from the saved checkpoint");
+    println!("  help                 show this message");
 }
 
 fn demo() {
@@ -345,4 +363,127 @@ fn accuracy(logits: &[f32], labels: &[usize]) -> f32 {
         })
         .count();
     correct as f32 / labels.len() as f32
+}
+
+/// Character-level Tiny GPT training on the built-in corpus.
+fn train_tiny_gpt(arguments: &[String]) {
+    const BLOCK_SIZE: usize = 16;
+    const BATCH_SIZE: usize = 4;
+
+    let steps = arguments
+        .first()
+        .and_then(|value| value.parse().ok())
+        .unwrap_or(800);
+
+    let tokenizer = CharTokenizer::from_text(TINY_CORPUS);
+    let tokens = tokenizer.encode(TINY_CORPUS).expect("corpus encodes");
+    let config = ModelConfig {
+        vocab_size: tokenizer.vocab_size(),
+        hidden_size: 48,
+        num_layers: 2,
+        num_heads: 4,
+        max_seq_len: BLOCK_SIZE,
+    };
+    let mut rng = Rng::new(1337);
+    let model = TinyGpt::new(config, &mut rng).expect("model");
+
+    println!("Tiny GPT, character level");
+    println!(
+        "  corpus: {} chars, vocab {}, {} training windows",
+        TINY_CORPUS.chars().count(),
+        tokenizer.vocab_size(),
+        tokens.len() - BLOCK_SIZE
+    );
+    println!(
+        "  model: {} params | layers={} hidden={} heads={} block={}",
+        model.num_parameters(),
+        model.config().num_layers,
+        model.config().hidden_size,
+        model.config().num_heads,
+        model.config().max_seq_len
+    );
+    println!("  optimizer: AdamW | batch={BATCH_SIZE} | steps={steps}");
+    println!();
+
+    let dataset = TextDataset::new(tokens, BLOCK_SIZE).expect("dataset");
+    let mut trainer = Trainer::new(
+        model,
+        dataset,
+        TrainConfig {
+            steps,
+            batch_size: BATCH_SIZE,
+            learning_rate: 3e-3,
+            weight_decay: 0.01,
+            seed: 7,
+        },
+    );
+
+    let mut last_loss = f32::NAN;
+    trainer
+        .train(steps, |report| {
+            last_loss = report.loss;
+            if report.step == 1 || report.step % 10 == 0 {
+                println!(
+                    "  step {:>4}  loss {:>7.4}  {:>6.1} ms/step",
+                    report.step, report.loss, report.elapsed_ms
+                );
+            }
+        })
+        .expect("training");
+    println!("  final sampled loss: {last_loss:.4}");
+
+    let prompt = tokenizer.encode("The ").unwrap_or_else(|_| vec![0]);
+    let mut sampler = Rng::new(99);
+    let generated = trainer
+        .model()
+        .generate(&prompt, 160, 0.8, &mut sampler)
+        .expect("generate");
+    println!();
+    println!("--- sample ---");
+    println!("{}", tokenizer.decode(&generated).expect("decode"));
+
+    std::fs::create_dir_all("checkpoints").ok();
+    save_checkpoint(CHECKPOINT_PATH, trainer.model(), &tokenizer).expect("save checkpoint");
+    println!();
+    println!("checkpoint saved to {CHECKPOINT_PATH}");
+}
+
+/// Samples text from the saved checkpoint.
+fn generate_text(arguments: &[String]) {
+    let prompt = arguments.first().map(String::as_str).unwrap_or("The ");
+    let count = arguments
+        .get(1)
+        .and_then(|value| value.parse().ok())
+        .unwrap_or(120usize);
+    let temperature = arguments
+        .get(2)
+        .and_then(|value| value.parse().ok())
+        .unwrap_or(0.8f32);
+
+    let (model, tokenizer) = match load_checkpoint(CHECKPOINT_PATH) {
+        Ok(loaded) => loaded,
+        Err(err) => {
+            eprintln!("cannot load {CHECKPOINT_PATH}: {err}");
+            eprintln!("run `cargo run -p mini-llm-cli -- train` first");
+            std::process::exit(1);
+        }
+    };
+
+    let filtered: String = prompt
+        .chars()
+        .filter(|character| tokenizer.characters().contains(character))
+        .collect();
+    let encoded = if filtered.is_empty() {
+        vec![0]
+    } else {
+        tokenizer
+            .encode(&filtered)
+            .expect("filtered prompt encodes")
+    };
+
+    let mut rng = Rng::new(2024);
+    let generated = model
+        .generate(&encoded, count, temperature, &mut rng)
+        .expect("generate");
+    println!("{}", tokenizer.decode(&generated).expect("decode"));
 }

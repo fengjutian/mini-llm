@@ -150,6 +150,35 @@ fn cross_entropy_rejects_invalid_targets() {
 }
 
 #[test]
+fn slice_rows_matches_finite_differences() {
+    let values = vec![1.0, -2.0, 3.0, 4.0, -5.0, 6.0];
+    check_gradient(&values, &[3, 2], |x| x.slice_rows(1, 2)?.sum());
+}
+
+#[test]
+fn slice_cols_matches_finite_differences() {
+    let values = vec![1.0, -2.0, 3.0, 4.0, -5.0, 6.0, 7.0, -8.0];
+    check_gradient(&values, &[2, 4], |x| {
+        let slice = x.slice_cols(1, 2)?;
+        let coefficients = TensorValue::constant(vec![1.0, -1.0, 0.5, 2.0], vec![2, 2])?;
+        slice.mul(&coefficients)?.sum()
+    });
+}
+
+#[test]
+fn slices_reject_out_of_bounds_ranges() {
+    let x = TensorValue::parameter(vec![1.0, 2.0, 3.0, 4.0], vec![2, 2]).unwrap();
+    assert!(matches!(
+        x.slice_cols(1, 2),
+        Err(AutogradError::SliceOutOfBounds { .. })
+    ));
+    assert!(matches!(
+        x.slice_rows(2, 1),
+        Err(AutogradError::SliceOutOfBounds { .. })
+    ));
+}
+
+#[test]
 fn parameters_are_leaf_nodes_only() {
     let x = TensorValue::constant(vec![1.0, 2.0], vec![1, 2]).unwrap();
     let w = TensorValue::parameter(vec![0.5, -0.5], vec![2, 1]).unwrap();

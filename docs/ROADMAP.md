@@ -51,17 +51,34 @@
 - 演示命令：`cargo run -p mini-llm-cli -- xor` 与
   `cargo run -p mini-llm-cli -- classify`。
 
-## Milestone 3 — Tiny GPT（下一步）
+## Milestone 3 — Tiny GPT（已完成）
 
-- [ ] 字符级 Tokenizer
-- [ ] 数据批处理
-- [ ] Causal Attention
-- [ ] Transformer Decoder
-- [ ] Language Modeling Loss
-- [ ] 训练循环与 checkpoint
-- [ ] 文本生成
+- [x] 字符级 Tokenizer
+- [x] 数据批处理
+- [x] Causal Attention
+- [x] Transformer Decoder
+- [x] Language Modeling Loss
+- [x] 训练循环与 checkpoint
+- [x] 文本生成
 
-## Milestone 4 — Modern LLM
+实现拆分：
+
+- `mini-llm-data`：`CharTokenizer`（按码点排序、确定性的字符表）与
+  `TextDataset`（随机窗口采样，target 右移一位，显式 `batch_at` 便于测试）；
+- `mini-llm-model`：`CausalSelfAttention`（按 head 切片，块对角 causal mask）、
+  `Mlp`、`TransformerBlock`（pre-norm + 残差）、`TinyGpt`
+  （token/position embedding → blocks → final norm → lm head）；
+- `mini-llm-train`：`Trainer`（采样、前向、反向、AdamW 更新、评估）与
+  自描述的二进制 checkpoint（配置 + 字符表 + 全部参数）；
+- 命令行：`train [steps]` 在 420 字符的内置语料上训练约 6 万参数的模型，
+  `generate [prompt] [tokens] [temp]` 加载 checkpoint 采样；
+- 测试覆盖：causal mask 不泄漏未来 token、不同样本不互相注意、梯度到达全部参数、
+  训练可复现且 loss 下降、checkpoint 往返与损坏检测。
+
+为了让纯标量 kernel 在 debug 构建下可用，workspace 的 `[profile.dev]` 与
+`[profile.test]` 设为 `opt-level = 2`。
+
+## Milestone 4 — Modern LLM（下一步）
 
 - [ ] RoPE
 - [ ] RMSNorm

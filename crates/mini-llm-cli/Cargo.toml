@@ -9,3 +9,5 @@ mini-llm-tensor.workspace = true
 mini-llm-autograd.workspace = true
 mini-llm-nn.workspace = true
 mini-llm-model.workspace = true
+mini-llm-data.workspace = true
+mini-llm-train.workspace = true
