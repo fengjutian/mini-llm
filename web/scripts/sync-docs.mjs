@@ -35,6 +35,14 @@ const DOCS = [
     order: 10,
   },
   {
+    file: 'AUTOGRAD_ENGINE.md',
+    slug: 'autograd-engine',
+    title: 'Autograd Engine 深度解析',
+    description: '从计算图、链式法则到反向传播：梯度是怎样被自动算出来的。',
+    section: '内核',
+    order: 15,
+  },
+  {
     file: 'MATH_FOUNDATIONS.md',
     slug: 'math-foundations',
     title: '数学基础与神经网络原理',

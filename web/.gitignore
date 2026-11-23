@@ -13,5 +13,8 @@ src/content/docs/
 .env.*
 !.env.example
 
+# local verification artifacts
+.shots/
+
 # platform noise
 .DS_Store

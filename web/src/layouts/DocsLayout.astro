@@ -30,9 +30,10 @@ const tocHeadings =
 
 <BaseLayout title={title} description={description} type="article">
   <div class="shell docs">
-    <aside class="docs__sidebar">
+    <details class="docs__sidebar" open data-doc-nav>
+      <summary class="docs__nav-summary">文档导航</summary>
       <DocsSidebar entries={entries} current={current} />
-    </aside>
+    </details>
 
     <div>
       <header class="doc-head">

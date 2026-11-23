@@ -20,6 +20,7 @@ This repository is an initial scaffold:
 - CPU tensor foundation with shape validation, addition, matrix multiplication, ReLU, and softmax
 - Small model crate with configuration and a transparent scaled dot-product attention implementation
 - CLI demo
+- Astro site in `web/`: three interactive concept lessons plus the repository docs
 - Product requirements and architecture documents
 
 The initial tensor implementation is deliberately simple and uses `f32` plus `Vec<f32>`. It is an educational baseline, not a high-performance tensor library. Automatic differentiation, tokenization, complete Transformer blocks, training, and GPU acceleration are planned milestones, not yet implemented.
@@ -34,6 +35,31 @@ cargo run -p mini-llm-cli -- demo
 cargo run -p mini-llm-cli -- inspect-config
 ```
 
+## Web site (Astro)
+
+`web/` contains a static Astro site whose goal is to make the concepts behind the
+code easier to grasp:
+
+- `/learn/tensor-shape` — shape, strides and the linear offset of a tensor
+- `/learn/softmax` — logits, temperature, entropy and the probability distribution
+- `/learn/attention` — scores, row-wise softmax, weighted values and a causal-mask preview
+- `/docs` — the Markdown files in `docs/`, rendered with LaTeX support
+
+The site is a presentation layer only; it does not train or run the model. The
+`docs/*.md` files remain the single source of truth: `web/scripts/sync-docs.mjs`
+copies them into the Astro content collection before `dev` and `build`, adds the
+frontmatter, strips the duplicated H1, and normalizes the escaped LaTeX dialect
+used in those documents.
+
+Requirements: Node.js 22+ and pnpm.
+
+```bash
+cd web
+pnpm install
+pnpm dev      # http://localhost:4321
+pnpm build    # static output in web/dist
+```
+
 ## Workspace
 
 ```text
@@ -43,10 +69,11 @@ mini-llm/
 │   ├── PRD.md
 │   ├── ARCHITECTURE.md
 │   └── ROADMAP.md
-└── crates/
-    ├── mini-llm-tensor/  # transparent CPU tensor operations
-    ├── mini-llm-model/   # model configuration and attention primitives
-    └── mini-llm-cli/     # command-line entry point
+├── crates/
+│   ├── mini-llm-tensor/  # transparent CPU tensor operations
+│   ├── mini-llm-model/   # model configuration and attention primitives
+│   └── mini-llm-cli/     # command-line entry point
+└── web/                  # Astro concept site and rendered docs
 ```
 
 ## Planned compute backends

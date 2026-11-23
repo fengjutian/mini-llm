@@ -1051,6 +1051,10 @@ html[data-theme="dark"] .theme-icon--sun {
   color: var(--ink-faint);
 }
 
+.docs__nav-summary {
+  display: none;
+}
+
 /* --------------------------------------------------------------------------
    Article (prose)
    -------------------------------------------------------------------------- */
@@ -1492,7 +1496,7 @@ html[data-theme="dark"] .prose .astro-code span {
   text-wrap: balance;
 }
 
-.lesson__head p {
+.lesson__head > p {
   margin: 22px 0 0;
   font-size: 16.5px;
   line-height: 1.8;
@@ -1593,6 +1597,38 @@ html[data-theme="dark"] .prose .astro-code span {
   overflow-x: auto;
 }
 
+.lesson table {
+  width: 100%;
+  margin: 1.5em 0;
+  border-collapse: collapse;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.lesson thead th {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--line-strong);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.lesson tbody td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  color: var(--ink-soft);
+}
+
+.lesson tbody td code {
+  white-space: nowrap;
+}
+
 .formula {
   margin: 1.4em 0;
   padding: 18px 22px;
@@ -1635,7 +1671,7 @@ html[data-theme="dark"] .prose .astro-code span {
   background: var(--paper-3);
 }
 
-.widget__title {
+.widget__head .widget__title {
   margin: 0;
   font-family: var(--font-mono);
   font-size: 11px;
@@ -1847,11 +1883,52 @@ input[type="range"]::-moz-range-thumb {
   .docs__sidebar {
     position: static;
     max-height: none;
-    padding: 16px;
+    padding: 0;
     margin-bottom: 32px;
     border: 1px solid var(--line);
     border-radius: var(--radius-md);
     background: var(--paper-2);
+    overflow: hidden;
+  }
+
+  .docs__nav-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    list-style: none;
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    letter-spacing: 0.08em;
+    color: var(--ink-soft);
+  }
+
+  .docs__nav-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .docs__nav-summary::after {
+    content: "+";
+    font-size: 15px;
+    color: var(--ink-faint);
+  }
+
+  .docs__sidebar[open] .docs__nav-summary {
+    border-bottom: 1px solid var(--line);
+  }
+
+  .docs__sidebar[open] .docs__nav-summary::after {
+    content: "−";
+  }
+
+  .docs__sidebar-inner {
+    padding: 16px;
+  }
+
+  .docs__sidebar:not([open]) .docs__sidebar-inner {
+    display: none;
   }
 
   .side-group {

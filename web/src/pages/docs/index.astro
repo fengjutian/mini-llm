@@ -17,9 +17,10 @@ for (const entry of entries) {
   description="mini-llm 的内核笔记与设计文档：Tensor Engine、数学基础、系统架构、产品需求与路线图。"
 >
   <div class="shell docs docs--index">
-    <aside class="docs__sidebar">
+    <details class="docs__sidebar" open data-doc-nav>
+      <summary class="docs__nav-summary">文档导航</summary>
       <DocsSidebar entries={entries} />
-    </aside>
+    </details>
 
     <div>
       <header class="doc-head">

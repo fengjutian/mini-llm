@@ -69,6 +69,22 @@ for (const entry of entries) {
 </style>
 
 <script>
+  // On narrow screens the navigation becomes a collapsed disclosure so the
+  // document itself stays above the fold.
+  const sidebar = document.querySelector<HTMLDetailsElement>('[data-doc-nav]');
+  if (sidebar) {
+    const media = window.matchMedia('(max-width: 900px)');
+    const sync = () => {
+      if (media.matches) {
+        sidebar.removeAttribute('open');
+      } else {
+        sidebar.setAttribute('open', '');
+      }
+    };
+    sync();
+    media.addEventListener('change', sync);
+  }
+
   const filter = document.querySelector<HTMLInputElement>('[data-doc-filter]');
   const empty = document.querySelector<HTMLElement>('[data-nav-empty]');
   const groups = [...document.querySelectorAll<HTMLElement>('[data-nav-group]')];
