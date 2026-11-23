@@ -17,7 +17,9 @@ interface Props {
 const { title, description, section, source, current, headings = [] } = Astro.props;
 
 const entries = (await getCollection('docs')).sort((a, b) => a.data.order - b.data.order);
-const levelTwo = headings.filter((heading) => heading.depth === 2);
+const isSectionHeading = (heading: { text: string }) =>
+  heading.text.trim().length > 0 && !/^[\d\s.、,，()（）]+$/.test(heading.text);
+const levelTwo = headings.filter((heading) => heading.depth === 2 && isSectionHeading(heading));
 // Long documents would produce an unusable table of contents; keep it to the
 // section level in that case.
 const tocHeadings =
