@@ -42,15 +42,21 @@ for (const entry of entries) {
 
     {[...groups.entries()].map(([section, items]) => (
       <div class="side-group" data-nav-group>
-        <p class="side-group__label">{section}</p>
+        <p class="side-group__label">
+          {section}
+          {items.some((entry) => entry.data.part) && <span class="side-group__count">{items.length}</span>}
+        </p>
         {items.map((entry) => (
           <a
-            class="side-link"
+            class:list={['side-link', { 'side-link--numbered': Boolean(entry.data.part) }]}
             href={`/docs/${entry.id}`}
             aria-current={current === entry.id ? 'page' : undefined}
             data-doc-title={entry.data.title}
           >
-            {entry.data.title}
+            {entry.data.part ? (
+              <span class="side-part" aria-hidden="true">{String(entry.data.part).padStart(2, '0')}</span>
+            ) : null}
+            <span>{entry.data.title}</span>
           </a>
         ))}
       </div>
@@ -65,6 +71,35 @@ for (const entry of entries) {
     margin: 4px 10px;
     font-size: 12.5px;
     color: var(--ink-faint);
+  }
+
+  .side-group__count {
+    margin-left: 6px;
+    padding: 0 5px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    font-size: 9px;
+    letter-spacing: 0;
+    color: var(--ink-faint);
+  }
+
+  .side-link--numbered {
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr);
+    gap: 4px;
+    align-items: baseline;
+  }
+
+  .side-part {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.02em;
+    color: var(--ink-faint);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .side-link[aria-current='page'] .side-part {
+    color: var(--accent-ink);
   }
 </style>
 

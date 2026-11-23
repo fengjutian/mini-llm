@@ -9,23 +9,36 @@ interface Props {
   title: string;
   description: string;
   section: string;
+  series?: string;
+  part?: number;
+  minutes: number;
   source: string;
   current: string;
   headings?: { depth: number; slug: string; text: string }[];
 }
 
-const { title, description, section, source, current, headings = [] } = Astro.props;
+const { title, description, section, series, part, minutes, source, current, headings = [] } = Astro.props;
 
 const entries = (await getCollection('docs')).sort((a, b) => a.data.order - b.data.order);
-const isSectionHeading = (heading: { text: string }) =>
-  heading.text.trim().length > 0 && !/^[\d\s.、,，()（）]+$/.test(heading.text);
-const levelTwo = headings.filter((heading) => heading.depth === 2 && isSectionHeading(heading));
-// Long documents would produce an unusable table of contents; keep it to the
-// section level in that case.
-const tocHeadings =
-  levelTwo.length <= 10
-    ? headings.filter((heading) => heading.depth === 2 || heading.depth === 3)
-    : levelTwo;
+
+// The generated documents mix two outline styles: some use H1 for chapters,
+// others use H1 only for the title. Figure captions are also written as H2s.
+// Keep the table of contents to numbered sections and recognised closers.
+const numberedPattern =
+  /^([一二三四五六七八九十百]+、|\d+(\.\d+)*[\s、.]|第[一二三四五六七八九十百\d]+[章部]|Milestone\s|V\d+[：:]|Step\s\d)/;
+const closingPattern = /^(结语|小结|本章小结|总结|参考资料|附录|Definition of Done|后记)/;
+const isStructural = (text: string) => numberedPattern.test(text.trim()) || closingPattern.test(text.trim());
+const isContentHeading = (text: string) => /[^\d\s.、,，()（）]/.test(text);
+
+const proseHeadings = headings.filter(
+  (heading) => (heading.depth === 2 || heading.depth === 3) && isContentHeading(heading.text),
+);
+const structural = proseHeadings.filter((heading) => isStructural(heading.text));
+const usable = structural.length >= 4 ? structural : proseHeadings;
+const levelTwo = usable.filter((heading) => heading.depth === 2);
+// Long documents get a chapter/section-level contents only.
+const tocHeadings = levelTwo.length <= 10 ? usable : levelTwo;
+const partLabel = part ? `第 ${String(part).padStart(2, '0')} 部分` : null;
 ---
 
 <BaseLayout title={title} description={description} type="article">
@@ -38,9 +51,11 @@ const tocHeadings =
     <div>
       <header class="doc-head">
         <div class="doc-head__kicker">
-          <span>{section}</span>
+          <span>{series ?? section}{partLabel ? ` · ${partLabel}` : ''}</span>
           <span class="sep" aria-hidden="true">/</span>
           <span>{source}</span>
+          <span class="doc-head__spacer"></span>
+          <span>约 {minutes} 分钟</span>
         </div>
         <h1>{title}</h1>
         <p class="doc-head__desc">{description}</p>

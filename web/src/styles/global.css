@@ -1080,6 +1080,11 @@ html[data-theme="dark"] .theme-icon--sun {
   color: var(--line-strong);
 }
 
+.doc-head__spacer {
+  flex: 1;
+  min-width: 12px;
+}
+
 .doc-head h1 {
   margin: 14px 0 0;
   font-size: clamp(1.85rem, 3.2vw, 2.5rem);

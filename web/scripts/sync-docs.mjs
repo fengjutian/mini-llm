@@ -26,73 +26,152 @@ const repoRoot = path.resolve(webRoot, '..');
 const docsDir = path.join(repoRoot, 'docs');
 const outDir = path.join(webRoot, 'src', 'content', 'docs');
 
-/** Curated sidebar metadata. `order` controls the docs navigation. */
+/**
+ * Curated sidebar metadata. `order` controls the navigation order; `part`
+ * numbers the "engine" series so the site can show progress through it.
+ */
+const ENGINE_SERIES = '引擎系列';
+const DESIGN_SERIES = '项目设计';
+
 const KNOWN = [
   {
     file: 'MATH_FOUNDATIONS.md',
     slug: 'math-foundations',
     title: '数学基础与神经网络原理',
+    short: '数学基础',
     description: '线性代数、微积分、概率、优化与神经网络数学：LLM 背后那套可推导的直觉。',
-    section: '内核',
+    section: ENGINE_SERIES,
+    series: ENGINE_SERIES,
+    part: 1,
     order: 10,
   },
   {
     file: 'TENSOR_ENGINE.md',
     slug: 'tensor-engine',
     title: 'Tensor Engine 深度解析',
+    short: 'Tensor Engine',
     description: '从内存布局、Shape、Stride 到矩阵乘法，拆开一个教学用张量引擎的内部结构。',
-    section: '内核',
+    section: ENGINE_SERIES,
+    series: ENGINE_SERIES,
+    part: 2,
     order: 20,
   },
   {
     file: 'AUTOGRAD_ENGINE.md',
     slug: 'autograd-engine',
     title: 'Autograd Engine 深度解析',
+    short: 'Autograd Engine',
     description: '从计算图、链式法则到反向传播：梯度是怎样被自动算出来的。',
-    section: '内核',
+    section: ENGINE_SERIES,
+    series: ENGINE_SERIES,
+    part: 3,
     order: 30,
   },
   {
     file: 'NEURAL_NETWORK_ENGINE.md',
     slug: 'neural-network-engine',
     title: 'Neural Network Engine 深度解析',
+    short: 'Neural Network',
     description: '从 Linear、MLP 到 Loss、Optimizer：把算子、梯度与损失串成可训练的网络。',
-    section: '内核',
+    section: ENGINE_SERIES,
+    series: ENGINE_SERIES,
+    part: 4,
     order: 40,
   },
   {
     file: 'TRANSFORMER_ENGINE.md',
     slug: 'transformer-engine',
     title: 'Transformer Engine 深度解析',
+    short: 'Transformer Engine',
     description: '从 Embedding、位置编码到 Self-Attention 与 Multi-Head：Transformer 的计算核心。',
-    section: '内核',
+    section: ENGINE_SERIES,
+    series: ENGINE_SERIES,
+    part: 5,
     order: 50,
+  },
+  {
+    file: 'TRANSFORMER_BLOCK.md',
+    slug: 'transformer-block',
+    title: 'Transformer Block 深度解析',
+    short: 'Transformer Block',
+    description: '从 FFN、残差连接、LayerNorm 到 Pre-Norm 与 GQA：一个 Block 里到底有什么。',
+    section: ENGINE_SERIES,
+    series: ENGINE_SERIES,
+    part: 6,
+    order: 60,
+  },
+  {
+    file: 'DECODER_ENGINE.md',
+    slug: 'decoder-engine',
+    title: 'Decoder Engine 深度解析',
+    short: 'Decoder Engine',
+    description: '从 Transformer Stack、LM Head 到采样与 KV Cache：GPT 如何逐 token 生成文本。',
+    section: ENGINE_SERIES,
+    series: ENGINE_SERIES,
+    part: 7,
+    order: 70,
+  },
+  {
+    file: 'TRAINING_ENGINE.md',
+    slug: 'training-engine',
+    title: 'Training Engine 深度解析',
+    short: 'Training Engine',
+    description: '从 Dataset、滑动窗口到 Cross Entropy、AdamW 与 checkpoint：把模型真正训练起来。',
+    section: ENGINE_SERIES,
+    series: ENGINE_SERIES,
+    part: 8,
+    order: 80,
+  },
+  {
+    file: 'EVALUATION_ENGINE.md',
+    slug: 'evaluation-engine',
+    title: 'Evaluation Engine 深度解析',
+    short: 'Evaluation Engine',
+    description: '从 Validation Loss、Perplexity 到 Benchmark：训练之后如何判断模型真正学会了什么。',
+    section: ENGINE_SERIES,
+    series: ENGINE_SERIES,
+    part: 9,
+    order: 90,
   },
   {
     file: 'ARCHITECTURE.md',
     slug: 'architecture',
     title: '系统架构',
+    short: '系统架构',
     description: 'crate 职责、依赖方向、Tensor 不变量与训练可观测性的设计约定。',
-    section: '设计',
+    section: DESIGN_SERIES,
     order: 100,
   },
   {
     file: 'PRD.md',
     slug: 'prd',
     title: '产品需求文档（PRD）',
+    short: 'PRD',
     description: '目标用户、MVP 范围、验收标准与关键风险。',
-    section: '设计',
+    section: DESIGN_SERIES,
     order: 110,
   },
   {
     file: 'ROADMAP.md',
     slug: 'roadmap',
     title: '开发路线图',
+    short: '路线图',
     description: '从可运行骨架到 Autograd、Tiny GPT、现代 LLM 与可观测研究环境的里程碑。',
-    section: '设计',
+    section: DESIGN_SERIES,
     order: 120,
   },
 ];
+
+/** Rough reading time: CJK characters and Latin words at different speeds. */
+function estimateMinutes(markdown) {
+  const text = markdown
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/\$\$[\s\S]*?\$\$/g, ' ')
+    .replace(/[#>*_`|~-]/g, ' ');
+  const cjk = (text.match(/[\u4e00-\u9fff]/g) ?? []).length;
+  const words = (text.replace(/[\u4e00-\u9fff]/g, ' ').match(/[A-Za-z0-9]+/g) ?? []).length;
+  return Math.max(1, Math.round(cjk / 420 + words / 220));
+}
 
 const slugify = (value) =>
   value
@@ -194,6 +273,8 @@ const documents = files.map((file, index) => {
       title: null,
       description: `来自 docs/${file} 的仓库文档。`,
       section: '其他',
+      series: null,
+      part: null,
       order: 200 + index,
     }
   );
@@ -210,11 +291,16 @@ for (const doc of documents) {
   const { markdown, heading } = stripLeadingHeading(normalized.markdown);
 
   const title = doc.title ?? heading ?? doc.slug;
+  const minutes = estimateMinutes(markdown);
   const frontmatter = [
     '---',
     `title: ${yamlString(title)}`,
     `description: ${yamlString(doc.description)}`,
     `section: ${yamlString(doc.section)}`,
+    ...(doc.series ? [`series: ${yamlString(doc.series)}`] : []),
+    ...(doc.part ? [`part: ${doc.part}`] : []),
+    ...(doc.short ? [`short: ${yamlString(doc.short)}`] : []),
+    `minutes: ${minutes}`,
     `order: ${doc.order}`,
     `source: ${yamlString(`docs/${doc.file}`)}`,
     '---',

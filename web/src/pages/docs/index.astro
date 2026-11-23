@@ -4,17 +4,16 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import DocsSidebar from '../../components/DocsSidebar.astro';
 
 const entries = (await getCollection('docs')).sort((a, b) => a.data.order - b.data.order);
-
-const groups = new Map<string, typeof entries>();
-for (const entry of entries) {
-  if (!groups.has(entry.data.section)) groups.set(entry.data.section, []);
-  groups.get(entry.data.section)!.push(entry);
-}
+const engine = entries.filter((entry) => entry.data.part);
+const design = entries.filter((entry) => !entry.data.part);
+const seriesTitle = engine[0]?.data.series ?? '引擎系列';
+const totalMinutes = engine.reduce((sum, entry) => sum + entry.data.minutes, 0);
+const pad = (value: number) => String(value).padStart(2, '0');
 ---
 
 <BaseLayout
   title="文档"
-  description="mini-llm 的内核笔记与设计文档：Tensor Engine、数学基础、系统架构、产品需求与路线图。"
+  description="mini-llm 的引擎系列与项目文档：从数学基础、Tensor、Autograd、Transformer，到 Decoder、训练与评估。"
 >
   <div class="shell docs docs--index">
     <details class="docs__sidebar" open data-doc-nav>
@@ -28,42 +27,86 @@ for (const entry of entries) {
           <span>仓库文档</span>
           <span class="sep" aria-hidden="true">/</span>
           <span>docs/</span>
+          <span class="doc-head__spacer"></span>
+          <span>{entries.length} 篇</span>
         </div>
         <h1>从内核到设计决策</h1>
         <p class="doc-head__desc">
-          这里的每一页都直接来自仓库中的 <code>docs/*.md</code>，随代码一起演进。先读概念图解建立直觉，再回来读实现细节与设计约束。
+          引擎系列是一条完整的实现路径：先补数学，再实现张量、自动微分、网络层、Transformer 与训练循环。
+          每一页都直接来自仓库的 <code>docs/*.md</code>，与代码一起演进。
         </p>
       </header>
 
-      <div class="docs-index">
-        {[...groups.entries()].map(([section, items]) => (
-          <section class="docs-group">
-            <h2 class="docs-group__label">{section}</h2>
-            <div class="docs-cards">
-              {items.map((entry) => (
-                <a class="doc-tile" href={`/docs/${entry.id}`}>
-                  <span class="doc-tile__meta">
-                    {entry.data.source.replace('docs/', '')}
-                    <span aria-hidden="true">·</span>
-                    {entry.data.section}
-                  </span>
-                  <h3>{entry.data.title}</h3>
-                  <p>{entry.data.description}</p>
-                  <span class="doc-tile__more">
-                    阅读 <span class="arrow" aria-hidden="true">→</span>
-                  </span>
-                </a>
-              ))}
+      <section class="series-band" aria-labelledby="series-title">
+        <div class="series-band__head">
+          <div>
+            <h2 id="series-title">{seriesTitle}</h2>
+            <p>
+              {engine.length} 个部分 · 约 {Math.round(totalMinutes / 60)} 小时阅读 · 从数学到训练与评估
+            </p>
+          </div>
+          <a class="series-band__start" href={`/docs/${engine[0]?.id}`}>
+            从第一部分开始 <span class="arrow" aria-hidden="true">→</span>
+          </a>
+        </div>
+
+        <ol class="series-path">
+          {engine.map((entry) => (
+            <li>
+              <a href={`/docs/${entry.id}`}>
+                <span class="series-path__num">{pad(entry.data.part ?? 0)}</span>
+                <span class="series-path__title">{entry.data.short ?? entry.data.title}</span>
+              </a>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <div class="docs-cards docs-cards--engine">
+        {engine.map((entry) => (
+          <a class="doc-tile doc-tile--part" href={`/docs/${entry.id}`}>
+            <div class="doc-tile__top">
+              <span class="doc-tile__part">Part {pad(entry.data.part ?? 0)}</span>
+              <span class="doc-tile__meta">
+                {entry.data.minutes} 分钟
+                <span aria-hidden="true">·</span>
+                {entry.data.source.replace('docs/', '')}
+              </span>
             </div>
-          </section>
+            <h3>{entry.data.title}</h3>
+            <p>{entry.data.description}</p>
+            <span class="doc-tile__more">
+              阅读 <span class="arrow" aria-hidden="true">→</span>
+            </span>
+          </a>
         ))}
       </div>
+
+      <section class="docs-group docs-group--design">
+        <h2 class="docs-group__label">项目设计</h2>
+        <div class="docs-cards">
+          {design.map((entry) => (
+            <a class="doc-tile" href={`/docs/${entry.id}`}>
+              <span class="doc-tile__meta">
+                {entry.data.source.replace('docs/', '')}
+                <span aria-hidden="true">·</span>
+                {entry.data.minutes} 分钟
+              </span>
+              <h3>{entry.data.title}</h3>
+              <p>{entry.data.description}</p>
+              <span class="doc-tile__more">
+                阅读 <span class="arrow" aria-hidden="true">→</span>
+              </span>
+            </a>
+          ))}
+        </div>
+      </section>
 
       <div class="note docs-note">
         <strong>同步方式</strong>
         文档页由 <code>web/scripts/sync-docs.mjs</code> 在 <code>dev</code> / <code>build</code> 前生成：
-        它会补上标题与摘要、把 <code>\[ ... \]</code> 形式的公式转换成标准 LaTeX 分隔符，并去掉重复的一级标题。
-        改了 <code>docs/</code> 里的文件，重新运行 <code>pnpm dev</code> 就能看到。
+        自动发现 <code>docs/*.md</code>、补上标题摘要与阅读时长、把 <code>\[ ... \]</code> 公式转换成标准
+        LaTeX 分隔符，并去掉重复的一级标题。新增文档不用改页面代码。
       </div>
     </div>
   </div>
@@ -74,26 +117,118 @@ for (const entry of entries) {
     grid-template-columns: 216px minmax(0, 1fr);
   }
 
-  .docs-index {
-    display: grid;
-    gap: 34px;
+  /* Series band ------------------------------------------------------------ */
+
+  .series-band {
     margin-top: 30px;
+    padding: 22px 24px 20px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background:
+      radial-gradient(circle at 1px 1px, var(--dot) 1px, transparent 0) 0 0 / 18px 18px,
+      var(--paper-2);
   }
 
-  .docs-group__label {
-    margin: 0 0 12px;
+  .series-band__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+  }
+
+  .series-band__head h2 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 620;
+    letter-spacing: -0.01em;
+  }
+
+  .series-band__head p {
+    margin: 5px 0 0;
     font-family: var(--font-mono);
-    font-size: 10px;
-    font-weight: 500;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
+    font-size: 10.5px;
+    letter-spacing: 0.02em;
     color: var(--ink-faint);
   }
+
+  .series-band__start {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--accent-ink);
+  }
+
+  .series-band__start .arrow {
+    transition: transform 0.16s var(--ease);
+  }
+
+  .series-band__start:hover .arrow {
+    transform: translateX(3px);
+  }
+
+  .series-path {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 0;
+    margin: 18px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .series-path li {
+    display: flex;
+    align-items: center;
+  }
+
+  .series-path li + li::before {
+    content: "→";
+    margin: 0 6px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--line-strong);
+  }
+
+  .series-path a {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 5px 9px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--paper);
+    transition: border-color 0.14s var(--ease), color 0.14s var(--ease);
+  }
+
+  .series-path a:hover {
+    border-color: var(--accent);
+    color: var(--accent-ink);
+  }
+
+  .series-path__num {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    color: var(--accent);
+  }
+
+  .series-path__title {
+    font-size: 12.5px;
+    color: var(--ink-soft);
+  }
+
+  /* Cards ------------------------------------------------------------------ */
 
   .docs-cards {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 14px;
+  }
+
+  .docs-cards--engine {
+    margin-top: 16px;
   }
 
   .doc-tile {
@@ -112,6 +247,22 @@ for (const entry of entries) {
     border-color: var(--line-strong);
     transform: translateY(-2px);
     box-shadow: var(--shadow-md);
+  }
+
+  .doc-tile__top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .doc-tile__part {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
   }
 
   .doc-tile__meta {
@@ -151,6 +302,22 @@ for (const entry of entries) {
     transform: translateX(3px);
   }
 
+  /* Design docs ------------------------------------------------------------ */
+
+  .docs-group--design {
+    margin-top: 40px;
+  }
+
+  .docs-group__label {
+    margin: 0 0 12px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
   .docs-note {
     margin-top: 36px;
   }
@@ -170,6 +337,15 @@ for (const entry of entries) {
   @media (max-width: 720px) {
     .docs-cards {
       grid-template-columns: minmax(0, 1fr);
+    }
+
+    .series-path li + li::before {
+      content: "";
+      margin: 0;
+    }
+
+    .series-path {
+      gap: 6px;
     }
   }
 </style>
