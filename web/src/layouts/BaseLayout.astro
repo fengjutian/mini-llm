@@ -46,6 +46,7 @@ const ogImage = Astro.site ? new URL('/og.svg', Astro.site) : null;
 
     <script is:inline>
       (() => {
+        const requested = new URLSearchParams(window.location.search).get('theme');
         const stored = (() => {
           try {
             return localStorage.getItem('mini-llm-theme');
@@ -53,14 +54,23 @@ const ogImage = Astro.site ? new URL('/og.svg', Astro.site) : null;
             return null;
           }
         })();
-        const theme =
-          stored === 'light' || stored === 'dark'
-            ? stored
-            : window.matchMedia('(prefers-color-scheme: dark)').matches
-              ? 'dark'
-              : 'light';
-        document.documentElement.dataset.theme = theme;
-        document.documentElement.style.colorScheme = theme;
+        const preferred =
+          requested === 'light' || requested === 'dark'
+            ? requested
+            : stored === 'light' || stored === 'dark'
+              ? stored
+              : window.matchMedia('(prefers-color-scheme: dark)').matches
+                ? 'dark'
+                : 'light';
+        document.documentElement.dataset.theme = preferred;
+        document.documentElement.style.colorScheme = preferred;
+        if (requested === 'light' || requested === 'dark') {
+          try {
+            localStorage.setItem('mini-llm-theme', requested);
+          } catch {
+            /* ignore unavailable storage */
+          }
+        }
       })();
     </script>
   </head>
