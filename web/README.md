@@ -96,3 +96,33 @@ pnpm build
 Set `SITE_URL` (for example `SITE_URL=https://mini-llm.example.com pnpm build`)
 to emit canonical and Open Graph URLs. Without it those tags are omitted rather
 than pointing at localhost.
+
+### Netlify
+
+The repository root has a `netlify.toml` for this package:
+
+```toml
+[build]
+  base = "web"
+  command = "pnpm run build"
+  publish = "dist"
+```
+
+`publish` is relative to `base`, so Netlify publishes `web/dist`. The file also
+sets `NODE_VERSION=22` and long-lived caching for `/_astro/*`. Because the
+committed configuration overrides the UI, leave the Netlify build fields empty
+when connecting the repository; a deploy of the repo root without a build is what
+produces Netlify's default 404 page.
+
+Manual alternatives:
+
+```bash
+pnpm build
+npx netlify deploy --prod --dir=dist   # from web/
+```
+
+or drag `web/dist` onto <https://app.netlify.com/drop>.
+
+During a Netlify build the `URL` environment variable is available, and
+`astro.config.mjs` uses it as the `site` fallback so canonical URLs point at the
+deployed domain without extra configuration.

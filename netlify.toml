@@ -1,0 +1,30 @@
+# Netlify configuration for the mini-llm site.
+#
+# The Astro app lives in `web/`, so the build runs there and publishes `web/dist`.
+# `publish` is resolved relative to `base`.
+#
+# With this file committed you can leave the Netlify UI build settings empty:
+# the committed configuration overrides them.
+
+[build]
+  base = "web"
+  command = "pnpm run build"
+  publish = "dist"
+
+[build.environment]
+  # Astro 7 requires Node >= 22.23.4.
+  NODE_VERSION = "22"
+
+# Hashed assets are immutable; everything else revalidates.
+[[headers]]
+  for = "/_astro/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Astro emits 404.html; Netlify serves it automatically for unknown paths.

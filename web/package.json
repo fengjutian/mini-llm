@@ -4,6 +4,10 @@
   "private": true,
   "type": "module",
   "description": "Astro site for mini-llm: concept lessons and repository docs.",
+  "packageManager": "pnpm@11.28.5",
+  "engines": {
+    "node": ">=22.23.4"
+  },
   "scripts": {
     "sync": "node scripts/sync-docs.mjs",
     "dev": "pnpm run sync && astro dev",

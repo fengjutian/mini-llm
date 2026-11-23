@@ -9,8 +9,9 @@ import rehypeKatex from 'rehype-katex';
 // remark-math + rehype-katex. This also keeps Shiki highlighting available.
 export default defineConfig({
   // Set SITE_URL (e.g. https://example.com) to emit canonical and Open Graph
-  // absolute URLs; without it the build stays portable.
-  site: process.env.SITE_URL || undefined,
+  // absolute URLs. Netlify exposes the primary site URL as `URL` during builds,
+  // so Netlify deployments get canonical tags without extra configuration.
+  site: process.env.SITE_URL || process.env.URL || undefined,
   markdown: {
     processor: unified({
       remarkPlugins: [remarkMath],

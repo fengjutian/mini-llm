@@ -64,6 +64,26 @@ pnpm dev      # http://localhost:4321
 pnpm build    # static output in web/dist
 ```
 
+### Deploying to Netlify
+
+The repository ships a [`netlify.toml`](netlify.toml) that points Netlify at the
+`web/` base directory, runs `pnpm run build`, and publishes `web/dist` with
+`NODE_VERSION=22`. Netlify's file configuration overrides the UI build settings,
+so connect the repository and leave the build fields empty (or set Base directory
+to `web`), then trigger a deploy.
+
+For a one-off deploy without Git integration:
+
+```bash
+cd web
+pnpm build
+npx netlify deploy --prod --dir=dist
+```
+
+Or drag the generated `web/dist` folder onto <https://app.netlify.com/drop>.
+`SITE_URL` is optional on Netlify: the build reads Netlify's own `URL` variable
+for canonical and Open Graph tags.
+
 ## Workspace
 
 ```text
