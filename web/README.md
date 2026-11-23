@@ -40,9 +40,11 @@ pnpm sync      # only regenerate src/content/docs
 4. writes the result to `src/content/docs/`, which is git-ignored and pruned of
    stale pages on every run.
 
-To add a document, add it to `docs/` and register it in `DOCS`; the sidebar order
-and grouping come from `order` and `section`. The `section` groups are rendered
-in the order in which they first appear.
+To add a document, drop it into `docs/`: the script discovers `*.md` automatically
+and derives the title from the leading H1. Add an entry to `KNOWN` in
+`scripts/sync-docs.mjs` when you want a curated sidebar title, description,
+section, or ordering (the groups are rendered in the order in which they first
+appear).
 
 ## Structure
 
