@@ -346,6 +346,16 @@ impl TensorValue {
         })
     }
 
+    pub fn sigmoid(&self) -> Result<TensorValue, AutogradError> {
+        let value = self.value().sigmoid()?;
+        let saved = value.clone();
+        self.unary("sigmoid", value, move |g| {
+            // d/dx sigmoid(x) = sigmoid(x) * (1 - sigmoid(x))
+            let slope = saved.map(|v| v * (1.0 - v))?;
+            Ok(g.mul(&slope)?)
+        })
+    }
+
     /// Row-wise softmax of a rank-2 value.
     pub fn softmax_rows(&self) -> Result<TensorValue, AutogradError> {
         let value = self.value().softmax_rows()?;

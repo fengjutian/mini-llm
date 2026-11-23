@@ -15,6 +15,7 @@ version = "0.1.0"
 dependencies = [
  "mini-llm-autograd",
  "mini-llm-model",
+ "mini-llm-nn",
  "mini-llm-tensor",
 ]
 
@@ -22,6 +23,14 @@ dependencies = [
 name = "mini-llm-model"
 version = "0.1.0"
 dependencies = [
+ "mini-llm-tensor",
+]
+
+[[package]]
+name = "mini-llm-nn"
+version = "0.1.0"
+dependencies = [
+ "mini-llm-autograd",
  "mini-llm-tensor",
 ]
 

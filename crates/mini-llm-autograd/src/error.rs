@@ -39,10 +39,7 @@ impl Display for AutogradError {
                 "cross-entropy expects {} targets for {} logits rows, got {}",
                 logits_rows, logits_rows, targets
             ),
-            Self::NotAParameter => write!(
-                f,
-                "only learnable parameters can be updated in place"
-            ),
+            Self::NotAParameter => write!(f, "only learnable parameters can be updated in place"),
         }
     }
 }

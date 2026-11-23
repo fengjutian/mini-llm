@@ -185,7 +185,7 @@ fn mean_rows_keepdim_matches_finite_differences() {
 
 #[test]
 fn parameter_values_can_be_updated_in_place() {
-    let mut weight = TensorValue::parameter(vec![1.0, 2.0], vec![2]).unwrap();
+    let weight = TensorValue::parameter(vec![1.0, 2.0], vec![2]).unwrap();
     let updated = weight.value().scale(0.5).unwrap();
     weight.set_value(updated).unwrap();
     assert_eq!(weight.data(), &[0.5, 1.0]);

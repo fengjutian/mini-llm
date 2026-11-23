@@ -19,8 +19,9 @@ This repository is an initial scaffold:
 - Rust Cargo workspace
 - CPU tensor foundation with shape validation, broadcasting, addition, matrix multiplication, ReLU, and softmax
 - `mini-llm-autograd`: a reverse-mode autodiff engine (computation graph, reverse topological backward pass, gradient accumulation)
+- `mini-llm-nn`: `Linear`, `Embedding`, `LayerNorm`, activations, a `Sequential` container, SGD and AdamW
 - Small model crate with configuration and a transparent scaled dot-product attention implementation
-- CLI demos, including a hand-checked `y = wx + b` gradient example and a linear-regression training loop
+- CLI demos: hand-checked `y = wx + b` gradients, linear regression, XOR, and a 2D classifier
 - Astro site in `web/`: three interactive concept lessons plus the repository docs
 - Product requirements and architecture documents
 
@@ -36,6 +37,8 @@ cargo run -p mini-llm-cli -- demo
 cargo run -p mini-llm-cli -- inspect-config
 cargo run -p mini-llm-cli -- autograd    # graph + gradients for y = wx + b
 cargo run -p mini-llm-cli -- train-line  # fit y = 2x - 1 with manual SGD
+cargo run -p mini-llm-cli -- xor         # Linear + Tanh MLP trained with AdamW
+cargo run -p mini-llm-cli -- classify    # softmax + cross-entropy on two blobs
 ```
 
 ## Autograd engine
@@ -62,15 +65,53 @@ assert!((w.grad().unwrap().data()[0] + 12.0).abs() < 1e-4); // dL/dw = -12
 assert!((b.grad().unwrap().data()[0] + 6.0).abs() < 1e-4);  // dL/db = -6
 ```
 
-Supported operations: `add`, `sub`, `mul`, `matmul`, `transpose`, `relu`,
-`softmax_rows`, `scale`, `add_scalar`, `powf`, `sum`, `mean`, `mse`, and
-`cross_entropy`. Binary operations follow NumPy-style right-aligned
-broadcasting, and gradients are summed back to the original shape. Every
-analytic gradient is verified against central finite differences in
-`crates/mini-llm-autograd/tests/gradients.rs`.
+Supported operations: `add`, `sub`, `mul`, `matmul`, `transpose`, `relu`, `tanh`,
+`sigmoid`, `softmax_rows`, `scale`, `add_scalar`, `powf`, `sum`, `mean`,
+`mean_rows_keepdim`, `gather_rows`, `mse`, and `cross_entropy`. Binary operations
+follow NumPy-style right-aligned broadcasting, and gradients are summed back to
+the original shape. Every analytic gradient is verified against central finite
+differences in `crates/mini-llm-autograd/tests/gradients.rs`.
 
-Known limitations: `f32` only, single-threaded, no in-place updates, no
-`no_grad` region, no higher-order gradients.
+Known limitations: `f32` only, single-threaded, no `no_grad` region, no
+higher-order gradients.
+
+## Neural network building blocks
+
+`crates/mini-llm-nn` adds the pieces needed to train small models. Parameters are
+`TensorValue` handles updated in place, so modules only need `&self` in `forward`
+and optimizers can mutate them between steps.
+
+```rust
+use mini_llm_nn::{AdamW, Linear, Module, Optimizer, Rng, Sequential, Tanh};
+
+let mut rng = Rng::new(42); // deterministic initialization
+let model = Sequential::new(vec![
+    Box::new(Linear::new(2, 8, &mut rng).unwrap()),
+    Box::new(Tanh),
+    Box::new(Linear::new(8, 1, &mut rng).unwrap()),
+]);
+
+let parameters = model.parameters();
+let mut optimizer = AdamW::new(0.02);
+
+// forward -> loss -> backward -> step -> zero_grad
+```
+
+| Piece | Notes |
+| --- | --- |
+| `Linear` | `y = xW + b`, Xavier-uniform weights, optional bias |
+| `Embedding` | row gather; repeated tokens accumulate gradient in the table |
+| `LayerNorm` | composed from autograd primitives, so backprop is automatic |
+| `Relu` / `Tanh` / `Sigmoid` | stateless activation modules |
+| `Sequential` | chains modules and concatenates their parameters |
+| `Sgd` / `AdamW` | momentum SGD and AdamW with decoupled weight decay |
+
+`Rng` is a seeded xorshift64\* generator, so the same seed reproduces the same
+initialization. Layer normalization, embedding lookups, optimizer updates and XOR
+convergence are covered in `crates/mini-llm-nn/tests/modules.rs`.
+
+Known limitations: no dropout, no fused kernels, no learning-rate schedule, no
+save/load of parameters yet.
 
 ## Web site (Astro)
 
@@ -133,6 +174,7 @@ mini-llm/
 ├── crates/
 │   ├── mini-llm-tensor/   # transparent CPU tensor operations
 │   ├── mini-llm-autograd/ # reverse-mode autodiff over the tensor engine
+│   ├── mini-llm-nn/       # layers, activations and optimizers
 │   ├── mini-llm-model/    # model configuration and attention primitives
 │   └── mini-llm-cli/      # command-line entry point
 └── web/                  # Astro concept site and rendered docs

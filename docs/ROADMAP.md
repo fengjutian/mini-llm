@@ -30,15 +30,28 @@
 
 当前限制：仅 `f32`、单线程、无原地更新、无 `no_grad`、无高阶梯度。
 
-## Milestone 2 — Neural Network Basics（下一步）
+## Milestone 2 — Neural Network Basics（已完成）
 
-- [ ] Linear
-- [ ] Embedding
-- [ ] LayerNorm
-- [ ] SGD / AdamW
-- [ ] XOR 与小型分类任务
+- [x] Linear
+- [x] Embedding
+- [x] LayerNorm
+- [x] SGD / AdamW
+- [x] XOR 与小型分类任务
 
-## Milestone 3 — Tiny GPT
+实现位于 `crates/mini-llm-nn`：
+
+- `Linear`（`y = xW + b`，Xavier 初始化，可选 bias）、`Embedding`（行 gather，
+  重复 token 的梯度会累加）、`LayerNorm`（由 autograd 原语组合而成，反向传播
+  自动推导）、`Relu` / `Tanh` / `Sigmoid`、`Sequential` 容器；
+- `Sgd`（可选 momentum）与 `AdamW`（解耦权重衰减 + 偏差修正），通过
+  `TensorValue::set_value` 原地更新参数；
+- 确定性 `Rng`（xorshift64*），相同 seed 得到相同的初始化；
+- 测试覆盖形状、LayerNorm 归一化性质、Embedding 梯度散射、SGD/AdamW 数值、
+  XOR 端到端收敛；
+- 演示命令：`cargo run -p mini-llm-cli -- xor` 与
+  `cargo run -p mini-llm-cli -- classify`。
+
+## Milestone 3 — Tiny GPT（下一步）
 
 - [ ] 字符级 Tokenizer
 - [ ] 数据批处理

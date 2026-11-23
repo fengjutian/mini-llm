@@ -35,6 +35,7 @@ CLI / Future Research Studio
 |---|---|---|
 | mini-llm-tensor | CPU Tensor 与基础算子 | 训练任务管理 |
 | mini-llm-autograd | 计算图、反向传播、梯度累积 | 优化器状态、模型结构 |
+| mini-llm-nn | Linear / Embedding / LayerNorm / 优化器 | 具体任务与数据加载 |
 | mini-llm-model | 模型配置、Attention 等模型原语 | 文件持久化、UI |
 | mini-llm-training（planned） | 训练循环与优化器 | GPU 驱动细节 |
 | mini-llm-data（planned） | Dataset、Batch、Tokenizer 适配 | 模型结构 |
@@ -96,11 +97,11 @@ MVP 采用单头 scaled dot-product attention：
 
 ## 8. 依赖方向
 
-`cli -> model -> tensor`，`cli -> autograd -> tensor`
+`cli -> model -> tensor`，`cli -> autograd -> tensor`，`nn -> autograd -> tensor`
 
 后续建议：
 
-- `training -> model + autograd + backend + data`
+- `training -> model + nn + autograd + backend + data`
 - `inspector -> trace protocol`
 - `backend -> tensor abstraction`
 - `model` 不应反向依赖 `cli` 或 UI。

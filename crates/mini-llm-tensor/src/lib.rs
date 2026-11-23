@@ -269,6 +269,10 @@ impl Tensor {
         self.map(f32::tanh)
     }
 
+    pub fn sigmoid(&self) -> Result<Self, TensorError> {
+        self.map(|x| 1.0 / (1.0 + (-x).exp()))
+    }
+
     /// Row-wise stable softmax for a rank-2 tensor.
     pub fn softmax_rows(&self) -> Result<Self, TensorError> {
         if self.rank() != 2 {
