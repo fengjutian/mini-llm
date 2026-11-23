@@ -1,0 +1,367 @@
+---
+import LessonLayout from '../../layouts/LessonLayout.astro';
+---
+
+<LessonLayout
+  index="01"
+  tag="数据结构"
+  title="张量的形状、步长与偏移"
+  summary="一句话进入模型后是一个 [B, S, D] 的张量，但内存里它只是一条连续的 f32。shape 决定了你怎么看这条线，stride 决定了你怎么走。"
+  time="6 分钟"
+  points={[
+    'shape 是元数据，data 才是真正占内存的部分。',
+    '元素总数 = 各维度乘积，必须等于 data 的长度。',
+    '行优先（row-major）下，stride 从右往左乘出来。',
+    '多维索引最终都要折算成一个一维偏移量。',
+  ]}
+  links={[
+    { label: 'Tensor Engine 深度解析', href: '/docs/tensor-engine' },
+    { label: '系统架构 · Tensor 设计', href: '/docs/architecture' },
+  ]}
+  next={{ href: '/learn/softmax', title: 'Logits 怎样变成概率' }}
+>
+  <p>
+    语言模型处理的从来不是“一句话”，而是一个数字矩形。一个 batch 的两条文本，每条 3 个 token，每个 token 用 4 维向量表示，就是形状
+    <code>[2, 3, 4]</code> 的张量。可是当它真的躺在内存里时，并没有二维或三维的结构——只有一条连续的 <code>Vec&lt;f32&gt;</code>。
+  </p>
+
+  <p>
+    <strong>shape 是你看这条线的方式，stride 是你沿着某个维度走一步要跨过多少个元素。</strong>
+    理解这两件事，才能看懂后面所有“为什么 reshape 之后要 contiguous”“为什么转置几乎不花钱”的问题。
+  </p>
+
+  <div class="formula">
+    shape = (2, 3, 4)<br />
+    strides = (12, 4, 1) &nbsp;<span class="text-dim">// 从右往左：1, 1×4, 4×3</span><br />
+    offset(i, j, k) = i·12 + j·4 + k·1
+  </div>
+
+  <div class="widget" data-tensor-widget>
+    <div class="widget__head">
+      <h2 class="widget__title">形状 → 步长 → 偏移</h2>
+      <span class="widget__hint">hover / focus 单元格查看索引</span>
+    </div>
+    <div class="widget__body">
+      <div class="control-row">
+        <div class="field">
+          <label for="shape-input">shape</label>
+          <input
+            id="shape-input"
+            type="text"
+            value="2, 3, 4"
+            spellcheck="false"
+            inputmode="numeric"
+            autocomplete="off"
+            data-shape-input
+          />
+        </div>
+        <div class="presets" role="group" aria-label="形状预设">
+          <button class="chip" type="button" data-shape="4">[4]</button>
+          <button class="chip" type="button" data-shape="2,3">[2,3]</button>
+          <button class="chip" type="button" data-shape="2,3,4" aria-pressed="true">[B,S,D]</button>
+          <button class="chip" type="button" data-shape="4,4,8">[4,4,8]</button>
+          <button class="chip" type="button" data-shape="2,2,3,4">[2,2,3,4]</button>
+        </div>
+      </div>
+
+      <dl class="readout tensor-readout">
+        <div><dt>rank</dt><dd data-out-rank>3</dd></div>
+        <div><dt>元素数</dt><dd data-out-size>24</dd></div>
+        <div><dt>步长</dt><dd data-out-strides>12, 4, 1</dd></div>
+        <div><dt>内存 · f32</dt><dd data-out-bytes>96 B</dd></div>
+      </dl>
+
+      <div class="slice-nav" data-slice-nav hidden></div>
+
+      <div class="matrix-wrap">
+        <div class="matrix" data-matrix role="grid" aria-label="张量切片"></div>
+      </div>
+
+      <p class="hover-readout" data-hover aria-live="polite">索引 [0, 0, 0] → offset 0</p>
+    </div>
+  </div>
+
+  <h2>为什么要关心步长？</h2>
+  <p>
+    因为“按某个维度取一行”这件事，在内存里就是按固定的步长跳。取 <code>[i, :, :]</code> 的起点是
+    <code>i·12</code>；取 <code>[i, j, :]</code> 的起点是 <code>i·12 + j·4</code>；而 <code>k</code> 每加 1，指针只前进 1 个
+    <code>f32</code>。步长把“多维索引”翻译成了“一个整数”，这就是所有张量库最核心的一层抽象。
+  </p>
+  <p>
+    这也是为什么转置可以很便宜：如果允许任意排列维度（permute），转置只是把步长重新排列，例如把
+    <code>(12, 4, 1)</code> 换成 <code>(1, 4, 12)</code>，一行数据都不用动。代价是后续的矩阵乘法不能再假设内存是行优先连续的，必须显式按步长寻址。
+  </p>
+
+  <h2>LLM 里最常见的形状</h2>
+  <table>
+    <thead>
+      <tr><th>张量</th><th>形状</th><th>含义</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>输入 token ids</td><td><code>[B, S]</code></td><td>batch 大小 × 序列长度</td></tr>
+      <tr><td>Embedding</td><td><code>[B, S, D]</code></td><td>每个 token 一个 D 维向量</td></tr>
+      <tr><td>Q / K</td><td><code>[B, H, S, d_head]</code></td><td>多头注意力中每头独立计算</td></tr>
+      <tr><td>Attention scores</td><td><code>[B, H, S, S]</code></td><td>每个 query 对每个 key 的分数</td></tr>
+      <tr><td>Logits</td><td><code>[B, S, V]</code></td><td>词表大小 V 上的未归一化分数</td></tr>
+    </tbody>
+  </table>
+
+  <h2>当前实现做了什么取舍</h2>
+  <p>
+    mini-llm 的 MVP 只支持<strong>连续的行优先存储</strong>：<code>Tensor</code> 里保存 <code>data: Vec&lt;f32&gt;</code> 和
+    <code>shape: Vec&lt;usize&gt;</code>，没有 strides 字段。因此上面这些偏移计算在代码里是直接写死的
+    <code>i * cols + j</code>，而不是查表得到。这是教学上的简化：先让形状校验和数值路径正确，再引入更通用的布局。
+  </p>
+  <p>
+    限制也很明确：转置会真的复制数据，<code>matmul</code> 只接受秩为 2 的输入，广播尚未实现。这些都在架构文档里写清楚了，而不是留给读者猜。
+  </p>
+
+  <div class="note">
+    <strong>动手验证</strong>
+    运行 <code>cargo test -p mini-llm-tensor</code>，看 <code>rejects_invalid_shape</code> 如何拒绝
+    <code>Tensor::new(vec![1.0, 2.0], vec![3])</code>。形状和数据的乘积不相等，构造就会失败。
+  </div>
+</LessonLayout>
+
+<style>
+  .presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .tensor-readout {
+    margin: 16px 0 0;
+  }
+
+  .slice-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 18px;
+  }
+
+  .slice-nav label {
+    display: grid;
+    gap: 4px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  .matrix-wrap {
+    margin-top: 18px;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background:
+      radial-gradient(circle at 1px 1px, var(--dot) 1px, transparent 0) 0 0 / 16px 16px,
+      var(--paper-3);
+  }
+
+  .matrix {
+    display: grid;
+    gap: 4px;
+    justify-content: start;
+  }
+
+  .matrix button {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 4px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: var(--paper-2);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink-soft);
+    cursor: crosshair;
+    transition: transform 0.1s var(--ease), border-color 0.1s var(--ease),
+      background-color 0.1s var(--ease), color 0.1s var(--ease);
+  }
+
+  .slice-nav select {
+    width: 70px;
+    padding: 6px 8px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+
+  .matrix button:hover,
+  .matrix button:focus-visible {
+    border-color: var(--accent);
+    color: var(--ink);
+    transform: translateY(-1px);
+    outline: none;
+  }
+
+  .hover-readout {
+    margin: 14px 0 0;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    min-height: 1.6em;
+  }
+
+  .hover-readout.is-error {
+    color: var(--accent-ink);
+  }
+</style>
+
+<script>
+  type Shape = number[];
+
+  const widget = document.querySelector<HTMLElement>('[data-tensor-widget]');
+  if (widget) {
+    const input = widget.querySelector<HTMLInputElement>('[data-shape-input]')!;
+    const presets = [...widget.querySelectorAll<HTMLButtonElement>('[data-shape]')];
+    const matrix = widget.querySelector<HTMLElement>('[data-matrix]')!;
+    const sliceNav = widget.querySelector<HTMLElement>('[data-slice-nav]')!;
+    const hover = widget.querySelector<HTMLElement>('[data-hover]')!;
+    const outRank = widget.querySelector<HTMLElement>('[data-out-rank]')!;
+    const outSize = widget.querySelector<HTMLElement>('[data-out-size]')!;
+    const outStrides = widget.querySelector<HTMLElement>('[data-out-strides]')!;
+    const outBytes = widget.querySelector<HTMLElement>('[data-out-bytes]')!;
+
+    const MAX_RANK = 6;
+    const MAX_ELEMENTS = 4096;
+
+    const computeStrides = (shape: Shape) => {
+      const strides = new Array(shape.length).fill(1);
+      for (let i = shape.length - 2; i >= 0; i -= 1) {
+        strides[i] = strides[i + 1] * shape[i + 1];
+      }
+      return strides;
+    };
+
+    const parseShape = (raw: string): Shape | null => {
+      const parts = raw
+        .replace(/[[\]]/g, '')
+        .split(/[\s,×x]+/)
+        .filter(Boolean);
+
+      if (parts.length === 0 || parts.length > MAX_RANK) return null;
+      const shape: number[] = [];
+      for (const part of parts) {
+        if (!/^\d+$/.test(part)) return null;
+        const value = Number(part);
+        if (value < 1) return null;
+        shape.push(value);
+      }
+
+      const size = shape.reduce((acc, dim) => acc * dim, 1);
+      if (size > MAX_ELEMENTS) return null;
+      return shape;
+    };
+
+    const leading = new Map<number, number>();
+
+    const render = () => {
+      const shape = parseShape(input.value);
+      if (!shape) {
+        hover.textContent = '形状无效：请用逗号分隔 1–6 个正整数，元素总数不超过 4096。';
+        hover.classList.add('is-error');
+        return;
+      }
+      hover.classList.remove('is-error');
+
+      const strides = computeStrides(shape);
+      const size = shape.reduce((acc, dim) => acc * dim, 1);
+      outRank.textContent = String(shape.length);
+      outSize.textContent = String(size);
+      outStrides.textContent = strides.join(', ');
+      outBytes.textContent = `${size * 4} B`;
+
+      presets.forEach((button) => {
+        button.setAttribute('aria-pressed', button.dataset.shape === shape.join(',') ? 'true' : 'false');
+      });
+
+      const outerDims = shape.slice(0, Math.max(0, shape.length - 2));
+      const rows = shape.length >= 2 ? shape[shape.length - 2] : shape[0] ?? 1;
+      const cols = shape.length >= 2 ? shape[shape.length - 1] : 1;
+
+      sliceNav.innerHTML = '';
+      sliceNav.hidden = outerDims.length === 0;
+      outerDims.forEach((dim, dimIndex) => {
+        if (!leading.has(dimIndex) || leading.get(dimIndex)! >= dim) {
+          leading.set(dimIndex, 0);
+        }
+        const label = document.createElement('label');
+        label.textContent = `dim ${dimIndex} · ${dim}`;
+        const select = document.createElement('select');
+        for (let value = 0; value < dim; value += 1) {
+          const option = document.createElement('option');
+          option.value = String(value);
+          option.textContent = String(value);
+          select.append(option);
+        }
+        select.value = String(leading.get(dimIndex));
+        select.addEventListener('change', () => {
+          leading.set(dimIndex, Number(select.value));
+          render();
+        });
+        label.append(select);
+        sliceNav.append(label);
+      });
+
+      const leadingIndices = outerDims.map((_, index) => leading.get(index) ?? 0);
+      const baseOffset = leadingIndices.reduce((acc, value, index) => acc + value * strides[index], 0);
+
+      const isVector = shape.length === 1;
+      const rowCount = isVector ? shape[0] : rows;
+      const colCount = isVector ? 1 : cols;
+      const rowStride = shape.length >= 2 ? strides[strides.length - 2] : strides[0];
+      const colStride = shape.length >= 2 ? strides[strides.length - 1] : 1;
+
+      matrix.setAttribute('aria-rowcount', String(rowCount));
+      matrix.setAttribute('aria-colcount', String(colCount));
+      matrix.style.gridTemplateColumns = `repeat(${colCount}, minmax(0, 76px))`;
+      matrix.innerHTML = '';
+
+      for (let row = 0; row < rowCount; row += 1) {
+        for (let col = 0; col < colCount; col += 1) {
+          const indices = isVector ? [...leadingIndices, row] : [...leadingIndices, row, col];
+          const offset = baseOffset + row * rowStride + col * colStride;
+
+          const cell = document.createElement('button');
+          cell.type = 'button';
+          cell.textContent = String(offset);
+          const tint = Math.round(4 + (offset / Math.max(1, size - 1)) * 28);
+          cell.style.background = `color-mix(in srgb, var(--accent) ${tint}%, var(--paper-2))`;
+          cell.setAttribute('aria-label', `索引 ${JSON.stringify(indices)}，偏移 ${offset}`);
+          cell.addEventListener('mouseenter', () => showOffset(indices, strides, offset));
+          cell.addEventListener('focus', () => showOffset(indices, strides, offset));
+          matrix.append(cell);
+        }
+      }
+
+      const initialIndices = isVector ? [0] : [...leadingIndices, 0, 0];
+      showOffset(initialIndices, strides, baseOffset);
+    };
+
+    const showOffset = (indices: number[], strides: number[], offset: number) => {
+      const terms = indices.map((value, index) => `${value}·${strides[index]}`);
+      hover.textContent = `索引 [${indices.join(', ')}] → offset ${offset}  (${terms.join(' + ')})`;
+    };
+
+    input.addEventListener('input', render);
+    presets.forEach((button) => {
+      button.addEventListener('click', () => {
+        input.value = button.dataset.shape ?? '';
+        render();
+      });
+    });
+
+    render();
+  }
+</script>

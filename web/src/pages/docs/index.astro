@@ -1,0 +1,174 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import DocsSidebar from '../../components/DocsSidebar.astro';
+
+const entries = (await getCollection('docs')).sort((a, b) => a.data.order - b.data.order);
+
+const groups = new Map<string, typeof entries>();
+for (const entry of entries) {
+  if (!groups.has(entry.data.section)) groups.set(entry.data.section, []);
+  groups.get(entry.data.section)!.push(entry);
+}
+---
+
+<BaseLayout
+  title="文档"
+  description="mini-llm 的内核笔记与设计文档：Tensor Engine、数学基础、系统架构、产品需求与路线图。"
+>
+  <div class="shell docs docs--index">
+    <aside class="docs__sidebar">
+      <DocsSidebar entries={entries} />
+    </aside>
+
+    <div>
+      <header class="doc-head">
+        <div class="doc-head__kicker">
+          <span>仓库文档</span>
+          <span class="sep" aria-hidden="true">/</span>
+          <span>docs/</span>
+        </div>
+        <h1>从内核到设计决策</h1>
+        <p class="doc-head__desc">
+          这里的每一页都直接来自仓库中的 <code>docs/*.md</code>，随代码一起演进。先读概念图解建立直觉，再回来读实现细节与设计约束。
+        </p>
+      </header>
+
+      <div class="docs-index">
+        {[...groups.entries()].map(([section, items]) => (
+          <section class="docs-group">
+            <h2 class="docs-group__label">{section}</h2>
+            <div class="docs-cards">
+              {items.map((entry) => (
+                <a class="doc-tile" href={`/docs/${entry.id}`}>
+                  <span class="doc-tile__meta">
+                    {entry.data.source.replace('docs/', '')}
+                    <span aria-hidden="true">·</span>
+                    {entry.data.section}
+                  </span>
+                  <h3>{entry.data.title}</h3>
+                  <p>{entry.data.description}</p>
+                  <span class="doc-tile__more">
+                    阅读 <span class="arrow" aria-hidden="true">→</span>
+                  </span>
+                </a>
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+
+      <div class="note docs-note">
+        <strong>同步方式</strong>
+        文档页由 <code>web/scripts/sync-docs.mjs</code> 在 <code>dev</code> / <code>build</code> 前生成：
+        它会补上标题与摘要、把 <code>\[ ... \]</code> 形式的公式转换成标准 LaTeX 分隔符，并去掉重复的一级标题。
+        改了 <code>docs/</code> 里的文件，重新运行 <code>pnpm dev</code> 就能看到。
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .docs.docs--index {
+    grid-template-columns: 216px minmax(0, 1fr);
+  }
+
+  .docs-index {
+    display: grid;
+    gap: 34px;
+    margin-top: 30px;
+  }
+
+  .docs-group__label {
+    margin: 0 0 12px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  .docs-cards {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .doc-tile {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 20px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--paper-2);
+    transition: border-color 0.16s var(--ease), transform 0.16s var(--ease),
+      box-shadow 0.16s var(--ease);
+  }
+
+  .doc-tile:hover {
+    border-color: var(--line-strong);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .doc-tile__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--ink-faint);
+    letter-spacing: 0.02em;
+  }
+
+  .doc-tile h3 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 620;
+    letter-spacing: -0.015em;
+  }
+
+  .doc-tile p {
+    margin: 0;
+    flex: 1;
+    font-size: 13.5px;
+    line-height: 1.7;
+    color: var(--ink-soft);
+  }
+
+  .doc-tile__more {
+    margin-top: 6px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--accent-ink);
+  }
+
+  .doc-tile:hover .arrow {
+    display: inline-block;
+    transform: translateX(3px);
+  }
+
+  .docs-note {
+    margin-top: 36px;
+  }
+
+  @media (max-width: 1120px) {
+    .docs.docs--index {
+      grid-template-columns: 196px minmax(0, 1fr);
+    }
+  }
+
+  @media (max-width: 900px) {
+    .docs.docs--index {
+      display: block;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .docs-cards {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>

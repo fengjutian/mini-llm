@@ -1,0 +1,17 @@
+# build output
+dist/
+.astro/
+
+# dependencies
+node_modules/
+
+# generated documentation pages (see scripts/sync-docs.mjs)
+src/content/docs/
+
+# environment
+.env
+.env.*
+!.env.example
+
+# platform noise
+.DS_Store

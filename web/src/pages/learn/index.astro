@@ -1,0 +1,100 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import LessonCard from '../../components/LessonCard.astro';
+import { LESSONS } from '../../data/site';
+---
+
+<BaseLayout
+  title="概念图解"
+  description="三个可交互的 LLM 概念实验：张量的形状与步长、Softmax 概率、注意力权重。每个实验都对应 mini-llm 中已经跑通的 Rust 代码。"
+>
+  <section class="learn-hero">
+    <div class="shell">
+      <p class="eyebrow">概念图解</p>
+      <h1>三个实验，建立 LLM 的直觉骨架</h1>
+      <p class="learn-hero__lead">
+        大模型的公式不算多，难的是把符号和真实的数据流动对应起来。这三个页面用最小的例子、可拖动的参数，把
+        <strong>形状 → 概率 → 注意力</strong> 这条链条走一遍。公式旁边就是仓库里对应的实现。
+      </p>
+      <div class="learn-hero__hint">
+        <span class="mono">建议顺序</span>
+        <span>01 张量</span><span class="sep" aria-hidden="true">→</span>
+        <span>02 Softmax</span><span class="sep" aria-hidden="true">→</span>
+        <span>03 注意力</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="shell">
+    <div class="grid grid--3 learn-grid">
+      {LESSONS.map((lesson) => <LessonCard lesson={lesson} />)}
+    </div>
+
+    <div class="learn-foot">
+      <div class="note">
+        <strong>读完图解之后</strong>
+        想补数学推导，去读<a class="link-underline" href="/docs/math-foundations">《数学基础与神经网络原理》</a>；
+        想知道这些形状为什么这么定，去读<a class="link-underline" href="/docs/tensor-engine">《Tensor Engine 深度解析》</a>。
+        两篇都来自仓库的 <code>docs/</code>。
+      </div>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .learn-hero {
+    padding: 68px 0 48px;
+  }
+
+  .learn-hero h1 {
+    margin: 16px 0 0;
+    font-size: clamp(2.2rem, 4.4vw, 3.2rem);
+    line-height: 1.08;
+    letter-spacing: -0.035em;
+    font-weight: 640;
+    max-width: 18em;
+    text-wrap: balance;
+  }
+
+  .learn-hero__lead {
+    margin: 22px 0 0;
+    max-width: 58ch;
+    font-size: 16.5px;
+    line-height: 1.8;
+    color: var(--ink-soft);
+  }
+
+  .learn-hero__lead strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .learn-hero__hint {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 10px;
+    margin-top: 26px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink-faint);
+  }
+
+  .learn-hero__hint .mono {
+    padding: 3px 7px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-size: 9.5px;
+  }
+
+  .learn-grid {
+    margin-top: 8px;
+  }
+
+  .learn-foot {
+    max-width: 720px;
+    margin: 40px 0 88px;
+  }
+</style>

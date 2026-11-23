@@ -1,0 +1,42 @@
+---
+import { SITE } from '../data/site';
+---
+
+<footer class="site-footer">
+  <div class="shell">
+    <div class="site-footer__grid">
+      <div>
+        <a href="/" class="brand" aria-label={`${SITE.name} 首页`}>
+          <span class="brand__mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span>mini-llm</span>
+        </a>
+        <p>
+          教学优先的 Rust 大语言模型实验平台。把张量、梯度、注意力与训练循环拆成可以亲手运行的小块。
+        </p>
+      </div>
+
+      <div>
+        <h2>站点</h2>
+        <ul>
+          <li><a href="/learn">概念图解</a></li>
+          <li><a href="/docs">仓库文档</a></li>
+          <li><a href="/docs/roadmap">路线图</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h2>项目</h2>
+        <ul>
+          <li><a href="/docs/architecture">系统架构</a></li>
+          <li><a href="/docs/prd">产品需求</a></li>
+          <li><a href="/docs/tensor-engine">Tensor Engine</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="site-footer__base">
+      <span>© 2026 mini-llm contributors · {SITE.license}</span>
+      <span>Built with Astro · 内容来自仓库 docs/</span>
+    </div>
+  </div>
+</footer>

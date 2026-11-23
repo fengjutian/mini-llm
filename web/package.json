@@ -1,0 +1,21 @@
+{
+  "name": "mini-llm-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Astro site for mini-llm: concept lessons and repository docs.",
+  "scripts": {
+    "sync": "node scripts/sync-docs.mjs",
+    "dev": "pnpm run sync && astro dev",
+    "build": "pnpm run sync && astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/markdown-remark": "^7.3.10",
+    "astro": "^7.4.13",
+    "katex": "^0.16.22",
+    "rehype-katex": "^7.0.1",
+    "remark-math": "^6.0.0"
+  }
+}

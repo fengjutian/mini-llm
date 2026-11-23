@@ -1,0 +1,111 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from './BaseLayout.astro';
+import DocsSidebar from '../components/DocsSidebar.astro';
+import Toc from '../components/Toc.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  section: string;
+  source: string;
+  current: string;
+  headings?: { depth: number; slug: string; text: string }[];
+}
+
+const { title, description, section, source, current, headings = [] } = Astro.props;
+
+const entries = (await getCollection('docs')).sort((a, b) => a.data.order - b.data.order);
+const levelTwo = headings.filter((heading) => heading.depth === 2);
+// Long documents would produce an unusable table of contents; keep it to the
+// section level in that case.
+const tocHeadings =
+  levelTwo.length <= 10
+    ? headings.filter((heading) => heading.depth === 2 || heading.depth === 3)
+    : levelTwo;
+---
+
+<BaseLayout title={title} description={description} type="article">
+  <div class="shell docs">
+    <aside class="docs__sidebar">
+      <DocsSidebar entries={entries} current={current} />
+    </aside>
+
+    <div>
+      <header class="doc-head">
+        <div class="doc-head__kicker">
+          <span>{section}</span>
+          <span class="sep" aria-hidden="true">/</span>
+          <span>{source}</span>
+        </div>
+        <h1>{title}</h1>
+        <p class="doc-head__desc">{description}</p>
+      </header>
+
+      <article class="prose" data-article>
+        <slot />
+      </article>
+
+      <footer class="doc-foot">
+        <div class="doc-foot__meta">
+          <span>来源 · {source}</span>
+          <span>随仓库文档同步</span>
+        </div>
+        <slot name="pager" />
+      </footer>
+    </div>
+
+    <aside class="docs__toc">
+      {tocHeadings.length > 0 && <Toc headings={tocHeadings} />}
+    </aside>
+  </div>
+</BaseLayout>
+
+<script>
+  const toc = document.querySelector<HTMLElement>('[data-toc]');
+  const article = document.querySelector<HTMLElement>('[data-article]');
+
+  if (toc && article) {
+    const links = new Map<string, HTMLAnchorElement>();
+    toc.querySelectorAll<HTMLAnchorElement>('a').forEach((link) => {
+      const id = decodeURIComponent(link.hash.slice(1));
+      if (id) links.set(id, link);
+    });
+
+    const headings = [...article.querySelectorAll<HTMLElement>('h2[id], h3[id]')];
+    let ticking = false;
+
+    const update = () => {
+      ticking = false;
+      if (headings.length === 0) return;
+
+      const offset = 96;
+      let activeId = headings[0].id;
+
+      for (const heading of headings) {
+        if (heading.getBoundingClientRect().top <= offset) {
+          activeId = heading.id;
+        } else {
+          break;
+        }
+      }
+
+      // Near the bottom of the page, highlight the last heading.
+      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 40) {
+        activeId = headings[headings.length - 1].id;
+      }
+
+      links.forEach((link, id) => link.classList.toggle('is-active', id === activeId));
+    };
+
+    const requestUpdate = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(update);
+    };
+
+    window.addEventListener('scroll', requestUpdate, { passive: true });
+    window.addEventListener('resize', requestUpdate);
+    update();
+  }
+</script>

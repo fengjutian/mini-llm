@@ -1,0 +1,105 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { LESSONS } from '../data/site';
+
+interface Props {
+  entries: CollectionEntry<'docs'>[];
+  current?: string;
+}
+
+const { entries, current } = Astro.props;
+
+const groups = new Map<string, CollectionEntry<'docs'>[]>();
+for (const entry of entries) {
+  const section = entry.data.section;
+  if (!groups.has(section)) groups.set(section, []);
+  groups.get(section)!.push(entry);
+}
+---
+
+<div class="docs__sidebar-inner">
+  <a class="side-link side-link--back" href="/docs">
+    <span aria-hidden="true">←</span> 文档首页
+  </a>
+
+  <input
+    class="docs__lookup"
+    type="search"
+    placeholder="筛选文档…"
+    aria-label="筛选文档"
+    data-doc-filter
+  />
+
+  <nav aria-label="文档导航">
+    <div class="side-group" data-nav-group>
+      <p class="side-group__label">概念图解</p>
+      {LESSONS.map((lesson) => (
+        <a class="side-link" href={lesson.href} data-doc-title={`${lesson.title} ${lesson.tag}`}>
+          {lesson.title}
+        </a>
+      ))}
+    </div>
+
+    {[...groups.entries()].map(([section, items]) => (
+      <div class="side-group" data-nav-group>
+        <p class="side-group__label">{section}</p>
+        {items.map((entry) => (
+          <a
+            class="side-link"
+            href={`/docs/${entry.id}`}
+            aria-current={current === entry.id ? 'page' : undefined}
+            data-doc-title={entry.data.title}
+          >
+            {entry.data.title}
+          </a>
+        ))}
+      </div>
+    ))}
+  </nav>
+
+  <p class="side-empty" data-nav-empty hidden>没有匹配的文档。</p>
+</div>
+
+<style>
+  .side-empty {
+    margin: 4px 10px;
+    font-size: 12.5px;
+    color: var(--ink-faint);
+  }
+</style>
+
+<script>
+  const filter = document.querySelector<HTMLInputElement>('[data-doc-filter]');
+  const empty = document.querySelector<HTMLElement>('[data-nav-empty]');
+  const groups = [...document.querySelectorAll<HTMLElement>('[data-nav-group]')];
+
+  if (filter) {
+    const apply = () => {
+      const query = filter.value.trim().toLowerCase();
+      let matches = 0;
+
+      groups.forEach((group) => {
+        const links = [...group.querySelectorAll<HTMLAnchorElement>('.side-link')];
+        let groupMatches = 0;
+        links.forEach((link) => {
+          const hidden = query.length > 0 && !(link.dataset.docTitle ?? '').toLowerCase().includes(query);
+          link.hidden = hidden;
+          if (!hidden) groupMatches += 1;
+        });
+        group.hidden = groupMatches === 0;
+        matches += groupMatches;
+      });
+
+      if (empty) empty.hidden = matches > 0;
+    };
+
+    filter.addEventListener('input', apply);
+    filter.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        filter.value = '';
+        apply();
+        filter.blur();
+      }
+    });
+  }
+</script>

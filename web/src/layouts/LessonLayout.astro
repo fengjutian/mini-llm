@@ -1,0 +1,149 @@
+---
+import BaseLayout from './BaseLayout.astro';
+
+interface Props {
+  index: string;
+  tag: string;
+  title: string;
+  summary: string;
+  time: string;
+  points: string[];
+  links?: { label: string; href: string }[];
+  next?: { href: string; title: string };
+}
+
+const { index, tag, title, summary, time, points, links = [], next } = Astro.props;
+---
+
+<BaseLayout title={title} description={summary} type="article">
+  <div class="shell lesson">
+    <header class="lesson__head">
+      <p class="eyebrow">
+        概念图解 {index} · {tag}
+      </p>
+      <h1>{title}</h1>
+      <p>{summary}</p>
+      <div class="lesson__meta">
+        <a href="/learn">← 全部实验</a>
+        <span>预计 {time}</span>
+        <span>可交互</span>
+      </div>
+    </header>
+
+    <div class="lesson__body">
+      <article class="lesson__article" data-article>
+        <slot />
+      </article>
+
+      <aside class="lesson__aside">
+        <div class="note">
+          <strong>本页要点</strong>
+          <ul class="points">
+            {points.map((point) => <li>{point}</li>)}
+          </ul>
+        </div>
+
+        {links.length > 0 && (
+          <div class="note note--warn">
+            <strong>对应实现</strong>
+            <ul class="points">
+              {links.map((link) => (
+                <li><a class="link-underline" href={link.href}>{link.label}</a></li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {next && (
+          <a class="next-card" href={next.href}>
+            <span>下一个实验</span>
+            <strong>{next.title}</strong>
+            <span class="arrow" aria-hidden="true">→</span>
+          </a>
+        )}
+      </aside>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .lesson__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 20px;
+    margin-top: 22px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.03em;
+    color: var(--ink-faint);
+  }
+
+  .lesson__meta a:hover {
+    color: var(--accent-ink);
+  }
+
+  .points {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 7px;
+  }
+
+  .points li {
+    position: relative;
+    padding-left: 12px;
+    font-size: 12.5px;
+    line-height: 1.65;
+  }
+
+  .points li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.62em;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--ink-faint);
+  }
+
+  .next-card {
+    position: relative;
+    display: grid;
+    gap: 4px;
+    padding: 16px 18px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--paper-2);
+    transition: border-color 0.16s var(--ease), transform 0.16s var(--ease);
+  }
+
+  .next-card:hover {
+    border-color: var(--line-strong);
+    transform: translateY(-1px);
+  }
+
+  .next-card span:first-child {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  .next-card strong {
+    font-size: 13.5px;
+    font-weight: 600;
+    line-height: 1.5;
+  }
+
+  .next-card .arrow {
+    position: absolute;
+    right: 16px;
+    bottom: 14px;
+    color: var(--accent);
+    font-family: var(--font-mono);
+  }
+</style>

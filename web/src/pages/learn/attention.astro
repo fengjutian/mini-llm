@@ -1,0 +1,547 @@
+---
+import LessonLayout from '../../layouts/LessonLayout.astro';
+import { Code } from 'astro:components';
+
+const snippet = `let k_t = k.transpose_2d()?;
+let scores = q.matmul(&k_t)?;            // [query_len, key_len]
+let scale = (head_dim as f32).sqrt();
+let scaled = Tensor::new(
+    scores.data().iter().map(|x| x / scale).collect(),
+    scores.shape().to_vec(),
+)?;
+let weights = scaled.softmax_rows()?;    // 每一行是一个 query 的分布
+let output = weights.matmul(v)?;         // [query_len, value_dim]`;
+---
+
+<LessonLayout
+  index="03"
+  tag="注意力"
+  title="一次注意力究竟算了什么"
+  summary="Q 与 K 的点积决定“该看谁”，除以 √d 之后逐行 Softmax 得到权重，再用权重去混合 V。没有比喻，只有三次矩阵运算。"
+  time="10 分钟"
+  points={[
+    'scores = Q·Kᵀ / √d，形状是 [query_len, key_len]。',
+    'Softmax 按行做：每个 query 的权重加起来是 1。',
+    '输出是 V 的加权平均，权重集中时输出接近被关注的那个 V。',
+    '当前实现没有 causal mask，M3 才会引入。',
+  ]}
+  links={[
+    { label: '系统架构 · Attention 数据约定', href: '/docs/architecture' },
+    { label: 'Tensor Engine 深度解析', href: '/docs/tensor-engine' },
+  ]}
+  next={{ href: '/learn/tensor-shape', title: '回到第一个实验' }}
+>
+  <p>
+    Transformer 里的“注意力”经常被讲成“模型在关注什么”。这个说法不算错，但很容易让人以为里面有什么额外的机制。
+    实际上它只是一个<strong>加权平均</strong>：对每个 query，算出一组权重，然后把所有 value 按权重混起来。
+  </p>
+
+  <div class="formula">
+    scores = Q · K<sup>T</sup> / √d &nbsp;<span class="text-dim">// [S_q, S_k]</span><br />
+    A = softmax<sub>row</sub>(scores) &nbsp;<span class="text-dim">// 每个 query 一行，行和为 1</span><br />
+    out = A · V &nbsp;<span class="text-dim">// [S_q, d_v]</span>
+  </div>
+
+  <div class="widget" data-attention-widget>
+    <div class="widget__head">
+      <h2 class="widget__title">scores → weights → output</h2>
+      <span class="widget__hint">点击热力图的任意一行，切换 query</span>
+    </div>
+    <div class="widget__body">
+      <div class="attn-layout">
+        <div class="attn-heat-wrap">
+          <div class="attn-axis" aria-hidden="true"><span></span>key →</div>
+          <div class="attn-heat" data-heat role="grid" aria-label="注意力权重矩阵，行是 query，列是 key"></div>
+          <div class="attn-caption">
+            <span>行：query</span>
+            <span>列：key</span>
+          </div>
+        </div>
+
+        <div class="attn-detail">
+          <p class="attn-query">
+            query = <strong data-query-token>猫</strong>
+            <span class="attn-scale">d = 4 · √d = 2</span>
+          </p>
+
+          <table class="attn-table">
+            <thead>
+              <tr><th>key</th><th>score</th><th>weight</th></tr>
+            </thead>
+            <tbody data-attn-rows></tbody>
+          </table>
+
+          <div class="attn-out">
+            <span class="attn-out__label">output = Σ weight · V</span>
+            <div class="attn-out__bars" data-output-bars></div>
+            <span class="attn-out__note" data-output-note></span>
+          </div>
+
+          <label class="attn-mask">
+            <input type="checkbox" data-causal />
+            <span>预览 causal mask（M3 计划，当前实现未包含）</span>
+          </label>
+        </div>
+      </div>
+
+      <p class="widget__foot" data-attn-summary></p>
+    </div>
+  </div>
+
+  <h2>为什么除以 √d</h2>
+  <p>
+    点积是 <code>d</code> 个数相乘再相加。如果 Q、K 的每个分量方差是 1，点积的方差大约就是 <code>d</code>，标准差是
+    <code>√d</code>。维度越大，分数的绝对值越容易变得很大，Softmax 也会随之饱和：一个位置接近 1，其余全部接近 0，梯度几乎消失。
+    除以 <code>√d</code> 把分数的量级拉回常数范围，让不同 head_dim 下的训练行为可比。
+  </p>
+
+  <h2>为什么是逐行 Softmax</h2>
+  <p>
+    Q 的每一行是一个 query，K 的每一行是一个 key，<code>Q·K<sup>T</sup></code> 的第 <code>i</code> 行第 <code>j</code> 列就是第
+    <code>i</code> 个 query 对第 <code>j</code> 个 key 的原始分数。Softmax 必须沿“key 的方向”做，因为我们要回答的是
+    “第 i 个 query 把注意力怎么分配给所有 key”。所以每一行独立归一化，行和为 1，列则不需要。
+  </p>
+  <p>
+    这也是为什么 <code>softmax_rows</code> 要求秩为 2 的输入，并且列数不能为 0：它只关心“一行里的分布”。
+  </p>
+
+  <h2>输出为什么不是“复制”</h2>
+  <p>
+    <code>out = A·V</code> 是矩阵乘法，所以第 <code>i</code> 行输出是 <code>Σ<sub>j</sub> A[i, j] · V[j]</code>。
+    当某个权重接近 1 时，输出确实接近那个位置的 V；但权重分散时，输出是多个 V 的混合。这个“混合”才是注意力真正的表达能力：
+    它把上下文信息压缩进当前 token 的表示里，而不是简单地挑一个位置。
+  </p>
+
+  <h2>当前实现还没有 mask</h2>
+  <p>
+    语言模型是逐 token 生成下一个 token 的，训练时必须保证第 <code>t</code> 个位置看不到 <code>t+1</code> 之后的内容，
+    否则就是在抄答案。标准做法是在 Softmax 之前把未来位置的分数设成 <code>−∞</code>，这就是 causal mask。
+    mini-llm 当前的单头注意力原语<strong>刻意没有实现它</strong>——上面那个开关只是让你预览效果，M3 的 Transformer Decoder 才会正式引入。
+  </p>
+
+  <h2>从实现看</h2>
+  <div class="code-card">
+    <div class="code-card__head mono">crates/mini-llm-model/src/lib.rs</div>
+    <Code code={snippet} lang="rust" theme="github-dark-dimmed" />
+  </div>
+  <p>
+    十行代码，没有隐藏状态。转置、矩阵乘、缩放、逐行 Softmax、再乘 V——每一步都有对应的张量形状，都可以断点打印。
+  </p>
+
+  <div class="note">
+    <strong>下一步</strong>
+    多头注意力只是把这个过程并行做 <code>h</code> 次，再拼接、投影；KV Cache 是缓存已算过的 K、V 避免重复计算；
+    RoPE 则是在算分数之前给 Q、K 加上位置旋转。它们都不会改变上面这三步的形状约定。
+  </div>
+</LessonLayout>
+
+<style>
+  .attn-layout {
+    display: grid;
+    grid-template-columns: 244px minmax(0, 1fr);
+    gap: 28px;
+    align-items: start;
+  }
+
+  .attn-heat-wrap {
+    display: grid;
+    gap: 8px;
+  }
+
+  .attn-axis {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  .attn-heat {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+  }
+
+  .attn-heat button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1.25;
+    padding: 2px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.92);
+    cursor: pointer;
+    transition: border-color 0.12s var(--ease), transform 0.12s var(--ease);
+  }
+
+  .attn-heat button:hover,
+  .attn-heat button:focus-visible {
+    border-color: var(--ink);
+    outline: none;
+    transform: translateY(-1px);
+  }
+
+  .attn-heat button.is-query {
+    border-color: var(--ink);
+    box-shadow: inset 0 0 0 1px var(--paper-2);
+  }
+
+  .attn-caption {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    color: var(--ink-faint);
+  }
+
+  .attn-detail {
+    min-width: 0;
+  }
+
+  .attn-query {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 10px;
+    margin: 0 0 12px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+
+  .attn-query strong {
+    font-size: 15px;
+    color: var(--ink);
+  }
+
+  .attn-scale {
+    font-size: 10.5px;
+    color: var(--ink-faint);
+  }
+
+  .attn-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-size: 12.5px;
+  }
+
+  .attn-table th:nth-child(1) {
+    width: 20%;
+  }
+
+  .attn-table th:nth-child(2) {
+    width: 24%;
+  }
+
+  .attn-table th:nth-child(3) {
+    width: 56%;
+  }
+
+  .attn-table th {
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--line-strong);
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    text-align: left;
+  }
+
+  .attn-table td {
+    padding: 7px 8px;
+    border-bottom: 1px solid var(--line);
+    font-family: var(--font-mono);
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .attn-table td:first-child {
+    color: var(--ink);
+  }
+
+  .weight-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .weight-track {
+    position: relative;
+    flex: 1;
+    height: 6px;
+    min-width: 24px;
+    border-radius: 3px;
+    background: var(--paper-3);
+    overflow: hidden;
+  }
+
+  .weight-bar {
+    display: block;
+    height: 100%;
+    background: var(--accent);
+    transition: width 0.18s var(--ease);
+  }
+
+  .attn-out {
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px dashed var(--line);
+  }
+
+  .attn-out__label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+
+  .attn-out__bars {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    align-items: end;
+    height: 84px;
+    margin-top: 10px;
+  }
+
+  .attn-out__bars div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    height: 100%;
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    color: var(--ink-faint);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .attn-out__bars i {
+    display: block;
+    width: 100%;
+    border-radius: 3px 3px 0 0;
+    background: color-mix(in srgb, var(--jade) 72%, var(--paper-2));
+  }
+
+  .attn-out__note {
+    display: block;
+    margin-top: 10px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 1.6;
+    color: var(--ink-soft);
+  }
+
+  .attn-mask {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-top: 18px;
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--ink-faint);
+    cursor: pointer;
+  }
+
+  .attn-mask input {
+    margin-top: 3px;
+    accent-color: var(--accent);
+  }
+
+  .widget__foot {
+    margin: 20px 0 0;
+    padding-top: 14px;
+    border-top: 1px dashed var(--line);
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: var(--ink-faint);
+  }
+
+  .code-card {
+    margin: 1.4em 0;
+    border: 1px solid #262e34;
+    border-radius: var(--radius-md);
+    background: #0d1114;
+    overflow: hidden;
+  }
+
+  .code-card__head {
+    padding: 10px 16px;
+    border-bottom: 1px solid #1e262c;
+    background: #11171b;
+    font-size: 10.5px;
+    color: #7c878f;
+    letter-spacing: 0.03em;
+  }
+
+  .code-card :global(pre) {
+    margin: 0;
+    padding: 16px 18px;
+    background: #0d1114;
+    font-size: 12.2px;
+    line-height: 1.75;
+    overflow-x: auto;
+  }
+
+  @media (max-width: 760px) {
+    .attn-layout {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 20px;
+    }
+
+    .attn-heat-wrap {
+      max-width: 300px;
+    }
+  }
+</style>
+
+<script>
+  const widget = document.querySelector<HTMLElement>('[data-attention-widget]');
+  if (widget) {
+    const tokens = ['猫', '坐', '在', '垫子'];
+    const Q = [
+      [0.5, 0.3, 0.2, 2.2],
+      [2.6, 0.5, 0.2, 0.1],
+      [0.3, 0.2, 0.4, 2.3],
+      [2.2, 0.4, 0.2, 0.3],
+    ];
+    const K = [
+      [2.4, 0.3, 0.1, 0.4],
+      [0.4, 2.2, 0.2, 0.1],
+      [0.2, 0.1, 2.3, 0.5],
+      [0.1, 0.3, 0.4, 2.6],
+    ];
+    const V = [
+      [0.9, 0.1, 0.2, 0.0],
+      [0.2, 0.8, 0.1, 0.1],
+      [0.1, 0.2, 0.7, 0.2],
+      [0.2, 0.1, 0.1, 0.9],
+    ];
+
+    const scale = Math.sqrt(4);
+    const dot = (a: number[], b: number[]) => a.reduce((acc, value, index) => acc + value * b[index], 0);
+    const softmax = (values: number[]) => {
+      const max = Math.max(...values);
+      const exps = values.map((value) => Math.exp(value - max));
+      const total = exps.reduce((acc, value) => acc + value, 0);
+      return exps.map((value) => value / total);
+    };
+
+    let query = 0;
+    let causal = false;
+
+    const heat = widget.querySelector<HTMLElement>('[data-heat]')!;
+    const rowsBody = widget.querySelector<HTMLElement>('[data-attn-rows]')!;
+    const queryToken = widget.querySelector<HTMLElement>('[data-query-token]')!;
+    const outputBars = widget.querySelector<HTMLElement>('[data-output-bars]')!;
+    const outputNote = widget.querySelector<HTMLElement>('[data-output-note]')!;
+    const summary = widget.querySelector<HTMLElement>('[data-attn-summary]')!;
+    const causalInput = widget.querySelector<HTMLInputElement>('[data-causal]')!;
+
+    const cells: HTMLButtonElement[] = [];
+    for (let row = 0; row < tokens.length; row += 1) {
+      for (let col = 0; col < tokens.length; col += 1) {
+        const cell = document.createElement('button');
+        cell.type = 'button';
+        cell.dataset.row = String(row);
+        cell.dataset.col = String(col);
+        cell.addEventListener('click', () => {
+          query = row;
+          render();
+        });
+        cells.push(cell);
+        heat.append(cell);
+      }
+    }
+
+    const buildState = () => {
+      const scores = Q.map((q) => K.map((k) => dot(q, k) / scale));
+      const masked = scores.map((row, i) => row.map((score, j) => (causal && j > i ? Number.NEGATIVE_INFINITY : score)));
+      const weights = masked.map((row) => softmax(row));
+      const output = weights.map((row, i) =>
+        V[0].map((_, dim) => row.reduce((acc, weight, j) => acc + weight * V[j][dim], 0)),
+      );
+      return { scores, weights, output };
+    };
+
+    const render = () => {
+      const { scores, weights, output } = buildState();
+
+      cells.forEach((cell, index) => {
+        const row = Math.floor(index / tokens.length);
+        const col = index % tokens.length;
+        const weight = weights[row][col];
+        const maskedOut = causal && col > row;
+        cell.textContent = maskedOut ? '—' : weight.toFixed(2);
+        cell.style.background = maskedOut
+          ? 'var(--paper-3)'
+          : `color-mix(in srgb, var(--accent) ${Math.round(weight * 92)}%, var(--paper-3))`;
+        cell.style.color = maskedOut ? 'var(--ink-faint)' : 'rgba(255,255,255,0.92)';
+        cell.classList.toggle('is-query', row === query);
+        cell.setAttribute(
+          'aria-label',
+          maskedOut
+            ? `query ${tokens[row]} 对 key ${tokens[col]} 被 mask`
+            : `query ${tokens[row]} 对 key ${tokens[col]} 的权重 ${weight.toFixed(2)}`,
+        );
+      });
+
+      queryToken.textContent = tokens[query];
+
+      rowsBody.innerHTML = '';
+      const ranked = weights[query]
+        .map((weight, index) => ({ weight, index, score: scores[query][index] }))
+        .sort((a, b) => b.weight - a.weight);
+
+      ranked.forEach(({ weight, index, score }) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${tokens[index]}</td>
+          <td>${causal && index > query ? '−∞' : score.toFixed(2)}</td>
+          <td>
+            <span class="weight-cell">
+              <span class="weight-track"><span class="weight-bar" style="width:${(weight * 100).toFixed(1)}%"></span></span>
+              <span>${(weight * 100).toFixed(1)}%</span>
+            </span>
+          </td>
+        `;
+        rowsBody.append(tr);
+      });
+
+      outputBars.innerHTML = '';
+      output[query].forEach((value, dim) => {
+        const container = document.createElement('div');
+        const bar = document.createElement('i');
+        bar.style.height = `${Math.max(2, Math.round(Math.min(1, Math.max(0, value)) * 62))}px`;
+        container.append(bar, document.createTextNode(`d${dim} ${value.toFixed(2)}`));
+        outputBars.append(container);
+      });
+
+      const top = ranked[0];
+      outputNote.textContent = `out ≈ ${(top.weight * 100).toFixed(0)}% · V(${tokens[top.index]}) + 其余 ${(
+        (1 - top.weight) * 100
+      ).toFixed(0)}%`;
+      summary.textContent = `在 query「${tokens[query]}」这一行，Softmax 把大部分权重给了「${tokens[top.index]}」（${(
+        top.weight * 100
+      ).toFixed(1)}%）。输出因此更像被关注 token 的 V，但仍混入其他位置。`;
+    };
+
+    causalInput.addEventListener('change', () => {
+      causal = causalInput.checked;
+      render();
+    });
+
+    render();
+  }
+</script>

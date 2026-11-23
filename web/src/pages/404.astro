@@ -1,0 +1,46 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="页面不存在" description="这个地址没有对应的页面。">
+  <div class="shell notfound">
+    <p class="eyebrow">404</p>
+    <h1>这条路径没有对应的张量。</h1>
+    <p>
+      页面可能被移动或改名了。可以从概念图解重新进入，或者直接回到文档索引。
+    </p>
+    <div class="notfound__actions">
+      <a class="btn btn--primary" href="/learn">概念图解 <span class="arrow" aria-hidden="true">→</span></a>
+      <a class="btn btn--ghost" href="/docs">文档索引</a>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .notfound {
+    padding: 120px 0 160px;
+    max-width: 640px;
+  }
+
+  .notfound h1 {
+    margin: 18px 0 0;
+    font-size: clamp(1.9rem, 4vw, 2.7rem);
+    line-height: 1.14;
+    letter-spacing: -0.03em;
+    font-weight: 640;
+  }
+
+  .notfound p {
+    margin: 18px 0 0;
+    font-size: 15.5px;
+    line-height: 1.8;
+    color: var(--ink-soft);
+  }
+
+  .notfound__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 30px;
+  }
+</style>

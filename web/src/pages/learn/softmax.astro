@@ -1,0 +1,358 @@
+---
+import LessonLayout from '../../layouts/LessonLayout.astro';
+
+const candidates = [
+  { token: '垫子', logit: 3.2 },
+  { token: '沙发', logit: 1.6 },
+  { token: '地板', logit: 0.4 },
+  { token: '窗台', logit: -1.2 },
+  { token: '月亮', logit: -2.8 },
+];
+
+const temperature = 1;
+const maxLogit = Math.max(...candidates.map((item) => item.logit / temperature));
+const exps = candidates.map((item) => Math.exp(item.logit / temperature - maxLogit));
+const total = exps.reduce((acc, value) => acc + value, 0);
+const rows = candidates.map((item, index) => ({
+  ...item,
+  probability: exps[index] / total,
+}));
+const entropy = -rows.reduce((acc, row) => acc + (row.probability > 0 ? row.probability * Math.log2(row.probability) : 0), 0);
+const top = rows.reduce((best, row) => (row.probability > best.probability ? row : best), rows[0]);
+---
+
+<LessonLayout
+  index="02"
+  tag="概率"
+  title="Logits 怎样变成概率"
+  summary="模型最后一层吐出的是没有约束的分数，Softmax 把它们压成一个总和为 1 的分布。拖动分数和温度，看看概率、熵和“模型有多确定”如何一起变化。"
+  time="8 分钟"
+  points={[
+    'logits 可以是任意实数，概率必须非负且和为 1。',
+    '减去最大值只为数值稳定，不改变结果。',
+    '温度 T 缩放 logits：T 越小越尖锐，越大越平坦。',
+    '熵衡量分布的分散程度，不是模型“对不对”。',
+  ]}
+  links={[
+    { label: 'Tensor::softmax_rows 实现', href: '/docs/tensor-engine' },
+    { label: '数学基础 · 第三章：概率与统计', href: '/docs/math-foundations' },
+  ]}
+  next={{ href: '/learn/attention', title: '一次注意力究竟算了什么' }}
+>
+  <p>
+    假设上下文是「猫坐在___」，模型在词表上给出了五个候选的分数：垫子 3.2、沙发 1.6、地板 0.4、窗台 −1.2、月亮 −2.8。
+    这些数叫 <strong>logits</strong>，它们可以是任意实数，甚至可以是负数，并不能直接当概率用。
+  </p>
+  <p>
+    Softmax 做的事只有两件：<strong>取指数</strong>让所有数变成正数，再<strong>除以总和</strong>让它们加起来等于 1。
+    指数还是个“放大器”——分数领先一点，概率就会领先很多。
+  </p>
+
+  <div class="formula">
+    p<sub>i</sub> = exp(z<sub>i</sub> / T) / Σ<sub>j</sub> exp(z<sub>j</sub> / T)<br />
+    <span class="text-dim">实现时先减去 max(z)，避免 exp 溢出：</span><br />
+    p<sub>i</sub> = exp(z<sub>i</sub> − max z) / Σ<sub>j</sub> exp(z<sub>j</sub> − max z)
+  </div>
+
+  <div class="widget" data-softmax-widget>
+    <div class="widget__head">
+      <h2 class="widget__title">logits → 概率分布</h2>
+      <span class="widget__hint">拖动滑块改变分数与温度</span>
+    </div>
+    <div class="widget__body">
+      <div class="logit-list">
+        {rows.map((row, index) => (
+          <div class="logit-row">
+            <label for={`logit-${index}`}>{row.token}</label>
+            <input
+              id={`logit-${index}`}
+              type="range"
+              min="-4"
+              max="4"
+              step="0.1"
+              value={row.logit}
+              data-logit={index}
+            />
+            <output data-logit-value={index}>{row.logit.toFixed(1)}</output>
+          </div>
+        ))}
+      </div>
+
+      <div class="temp-row">
+        <label for="temperature">温度 T</label>
+        <input id="temperature" type="range" min="0.2" max="3" step="0.05" value={temperature} data-temperature />
+        <output data-temperature-value>{temperature.toFixed(2)}</output>
+        <button class="chip" type="button" data-reset>重置</button>
+      </div>
+
+      <div class="dist" data-dist>
+        {rows.map((row) => (
+          <div class="dist__row" data-dist-row>
+            <span class="dist__label">{row.token}</span>
+            <div class="dist__track">
+              <span class="dist__bar" data-bar style={`width:${(row.probability * 100).toFixed(2)}%`}></span>
+            </div>
+            <span class="dist__pct" data-pct>{(row.probability * 100).toFixed(1)}%</span>
+          </div>
+        ))}
+      </div>
+
+      <dl class="readout softmax-readout">
+        <div><dt>最大概率</dt><dd data-out-top>{(top.probability * 100).toFixed(1)}%</dd></div>
+        <div><dt>熵（bit）</dt><dd data-out-entropy>{entropy.toFixed(2)}</dd></div>
+        <div><dt>困惑度</dt><dd data-out-perplexity>{Math.pow(2, entropy).toFixed(2)}</dd></div>
+      </dl>
+
+      <p class="widget__foot" data-summary>
+        当前温度下，分布相对集中：模型把大部分概率放在「{top.token}」上。
+      </p>
+    </div>
+  </div>
+
+  <h2>为什么要先减去最大值</h2>
+  <p>
+    指数函数增长极快。如果某个 logit 是 100，<code>exp(100)</code> 约是 <code>2.7×10<sup>43</sup></code>，在 f32 里早就溢出了；
+    而几个同样巨大的数相除，结果反而可能变成 <code>NaN</code>。把每个数都减去同一个 <code>max(z)</code>，比值完全不变，却把最大的指数变回
+    <code>exp(0) = 1</code>。这就是 mini-llm 里 <code>softmax_rows</code> 第一行在做的事。
+  </p>
+
+  <h2>温度在调什么</h2>
+  <p>
+    温度 <code>T</code> 是在做除法：<code>z / T</code>。温度低，分数之间的差距被放大，分布更尖锐；温度高，差距被压缩，分布更接近均匀。
+    当 <code>T → 0</code> 时，Softmax 退化成 argmax（把全部概率给最大值）；当 <code>T → ∞</code> 时，所有候选项趋于等概率。
+  </p>
+  <p>
+    需要提醒的是：<strong>温度只改变分布的形状，不改变相对排序</strong>。所谓“提高温度更有创造力”，本质上是让低概率 token 更容易被采样到，
+    代价是输出更不稳定。它和 top-k、top-p 采样是两个不同层面的机制。
+  </p>
+
+  <h2>熵衡量什么</h2>
+  <p>
+    熵 <code>H = −Σ p<sub>i</sub> log<sub>2</sub> p<sub>i</sub></code> 描述分布的分散程度：只有一个候选概率为 1 时，熵是 0；
+    五个候选完全均匀时，熵是 <code>log<sub>2</sub> 5 ≈ 2.32</code> bit。它经常和困惑度一起出现，因为困惑度就是 <code>2<sup>H</sup></code>：
+    模型平均在多少个等概率候选之间犹豫。
+  </p>
+
+  <h2>它和交叉熵的关系</h2>
+  <p>
+    训练时，交叉熵 <code>L = −log p<sub>target</sub></code> 直接惩罚目标 token 的概率。Softmax 是它的前置步骤，两者经常一起出现，
+    但职责不同：Softmax 负责“把 logits 变成分布”，交叉熵负责“给这个分布打分”。在 mini-llm 里，Softmax 已经实现，交叉熵与反向传播属于 M1 / M2。
+  </p>
+
+  <div class="note">
+    <strong>与实现对照</strong>
+    <code>softmax_rows</code> 只接受秩为 2 的张量，对每一行独立计算，并要求列数大于 0。
+    行数不改、列数不改，输出和输入同形——这让它可以直接嵌进注意力里，对 scores 矩阵逐行归一化。
+  </div>
+</LessonLayout>
+
+<style>
+  .logit-list {
+    display: grid;
+    gap: 12px;
+  }
+
+  .logit-row {
+    display: grid;
+    grid-template-columns: 54px minmax(0, 1fr) 46px;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logit-row label {
+    font-size: 13.5px;
+    color: var(--ink-soft);
+  }
+
+  .logit-row output {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    text-align: right;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .temp-row {
+    display: grid;
+    grid-template-columns: 54px minmax(0, 1fr) 46px auto;
+    align-items: center;
+    gap: 12px;
+    margin: 22px 0 6px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+  }
+
+  .temp-row label {
+    font-size: 13.5px;
+    color: var(--ink-soft);
+  }
+
+  .temp-row output {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    text-align: right;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .dist {
+    display: grid;
+    gap: 9px;
+    margin: 20px 0 22px;
+  }
+
+  .dist__row {
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr) 54px;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .dist__label {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+
+  .dist__track {
+    position: relative;
+    height: 20px;
+    border-radius: 4px;
+    background: var(--paper-3);
+    border: 1px solid var(--line);
+    overflow: hidden;
+  }
+
+  .dist__bar {
+    display: block;
+    height: 100%;
+    background: color-mix(in srgb, var(--accent) 78%, var(--paper-2));
+    transition: width 0.18s var(--ease), background-color 0.18s var(--ease);
+  }
+
+  .dist__row[data-top='true'] .dist__bar {
+    background: var(--accent);
+  }
+
+  .dist__pct {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    text-align: right;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .dist__row[data-top='true'] .dist__pct,
+  .dist__row[data-top='true'] .dist__label {
+    color: var(--ink);
+  }
+
+  .softmax-readout {
+    margin: 0;
+  }
+
+  .widget__foot {
+    margin: 16px 0 0;
+    padding-top: 14px;
+    border-top: 1px dashed var(--line);
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: var(--ink-faint);
+  }
+
+  @media (max-width: 560px) {
+    .logit-row,
+    .temp-row {
+      grid-template-columns: 44px minmax(0, 1fr) 40px;
+    }
+
+    .temp-row .chip {
+      grid-column: 2 / -1;
+      justify-self: start;
+    }
+  }
+</style>
+
+<script>
+  const widget = document.querySelector<HTMLElement>('[data-softmax-widget]');
+  if (widget) {
+    const initial = [3.2, 1.6, 0.4, -1.2, -2.8];
+    const logits = [...initial];
+    let temperature = 1;
+
+    const sliders = [...widget.querySelectorAll<HTMLInputElement>('[data-logit]')];
+    const outputs = [...widget.querySelectorAll<HTMLOutputElement>('[data-logit-value]')];
+    const tempInput = widget.querySelector<HTMLInputElement>('[data-temperature]')!;
+    const tempValue = widget.querySelector<HTMLOutputElement>('[data-temperature-value]')!;
+    const bars = [...widget.querySelectorAll<HTMLElement>('[data-bar]')];
+    const pcts = [...widget.querySelectorAll<HTMLElement>('[data-pct]')];
+    const distRows = [...widget.querySelectorAll<HTMLElement>('[data-dist-row]')];
+    const outTop = widget.querySelector<HTMLElement>('[data-out-top]')!;
+    const outEntropy = widget.querySelector<HTMLElement>('[data-out-entropy]')!;
+    const outPerplexity = widget.querySelector<HTMLElement>('[data-out-perplexity]')!;
+    const summary = widget.querySelector<HTMLElement>('[data-summary]')!;
+    const reset = widget.querySelector<HTMLButtonElement>('[data-reset]')!;
+
+    const render = () => {
+      const scaled = logits.map((value) => value / temperature);
+      const maxScaled = Math.max(...scaled);
+      const exps = scaled.map((value) => Math.exp(value - maxScaled));
+      const total = exps.reduce((acc, value) => acc + value, 0);
+      const probs = exps.map((value) => value / total);
+
+      const entropy = -probs.reduce(
+        (acc, p) => acc + (p > 0 ? p * Math.log2(p) : 0),
+        0,
+      );
+      const topIndex = probs.reduce((best, p, index) => (p > probs[best] ? index : best), 0);
+
+      sliders.forEach((slider, index) => {
+        outputs[index].textContent = logits[index].toFixed(1);
+      });
+      tempValue.textContent = temperature.toFixed(2);
+
+      probs.forEach((p, index) => {
+        bars[index].style.width = `${(p * 100).toFixed(2)}%`;
+        pcts[index].textContent = `${(p * 100).toFixed(1)}%`;
+        distRows[index].dataset.top = String(index === topIndex);
+      });
+
+      outTop.textContent = `${(probs[topIndex] * 100).toFixed(1)}%`;
+      outEntropy.textContent = entropy.toFixed(2);
+      outPerplexity.textContent = Math.pow(2, entropy).toFixed(2);
+
+      const token = distRows[topIndex].querySelector('.dist__label')?.textContent ?? '';
+      const tone =
+        probs[topIndex] > 0.75
+          ? '分布非常集中，几乎是在“背诵”最可能的答案。'
+          : probs[topIndex] > 0.4
+            ? '分布相对集中，模型有明显偏好，但仍保留其他可能。'
+            : '分布比较平坦，模型在多个候选之间犹豫。';
+      summary.textContent = `当前温度下，概率最高的是「${token}」，占 ${(probs[topIndex] * 100).toFixed(1)}%。${tone}`;
+    };
+
+    sliders.forEach((slider, index) => {
+      slider.addEventListener('input', () => {
+        logits[index] = Number(slider.value);
+        render();
+      });
+    });
+
+    tempInput.addEventListener('input', () => {
+      temperature = Number(tempInput.value);
+      render();
+    });
+
+    reset.addEventListener('click', () => {
+      logits.splice(0, logits.length, ...initial);
+      temperature = 1;
+      sliders.forEach((slider, index) => {
+        slider.value = String(initial[index]);
+      });
+      tempInput.value = '1';
+      render();
+    });
+
+    render();
+  }
+</script>
