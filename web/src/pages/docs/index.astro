@@ -13,7 +13,7 @@ const pad = (value: number) => String(value).padStart(2, '0');
 
 <BaseLayout
   title="文档"
-  description="mini-llm 的引擎系列与项目文档：从数学基础、Tensor、Autograd、Transformer，到训练、评估与内部表征。"
+  description="mini-llm 的引擎系列与项目文档：从数学基础、Tensor、Autograd、Transformer，到训练、评估、内部表征与世界模型。"
 >
   <div class="shell docs docs--index">
     <details class="docs__sidebar" open data-doc-nav>
@@ -32,8 +32,8 @@ const pad = (value: number) => String(value).padStart(2, '0');
         </div>
         <h1>从内核到设计决策</h1>
         <p class="doc-head__desc">
-          引擎系列是一条完整的实现路径：先补数学，再实现张量、自动微分、网络层、Transformer 与训练循环。
-          每一页都直接来自仓库的 <code>docs/*.md</code>，与代码一起演进。
+          引擎系列是一条完整的实现路径：先补数学，再实现张量、自动微分、网络层、Transformer 与训练循环，
+          最后讨论评估、内部表征与世界模型。每一页都直接来自仓库的 <code>docs/*.md</code>，与代码一起演进。
         </p>
       </header>
 
@@ -42,7 +42,7 @@ const pad = (value: number) => String(value).padStart(2, '0');
           <div>
             <h2 id="series-title">{seriesTitle}</h2>
             <p>
-              {engine.length} 个部分 · 约 {Math.round(totalMinutes / 60)} 小时阅读 · 从数学到内部表征
+              {engine.length} 个部分 · 约 {Math.round(totalMinutes / 60)} 小时阅读 · 从数学到世界模型
             </p>
           </div>
           <a class="series-band__start" href={`/docs/${engine[0]?.id}`}>

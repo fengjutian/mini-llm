@@ -112,7 +112,8 @@ const partLabel = part ? `第 ${String(part).padStart(2, '0')} 部分` : null;
       if (headings.length === 0) return;
 
       const offset = 96;
-      let activeId = headings[0].id;
+      const firstLinked = headings.find((heading) => links.has(heading.id));
+      let activeId = firstLinked?.id ?? headings[0].id;
 
       for (const heading of headings) {
         if (heading.getBoundingClientRect().top <= offset) {

@@ -44,9 +44,10 @@ code easier to grasp:
 - `/learn/softmax` — logits, temperature, entropy and the probability distribution
 - `/learn/attention` — scores, row-wise softmax, weighted values and a causal-mask preview
 - `/docs` — the Markdown files in `docs/`, rendered with LaTeX support
-- `/docs` also presents the nine-part **engine series** (math, tensor, autograd,
-  neural network, Transformer, block, decoder, training, evaluation) as a numbered
-  reading path, with per-document reading time and prev/next navigation
+- `/docs` also presents the **engine series** (math, tensor, autograd, neural
+  network, Transformer, block, decoder, training, evaluation, representation,
+  world model) as a numbered reading path, with per-document reading time and
+  prev/next navigation
 
 The site is a presentation layer only; it does not train or run the model. The
 `docs/*.md` files remain the single source of truth: `web/scripts/sync-docs.mjs`

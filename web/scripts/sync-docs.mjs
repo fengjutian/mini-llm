@@ -145,6 +145,17 @@ const KNOWN = [
     order: 100,
   },
   {
+    file: 'WORLD_MODEL_ENGINE.md',
+    slug: 'world-model-engine',
+    title: 'World Model Engine 深度解析',
+    short: 'World Model',
+    description: '从状态表示、状态转移到预测与规划：模型如何不只理解语言，还能推演世界的变化。',
+    section: ENGINE_SERIES,
+    series: ENGINE_SERIES,
+    part: 11,
+    order: 110,
+  },
+  {
     file: 'ARCHITECTURE.md',
     slug: 'architecture',
     title: '系统架构',
@@ -173,15 +184,33 @@ const KNOWN = [
   },
 ];
 
-/** Rough reading time: CJK characters and Latin words at different speeds. */
-function estimateMinutes(markdown) {
-  const text = markdown
-    .replace(/```[\s\S]*?```/g, ' ')
-    .replace(/\$\$[\s\S]*?\$\$/g, ' ')
-    .replace(/[#>*_`|~-]/g, ' ');
+/**
+ * Rough reading time for technical Chinese prose: characters and Latin words at
+ * different speeds, plus a per-display-equation allowance. It intentionally runs
+ * on the raw source: after math normalization, `$$` blocks can span lines and
+ * make a naive text strip eat whole paragraphs.
+ */
+function estimateMinutes(raw) {
+  const lines = raw.split(/\r?\n/);
+  let fence = null;
+  const kept = [];
+  for (const line of lines) {
+    const fenceMatch = /^\s*(```|~~~)/.exec(line);
+    if (fenceMatch) {
+      if (!fence) fence = fenceMatch[1];
+      else if (fenceMatch[1] === fence) fence = null;
+      continue;
+    }
+    if (fence) continue;
+    if (/^\\\\\[/.test(line.trim()) || /^\\\\\]/.test(line.trim())) continue;
+    kept.push(line);
+  }
+
+  const text = kept.join('\n').replace(/\\\\[a-zA-Z]+/g, ' ');
   const cjk = (text.match(/[\u4e00-\u9fff]/g) ?? []).length;
   const words = (text.replace(/[\u4e00-\u9fff]/g, ' ').match(/[A-Za-z0-9]+/g) ?? []).length;
-  return Math.max(1, Math.round(cjk / 420 + words / 220));
+  const equations = (raw.match(/\\\\\[/g) ?? []).length;
+  return Math.max(1, Math.round(cjk / 380 + words / 240 + equations * 0.06));
 }
 
 const slugify = (value) =>
@@ -302,7 +331,7 @@ for (const doc of documents) {
   const { markdown, heading } = stripLeadingHeading(normalized.markdown);
 
   const title = doc.title ?? heading ?? doc.slug;
-  const minutes = estimateMinutes(markdown);
+  const minutes = estimateMinutes(raw);
   const frontmatter = [
     '---',
     `title: ${yamlString(title)}`,

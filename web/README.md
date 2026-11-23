@@ -45,7 +45,7 @@ pnpm sync      # only regenerate src/content/docs
 
 `KNOWN` is optional metadata. Documents missing from it still render (title from
 the leading H1, `section: '其他'`), but they get no part number and appear after
-the curated ones. The engine series uses `part` to show `Part 01 … 09` in the
+the curated ones. The engine series uses `part` to show `Part 01 …` in the
 sidebar, the docs index, and the previous/next links.
 
 ## Structure
