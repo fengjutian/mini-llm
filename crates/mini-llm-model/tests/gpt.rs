@@ -427,5 +427,3 @@ fn batch_generation_rejects_empty_input() {
         Err(ModelError::EmptyPrompt)
     ));
 }
-", batch[1]);
-}

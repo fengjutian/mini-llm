@@ -372,7 +372,10 @@ impl TinyGpt {
             if prompt.is_empty() {
                 return Err(ModelError::EmptyPrompt);
             }
-            if let Some(&index) = prompt.iter().find(|&&index| index >= self.config.vocab_size) {
+            if let Some(&index) = prompt
+                .iter()
+                .find(|&&index| index >= self.config.vocab_size)
+            {
                 return Err(ModelError::TokenOutOfRange {
                     index,
                     vocab_size: self.config.vocab_size,
@@ -474,11 +477,7 @@ fn sample_next(
 }
 
 /// Samples one token from a row of next-token logits.
-fn sample_from_last(
-    last: &[f32],
-    sampling: Sampling,
-    rng: &mut Rng,
-) -> Result<usize, ModelError> {
+fn sample_from_last(last: &[f32], sampling: Sampling, rng: &mut Rng) -> Result<usize, ModelError> {
     if sampling.temperature <= 0.0 {
         return Ok(argmax(last));
     }
