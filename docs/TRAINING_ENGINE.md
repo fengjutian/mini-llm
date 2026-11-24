@@ -4,6 +4,10 @@
 
 _图：端到端训练闭环。从左到右展示本章核心概念之间的数据流与依赖关系。_
 
+![Cray 超级计算机](assets/images/training-cray-supercomputer.jpg)
+
+_图：大规模模型训练建立在高性能计算基础设施之上。图中是美国国家癌症研究所使用的 Cray 超级计算机；现代训练集群的硬件已经不同，但并行计算、存储吞吐和任务调度仍是核心问题。图片：美国 NCI，[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Supercomputer.jpg)，美国公有领域。_
+
 **副标题：理解大语言模型如何从文本中学习——构建一个真正能够训练 Transformer 的训练引擎**
 
 在前面的文章中，我们已经逐步构建了 mini-llm 的核心组件：

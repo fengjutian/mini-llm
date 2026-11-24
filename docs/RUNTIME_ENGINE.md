@@ -1129,6 +1129,10 @@ Rollback
 
 # **十、Distributed Execution：如何将任务分配到多台机器？**
 
+![数据中心中的服务器机架](assets/images/runtime-datacenter-racks.jpg)
+
+_图：分布式 Runtime 最终运行在真实计算、网络和存储资源之上；调度器需要处理容量、故障域、数据位置与跨节点通信。图片：Carl Lender，[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Datacenter_Server_Racks_(22370909788).jpg)，CC BY 2.0。_
+
 当 AI Runtime 需要处理大量任务时，单机可能无法满足需求。
 
 例如：

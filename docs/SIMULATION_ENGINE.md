@@ -36,6 +36,10 @@ Multi-Agent 则让多个智能体通过分工、通信和协作完成复杂任�
 
 # **一、Simulation Engine：为什么 Agent 需要模拟环境？**
 
+![Gazebo 中的移动操作机器人仿真](assets/images/gazebo-mobile-manipulator.png)
+
+_图：机器人仿真环境可以同时呈现底盘、传感器、机械臂、夹爪与场景几何，用于在真实执行前验证状态转移和控制逻辑。图片：Jose Luis Rivero / OSRF，[官方教程素材](https://github.com/osrf/gazebo_tutorials/tree/master/attach_gripper/files)，Apache 2.0。_
+
 ## **1.1 从直接行动到模拟行动**
 
 传统 Agent 的执行过程：

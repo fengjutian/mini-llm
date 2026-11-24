@@ -33,6 +33,10 @@ World Model 让 AI 能够在内部表示世界、预测环境变化，并推演�
 
 # **一、Embodied AI：什么是具身智能？**
 
+![正在被编程调试的人形机器人](assets/images/embodied-humanoid-programming.jpg)
+
+_图：具身智能最终要落到具体硬件、传感器和执行器上；模型输出必须经过控制与安全层才能变成物理动作。图片：ZhanatKappassov，[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Humanoid_robot_is_being_programmed.jpg)，CC0 1.0。_
+
 ## **1.1 从数字智能到具身智能**
 
 传统 LLM 主要通过文本与外部世界交互。

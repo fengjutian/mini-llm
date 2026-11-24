@@ -97,15 +97,16 @@ LLM 可以理解这句话，但它不能直接把这句话发送给电机。
 
 # **二、Robot Architecture：机器人由哪些部分组成？**
 
+![实验室中的机械臂正在操作小型部件](assets/images/robot-arm-lab-component.jpg)
+
+_图：真实机械臂通常由基座、多个旋转关节、连杆、腕部和末端执行器构成。图片：Nenad Stojković，[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Robot_arm_works_on_a_small_component_in_a_lab_setting.jpg)，[CC BY 2.0](https://creativecommons.org/licenses/by/2.0/)。_
+
 在研究数学模型之前，需要先理解机器人的物理结构。
 
 以六自由度机械臂为例。
 
-[Robotics # Kinematic Chains. Welcome to this comprehensive guide on… | by Dilip Kumar | Medium](https://images.openai.com/static-rsc-4/tsGa-CYKgPRvfZOJyK_NSx_SqLvMiO1IaqaHHrAjBSKVRu-U3lpBg00PokYNrjMLTtAh8rrxonDkFvLdfQMy1JVjH_6amqY8dkZbtnEq575Sy61xzCbvB6eHpIISK-KmWeTVy1pfxrHKQZjS1xCEHp98OR_bjLko3yRRHA5dc4A?purpose=inline)
 
-[Articulated Robot Components and Degrees of Freedom | Jeevanand M posted on the topic | LinkedIn](https://images.openai.com/static-rsc-4/D9NOeiuK6Xeh5IvopWssLb4IGvHe9dVOxMUB9cebIJnWJiGdccYGphYAuKW2bXPUtN7WDOwUqaiuht7ApsY8veZ2lWLS88uGhB6jEH9JraR4fJBeSr0gL_q-HYrELV8xNWYxjrFs2_FvpFz41bEmWyZz7_ZPL2R7HSJM0vLcB3I?purpose=inline)
 
-[🔗Unraveling Robotics: Degrees of Freedom, Manipulator Anatomy, and Beyond!🌐📐](https://images.openai.com/static-rsc-4/KogOuQD4xT_mfsXIVqqAc5nLxkx0TX2gmiS-X5ssFmn_3-hgo56YPLdYt7MpZckB6V-5g3NeBxcJdx-yUrkUhzLe960RT4pn1MwIT4wGSrj4uuWrXVVqIhnIwDZuje5mvV8GIC7Jhnc3_GC2H2ZkC4ebDKcSuES4nJXYqOtApIY?purpose=inline)
 
 11
 
@@ -149,13 +150,11 @@ Link 是机器人结构中的刚性或近似刚性部件。
 
 常见关节有两类：
 
-[Робо-суставы. Погружение в анатомию, физику и сложности проектирования](https://images.openai.com/static-rsc-4/-UTfgf3uzmUetC-ILBUJwECPomgDqzdulEF3L7Qe4TctDzZ9v-Y2rS1D7gEWoVwLx0gMd2aivDmdV8AeLeMQ8xJ648hhzMWbpF8jGHZUwCs8qRwehMkN3iyLDfZmHh_gsZWB1wvBCKii0LUQFcKF55QjLK9T73MmMqCb3DTqnbs?purpose=inline)
 
 **Revolute Joint**
 
 旋转关节，围绕指定轴旋转。
 
-[PPT - Modeling and Control of Robot Manipulators PowerPoint Presentation - ID:838717](https://images.openai.com/static-rsc-4/qI_ZHD1ZQf-64RFLAsbtwZy9X2Ce0CPtm13A_URf1oZ7oQdO2MrJhtQCGiCCSkpRIEm6NSUsGOKU3DfNmNBZuWrxbs3zHKW-TZqrSKUBGKFl-1rxTLok2GbLw_2QcD9YjhCAq-YqguW4LsRtwCV0XrtfgYs3aDevM-cO6-oNGuE?purpose=inline)
 
 **Prismatic Joint**
 
@@ -232,7 +231,6 @@ Link 是机器人结构中的刚性或近似刚性部件。
 - 原点。
 - 轴的方向。
 
-[Robotics Kinematics: Right Hand Rule, Frames & Homogeneous Transformations](https://images.openai.com/static-rsc-4/ktbI-ZvEXJQGJSIAkhHUQpo3Jt1jFmfRhUJyitch0OnQsXsKu6fkWFtgOyFfAz_7ZcatTZya1sz7w7MK5hzg2oTGr8iY9P01OaY9x7KPpXyh7ub6uNsa7R8ydH4_ay9FGHL6cUVqD3gvzY1YZZp0IQc-YdsJVUH_gQgGdBd1Vrw?purpose=inline)
 
 [studylib.net](https://studylib.net/doc/28011693/robot-manipulator-spatial-description-p1?utm_source=chatgpt.com)
 
@@ -372,7 +370,6 @@ _图：给定关节角可计算末端坐标；给定末端坐标时，通常存�
 
 先研究最简单的平面两关节机械臂。
 
-[机器人动力学与控制学习笔记（二）————机器人动力学建模-CSDN博客](https://images.openai.com/static-rsc-4/ViLItvzdd_mRPLjK100LeL6r-mwLOdPJ0xycIq5b0vT6Zysr2vD_6Js57HxIK5P0nhjrziSQIRQoeULO9PjFEOulayVz0TtJ42NMYhdd6p5VRCxSPnBFLV_r9V4BZnoBllmRc_u6eT6iQQoBGRGiprJ0smFEyejHffLWXWWIbsM?purpose=inline)
 
 [blog.csdn.net](https://blog.csdn.net/weixin_38452841/article/details/108631723?utm_source=chatgpt.com)
 
@@ -565,7 +562,6 @@ import mathdef forward_kinematics(    l1,    l2,    theta1,    theta2):    t1 = 
 - 肘部向上。
 - 肘部向下。
 
-[brian lee](https://images.openai.com/static-rsc-4/VzoYfGYpM-8JX83DOIxr50-BoT7QTxAKIeazNME2zH4JOK3qzq3n5g2hywEqps-NJBR_lSJ1haaFOdPlvKcfWCqKTZg6OoA3fUWx6nvndh-zqojo2wW9FMtjX3HTeMO_QjaqlDb8BE0Ze9VrxjLSUZVIUBVr-tXYMfVdhbUn9kg?purpose=inline)
 
 [brianjsl.com](https://www.brianjsl.com/blog/2024/04/23/mixture_density_networks/?utm_source=chatgpt.com)
 
@@ -803,7 +799,6 @@ Configuration Space（配置空间），简称 C-space。
 
 障碍物不再只是现实世界中的几何障碍，还会映射为配置空间中的不可行区域。
 
-[CS440 Lectures](https://images.openai.com/static-rsc-4/zM4myn0xZke2MvdZQpEo8MjnsoGivJcmzInylMX0lRTLrrzwRFNZjDUCv2rpa8S5bMu4yEk5qsel8_REyCBpOF70mAcb_MnjI-aaEPf2S4EsLVmGmYdF_rit3C7WdvOEYUJ-7t8jzXo-k-KfdKqAEg-SxL22HJYw3VI6QtZyYjI?purpose=inline)
 
 [courses.grainger.illinois.edu](https://courses.grainger.illinois.edu/cs440/fa2025/lectures/robots.html?utm_source=chatgpt.com)
 
@@ -857,7 +852,6 @@ RRT 的基本思想是：
 6. 如果安全，将新节点加入树。
 7. 重复直到到达目标附近。
 
-[Journey Through Robotics Path Planning: From Basic Bugs to AI Brains | by Dilip Kumar | Mar, 2026 | Medium](https://images.openai.com/static-rsc-4/BBX3YRkcUGwOZeOHyL6QbLSZ4T-eT8dX6p--UgLIsh0ylUAgxTVzCZ6j2_qY3yXNoDBwnCjrCXkB4whIuxcLXg9I0pRhSVRX5n94FPskEhTX8m7xVhs2gON67m8vaJ-Mg5ZtyE_1t_XAlv1MODZnksiOmruh02ClvNUERvzWD6k?purpose=inline)
 
 [dilipkumar.medium.com](https://dilipkumar.medium.com/journey-through-robotics-path-planning-from-basic-bugs-to-ai-brains-fcff690fadcd?utm_source=chatgpt.com)
 
@@ -1142,7 +1136,6 @@ Manipulation 是机器人从运动能力走向实际任务能力的重要一步�
 - 夹爪开口。
 - 夹持力度。
 
-[9 Industrial Robots for Your Warehouse - Nanalyze](https://images.openai.com/static-rsc-4/0GkilQreKX8QDMcJ6tCBRlz0j2CLFB3khncE_2AcqRBBSV9vpbWzEI0340zXEI9_CR7eulDpUl2YM8qRlxqnYr1g69hmz-2PieFIuMnNDN15RXA3ey-N-kJ5b0ptXDIGDCiJwm8Th-Yf4SgdwNc664h9oA58u4knU3CPsHIvGGg?purpose=inline)
 
 [nanalyze.com](https://www.nanalyze.com/2017/01/9-industrial-robots-warehouse/?utm_source=chatgpt.com)
 
@@ -1283,6 +1276,10 @@ _图：机械臂通过腕部力/力矩传感器和柔性抛光垫保持稳定接
 柔顺控制可以提高接触操作的适应能力。
 
 # **十三、Robotics Engine 与 mini-llm 的整体集成**
+
+![机器人自动抓取实验检测板](assets/images/robot-arm-assay-plate.jpg)
+
+_图：实验室自动化中的机械臂抓取检测板；感知、规划、轨迹、夹爪控制和状态反馈必须协同工作。图片：美国 NIAID，[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Robot_arm_handles_an_assay_plate.jpg)，美国公有领域。_
 
 现在将前面介绍的模块整合起来。
 
@@ -1443,9 +1440,12 @@ mini-llm/
 
 # **十五、推荐开源技术与基础设施**
 
+![Gazebo 中的移动操作机器人](assets/images/gazebo-mobile-manipulator.png)
+
+_图：Gazebo 教程中的移动操作机器人模型包含移动底盘、传感器、机械臂和夹爪，可用于在接入真实硬件前验证模型与控制流程。图片：Jose Luis Rivero / OSRF，[官方教程素材](https://github.com/osrf/gazebo_tutorials/tree/master/attach_gripper/files)，Apache 2.0。_
+
 Robotics Engine 涉及大量成熟的数学算法和机器人软件基础设施。建议不要全部从零开发。
 
-[Getting Started — MoveIt Documentation: Humble  documentation](https://images.openai.com/static-rsc-4/T1hdc8d-bvfk6_L-oL4e8NjhroDfyTK_IP5vd7OuE3htKwC2QlDEGyjQIxbwxXKZPjU7nxlrR6L6BqWuG2DNAlwL-P6PYlwpCC5Y1h7afH8hW4zH137qh2mON3oAj8zMvIq4vAvC-EVr2fgID-qXJSujUrFhGBK6WbgW62eHBeU?purpose=inline)
 
 **MoveIt 2**
 
@@ -1453,7 +1453,6 @@ Robotics Engine 涉及大量成熟的数学算法和机器人软件基础设施�
 
 [官方文档](https://moveit.picknik.ai/?utm_source=chatgpt.com)
 
-[Releases · stack-of-tasks/pinocchio · GitHub](https://images.openai.com/static-rsc-4/NqkrhXMfnF0cZIGiYAjJkrFqAlI2KPW2W9TOHRJDNBUgwFyP9NnFdJeXOHEnu5RVtVNO6OpOFqcAvLkFfYJ8_I_D8bUrVA-w8-GY8G1OD-mvWq_ZIjmx-SFD-rpaRC8CqmZHgB0ez86SJkk5BDuVd8l03Wi_mprOtg69DMjxPng?purpose=inline)
 
 **Pinocchio**
 
@@ -1461,7 +1460,6 @@ Robotics Engine 涉及大量成熟的数学算法和机器人软件基础设施�
 
 [项目主页](https://stack-of-tasks.github.io/pinocchio/?utm_source=chatgpt.com)
 
-[Drake: Model-Based Design and Verification for Robotics](https://images.openai.com/static-rsc-4/v8BSAzmxnBrHakkw6wPC3CvFjFrSVbz67JqsgfPk9-mk19hMQh-tag7i05hQppdBAx2rgUdh8TLbSj4y6zc2Apk5FicL4rDVzgrFTQhbI68HhpQSdKwwlWEy3VctxNK7VcM8USLObAo218N8Krc8i4NoP2ke1fFhkeR2wvEfKzM?purpose=inline)
 
 **Drake**
 
@@ -1469,7 +1467,6 @@ Robotics Engine 涉及大量成熟的数学算法和机器人软件基础设施�
 
 [官方文档](https://drake.mit.edu/?utm_source=chatgpt.com)
 
-[Install tesseract-ignition on Linux | Snap Store](https://images.openai.com/static-rsc-4/i55mZtjgydlOGy2Os5r3anOlHjqMekWt9CpcSK21BYQRuTi1BWcIQ6A9KmvfOyfvuVgTBlb8DBzKMRo_P_fRImfI9eXIFUr4mp2yfcEIcqPTxvlOEThL40ZQY6N0bsl9Y-bW31kfgDZIuG60StonFeiMTGOQOaonw6k9ZLCKZvc?purpose=inline)
 
 **Tesseract Robotics**
 
@@ -1477,7 +1474,6 @@ Robotics Engine 涉及大量成熟的数学算法和机器人软件基础设施�
 
 [GitHub 项目](https://github.com/tesseract-robotics/tesseract?utm_source=chatgpt.com)
 
-[Ruckig: (15) Tracking Offline](https://images.openai.com/static-rsc-4/hA_mRbuDOpZOoym_b35biktPSf779_2ZaUiZ4Wc1fpEgT2giP-NQKQXQ2zAQxwTu4E8RbYq67oNx7ExPr_oPgCO0R1jQvjGbybnHH4GjCjuLPr5-iKlkRiNTRYhUhf3Hs5fFJhUhBOXz81FC_7g80NCzjCL1shkQprqWp5qxgqE?purpose=inline)
 
 **Ruckig**
 
@@ -1485,7 +1481,6 @@ Robotics Engine 涉及大量成熟的数学算法和机器人软件基础设施�
 
 [官方网站](https://ruckig.com/?utm_source=chatgpt.com)
 
-[ROS2 Moveit Servo: A Tool for Robot Teleoperation and Data Collection](https://images.openai.com/static-rsc-4/s9CWtFph8M5paqqqQT518KWlQjO-cfxpUl_Z3IFgFwVvkf_HBT_Xieee93azNtPlnxsfEG7F56R72SXb1FocnmTiyCXkXHmtDvQEgd96K-EsyLfwdOmKaOwiyQOo3ncJMBQLLSAuMU-9HQtlRpvSdMDsqSP3W30cV6fYMJg0W9k?purpose=inline)
 
 **MoveIt Servo**
 
