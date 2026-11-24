@@ -1,0 +1,15 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ResearchStudio from '../components/studio/ResearchStudio';
+import initialEvents from '../data/sample-trace.json';
+import '../styles/studio.css';
+---
+
+<BaseLayout
+  title="Research Studio"
+  description="读取 mini-llm 的 JSONL 训练轨迹：损失曲线、每个 head 的注意力矩阵、最后一个位置的 logits。"
+>
+  <div class="shell studio-shell">
+    <ResearchStudio initialEvents={initialEvents} client:load />
+  </div>
+</BaseLayout>

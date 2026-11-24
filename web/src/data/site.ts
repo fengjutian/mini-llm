@@ -11,6 +11,7 @@ export const SITE = {
 export const NAV = [
   { href: '/', label: '概览' },
   { href: '/learn', label: '概念图解' },
+  { href: '/studio', label: '研究台' },
   { href: '/docs', label: '知识地图' },
 ] as const;
 
@@ -78,37 +79,37 @@ export const ROADMAP: RoadmapItem[] = [
   {
     id: 'M1',
     title: 'Autograd',
-    state: 'current',
+    state: 'done',
     text: '计算图与 backward、基础算子梯度、finite-difference 梯度检查。',
   },
   {
     id: 'M2',
     title: '神经网络基础',
-    state: 'planned',
+    state: 'done',
     text: 'Linear、Embedding、LayerNorm、SGD / AdamW，以及 XOR 等小型训练任务。',
   },
   {
     id: 'M3',
     title: 'Tiny GPT',
-    state: 'planned',
+    state: 'done',
     text: '字符级 Tokenizer、Causal Attention、Transformer Decoder、训练循环与文本生成。',
   },
   {
     id: 'M4',
     title: '现代 LLM 组件',
-    state: 'planned',
+    state: 'done',
     text: 'RoPE、RMSNorm、SwiGLU、GQA、KV Cache 与 MoE。',
   },
   {
     id: 'M5',
     title: '训练配方',
-    state: 'planned',
+    state: 'done',
     text: 'Pretraining、SFT / Loss Masking、LoRA、DPO 与 GRPO 玩具环境。',
   },
   {
     id: 'M6',
     title: '加速与可观测',
-    state: 'planned',
+    state: 'done',
     text: 'Candle 后端、CPU/GPU 数值对照、训练事件协议与内部状态可视化。',
   },
 ];

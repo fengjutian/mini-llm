@@ -294,6 +294,8 @@ code easier to grasp:
 - `/learn/tensor-shape` — shape, strides and the linear offset of a tensor
 - `/learn/softmax` — logits, temperature, entropy and the probability distribution
 - `/learn/attention` — scores, row-wise softmax, weighted values and a causal-mask preview
+- `/studio` — the Research Studio: load a JSONL trace and inspect the loss curve,
+  every attention head and the final logits
 - `/docs` — the Markdown files in `docs/`, rendered with LaTeX support
 - `/docs` is also a searchable **knowledge map**: four knowledge tracks
   (implementation, cognition, planning/learning, agents) plus project design,
@@ -305,6 +307,11 @@ The site is a presentation layer only; it does not train or run the model. The
 discovers them, adds the frontmatter (including series position and reading
 time), strips the duplicated H1, and normalizes the escaped LaTeX dialect used in
 those documents. New documents appear automatically.
+
+The Research Studio is a React island (`client:load`) that consumes the trace
+protocol. It ships with `web/src/data/sample-trace.json` (produced by
+`cargo run -p mini-llm-cli -- trace`) and accepts any `.jsonl` written by the
+same command via the file picker.
 
 Requirements: Node.js 22+ and pnpm.
 

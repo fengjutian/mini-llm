@@ -1,5 +1,6 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
+import react from '@astrojs/react';
 import { unified } from '@astrojs/markdown-remark';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -12,6 +13,7 @@ export default defineConfig({
   // absolute URLs. Netlify exposes the primary site URL as `URL` during builds,
   // so Netlify deployments get canonical tags without extra configuration.
   site: process.env.SITE_URL || process.env.URL || undefined,
+  integrations: [react()],
   markdown: {
     processor: unified({
       remarkPlugins: [remarkMath],

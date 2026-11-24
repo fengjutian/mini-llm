@@ -134,7 +134,7 @@ SFT 语料仅用于展示掩码机制。
 - [x] CPU/GPU parity tests
 - [x] Training event protocol
 - [x] Attention / activation / logits capture
-- [ ] React Research Studio（顺延）
+- [x] React Research Studio
 
 实现拆分：
 
@@ -147,7 +147,10 @@ SFT 语料仅用于展示掩码机制。
   `CandleBackend` 由 `candle` feature 启用；`tests/parity.rs` 对比 CPU 与
   Candle 的矩阵乘法（容差 1e-4）；
 - CLI：`trace` 命令训练 30 步并把事件、注意力矩阵与 logits 写入
-  `traces/<run_id>.jsonl`。
+  `traces/<run_id>.jsonl`；
+- Research Studio：`web/src/pages/studio.astro` + React 岛
+  `ResearchStudio.tsx`，读取轨迹后渲染损失曲线、每个 layer/head 的注意力
+  热力图与最后一个位置的 logits，支持拖入自己的 `.jsonl`。
 
 说明：
 
@@ -155,7 +158,8 @@ SFT 语料仅用于展示掩码机制。
   数值一致性；Candle 的 `Device::Cuda` 可用同一接口接入，但需要 GPU 环境。
 - Candle 依赖较重，默认不编译：
   `cargo test -p mini-llm-backend --features candle`。
-- React Research Studio 需要前端工程，暂未实现；JSONL 事件流是它的输入协议。
+- Studio 是纯静态页面（`pnpm build` 时把示例轨迹内联），不训练模型；拖入
+  新的轨迹即可查看自己的 run。
 
 ## Definition of Done
 

@@ -8,11 +8,26 @@ rendered as static pages.
 ## Stack
 
 - **Astro 7** with the static output adapter (no SSR)
+- **React 19** island for `/studio` (`@astrojs/react`); the three lessons remain
+  plain `<script>` blocks so they ship as small vanilla TypeScript modules
 - **Unified** Markdown pipeline (`@astrojs/markdown-remark`) for `remark-math` +
   `rehype-katex`, because the repository docs contain a lot of LaTeX
-- **No UI framework**: the three lessons are plain `<script>` blocks, so they ship
-  as small vanilla TypeScript modules instead of hydrated islands
 - Shiki for syntax highlighting, with separate light and dark themes
+
+## Research Studio
+
+`/studio` loads the JSONL trace produced by
+`cargo run -p mini-llm-cli -- trace` and renders the loss curve, every attention
+matrix (layer × head) and the final-position logits. The bundled sample lives at
+`src/data/sample-trace.json`; regenerate it from the newest trace with:
+
+```bash
+cargo run -p mini-llm-cli -- trace
+node web/scripts/bundle-trace.mjs
+```
+
+The page also accepts any `.jsonl` through its file picker, so a new run can be
+inspected without rebuilding the site.
 
 ## Scripts
 
