@@ -82,6 +82,56 @@ fn cross_entropy_matches_finite_differences() {
 }
 
 #[test]
+fn log_softmax_matches_finite_differences() {
+    let logits = vec![0.4, -0.2, 0.1, 0.9, -0.7, 0.3];
+    check_gradient(&logits, &[2, 3], |values| values.log_softmax_rows()?.sum());
+}
+
+#[test]
+fn log_sigmoid_matches_finite_differences() {
+    let values = vec![0.5, -1.5, 2.0, -0.25];
+    check_gradient(&values, &[4], |x| x.log_sigmoid()?.sum());
+}
+
+#[test]
+fn weighted_cross_entropy_ignores_masked_positions() {
+    let weights = vec![0.4, -0.2, 0.1, 0.9, -0.7, 0.3];
+    let parameter = TensorValue::parameter(weights, vec![2, 3]).unwrap();
+    let masked = parameter
+        .cross_entropy_weighted(&[1, 2], &[1.0, 0.0])
+        .unwrap();
+    let single = parameter
+        .slice_rows(0, 1)
+        .unwrap()
+        .cross_entropy(&[1])
+        .unwrap();
+    assert!((masked.data()[0] - single.data()[0]).abs() < 1e-5);
+
+    masked.backward().unwrap();
+    let grad = parameter.grad().unwrap();
+    // The masked row must not receive any gradient.
+    assert_eq!(&grad.data()[3..6], &[0.0, 0.0, 0.0]);
+    assert!(grad.data()[..3].iter().any(|value| value.abs() > 1e-6));
+}
+
+#[test]
+fn weighted_cross_entropy_validates_its_inputs() {
+    let logits = TensorValue::parameter(vec![0.1, 0.2, 0.3], vec![1, 3]).unwrap();
+    assert!(matches!(
+        logits.cross_entropy_weighted(&[0], &[1.0, 0.0]),
+        Err(AutogradError::WeightCountMismatch { .. })
+    ));
+    assert!(matches!(
+        logits.cross_entropy_weighted(&[0], &[0.0]),
+        Err(AutogradError::ZeroTotalWeight)
+    ));
+    assert!(matches!(
+        logits.cross_entropy_weighted(&[0], &[-1.0]),
+        Err(AutogradError::InvalidWeight { .. })
+    ));
+}
+
+#[test]
 fn squared_error_matches_the_hand_written_example() {
     // From the autograd article: y = w*x + b, L = (y - 10)^2
     let x = TensorValue::constant(vec![2.0], vec![1, 1]).unwrap();
@@ -155,6 +205,15 @@ fn rope_matches_finite_differences() {
         0.5, -1.0, 0.25, 0.75, 1.5, 0.0, -0.5, 2.0, -0.2, 0.3, 0.9, -0.4,
     ];
     check_gradient(&values, &[3, 4], |x| x.rope(4, &[0, 1, 2], 10_000.0)?.sum());
+}
+
+#[test]
+fn sum_rows_keepdim_matches_finite_differences() {
+    let values = vec![0.5, -1.0, 0.25, 0.75, 1.5, 0.0];
+    check_gradient(&values, &[2, 3], |x| {
+        let rows = x.sum_rows_keepdim()?;
+        rows.powf(2.0)?.sum()
+    });
 }
 
 #[test]

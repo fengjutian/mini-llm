@@ -4,7 +4,9 @@
 
 mod commands;
 
-use commands::{autograd, basics, classify, generate, moe, regression, train, xor};
+use commands::{
+    autograd, basics, classify, dpo, generate, grpo, lora, moe, regression, sft, train, xor,
+};
 
 fn main() {
     let arguments: Vec<String> = std::env::args().skip(1).collect();
@@ -21,6 +23,10 @@ fn main() {
         "train" => train::run(rest),
         "generate" => generate::run(rest),
         "moe" => moe::run(),
+        "sft" => sft::run(rest),
+        "dpo" => dpo::run(),
+        "grpo" => grpo::run(),
+        "lora" => lora::run(),
         "help" | "--help" | "-h" => usage(),
         other => {
             eprintln!("Unknown command: {other}");
@@ -44,6 +50,10 @@ fn usage() {
     println!("  generate [prompt] [tokens] [temp]");
     println!("                       sample text from the saved checkpoint (KV cache)");
     println!("  moe                  mixture-of-experts routing demo");
+    println!("  sft [steps]          supervised fine-tuning with prompt loss masking");
+    println!("  lora                  fine-tune a frozen classifier with LoRA adapters");
+    println!("  dpo                   preference optimization on a toy policy");
+    println!("  grpo                  group relative policy optimization on a bandit");
     println!("  help                 show this message");
     println!();
     println!("checkpoint: {}", commands::CHECKPOINT_PATH);

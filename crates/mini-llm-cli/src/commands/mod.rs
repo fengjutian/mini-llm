@@ -3,9 +3,13 @@
 pub mod autograd;
 pub mod basics;
 pub mod classify;
+pub mod dpo;
 pub mod generate;
+pub mod grpo;
+pub mod lora;
 pub mod moe;
 pub mod regression;
+pub mod sft;
 pub mod train;
 pub mod xor;
 

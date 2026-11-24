@@ -29,7 +29,7 @@ fn dataset() -> TextDataset {
     TextDataset::new(tokens, 8).unwrap()
 }
 
-fn trainer(seed: u64) -> Trainer {
+fn trainer(seed: u64) -> Trainer<TextDataset> {
     let model = TinyGpt::new(config(5), &mut Rng::new(seed)).unwrap();
     let train_config = TrainConfig {
         steps: 0,

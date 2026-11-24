@@ -39,15 +39,17 @@
 //! ```
 
 mod checkpoint;
+mod recipes;
 
 pub use checkpoint::{load_checkpoint, save_checkpoint};
+pub use recipes::{dpo_loss, grpo_loss, sequence_log_prob};
 
 use std::error::Error;
 use std::fmt::{Display, Formatter};
 use std::time::Instant;
 
 use mini_llm_autograd::TensorValue;
-use mini_llm_data::{Batch, DataError, TextDataset};
+use mini_llm_data::{Batch, DataError, Dataset};
 use mini_llm_model::{ModelError, TinyGpt};
 use mini_llm_nn::{AdamW, NnError, Optimizer, Rng};
 
@@ -82,16 +84,16 @@ pub struct StepReport {
 }
 
 /// Owns a model, an optimizer and a dataset, and runs next-token training.
-pub struct Trainer {
+pub struct Trainer<D: Dataset> {
     model: TinyGpt,
     optimizer: AdamW,
-    dataset: TextDataset,
+    dataset: D,
     rng: Rng,
     config: TrainConfig,
 }
 
-impl Trainer {
-    pub fn new(model: TinyGpt, dataset: TextDataset, config: TrainConfig) -> Self {
+impl<D: Dataset> Trainer<D> {
+    pub fn new(model: TinyGpt, dataset: D, config: TrainConfig) -> Self {
         let optimizer = AdamW::new(config.learning_rate).with_weight_decay(config.weight_decay);
         let rng = Rng::new(config.seed);
         Self {
@@ -107,7 +109,7 @@ impl Trainer {
         &self.model
     }
 
-    pub fn dataset(&self) -> &TextDataset {
+    pub fn dataset(&self) -> &D {
         &self.dataset
     }
 
@@ -137,7 +139,7 @@ impl Trainer {
     /// callers, but the graph itself is still built by the engine).
     pub fn loss(&self, batch: &Batch) -> Result<TensorValue, TrainError> {
         let logits = self.model.forward(&batch.inputs, batch.batch)?;
-        Ok(logits.cross_entropy(&batch.targets)?)
+        Ok(logits.cross_entropy_weighted(&batch.targets, &batch.weights)?)
     }
 
     /// Evaluates the mean loss over randomly sampled batches.
@@ -193,6 +195,11 @@ pub enum TrainError {
         field: &'static str,
         value: u32,
     },
+    /// A reward passed to a policy-gradient recipe is not finite.
+    InvalidReward {
+        index: usize,
+        value: f32,
+    },
 }
 
 impl Display for TrainError {
@@ -215,6 +222,9 @@ impl Display for TrainError {
             Self::InvalidVocabulary => write!(f, "checkpoint vocabulary is invalid"),
             Self::InvalidArchitecture { field, value } => {
                 write!(f, "checkpoint has an unknown {} flag: {}", field, value)
+            }
+            Self::InvalidReward { index, value } => {
+                write!(f, "reward {} is not finite: {}", index, value)
             }
         }
     }

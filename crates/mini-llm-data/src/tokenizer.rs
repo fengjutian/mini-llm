@@ -66,4 +66,38 @@ impl CharTokenizer {
         }
         Ok(text)
     }
+
+    /// Encodes `prompt` followed by `response` and returns a loss mask.
+    ///
+    /// `weights[i]` is `1.0` when the target following token `i` belongs to the
+    /// response, and `0.0` for prompt tokens (and for the final token, which has
+    /// no successor). This is exactly the mask
+    /// [`SftDataset`](crate::SftDataset) expects.
+    pub fn encode_supervised(
+        &self,
+        prompt: &str,
+        response: &str,
+    ) -> Result<(Vec<usize>, Vec<f32>), DataError> {
+        let prompt_tokens = self.encode(prompt)?;
+        let response_tokens = self.encode(response)?;
+        if response_tokens.is_empty() {
+            return Err(DataError::EmptyResponse);
+        }
+
+        let prompt_len = prompt_tokens.len();
+        let mut tokens = prompt_tokens;
+        tokens.extend(response_tokens);
+
+        let mut weights = vec![0.0f32; tokens.len()];
+        // Predicting the first response token is supervised by the last prompt
+        // position, so masking starts one token before the response.
+        let first_supervised = prompt_len.saturating_sub(1);
+        for weight in weights.iter_mut().skip(first_supervised) {
+            *weight = 1.0;
+        }
+        if let Some(last) = weights.last_mut() {
+            *last = 0.0;
+        }
+        Ok((tokens, weights))
+    }
 }

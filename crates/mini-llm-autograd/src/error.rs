@@ -14,6 +14,12 @@ pub enum AutogradError {
     TargetOutOfRange { index: usize, vocab_size: usize },
     /// The number of targets does not match the number of logits rows.
     TargetCountMismatch { logits_rows: usize, targets: usize },
+    /// The number of per-token weights does not match the number of targets.
+    WeightCountMismatch { targets: usize, weights: usize },
+    /// Every per-token weight is zero, so the loss is undefined.
+    ZeroTotalWeight,
+    /// A per-token weight is negative or not finite.
+    InvalidWeight { index: usize, value: f32 },
     /// `set_value` was called on a value that is not a learnable parameter.
     NotAParameter,
     /// A row/column slice extends past the tensor bounds.
@@ -47,6 +53,13 @@ impl Display for AutogradError {
                 logits_rows, logits_rows, targets
             ),
             Self::NotAParameter => write!(f, "only learnable parameters can be updated in place"),
+            Self::WeightCountMismatch { targets, weights } => {
+                write!(f, "expected {} per-token weights, got {}", targets, weights)
+            }
+            Self::ZeroTotalWeight => write!(f, "the loss mask has no active token"),
+            Self::InvalidWeight { index, value } => {
+                write!(f, "weight {} is invalid: {}", index, value)
+            }
             Self::SliceOutOfBounds {
                 axis,
                 start,

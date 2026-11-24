@@ -106,15 +106,29 @@
 已知限制：MoE 为稠密执行（所有专家都计算）；RoPE 超出训练上下文后质量下降；
 缓存只支持 batch=1 的生成。
 
-## Milestone 5 — Training Recipes（下一步）
+## Milestone 5 — Training Recipes（已完成）
 
-- [ ] Pretraining
-- [ ] SFT / Loss Masking
-- [ ] LoRA
-- [ ] DPO
-- [ ] GRPO toy environment
+- [x] Pretraining
+- [x] SFT / Loss Masking
+- [x] LoRA
+- [x] DPO
+- [x] GRPO toy environment
 
-## Milestone 6 — Accelerated & Observable
+实现拆分：
+
+- `mini-llm-autograd`：`log_softmax_rows`、`log_sigmoid`、`sum_rows_keepdim`、
+  `cross_entropy_weighted`（权重 0 即掩码，损失按权重和归一化），全部有有限差分校验。
+- `mini-llm-data`：`Dataset` trait、`Batch.weights`、`SftDataset`、
+  `CharTokenizer::encode_supervised`（prompt 掩码、response 监督）。
+- `mini-llm-train`：`Trainer<D: Dataset>` 支持带权批次；`recipes` 模块提供
+  `sequence_log_prob`、`dpo_loss`、`grpo_loss`。
+- `mini-llm-nn`：`LoraLinear`——冻结 base、只把低秩 A/B 报告给优化器。
+- CLI：`sft`、`lora`、`dpo`、`grpo` 四个可运行的配方演示。
+
+已知限制：DPO/GRPO 演示使用玩具策略（单个 Linear），没有真正的多步环境；
+SFT 语料仅用于展示掩码机制。
+
+## Milestone 6 — Accelerated & Observable（下一步）
 
 - [ ] Candle backend
 - [ ] CPU/GPU parity tests

@@ -2,8 +2,8 @@
 
 use mini_llm_autograd::TensorValue;
 use mini_llm_nn::{
-    AdamW, Embedding, LayerNorm, Linear, Module, Moe, Optimizer, Relu, RmsNorm, Rng, Sequential,
-    Sgd, SwiGlu, Tanh,
+    AdamW, Embedding, LayerNorm, Linear, LoraLinear, Module, Moe, Optimizer, Relu, RmsNorm, Rng,
+    Sequential, Sgd, SwiGlu, Tanh,
 };
 use mini_llm_tensor::Tensor;
 
@@ -311,4 +311,76 @@ fn moe_rejects_invalid_top_k() {
     assert!(Moe::new(4, 8, 2, 0, &mut rng).is_err());
     assert!(Moe::new(4, 8, 2, 3, &mut rng).is_err());
     assert!(Moe::new(4, 8, 0, 1, &mut rng).is_err());
+}
+
+#[test]
+fn lora_starts_as_the_base_function() {
+    let mut rng = Rng::new(51);
+    let base = Linear::new(3, 2, &mut rng).unwrap();
+    let x = input(vec![0.2, -0.4, 0.6, 1.0, 0.5, -0.5], vec![2, 3]);
+    let before = base.forward(&x).unwrap().data();
+
+    let lora = LoraLinear::new(base, 2, 4.0, &mut rng).unwrap();
+    assert_eq!(lora.forward(&x).unwrap().data(), before);
+    assert_eq!(lora.rank(), 2);
+    assert!((lora.scale() - 2.0).abs() < 1e-6);
+}
+
+#[test]
+fn lora_reports_only_adapter_parameters() {
+    let mut rng = Rng::new(53);
+    let base = Linear::new(4, 4, &mut rng).unwrap();
+    assert_eq!(base.parameters().len(), 2);
+    let lora = LoraLinear::new(base, 2, 4.0, &mut rng).unwrap();
+
+    assert_eq!(lora.parameters().len(), 2); // A and B only
+    assert_eq!(lora.all_parameters().len(), 4);
+    assert_eq!(lora.num_parameters(), 2 * (4 + 4));
+}
+
+#[test]
+fn lora_adapts_a_frozen_map() {
+    let mut rng = Rng::new(59);
+    // Base computes roughly y = x; the new task is y = 2x + 1.
+    let base = Linear::new(1, 1, &mut rng).unwrap();
+    base.weight()
+        .set_value(Tensor::from_2d(1, 1, vec![1.0]).unwrap())
+        .unwrap();
+    base.bias()
+        .unwrap()
+        .set_value(Tensor::from_1d(vec![0.0]).unwrap())
+        .unwrap();
+    let frozen = base.weight().data();
+
+    let lora = LoraLinear::new(base, 2, 8.0, &mut rng).unwrap();
+    let x = input(vec![0.0, 1.0, 2.0, 3.0], vec![4, 1]);
+    let target = input(vec![1.0, 3.0, 5.0, 7.0], vec![4, 1]);
+
+    let parameters = lora.parameters();
+    let mut optimizer = AdamW::new(0.05);
+    for _ in 0..300 {
+        let loss = lora
+            .forward(&x)
+            .unwrap()
+            .sub(&target)
+            .unwrap()
+            .powf(2.0)
+            .unwrap()
+            .mean()
+            .unwrap();
+        loss.backward().unwrap();
+        optimizer.step(&parameters).unwrap();
+        loss.zero_grad();
+    }
+
+    let prediction = lora.forward(&input(vec![2.0], vec![1, 1])).unwrap();
+    assert!((prediction.data()[0] - 5.0).abs() < 0.2);
+    assert_eq!(lora.base().weight().data(), frozen);
+}
+
+#[test]
+fn lora_rejects_a_zero_rank() {
+    let mut rng = Rng::new(61);
+    let base = Linear::new(2, 2, &mut rng).unwrap();
+    assert!(LoraLinear::new(base, 0, 1.0, &mut rng).is_err());
 }

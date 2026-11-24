@@ -7,7 +7,7 @@
 //! deterministic and independent of iteration order.
 //!
 //! ```no_run
-//! use mini_llm_data::{CharTokenizer, TextDataset};
+//! use mini_llm_data::{CharTokenizer, Dataset, TextDataset};
 //! use mini_llm_random::Rng;
 //!
 //! let tokenizer = CharTokenizer::from_text("hello world");
@@ -21,7 +21,7 @@
 mod dataset;
 mod tokenizer;
 
-pub use dataset::{Batch, TextDataset};
+pub use dataset::{Batch, Dataset, SftDataset, TextDataset};
 pub use tokenizer::CharTokenizer;
 
 use std::error::Error;
@@ -41,6 +41,12 @@ pub enum DataError {
     EmptyBatch,
     /// A window start index is out of range.
     WindowOutOfRange { start: usize, windows: usize },
+    /// Per-token weights and tokens have different lengths.
+    MaskLengthMismatch { tokens: usize, weights: usize },
+    /// A sampled window has no supervised (unmasked) target.
+    EmptyMaskWindow,
+    /// A supervised example needs a non-empty response to learn from.
+    EmptyResponse,
 }
 
 impl Display for DataError {
@@ -68,6 +74,11 @@ impl Display for DataError {
                 "window start {} is out of range for {} windows",
                 start, windows
             ),
+            Self::MaskLengthMismatch { tokens, weights } => {
+                write!(f, "{} tokens but {} weights", tokens, weights)
+            }
+            Self::EmptyMaskWindow => write!(f, "window contains no supervised tokens"),
+            Self::EmptyResponse => write!(f, "supervised example needs a non-empty response"),
         }
     }
 }

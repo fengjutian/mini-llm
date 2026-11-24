@@ -1,6 +1,6 @@
 //! Tests for tokenization and batching.
 
-use mini_llm_data::{CharTokenizer, DataError, TextDataset};
+use mini_llm_data::{CharTokenizer, DataError, Dataset, SftDataset, TextDataset};
 use mini_llm_random::Rng;
 
 #[test]
@@ -73,4 +73,44 @@ fn rejects_invalid_datasets() {
         dataset.sample_batch(0, &mut Rng::new(1)),
         Err(DataError::EmptyBatch)
     ));
+}
+
+#[test]
+fn supervised_encoding_masks_the_prompt() {
+    let tokenizer = CharTokenizer::from_text("abcde");
+    let (tokens, weights) = tokenizer.encode_supervised("ab", "cde").unwrap();
+    assert_eq!(tokens, tokenizer.encode("abcde").unwrap());
+    // Predicting "c" (the first response token) is supervised by "b".
+    assert_eq!(weights, vec![0.0, 1.0, 1.0, 1.0, 0.0]);
+    assert!(matches!(
+        tokenizer.encode_supervised("ab", ""),
+        Err(DataError::EmptyResponse)
+    ));
+}
+
+#[test]
+fn sft_batches_align_weights_with_targets() {
+    let tokenizer = CharTokenizer::from_text("abcdef");
+    let (tokens, weights) = tokenizer.encode_supervised("ab", "cdef").unwrap();
+    let dataset = SftDataset::new(tokens, weights, 2).unwrap();
+    let batch = dataset.batch_at(&[0]).unwrap();
+    assert_eq!(batch.seq, 2);
+    assert_eq!(batch.inputs, vec![0, 1]); // a b
+    assert_eq!(batch.targets, vec![1, 2]); // b c
+                                           // Both targets are supervised: "b" is the last prompt token, "c" the first
+                                           // response token.
+    assert_eq!(batch.weights, vec![1.0, 1.0]);
+    assert_eq!(batch.active_positions(), 2);
+}
+
+#[test]
+fn sft_windows_without_supervision_are_rejected() {
+    // Only the last two tokens are supervised, so a window at the start has no
+    // signal at all.
+    let dataset = SftDataset::new(vec![0, 1, 2, 3, 4, 5], vec![0., 0., 0., 0., 1., 0.], 2).unwrap();
+    assert!(matches!(
+        dataset.batch_at(&[0]),
+        Err(DataError::EmptyMaskWindow)
+    ));
+    assert!(SftDataset::new(vec![0, 1], vec![1.0], 1).is_err());
 }

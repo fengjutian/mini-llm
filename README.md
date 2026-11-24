@@ -48,6 +48,10 @@ cargo run -p mini-llm-cli -- classify    # softmax + cross-entropy on two blobs
 cargo run -p mini-llm-cli -- moe         # mixture-of-experts routing
 cargo run -p mini-llm-cli -- train       # modern Tiny GPT (RMSNorm/RoPE/SwiGLU/GQA)
 cargo run -p mini-llm-cli -- generate "The little language model learns " 14 0.3
+cargo run -p mini-llm-cli -- sft         # supervised fine-tuning with prompt masking
+cargo run -p mini-llm-cli -- lora        # adapt a frozen classifier with low-rank adapters
+cargo run -p mini-llm-cli -- dpo         # preference optimization on a toy policy
+cargo run -p mini-llm-cli -- grpo        # group relative policy optimization bandit
 ```
 
 `train` writes `checkpoints/tiny-gpt.bin`; `generate` loads it and samples with
@@ -116,6 +120,7 @@ let mut optimizer = AdamW::new(0.02);
 | `LayerNorm` / `RmsNorm` | composed from autograd primitives, so backprop is automatic |
 | `SwiGlu` | `W2(SiLU(W1x) ⊙ W3x)` gated feed-forward |
 | `Moe` | top-k router over SwiGLU experts (dense execution) |
+| `LoraLinear` | frozen base + trainable low-rank `A`/`B` adapters |
 | `Relu` / `Tanh` / `Sigmoid` | stateless activation modules |
 | `Sequential` | chains modules and concatenates their parameters |
 | `Sgd` / `AdamW` | momentum SGD and AdamW with decoupled weight decay |
@@ -197,6 +202,41 @@ characters are rejected rather than byte-encoded.
 > Note: because the kernels are scalar loops, the workspace sets
 > `[profile.dev] opt-level = 2`. Without it the Tiny GPT demo is roughly an order
 > of magnitude slower.
+
+## Training recipes
+
+Milestone 5 adds the supervised and preference-optimization recipes on top of the
+same autograd engine.
+
+| Recipe | Building blocks | Demo output |
+| --- | --- | --- |
+| Pretraining | `TextDataset` + `cross_entropy` | Tiny GPT (see above) |
+| SFT / loss masking | `Dataset`, `Batch.weights`, `cross_entropy_weighted`, `SftDataset` | prompt masked, losses fall to ~0.002 |
+| LoRA | `LoraLinear` (frozen base, rank-4 adapters) | 54% → 100% on the new task, base weights unchanged |
+| DPO | `sequence_log_prob`, `log_sigmoid`, `dpo_loss` | margin −1.0 → +9.7, chosen prob 0.99 |
+| GRPO | `grpo_loss` (group-normalized advantage) | P(target arm) 0.15 → 0.998 |
+
+Loss masking is a weighted cross-entropy: a weight of `0.0` removes a position
+from both the loss and its gradient, and the loss is normalized by the weight
+sum. `batch.weights` carries the mask through the trainer, so SFT and
+pretraining share one training loop.
+
+```rust
+use mini_llm_data::{CharTokenizer, SftDataset};
+use mini_llm_model::{ModelConfig, TinyGpt};
+use mini_llm_nn::Rng;
+use mini_llm_train::{TrainConfig, Trainer};
+
+let tokenizer = CharTokenizer::from_text(corpus);
+let (tokens, weights) = tokenizer.encode_supervised(prompt, response)?;
+let dataset = SftDataset::new(tokens, weights, block_size)?;
+let mut trainer = Trainer::new(model, dataset, TrainConfig::default());
+trainer.train(400, |_| {})?;
+```
+
+`LoraLinear` starts as the identity update (`B = 0`) and reports only `A` and
+`B` from `parameters()`, so an optimizer that receives `model.parameters()`
+leaves the base weights untouched — the LoRA demo asserts this explicitly.
 
 ## Web site (Astro)
 

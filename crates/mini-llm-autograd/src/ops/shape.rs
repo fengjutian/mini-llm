@@ -112,6 +112,29 @@ impl TensorValue {
         })
     }
 
+    /// Row-wise sum of a rank-2 value, kept as `[rows, 1]` for broadcasting.
+    pub fn sum_rows_keepdim(&self) -> Result<TensorValue, AutogradError> {
+        let source = self.value();
+        let (rows, cols) = matrix_shape(&source)?;
+        let data = source.data();
+        let mut sums = Vec::with_capacity(rows);
+        for row in 0..rows {
+            let start = row * cols;
+            sums.push(data[start..start + cols].iter().sum::<f32>());
+        }
+        let value = Tensor::new(sums, vec![rows, 1])?;
+        self.unary("sum_rows", value, move |g| {
+            let upstream = g.data();
+            let mut out = vec![0.0f32; rows * cols];
+            for row in 0..rows {
+                for col in 0..cols {
+                    out[row * cols + col] = upstream[row];
+                }
+            }
+            Ok(Tensor::new(out, vec![rows, cols])?)
+        })
+    }
+
     /// Row-wise mean of a rank-2 value, kept as `[rows, 1]` for broadcasting.
     pub fn mean_rows_keepdim(&self) -> Result<TensorValue, AutogradError> {
         let source = self.value();
