@@ -141,6 +141,7 @@ pub struct Trainer<D: Dataset> {
     parameters: Vec<TensorValue>,
     schedule: LrSchedule,
     grad_clip: Option<f32>,
+    accumulation_steps: usize,
     step_index: usize,
     last_grad_norm: f32,
 }
@@ -159,9 +160,18 @@ impl<D: Dataset> Trainer<D> {
             parameters,
             schedule: LrSchedule::Constant,
             grad_clip: None,
+            accumulation_steps: 1,
             step_index: 0,
             last_grad_norm: 0.0,
         }
+    }
+
+    /// Averaged over this many micro-batches before one optimizer update.
+    ///
+    /// The effective batch size is `batch_size * accumulation_steps`.
+    pub fn with_accumulation_steps(mut self, steps: usize) -> Self {
+        self.accumulation_steps = steps.max(1);
+        self
     }
 
     /// Uses a learning-rate schedule instead of the constant rate.
@@ -193,9 +203,10 @@ impl<D: Dataset> Trainer<D> {
         &self.parameters
     }
 
-    /// Samples one batch, computes the loss, backpropagates and updates.
+    /// Samples `accumulation_steps` micro-batches, accumulates their gradients,
+    /// then performs one optimizer update.
     ///
-    /// Returns the loss *before* the update.
+    /// Returns the mean loss of the micro-batches *before* the update.
     pub fn step(&mut self) -> Result<f32, TrainError> {
         self.step_index += 1;
         let learning_rate = self.schedule.learning_rate(
@@ -205,12 +216,27 @@ impl<D: Dataset> Trainer<D> {
         );
         self.optimizer.set_learning_rate(learning_rate);
 
-        let batch = self
-            .dataset
-            .sample_batch(self.config.batch_size, &mut self.rng)?;
-        let loss = self.loss(&batch)?;
-        loss.backward()?;
-        let value = loss.data()[0];
+        let micro_batches = self.accumulation_steps;
+        let mut total_loss = 0.0;
+        for _ in 0..micro_batches {
+            let batch = self
+                .dataset
+                .sample_batch(self.config.batch_size, &mut self.rng)?;
+            let loss = self.loss(&batch)?;
+            loss.backward()?;
+            total_loss += loss.data()[0];
+            // Free this graph before the next micro-batch: it is what keeps the
+            // parameter buffers shared.
+            drop(loss);
+        }
+
+        if micro_batches > 1 {
+            let factor = 1.0 / micro_batches as f32;
+            for parameter in &self.parameters {
+                parameter.scale_grad(factor)?;
+            }
+        }
+
         self.last_grad_norm = self.grad_norm();
         if let Some(max_norm) = self.grad_clip {
             if self.last_grad_norm > max_norm && self.last_grad_norm > 0.0 {
@@ -221,16 +247,13 @@ impl<D: Dataset> Trainer<D> {
                 self.last_grad_norm = max_norm;
             }
         }
-        // Drop the graph before the optimizer runs: it is what keeps parameter
-        // buffers shared, and a unique buffer lets `update_value` mutate in
-        // place instead of copying.
-        drop(loss);
+
         let parameters = &self.parameters;
         self.optimizer.step(parameters)?;
         for parameter in parameters {
             parameter.zero_grad();
         }
-        Ok(value)
+        Ok(total_loss / micro_batches as f32)
     }
 
     /// Sum of squared gradients across all parameters, square-rooted.
@@ -246,6 +269,11 @@ impl<D: Dataset> Trainer<D> {
     /// Global gradient norm measured during the most recent step.
     pub fn last_grad_norm(&self) -> f32 {
         self.last_grad_norm
+    }
+
+    /// Micro-batches accumulated per optimizer update.
+    pub fn accumulation_steps(&self) -> usize {
+        self.accumulation_steps
     }
 
     /// Number of optimizer updates performed so far (across restores).

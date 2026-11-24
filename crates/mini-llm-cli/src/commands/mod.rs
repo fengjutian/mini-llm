@@ -19,6 +19,32 @@ pub mod xor;
 /// Where `train` writes and `generate` reads the Tiny GPT checkpoint.
 pub(crate) const CHECKPOINT_PATH: &str = "checkpoints/tiny-gpt.bin";
 
+/// Reads `--corpus <path>` / `--corpus=<path>`, falling back to the built-in text.
+///
+/// Returns the text and a human-readable label for logging.
+pub(crate) fn corpus_text(arguments: &[String]) -> (String, String) {
+    let path = arguments
+        .iter()
+        .position(|argument| argument == "--corpus")
+        .and_then(|index| arguments.get(index + 1).cloned())
+        .or_else(|| {
+            arguments
+                .iter()
+                .find_map(|argument| argument.strip_prefix("--corpus=").map(str::to_string))
+        });
+
+    match path {
+        Some(path) => match std::fs::read_to_string(&path) {
+            Ok(text) => (text, path),
+            Err(error) => {
+                eprintln!("cannot read corpus `{path}`: {error}");
+                std::process::exit(2);
+            }
+        },
+        None => (TINY_CORPUS.to_string(), "built-in corpus".to_string()),
+    }
+}
+
 /// A short public-domain-style paragraph used for the character-level demo.
 pub(crate) const TINY_CORPUS: &str = "\
 The little language model learns one character at a time. It reads a short story, \

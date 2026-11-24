@@ -3,7 +3,7 @@
 use mini_llm_data::TextDataset;
 use mini_llm_train::{load_checkpoint, load_training_checkpoint, TrainConfig, Trainer};
 
-use super::{CHECKPOINT_PATH, TINY_CORPUS};
+use super::{corpus_text, CHECKPOINT_PATH};
 
 const BLOCK_SIZE: usize = 48;
 const VALIDATION_FRACTION: f32 = 0.1;
@@ -11,9 +11,11 @@ const EVAL_BATCHES: usize = 20;
 
 pub fn run(arguments: &[String]) {
     let batches = arguments
-        .iter()
-        .find_map(|value| value.parse::<usize>().ok())
+        .first()
+        .and_then(|value| value.parse::<usize>().ok())
         .unwrap_or(EVAL_BATCHES);
+
+    let (text, corpus_label) = corpus_text(arguments);
 
     let (model, tokenizer) = match load_training_checkpoint(CHECKPOINT_PATH) {
         Ok((model, tokenizer, state)) => {
@@ -30,10 +32,11 @@ pub fn run(arguments: &[String]) {
         },
     };
 
-    let tokens = match tokenizer.encode(TINY_CORPUS) {
+    let tokens = match tokenizer.encode(&text) {
         Ok(tokens) => tokens,
         Err(error) => {
-            eprintln!("checkpoint vocabulary does not cover the built-in corpus: {error}");
+            eprintln!("checkpoint vocabulary cannot encode `{corpus_label}`: {error}");
+            eprintln!("pass the same `--corpus` used for training");
             return;
         }
     };
@@ -55,7 +58,9 @@ pub fn run(arguments: &[String]) {
     };
     let mut trainer = Trainer::new(model, dataset, config);
     match trainer.evaluate(batches) {
-        Ok(loss) => println!("validation loss ({batches} batches of 2 windows): {loss:.4}"),
+        Ok(loss) => println!(
+            "validation loss on `{corpus_label}` ({batches} batches of 2 windows): {loss:.4}"
+        ),
         Err(error) => eprintln!("evaluation failed: {error}"),
     }
 }

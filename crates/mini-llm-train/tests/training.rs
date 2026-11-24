@@ -2,7 +2,7 @@
 
 use std::path::PathBuf;
 
-use mini_llm_data::{CharTokenizer, TextDataset};
+use mini_llm_data::{Batch, CharTokenizer, Dataset, TextDataset};
 use mini_llm_model::{ModelConfig, TinyGpt};
 use mini_llm_nn::Rng;
 use mini_llm_trace::{Event, MemorySink};
@@ -234,4 +234,62 @@ fn resumed_training_matches_the_uninterrupted_run() {
     );
 
     let _ = std::fs::remove_file(path);
+}
+
+struct FixedDataset {
+    batch: Batch,
+}
+
+impl Dataset for FixedDataset {
+    fn block_size(&self) -> usize {
+        self.batch.seq
+    }
+
+    fn sample_batch(
+        &self,
+        _batch_size: usize,
+        _rng: &mut Rng,
+    ) -> Result<Batch, mini_llm_data::DataError> {
+        Ok(self.batch.clone())
+    }
+}
+
+fn fixed_dataset() -> FixedDataset {
+    FixedDataset {
+        batch: Batch {
+            inputs: vec![0, 1, 2, 3],
+            targets: vec![1, 2, 3, 4],
+            weights: vec![1.0; 4],
+            batch: 1,
+            seq: 4,
+        },
+    }
+}
+
+#[test]
+fn gradient_accumulation_matches_a_single_step() {
+    // Two identical micro-batches average back to the single-batch gradient,
+    // so the accumulated run must match the plain one exactly.
+    let accumulated_model = TinyGpt::new(config(5), &mut Rng::new(1)).unwrap();
+    let single_model = TinyGpt::new(config(5), &mut Rng::new(1)).unwrap();
+    let mut accumulated =
+        Trainer::new(accumulated_model, fixed_dataset(), train_config()).with_accumulation_steps(2);
+    let mut single = Trainer::new(single_model, fixed_dataset(), train_config());
+
+    let accumulated_loss = accumulated.step().unwrap();
+    let single_loss = single.step().unwrap();
+    assert!((accumulated_loss - single_loss).abs() < 1e-6);
+    assert_eq!(accumulated.step_index(), 1);
+    assert_eq!(accumulated.accumulation_steps(), 2);
+
+    for (left, right) in accumulated
+        .model()
+        .parameters()
+        .iter()
+        .zip(single.model().parameters().iter())
+    {
+        for (a, b) in left.data().iter().zip(right.data()) {
+            assert!((a - b).abs() < 1e-6, "parameter diverged: {a} vs {b}");
+        }
+    }
 }

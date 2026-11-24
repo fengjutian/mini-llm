@@ -49,6 +49,7 @@ cargo run -p mini-llm-cli -- xor         # Linear + Tanh MLP trained with AdamW
 cargo run -p mini-llm-cli -- classify    # softmax + cross-entropy on two blobs
 cargo run -p mini-llm-cli -- moe         # mixture-of-experts routing
 cargo run -p mini-llm-cli -- train       # modern Tiny GPT (RMSNorm/RoPE/SwiGLU/GQA)
+cargo run -p mini-llm-cli -- train 200 --corpus examples/corpus.txt   # train on a text file
 cargo run -p mini-llm-cli -- train 200 --resume   # continue from the saved step
 cargo run -p mini-llm-cli -- eval        # validation loss of the saved checkpoint
 cargo run -p mini-llm-cli -- generate "The little language model learns " 14 0.3
@@ -76,6 +77,14 @@ The training loop includes what a real run needs:
   RNG state and Adam first/second moments, so `--resume` continues the same run
   instead of restarting the optimizer. A test asserts that a resumed step is
   bit-identical to the uninterrupted one.
+- **Gradient accumulation** — `--accum N` averages N micro-batches before one
+  optimizer update, trading time for a larger effective batch
+  (`batch_size × N`); a test checks that accumulating two identical batches
+  matches a plain single-batch step.
+- **Any UTF-8 text corpus** — `--corpus PATH` builds the character vocabulary
+  from that file instead of the built-in paragraph; the checkpoint records the
+  vocabulary, so `generate` works from it and `eval --corpus PATH` reproduces the
+  held-out number. `examples/corpus.txt` is a small pangram corpus to try.
 
 ## Autograd engine
 

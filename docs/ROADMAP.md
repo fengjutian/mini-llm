@@ -179,6 +179,8 @@ SFT 语料仅用于展示掩码机制。
 - [x] Global gradient-norm clipping
 - [x] Held-out validation split and `eval` command
 - [x] Resumable checkpoints (step, RNG, Adam moments)
+- [x] Gradient accumulation (`--accum N`)
+- [x] File corpus loading (`--corpus PATH`)
 
 实现拆分：
 

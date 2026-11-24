@@ -18,11 +18,13 @@
 //! assert_eq!(batch.inputs.len(), 2 * 4);
 //! ```
 
+mod bpe;
 mod dataset;
 mod tokenizer;
 
+pub use bpe::BpeTokenizer;
 pub use dataset::{Batch, Dataset, SftDataset, TextDataset};
-pub use tokenizer::CharTokenizer;
+pub use tokenizer::{CharTokenizer, Tokenizer};
 
 use std::error::Error;
 use std::fmt::{Display, Formatter};
@@ -47,6 +49,10 @@ pub enum DataError {
     EmptyMaskWindow,
     /// A supervised example needs a non-empty response to learn from.
     EmptyResponse,
+    /// A BPE merge refers to a token id that does not exist yet.
+    InvalidMerge { index: usize },
+    /// Decoded token bytes are not valid UTF-8.
+    InvalidUtf8,
 }
 
 impl Display for DataError {
@@ -79,6 +85,12 @@ impl Display for DataError {
             }
             Self::EmptyMaskWindow => write!(f, "window contains no supervised tokens"),
             Self::EmptyResponse => write!(f, "supervised example needs a non-empty response"),
+            Self::InvalidMerge { index } => write!(
+                f,
+                "BPE merge {} refers to a token id that does not exist yet",
+                index
+            ),
+            Self::InvalidUtf8 => write!(f, "decoded tokens are not valid UTF-8"),
         }
     }
 }

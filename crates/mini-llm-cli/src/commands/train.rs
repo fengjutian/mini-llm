@@ -13,7 +13,7 @@ use mini_llm_train::{
     load_training_checkpoint, save_training_checkpoint, LrSchedule, TrainConfig, Trainer,
 };
 
-use super::{CHECKPOINT_PATH, TINY_CORPUS};
+use super::{corpus_text, CHECKPOINT_PATH};
 
 const BLOCK_SIZE: usize = 48;
 const BATCH_SIZE: usize = 2;
@@ -21,37 +21,67 @@ const DEFAULT_STEPS: usize = 800;
 const WARMUP_STEPS: usize = 40;
 const GRAD_CLIP: f32 = 1.0;
 const VALIDATION_FRACTION: f32 = 0.1;
-const SAMPLE_PROMPT: &str = "The little language model learns ";
 
 pub fn run(arguments: &[String]) {
     let resume = arguments.iter().any(|argument| argument == "--resume");
+    let accumulation = parse_accumulation(arguments);
     let steps = arguments
-        .iter()
-        .find_map(|value| value.parse::<usize>().ok())
+        .first()
+        .and_then(|value| value.parse::<usize>().ok())
         .unwrap_or(DEFAULT_STEPS);
 
-    let corpus_tokenizer = CharTokenizer::from_text(TINY_CORPUS);
-    let tokens = corpus_tokenizer
-        .encode(TINY_CORPUS)
-        .expect("corpus encodes");
+    let corpus = corpus_text(arguments);
+    let (text, corpus_label) = corpus;
+
+    let resumed = if resume {
+        match load_training_checkpoint(CHECKPOINT_PATH) {
+            Ok((model, tokenizer, state)) => {
+                println!("  resumed checkpoints/tiny-gpt.bin at step {}", state.step);
+                Some((model, tokenizer, state))
+            }
+            Err(error) => {
+                println!("  cannot resume ({error}); starting a fresh run");
+                None
+            }
+        }
+    } else {
+        None
+    };
+
+    let (tokenizer, model, restored_state) = match resumed {
+        Some((model, tokenizer, state)) => (tokenizer, model, Some(state)),
+        None => {
+            let tokenizer = CharTokenizer::from_text(&text);
+            let model = build_model(tokenizer.vocab_size());
+            (tokenizer, model, None)
+        }
+    };
+    let tokens = match tokenizer.encode(&text) {
+        Ok(tokens) => tokens,
+        Err(error) => {
+            eprintln!("the checkpoint vocabulary cannot encode `{corpus_label}`: {error}");
+            eprintln!("start a fresh run (without --resume) or pass a compatible --corpus");
+            std::process::exit(2);
+        }
+    };
+    if tokens.len() <= BLOCK_SIZE + 1 {
+        eprintln!("`{corpus_label}` is too short: need more than {BLOCK_SIZE} tokens");
+        std::process::exit(2);
+    }
+
     let (train_tokens, validation_tokens) = split_tokens(&tokens, VALIDATION_FRACTION);
     let train_dataset = TextDataset::new(train_tokens, BLOCK_SIZE).expect("train dataset");
     let validation_dataset =
         TextDataset::new(validation_tokens, BLOCK_SIZE).expect("validation dataset");
 
-    let (tokenizer, model, restored) = if resume {
-        match load_training_checkpoint(CHECKPOINT_PATH) {
-            Ok((model, tokenizer, state)) => (tokenizer, model, Some(state)),
-            Err(error) => {
-                println!("  cannot resume ({error}); starting a fresh run");
-                (corpus_tokenizer, build_model(), None)
-            }
-        }
-    } else {
-        (corpus_tokenizer, build_model(), None)
-    };
-
-    print_model_summary(&model, &tokenizer, &tokens, steps);
+    print_model_summary(
+        &model,
+        &tokenizer,
+        &text,
+        &corpus_label,
+        tokens.len(),
+        steps,
+    );
 
     let config = TrainConfig {
         steps,
@@ -65,9 +95,16 @@ pub fn run(arguments: &[String]) {
             warmup_steps: WARMUP_STEPS,
             min_ratio: 0.1,
         })
-        .with_grad_clip(GRAD_CLIP);
+        .with_grad_clip(GRAD_CLIP)
+        .with_accumulation_steps(accumulation);
+    println!(
+        "  effective batch: {} windows ({} x {})",
+        BATCH_SIZE * accumulation,
+        BATCH_SIZE,
+        accumulation
+    );
 
-    if let Some(state) = restored {
+    if let Some(state) = restored_state {
         trainer
             .restore_state(&state)
             .expect("restore training state");
@@ -104,7 +141,7 @@ pub fn run(arguments: &[String]) {
     println!("  final sampled loss: {last_loss:.4}");
     println!("  final validation loss: {validation:.4}");
 
-    print_sample(trainer.model(), &tokenizer);
+    print_sample(trainer.model(), &tokenizer, &text);
     persist(trainer.model(), &tokenizer, &trainer.state());
 }
 
@@ -114,24 +151,43 @@ fn split_tokens(tokens: &[usize], fraction: f32) -> (Vec<usize>, Vec<usize>) {
     (tokens[..split].to_vec(), tokens[split..].to_vec())
 }
 
-fn build_model() -> TinyGpt {
-    let tokenizer = CharTokenizer::from_text(TINY_CORPUS);
-    let mut config = ModelConfig::modern(tokenizer.vocab_size());
+/// Reads `--accum N` / `--accum=N`; defaults to one micro-batch.
+fn parse_accumulation(arguments: &[String]) -> usize {
+    let mut value = None;
+    for (index, argument) in arguments.iter().enumerate() {
+        if argument == "--accum" {
+            value = arguments.get(index + 1).and_then(|next| next.parse().ok());
+        } else if let Some(rest) = argument.strip_prefix("--accum=") {
+            value = rest.parse().ok();
+        }
+    }
+    value.unwrap_or(1).max(1)
+}
+
+fn build_model(vocab_size: usize) -> TinyGpt {
+    let mut config = ModelConfig::modern(vocab_size);
     config.hidden_size = 32;
     config.max_seq_len = BLOCK_SIZE;
     let mut rng = Rng::new(1337);
     TinyGpt::new(config, &mut rng).expect("model")
 }
 
-fn print_model_summary(model: &TinyGpt, tokenizer: &CharTokenizer, tokens: &[usize], steps: usize) {
+fn print_model_summary(
+    model: &TinyGpt,
+    tokenizer: &CharTokenizer,
+    text: &str,
+    corpus_label: &str,
+    tokens: usize,
+    steps: usize,
+) {
     let config = model.config();
     println!("Tiny GPT, character level (modern stack)");
     println!(
-        "  corpus: {} chars, vocab {}, {} training windows ({} held out)",
-        TINY_CORPUS.chars().count(),
+        "  corpus: {corpus_label} ({} chars), vocab {}, {} training windows ({} held out)",
+        text.chars().count(),
         tokenizer.vocab_size(),
-        tokens.len() - BLOCK_SIZE,
-        (tokens.len() as f32 * VALIDATION_FRACTION) as usize
+        tokens - BLOCK_SIZE,
+        (tokens as f32 * VALIDATION_FRACTION) as usize
     );
     println!(
         "  model: {} params | layers={} hidden={} heads={} kv_heads={} block={}",
@@ -152,8 +208,13 @@ fn print_model_summary(model: &TinyGpt, tokenizer: &CharTokenizer, tokens: &[usi
     println!();
 }
 
-fn print_sample(model: &TinyGpt, tokenizer: &CharTokenizer) {
-    let prompt = tokenizer.encode(SAMPLE_PROMPT).unwrap_or_else(|_| vec![0]);
+fn print_sample(model: &TinyGpt, tokenizer: &CharTokenizer, text: &str) {
+    // Use the corpus prefix so the prompt is always in the vocabulary.
+    let prompt_text: String = text.chars().take(24).collect();
+    let prompt = match tokenizer.encode(&prompt_text) {
+        Ok(prompt) if !prompt.is_empty() => prompt,
+        _ => vec![0],
+    };
     let mut sampler = Rng::new(99);
     let generated = model
         .generate(&prompt, 14, 0.3, &mut sampler)

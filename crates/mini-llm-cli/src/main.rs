@@ -121,11 +121,11 @@ fn usage() {
     println!("  train-line           fit y = 2x - 1 with manual SGD");
     println!("  xor                  train a small MLP on XOR (Linear + Tanh + AdamW)");
     println!("  classify             train a 2D two-blob classifier with softmax + cross-entropy");
-    println!("  train [steps]        train Tiny GPT on the built-in corpus");
+    println!("  train [steps]        train Tiny GPT (flags: --resume, --accum N, --corpus PATH)");
     println!("  generate [prompt] [tokens] [temp]");
     println!("                       sample text from the saved checkpoint (KV cache)");
     println!("  moe                  mixture-of-experts routing demo");
-    println!("  eval [batches]       validation loss of the saved checkpoint");
+    println!("  eval [batches]       validation loss (flag: --corpus PATH)");
     println!("  sft [steps]          supervised fine-tuning with prompt loss masking");
     println!("  lora                  fine-tune a frozen classifier with LoRA adapters");
     println!("  dpo                   preference optimization on a toy policy");
