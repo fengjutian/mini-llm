@@ -1,4 +1,5 @@
-//! Binary checkpoint serialization: config + vocabulary + parameters.
+//! Binary checkpoint serialization: config + vocabulary + parameters, plus an
+//! optional training state (step, RNG and Adam moments) for exact resumption.
 
 use std::fs;
 use std::path::Path;
@@ -8,27 +9,53 @@ use mini_llm_model::{FeedForwardKind, ModelConfig, NormKind, PositionKind, TinyG
 use mini_llm_nn::Rng;
 use mini_llm_tensor::Tensor;
 
-use crate::TrainError;
+use crate::{TrainError, TrainingState};
 
 const MAGIC: &[u8; 8] = b"MINILLM1";
 /// Version 1 stored only the five base dimensions. Version 2 adds the modern
-/// architecture switches; version 1 checkpoints still load with the classic
-/// architecture.
-const VERSION: u32 = 2;
+/// architecture switches; version 3 appends the training state. Older
+/// checkpoints still load.
+const VERSION: u32 = 3;
+const VERSION_MODEL_ONLY: u32 = 2;
 
-/// Writes `model` and its vocabulary to `path`.
+/// Writes `model` and its vocabulary to `path` (no training state).
 pub fn save_checkpoint(
     path: impl AsRef<Path>,
     model: &TinyGpt,
     tokenizer: &CharTokenizer,
 ) -> Result<(), TrainError> {
+    write_checkpoint(path, model, tokenizer, None)
+}
+
+/// Writes `model`, its vocabulary and the run state needed to resume exactly.
+pub fn save_training_checkpoint(
+    path: impl AsRef<Path>,
+    model: &TinyGpt,
+    tokenizer: &CharTokenizer,
+    state: &TrainingState,
+) -> Result<(), TrainError> {
+    write_checkpoint(path, model, tokenizer, Some(state))
+}
+
+fn write_checkpoint(
+    path: impl AsRef<Path>,
+    model: &TinyGpt,
+    tokenizer: &CharTokenizer,
+    state: Option<&TrainingState>,
+) -> Result<(), TrainError> {
     if tokenizer.vocab_size() != model.config().vocab_size {
         return Err(TrainError::InvalidVocabulary);
     }
 
+    let version = if state.is_some() {
+        VERSION
+    } else {
+        VERSION_MODEL_ONLY
+    };
+
     let mut bytes = Vec::new();
     bytes.extend_from_slice(MAGIC);
-    push_u32(&mut bytes, VERSION);
+    push_u32(&mut bytes, version);
 
     let config = model.config();
     for value in [
@@ -64,12 +91,46 @@ pub fn save_checkpoint(
         }
     }
 
+    if let Some(state) = state {
+        push_u32(&mut bytes, state.step as u32);
+        push_u64(&mut bytes, state.rng_state);
+        push_u32(&mut bytes, state.optimizer_step);
+        for moments in [&state.first_moments, &state.second_moments] {
+            push_u32(&mut bytes, moments.len() as u32);
+            for values in moments {
+                push_u32(&mut bytes, values.len() as u32);
+                for entry in values {
+                    bytes.extend_from_slice(&entry.to_le_bytes());
+                }
+            }
+        }
+    }
+
     fs::write(path, bytes)?;
     Ok(())
 }
 
-/// Reads a checkpoint written by [`save_checkpoint`].
+/// Reads a checkpoint written by [`save_checkpoint`] or
+/// [`save_training_checkpoint`].
 pub fn load_checkpoint(path: impl AsRef<Path>) -> Result<(TinyGpt, CharTokenizer), TrainError> {
+    let (model, tokenizer, _) = load_components(path)?;
+    Ok((model, tokenizer))
+}
+
+/// Reads a checkpoint and the training state saved alongside it.
+pub fn load_training_checkpoint(
+    path: impl AsRef<Path>,
+) -> Result<(TinyGpt, CharTokenizer, TrainingState), TrainError> {
+    let (model, tokenizer, state) = load_components(path)?;
+    match state {
+        Some(state) => Ok((model, tokenizer, state)),
+        None => Err(TrainError::MissingTrainingState),
+    }
+}
+
+fn load_components(
+    path: impl AsRef<Path>,
+) -> Result<(TinyGpt, CharTokenizer, Option<TrainingState>), TrainError> {
     let bytes = fs::read(path)?;
     let mut reader = Reader::new(&bytes);
 
@@ -77,7 +138,7 @@ pub fn load_checkpoint(path: impl AsRef<Path>) -> Result<(TinyGpt, CharTokenizer
         return Err(TrainError::BadMagic);
     }
     let version = reader.u32()?;
-    if version != 1 && version != VERSION {
+    if version == 0 || version > VERSION {
         return Err(TrainError::UnsupportedVersion(version));
     }
 
@@ -164,10 +225,51 @@ pub fn load_checkpoint(path: impl AsRef<Path>) -> Result<(TinyGpt, CharTokenizer
         parameter.set_value(Tensor::new(data, shape)?)?;
     }
 
-    Ok((model, tokenizer))
+    let state = if version >= 3 {
+        let step = reader.u32()? as usize;
+        let rng_state = reader.u64()?;
+        let optimizer_step = reader.u32()?;
+        let mut moments = Vec::with_capacity(2);
+        for _ in 0..2 {
+            let count = reader.u32()? as usize;
+            if count != parameters.len() {
+                return Err(TrainError::ShapeMismatch {
+                    expected: vec![parameters.len()],
+                    actual: vec![count],
+                });
+            }
+            let mut values = Vec::with_capacity(count);
+            for _ in 0..count {
+                let length = reader.u32()? as usize;
+                let mut data = Vec::with_capacity(length);
+                for _ in 0..length {
+                    data.push(reader.f32()?);
+                }
+                values.push(data);
+            }
+            moments.push(values);
+        }
+        let second_moments = moments.pop().expect("two moment vectors");
+        let first_moments = moments.pop().expect("two moment vectors");
+        Some(TrainingState {
+            step,
+            rng_state,
+            optimizer_step,
+            first_moments,
+            second_moments,
+        })
+    } else {
+        None
+    };
+
+    Ok((model, tokenizer, state))
 }
 
 fn push_u32(bytes: &mut Vec<u8>, value: u32) {
+    bytes.extend_from_slice(&value.to_le_bytes());
+}
+
+fn push_u64(bytes: &mut Vec<u8>, value: u64) {
     bytes.extend_from_slice(&value.to_le_bytes());
 }
 
@@ -204,6 +306,13 @@ impl<'a> Reader<'a> {
         let mut buffer = [0u8; 4];
         buffer.copy_from_slice(bytes);
         Ok(u32::from_le_bytes(buffer))
+    }
+
+    fn u64(&mut self) -> Result<u64, TrainError> {
+        let bytes = self.take(8)?;
+        let mut buffer = [0u8; 8];
+        buffer.copy_from_slice(bytes);
+        Ok(u64::from_le_bytes(buffer))
     }
 
     fn f32(&mut self) -> Result<f32, TrainError> {

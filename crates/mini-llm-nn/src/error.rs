@@ -19,6 +19,12 @@ pub enum NnError {
     TokenOutOfRange { index: usize, vocab_size: usize },
     /// A mixture-of-experts layer got a top-k outside `1..=num_experts`.
     InvalidTopK { top_k: usize, num_experts: usize },
+    /// Restored optimizer state does not match a parameter's length.
+    StateShape {
+        index: usize,
+        expected: usize,
+        actual: usize,
+    },
 }
 
 impl Display for NnError {
@@ -43,6 +49,15 @@ impl Display for NnError {
                 f,
                 "top-k must be between 1 and {}, got {}",
                 num_experts, top_k
+            ),
+            Self::StateShape {
+                index,
+                expected,
+                actual,
+            } => write!(
+                f,
+                "optimizer state for parameter {} has {} values, expected {}",
+                index, actual, expected
             ),
         }
     }

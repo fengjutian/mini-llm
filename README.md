@@ -49,6 +49,8 @@ cargo run -p mini-llm-cli -- xor         # Linear + Tanh MLP trained with AdamW
 cargo run -p mini-llm-cli -- classify    # softmax + cross-entropy on two blobs
 cargo run -p mini-llm-cli -- moe         # mixture-of-experts routing
 cargo run -p mini-llm-cli -- train       # modern Tiny GPT (RMSNorm/RoPE/SwiGLU/GQA)
+cargo run -p mini-llm-cli -- train 200 --resume   # continue from the saved step
+cargo run -p mini-llm-cli -- eval        # validation loss of the saved checkpoint
 cargo run -p mini-llm-cli -- generate "The little language model learns " 14 0.3
 cargo run -p mini-llm-cli -- sft         # supervised fine-tuning with prompt masking
 cargo run -p mini-llm-cli -- lora        # adapt a frozen classifier with low-rank adapters
@@ -60,6 +62,20 @@ cargo run --release -p mini-llm-cli -- bench  # kernel + training micro-benchmar
 
 `train` writes `checkpoints/tiny-gpt.bin`; `generate` loads it and samples with
 the KV cache. A full 800-step run takes roughly 20 seconds on a laptop CPU.
+
+The training loop includes what a real run needs:
+
+- **Warmup + cosine schedule** (`LrSchedule::WarmupCosine`), printed per step
+  together with the current learning rate.
+- **Global gradient-norm clipping** (`Trainer::with_grad_clip`); the reported
+  `|g|` is post-clip.
+- **Held-out validation loss** — the corpus is split 90/10, validation is
+  evaluated every 50 steps and once at the end, and `eval` reproduces the final
+  number from the checkpoint.
+- **Exact resumption** — the version-3 checkpoint also stores the step counter,
+  RNG state and Adam first/second moments, so `--resume` continues the same run
+  instead of restarting the optimizer. A test asserts that a resumed step is
+  bit-identical to the uninterrupted one.
 
 ## Autograd engine
 
@@ -178,15 +194,17 @@ The training stack:
 | Crate | Role |
 | --- | --- |
 | `mini-llm-data` | `CharTokenizer` (sorted, deterministic vocabulary) and `TextDataset` (random windows, targets shifted by one) |
-| `mini-llm-train` | `Trainer` (sample → forward → cross-entropy → backward → AdamW) and checkpoint save/load |
+| `mini-llm-train` | `Trainer` (sample → forward → cross-entropy → backward → AdamW), LR schedule, gradient clipping, validation loss, checkpoint save/load with resumable state |
 
-Checkpoints are a dependency-free little-endian format (version 2 adds the
-architecture switches; version 1 files still load with the classic architecture):
+Checkpoints are a dependency-free little-endian format (version 3 appends the
+training state used for exact resumption; versions 1 and 2 still load):
 
 ```text
 magic "MINILLM1" | version u32 | 10 config u32s
 vocab_size u32 | vocab_size × (char as u32)
 parameter_count u32 | parameter_count × { rank u32 | dims | f32 data }
+(version 3) step u32 | rng_state u64 | optimizer_step u32
+            first_moments, second_moments: count u32 | count × { len u32 | f32 data }
 ```
 
 A 420-character corpus, 31-character vocabulary, 2 layers, 4 heads (2 KV heads),

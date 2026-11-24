@@ -6,8 +6,8 @@
 mod commands;
 
 use commands::{
-    autograd, basics, bench, classify, dpo, generate, grpo, lora, moe, regression, sft, trace,
-    train, xor,
+    autograd, basics, bench, classify, dpo, eval, generate, grpo, lora, moe, regression, sft,
+    trace, train, xor,
 };
 
 /// Which kernel backend the process should use.
@@ -95,6 +95,7 @@ fn dispatch(arguments: &[String]) {
         "train" => train::run(rest),
         "generate" => generate::run(rest),
         "moe" => moe::run(),
+        "eval" => eval::run(rest),
         "sft" => sft::run(rest),
         "dpo" => dpo::run(),
         "grpo" => grpo::run(),
@@ -124,6 +125,7 @@ fn usage() {
     println!("  generate [prompt] [tokens] [temp]");
     println!("                       sample text from the saved checkpoint (KV cache)");
     println!("  moe                  mixture-of-experts routing demo");
+    println!("  eval [batches]       validation loss of the saved checkpoint");
     println!("  sft [steps]          supervised fine-tuning with prompt loss masking");
     println!("  lora                  fine-tune a frozen classifier with LoRA adapters");
     println!("  dpo                   preference optimization on a toy policy");

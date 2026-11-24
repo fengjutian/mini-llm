@@ -147,6 +147,68 @@ impl AdamW {
     pub fn step_count(&self) -> u32 {
         self.step_count
     }
+
+    pub fn set_step_count(&mut self, step_count: u32) {
+        self.step_count = step_count;
+    }
+
+    /// First and second moments for `parameters`, in the given order.
+    ///
+    /// Parameters that have not been updated yet export zero vectors, so the
+    /// result can be written to a checkpoint and restored unconditionally.
+    pub fn export_moments(&self, parameters: &[TensorValue]) -> (Vec<Vec<f32>>, Vec<Vec<f32>>) {
+        let mut first = Vec::with_capacity(parameters.len());
+        let mut second = Vec::with_capacity(parameters.len());
+        for parameter in parameters {
+            let length = parameter.value().data().len();
+            match self.slots.get(&parameter.id()) {
+                Some(slot) => {
+                    first.push(slot.m.clone());
+                    second.push(slot.v.clone());
+                }
+                None => {
+                    first.push(vec![0.0; length]);
+                    second.push(vec![0.0; length]);
+                }
+            }
+        }
+        (first, second)
+    }
+
+    /// Restores moments produced by [`AdamW::export_moments`].
+    pub fn import_moments(
+        &mut self,
+        parameters: &[TensorValue],
+        first: &[Vec<f32>],
+        second: &[Vec<f32>],
+    ) -> Result<(), NnError> {
+        if first.len() != parameters.len() || second.len() != parameters.len() {
+            return Err(NnError::StateShape {
+                index: 0,
+                expected: parameters.len(),
+                actual: first.len().max(second.len()),
+            });
+        }
+        self.slots.clear();
+        for (index, parameter) in parameters.iter().enumerate() {
+            let length = parameter.value().data().len();
+            if first[index].len() != length || second[index].len() != length {
+                return Err(NnError::StateShape {
+                    index,
+                    expected: length,
+                    actual: first[index].len().max(second[index].len()),
+                });
+            }
+            self.slots.insert(
+                parameter.id(),
+                AdamSlot {
+                    m: first[index].clone(),
+                    v: second[index].clone(),
+                },
+            );
+        }
+        Ok(())
+    }
 }
 
 impl Optimizer for AdamW {

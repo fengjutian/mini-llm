@@ -6,7 +6,10 @@ use mini_llm_data::{CharTokenizer, TextDataset};
 use mini_llm_model::{ModelConfig, TinyGpt};
 use mini_llm_nn::Rng;
 use mini_llm_trace::{Event, MemorySink};
-use mini_llm_train::{load_checkpoint, save_checkpoint, TrainConfig, TrainError, Trainer};
+use mini_llm_train::{
+    load_checkpoint, load_training_checkpoint, save_checkpoint, save_training_checkpoint,
+    LrSchedule, TrainConfig, TrainError, Trainer,
+};
 
 fn tokenizer() -> CharTokenizer {
     CharTokenizer::from_text("abcde")
@@ -30,16 +33,19 @@ fn dataset() -> TextDataset {
     TextDataset::new(tokens, 8).unwrap()
 }
 
-fn trainer(seed: u64) -> Trainer<TextDataset> {
-    let model = TinyGpt::new(config(5), &mut Rng::new(seed)).unwrap();
-    let train_config = TrainConfig {
+fn train_config() -> TrainConfig {
+    TrainConfig {
         steps: 0,
         batch_size: 2,
         learning_rate: 0.01,
         weight_decay: 0.0,
         seed: 3,
-    };
-    Trainer::new(model, dataset(), train_config)
+    }
+}
+
+fn trainer(seed: u64) -> Trainer<TextDataset> {
+    let model = TinyGpt::new(config(5), &mut Rng::new(seed)).unwrap();
+    Trainer::new(model, dataset(), train_config())
 }
 
 fn temp_path(name: &str) -> PathBuf {
@@ -179,4 +185,53 @@ fn observed_training_emits_structured_events() {
         sink.events.last(),
         Some(Event::RunCompleted { .. })
     ));
+}
+
+#[test]
+fn warmup_cosine_schedule_has_the_expected_shape() {
+    let schedule = LrSchedule::WarmupCosine {
+        warmup_steps: 4,
+        min_ratio: 0.1,
+    };
+    // Warmup ramps linearly to the base rate.
+    assert!((schedule.learning_rate(1.0, 1, 100) - 0.25).abs() < 1e-6);
+    assert!((schedule.learning_rate(1.0, 4, 100) - 1.0).abs() < 1e-6);
+    // Cosine decay never leaves the [min_ratio, 1] band and reaches the floor.
+    let middle = schedule.learning_rate(1.0, 52, 100);
+    assert!((0.1..=1.0).contains(&middle), "middle rate {middle}");
+    assert!((schedule.learning_rate(1.0, 100, 100) - 0.1).abs() < 1e-5);
+}
+
+#[test]
+fn gradient_clipping_bounds_the_reported_norm() {
+    let mut trainer = trainer(5).with_grad_clip(0.01);
+    let loss = trainer.step().unwrap();
+    assert!(loss.is_finite());
+    assert!(
+        trainer.last_grad_norm() <= 0.0101,
+        "clip did not bound the norm: {}",
+        trainer.last_grad_norm()
+    );
+}
+
+#[test]
+fn resumed_training_matches_the_uninterrupted_run() {
+    let mut first = trainer(1);
+    first.train(3, |_| {}).unwrap();
+    let path = temp_path("resume");
+    save_training_checkpoint(&path, first.model(), &tokenizer(), &first.state()).unwrap();
+    let next_loss = first.step().unwrap();
+
+    let (model, tokenizer, state) = load_training_checkpoint(&path).unwrap();
+    assert_eq!(tokenizer.vocab_size(), 5);
+    let mut resumed = Trainer::new(model, dataset(), train_config());
+    resumed.restore_state(&state).unwrap();
+    assert_eq!(resumed.step_index(), 3);
+    let resumed_loss = resumed.step().unwrap();
+    assert_eq!(
+        next_loss, resumed_loss,
+        "resumed step diverged from the uninterrupted run"
+    );
+
+    let _ = std::fs::remove_file(path);
 }

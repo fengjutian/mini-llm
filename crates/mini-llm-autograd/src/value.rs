@@ -136,6 +136,22 @@ impl TensorValue {
         Ok(())
     }
 
+    /// Multiplies every stored gradient by `factor` (used by gradient clipping).
+    ///
+    /// Does nothing when the value has no gradient yet.
+    pub fn scale_grad(&self, factor: f32) -> Result<(), AutogradError> {
+        let mut node = self.node.borrow_mut();
+        if !node.requires_grad {
+            return Err(AutogradError::NotAParameter);
+        }
+        if let Some(grad) = node.grad.as_mut() {
+            for value in grad.data_mut() {
+                *value *= factor;
+            }
+        }
+        Ok(())
+    }
+
     // ---------------------------------------------------------------------
     // Graph plumbing
     // ---------------------------------------------------------------------

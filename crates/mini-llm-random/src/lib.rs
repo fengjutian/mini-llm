@@ -30,6 +30,22 @@ impl Rng {
         }
     }
 
+    /// The current internal state, for checkpointing a training run.
+    pub fn state(&self) -> u64 {
+        self.state
+    }
+
+    /// Rebuilds a generator from a state produced by [`Rng::state`].
+    pub fn resume(state: u64) -> Self {
+        Self {
+            state: if state == 0 {
+                0x9E37_79B9_7F4A_7C15
+            } else {
+                state
+            },
+        }
+    }
+
     pub fn next_u64(&mut self) -> u64 {
         let mut x = self.state;
         x ^= x >> 12;

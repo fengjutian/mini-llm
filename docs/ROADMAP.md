@@ -173,6 +173,26 @@ SFT 语料仅用于展示掩码机制。
 - Studio 是纯静态页面（`pnpm build` 时把示例轨迹内联），不训练模型；拖入
   新的轨迹即可查看自己的 run。
 
+## Milestone 7 — Training Loop Hardening（已完成）
+
+- [x] Warmup + cosine learning-rate schedule
+- [x] Global gradient-norm clipping
+- [x] Held-out validation split and `eval` command
+- [x] Resumable checkpoints (step, RNG, Adam moments)
+
+实现拆分：
+
+- `mini-llm-train`：`LrSchedule`（Constant / WarmupCosine）、`Trainer::with_schedule`、
+  `Trainer::with_grad_clip`、`evaluate_on`、`state` / `restore_state`；
+  `StepReport` 增加 `learning_rate` 与 `grad_norm`。
+- checkpoint 版本 3：在参数之后追加 `step`、`rng_state`、`optimizer_step` 与
+  Adam 一阶/二阶矩；`save_training_checkpoint` / `load_training_checkpoint`，
+  旧版本仍可加载。
+- CLI：`train` 使用 90/10 划分、每 50 步报告验证损失、`--resume` 续训；
+  新增 `eval` 命令复算验证损失。
+
+测试：调度形状、裁剪上界、以及「续训一步与不中断运行逐位相同」。
+
 ## Definition of Done
 
 每个 milestone 至少需要：

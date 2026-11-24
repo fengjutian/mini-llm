@@ -41,7 +41,9 @@
 mod checkpoint;
 mod recipes;
 
-pub use checkpoint::{load_checkpoint, save_checkpoint};
+pub use checkpoint::{
+    load_checkpoint, load_training_checkpoint, save_checkpoint, save_training_checkpoint,
+};
 pub use recipes::{dpo_loss, grpo_loss, sequence_log_prob};
 
 use std::error::Error;
@@ -82,6 +84,50 @@ pub struct StepReport {
     pub step: usize,
     pub loss: f32,
     pub elapsed_ms: f32,
+    pub learning_rate: f32,
+    pub grad_norm: f32,
+}
+
+/// How the learning rate changes over a run.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum LrSchedule {
+    /// Keep `TrainConfig::learning_rate` for every step.
+    Constant,
+    /// Linear warmup followed by a cosine decay to `min_ratio * base`.
+    WarmupCosine { warmup_steps: usize, min_ratio: f32 },
+}
+
+impl LrSchedule {
+    /// Learning rate for `step` (1-based) of a run with `total` steps.
+    pub fn learning_rate(&self, base: f32, step: usize, total: usize) -> f32 {
+        match *self {
+            Self::Constant => base,
+            Self::WarmupCosine {
+                warmup_steps,
+                min_ratio,
+            } => {
+                let min_ratio = min_ratio.clamp(0.0, 1.0);
+                if warmup_steps > 0 && step <= warmup_steps {
+                    return base * step as f32 / warmup_steps as f32;
+                }
+                let decay_steps = total.saturating_sub(warmup_steps).max(1);
+                let progress =
+                    (step.saturating_sub(warmup_steps) as f32 / decay_steps as f32).min(1.0);
+                let cosine = 0.5 * (1.0 + (std::f32::consts::PI * progress).cos());
+                base * (min_ratio + (1.0 - min_ratio) * cosine)
+            }
+        }
+    }
+}
+
+/// Everything needed to resume a run exactly: step counter, RNG and Adam state.
+#[derive(Debug, Clone, PartialEq)]
+pub struct TrainingState {
+    pub step: usize,
+    pub rng_state: u64,
+    pub optimizer_step: u32,
+    pub first_moments: Vec<Vec<f32>>,
+    pub second_moments: Vec<Vec<f32>>,
 }
 
 /// Owns a model, an optimizer and a dataset, and runs next-token training.
@@ -93,6 +139,10 @@ pub struct Trainer<D: Dataset> {
     config: TrainConfig,
     /// Parameter handles collected once; the optimizer mutates them in place.
     parameters: Vec<TensorValue>,
+    schedule: LrSchedule,
+    grad_clip: Option<f32>,
+    step_index: usize,
+    last_grad_norm: f32,
 }
 
 impl<D: Dataset> Trainer<D> {
@@ -107,7 +157,23 @@ impl<D: Dataset> Trainer<D> {
             rng,
             config,
             parameters,
+            schedule: LrSchedule::Constant,
+            grad_clip: None,
+            step_index: 0,
+            last_grad_norm: 0.0,
         }
+    }
+
+    /// Uses a learning-rate schedule instead of the constant rate.
+    pub fn with_schedule(mut self, schedule: LrSchedule) -> Self {
+        self.schedule = schedule;
+        self
+    }
+
+    /// Clips gradients to a global norm of `max_norm`.
+    pub fn with_grad_clip(mut self, max_norm: f32) -> Self {
+        self.grad_clip = Some(max_norm.max(0.0));
+        self
     }
 
     pub fn model(&self) -> &TinyGpt {
@@ -131,12 +197,30 @@ impl<D: Dataset> Trainer<D> {
     ///
     /// Returns the loss *before* the update.
     pub fn step(&mut self) -> Result<f32, TrainError> {
+        self.step_index += 1;
+        let learning_rate = self.schedule.learning_rate(
+            self.config.learning_rate,
+            self.step_index,
+            self.config.steps,
+        );
+        self.optimizer.set_learning_rate(learning_rate);
+
         let batch = self
             .dataset
             .sample_batch(self.config.batch_size, &mut self.rng)?;
         let loss = self.loss(&batch)?;
         loss.backward()?;
         let value = loss.data()[0];
+        self.last_grad_norm = self.grad_norm();
+        if let Some(max_norm) = self.grad_clip {
+            if self.last_grad_norm > max_norm && self.last_grad_norm > 0.0 {
+                let factor = max_norm / self.last_grad_norm;
+                for parameter in &self.parameters {
+                    parameter.scale_grad(factor)?;
+                }
+                self.last_grad_norm = max_norm;
+            }
+        }
         // Drop the graph before the optimizer runs: it is what keeps parameter
         // buffers shared, and a unique buffer lets `update_value` mutate in
         // place instead of copying.
@@ -147,6 +231,91 @@ impl<D: Dataset> Trainer<D> {
             parameter.zero_grad();
         }
         Ok(value)
+    }
+
+    /// Sum of squared gradients across all parameters, square-rooted.
+    fn grad_norm(&self) -> f32 {
+        self.parameters
+            .iter()
+            .filter_map(|parameter| parameter.grad())
+            .map(|grad| grad.data().iter().map(|value| value * value).sum::<f32>())
+            .sum::<f32>()
+            .sqrt()
+    }
+
+    /// Global gradient norm measured during the most recent step.
+    pub fn last_grad_norm(&self) -> f32 {
+        self.last_grad_norm
+    }
+
+    /// Number of optimizer updates performed so far (across restores).
+    pub fn step_index(&self) -> usize {
+        self.step_index
+    }
+
+    /// Learning rate used by the most recent step.
+    pub fn learning_rate(&self) -> f32 {
+        self.optimizer.learning_rate()
+    }
+
+    /// Snapshot of the run state for checkpointing.
+    pub fn state(&self) -> TrainingState {
+        let (first_moments, second_moments) = self.optimizer.export_moments(&self.parameters);
+        TrainingState {
+            step: self.step_index,
+            rng_state: self.rng.state(),
+            optimizer_step: self.optimizer.step_count(),
+            first_moments,
+            second_moments,
+        }
+    }
+
+    /// Restores a snapshot produced by [`Trainer::state`].
+    pub fn restore_state(&mut self, state: &TrainingState) -> Result<(), TrainError> {
+        for (index, parameter) in self.parameters.iter().enumerate() {
+            let length = parameter.value().data().len();
+            let first = state.first_moments.get(index);
+            let second = state.second_moments.get(index);
+            match (first, second) {
+                (Some(first), Some(second)) if first.len() == length && second.len() == length => {}
+                (Some(first), Some(second)) => {
+                    return Err(TrainError::StateShape {
+                        index,
+                        expected: length,
+                        actual: first.len().max(second.len()),
+                    });
+                }
+                _ => {
+                    return Err(TrainError::StateShape {
+                        index,
+                        expected: self.parameters.len(),
+                        actual: state.first_moments.len(),
+                    });
+                }
+            }
+        }
+        self.optimizer.import_moments(
+            &self.parameters,
+            &state.first_moments,
+            &state.second_moments,
+        )?;
+        self.optimizer.set_step_count(state.optimizer_step);
+        self.step_index = state.step;
+        self.rng = Rng::resume(state.rng_state);
+        Ok(())
+    }
+
+    /// Evaluates the mean loss on a held-out dataset without updating anything.
+    pub fn evaluate_on(&mut self, dataset: &D, batches: usize) -> Result<f32, TrainError> {
+        if batches == 0 {
+            return Ok(0.0);
+        }
+        let mut total = 0.0;
+        for _ in 0..batches {
+            let batch = dataset.sample_batch(self.config.batch_size, &mut self.rng)?;
+            total += self.loss(&batch)?.data()[0];
+        }
+        Ok(total / batches as f32)
     }
 
     /// Forward-only loss for a given batch (no gradients are recorded for
@@ -224,6 +393,8 @@ impl<D: Dataset> Trainer<D> {
                 step,
                 loss,
                 elapsed_ms: started.elapsed().as_secs_f32() * 1_000.0,
+                learning_rate: self.learning_rate(),
+                grad_norm: self.last_grad_norm(),
             });
         }
         Ok(())
@@ -254,6 +425,14 @@ pub enum TrainError {
         index: usize,
         value: f32,
     },
+    /// A checkpoint has no training state to resume from.
+    MissingTrainingState,
+    /// Restored optimizer state does not match the parameter list.
+    StateShape {
+        index: usize,
+        expected: usize,
+        actual: usize,
+    },
 }
 
 impl Display for TrainError {
@@ -280,6 +459,16 @@ impl Display for TrainError {
             Self::InvalidReward { index, value } => {
                 write!(f, "reward {} is not finite: {}", index, value)
             }
+            Self::MissingTrainingState => write!(f, "checkpoint has no training state"),
+            Self::StateShape {
+                index,
+                expected,
+                actual,
+            } => write!(
+                f,
+                "training state for parameter {} has {} values, expected {}",
+                index, actual, expected
+            ),
         }
     }
 }
