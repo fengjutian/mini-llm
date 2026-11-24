@@ -1,0 +1,491 @@
+---
+import LessonLayout from '../../layouts/LessonLayout.astro';
+import { Code } from 'astro:components';
+
+const TOKENS = ['猫', '坐', '在', '垫', '子', '上'];
+const SELECTED = 3;
+
+const scores = TOKENS.map((_, row) =>
+  TOKENS.map((_, column) => {
+    const raw = 1.25 * Math.sin((row + 1) * (column + 1) * 0.9) + 0.7 * Math.cos((row - column) * 1.7);
+    return raw;
+  }),
+);
+
+const softmax = (values: number[]) => {
+  const max = Math.max(...values);
+  const exps = values.map((value) => Math.exp(value - max));
+  const total = exps.reduce((sum, value) => sum + value, 0);
+  return exps.map((value) => value / total);
+};
+
+const unmasked = scores.map((row) => softmax(row));
+const masked = scores.map((row, rowIndex) =>
+  softmax(row.map((value, column) => (column > rowIndex ? -1e9 : value))),
+);
+
+const rowMax = (weights: number[]) => Math.max(...weights, 1e-9);
+const shade = (weight: number, max: number) => (weight / max).toFixed(3);
+
+const snippet = `pub fn causal_batch_mask(batch: usize, seq: usize) -> Vec<f32> {
+    let rows = batch * seq;
+    let mut data = vec![-1e9f32; rows * rows];
+    for sample in 0..batch {
+        for row in 0..seq {
+            for column in 0..=row {
+                data[(sample * seq + row) * rows + sample * seq + column] = 0.0;
+            }
+        }
+    }
+    data
+}`;
+---
+
+<LessonLayout
+  index="09"
+  tag="掩码"
+  title="模型为什么不能偷看答案"
+  summary="训练时整句话一次性进入注意力，每个位置都在预测下一个 token。causal mask 把每个位置与未来位置之间的分数设为 −∞，让第 t 个 token 只能看见 ≤ t 的内容。"
+  time="7 分钟"
+  points={[
+    '训练是并行的：一次前向同时算所有位置的 loss。',
+    'mask 加在 Softmax 之前，未来位置的权重被压成 0。',
+    'batch 内还要 block-diagonal，防止跨样本偷看。',
+    'mask 不增加参数，只改变分数矩阵里哪些位置可达。',
+  ]}
+  links={[
+    { label: 'Transformer Block 剖析', href: '/docs/transformer-block' },
+    { label: '系统架构 · Attention 数据约定', href: '/docs/architecture' },
+  ]}
+  next={{ href: '/learn/tensor-shape', title: '回到第一个实验' }}
+>
+  <p>
+    自回归语言模型的训练目标是：给定前 <code>t</code> 个 token，预测第 <code>t+1</code> 个。如果训练时把整句话一次性送进 Transformer，
+    第 <code>t</code> 个位置就能在注意力里看到第 <code>t+1</code> 个 token——它不需要学，直接抄答案就行。
+  </p>
+  <p>
+    所以要在 Softmax 之前动一个手脚：把“当前位置”和“未来位置”之间的分数设成一个极大的负数。指数之后它变成 0，
+    这些位置就再也分不到任何注意力权重。这就是 <strong>causal mask</strong>。
+  </p>
+
+  <div class="formula">
+    scores = Q·K<sup>T</sup> / √d<br />
+    scores[i, j] = −10<sup>9</sup> &nbsp;<span class="text-dim">if j &gt; i（未来位置）</span><br />
+    A = softmax<sub>row</sub>(scores) &nbsp;<span class="text-dim">// 被 mask 的位置权重为 0</span>
+  </div>
+
+  <div class="widget" data-mask-widget>
+    <div class="widget__head">
+      <h2 class="widget__title">同一行 query，两种可见范围</h2>
+      <span class="widget__hint">点击任意一行，切换 query</span>
+    </div>
+    <div class="widget__body">
+      <div class="mask-compare">
+        <div class="mask-panel">
+          <p class="mask-panel__title">
+            mask 关
+            <span>每个位置都能看到全部 6 个 token</span>
+          </p>
+          <div class="mask-matrix" data-matrix="off">
+            {TOKENS.map((token, row) => (
+              <div class:list={['mask-row', { 'is-query': row === SELECTED }]} data-row={row}>
+                <span class="mask-row__label">{token}</span>
+                {TOKENS.map((_, column) => (
+                  <button
+                    class="mask-cell"
+                    type="button"
+                    data-row={row}
+                    data-col={column}
+                    style={`--w:${shade(unmasked[row][column], rowMax(unmasked[row]))}`}
+                    aria-label={`query ${row + 1}，key ${column + 1}`}
+                  >
+                    <span class="visually-hidden">
+                      {(unmasked[row][column] * 100).toFixed(1)}%
+                    </span>
+                  </button>
+                ))}
+              </div>
+            ))}
+          </div>
+          <span class="mask-axis">key →</span>
+        </div>
+
+        <div class="mask-panel">
+          <p class="mask-panel__title">
+            causal mask
+            <span>第 t 个 query 只能看到 key ≤ t</span>
+          </p>
+          <div class="mask-matrix" data-matrix="on">
+            {TOKENS.map((token, row) => (
+              <div class:list={['mask-row', { 'is-query': row === SELECTED }]} data-row={row}>
+                <span class="mask-row__label">{token}</span>
+                {TOKENS.map((_, column) =>
+                  column > row ? (
+                    <button
+                      class="mask-cell is-masked"
+                      type="button"
+                      data-row={row}
+                      data-col={column}
+                      aria-label={`query ${row + 1}，key ${column + 1} 被屏蔽`}
+                    ></button>
+                  ) : (
+                    <button
+                      class="mask-cell"
+                      type="button"
+                      data-row={row}
+                      data-col={column}
+                      style={`--w:${shade(masked[row][column], rowMax(masked[row]))}`}
+                      aria-label={`query ${row + 1}，key ${column + 1}`}
+                    >
+                      <span class="visually-hidden">{(masked[row][column] * 100).toFixed(1)}%</span>
+                    </button>
+                  ),
+                )}
+              </div>
+            ))}
+          </div>
+          <span class="mask-axis">key →</span>
+        </div>
+      </div>
+
+      <div class="control-row mask-actions">
+        <button class="chip" type="button" data-prev>上一个 query</button>
+        <button class="chip" type="button" data-next>下一个 query</button>
+        <span class="mask-query mono" data-query-label>query 4 / 6 ·「垫」</span>
+      </div>
+
+      <table class="mask-table">
+        <thead>
+          <tr><th>key</th><th>score</th><th>mask 前</th><th>mask 后</th></tr>
+        </thead>
+        <tbody data-mask-rows>
+          {TOKENS.map((token, column) => (
+            <tr>
+              <td class="mask-key">{token}</td>
+              <td class="mono">{scores[SELECTED][column].toFixed(2)}</td>
+              <td class="mono" data-off>{(unmasked[SELECTED][column] * 100).toFixed(1)}%</td>
+              <td class="mono" data-on>
+                {column > SELECTED ? '0.0%' : `${(masked[SELECTED][column] * 100).toFixed(1)}%`}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <dl class="readout mask-readout">
+        <div><dt>可见 key</dt><dd data-out-visible>{SELECTED + 1} / 6</dd></div>
+        <div><dt>被屏蔽</dt><dd data-out-masked>2 / 6</dd></div>
+        <div><dt>mask 后行和</dt><dd data-out-sum>1.000</dd></div>
+        <div><dt>首位权重</dt><dd data-out-top>—</dd></div>
+      </dl>
+
+      <p class="widget__foot" data-mask-summary>
+        当前 query 是「垫」。加 mask 后，它只能看见「猫 坐 在 垫」四个位置；右边的「子」「上」权重为 0。
+      </p>
+    </div>
+  </div>
+
+  <h2>为什么不是“直接截断”</h2>
+  <p>
+    训练时不会为每个位置单独跑一次前向，而是把整个 batch 拼成一个大矩阵一次算完。mask 的作用是让同一份并行计算里，
+    每一行自动拥有不同的可见范围：第 0 行只看第 0 列，第 5 行看前 6 列。这样既保留了并行效率，又保证了因果性。
+  </p>
+  <p>
+    实现上不是把未来位置的 Q、K 删掉，而是在分数矩阵上加一个可加的偏置。这也是为什么 mask 的形状必须是
+    <code>[rows, rows]</code>，并且要加在 Softmax 之前：Softmax 之后再置零会破坏“行和为 1”。
+  </p>
+
+  <h2>batch 里还有一层 mask</h2>
+  <p>
+    <code>[batch, seq]</code> 展平之后，注意力矩阵是 <code>[batch·seq, batch·seq]</code>。如果只做因果 mask，
+    样本 0 的最后一个 token 仍然可能看到样本 1 的第一个 token。mini-llm 的 <code>causal_batch_mask</code> 因此同时做了两件事：
+    每个样本内部只允许 <code>column ≤ row</code>，样本之间整块屏蔽，形成块状对角结构。
+  </p>
+  <p>
+    测试里专门覆盖了这一点：2 个样本、每个 2 个 token 时，第 0 行只能看第 0 列，第 3 行只能看第 2、3 列，
+    跨样本的列全部小于 <code>−1e8</code>。
+  </p>
+
+  <h2>推理时为什么不需要它</h2>
+  <p>
+    带 KV Cache 的逐 token 生成里，query 永远是最新位置，缓存的 key 全部来自过去，本来就不存在“未来”。
+    所以 <code>forward_step</code> 不需要再传 mask；它只需要保证 cache 的顺序和位置索引一致。
+    换句话说，训练用 mask 模拟因果性，推理用生成顺序天然满足因果性。
+  </p>
+
+  <h2>在 mini-llm 里</h2>
+  <div class="code-card">
+    <div class="code-card__head mono">crates/mini-llm-model/src/attention.rs</div>
+    <Code code={snippet} lang="rust" theme="github-dark-dimmed" />
+  </div>
+  <p>
+    mask 的值用 <code>−1e9</code> 而不是 <code>−∞</code>：f32 的 <code>exp(−1e9)</code> 会下溢成 0，效果一样，但避免了
+    <code>−∞</code> 参与后续运算产生 <code>NaN</code>。这是一个很小的工程取舍，却经常出现在真实实现里。
+  </p>
+  <p>
+    当前实现只处理 causal 与跨样本隔离，还没有 padding mask。SFT 的 loss masking 是在交叉熵阶段给目标加权，
+    和注意力 mask 是两件不同的事，不要混为一谈。
+  </p>
+
+  <div class="note">
+    <strong>一句话总结</strong>
+    mask 不改变模型能算什么，只改变“谁能看见谁”。它把并行训练的计算效率和自回归生成的因果约束同时保住。
+  </div>
+</LessonLayout>
+
+<style>
+  .mask-compare {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 26px;
+  }
+
+  .mask-panel {
+    min-width: 0;
+  }
+
+  .mask-panel__title {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px;
+    margin: 0 0 10px;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+
+  .mask-panel__title span {
+    font-family: var(--font-sans);
+    font-size: 10.5px;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--ink-faint);
+  }
+
+  .mask-matrix {
+    display: grid;
+    gap: 3px;
+    padding: 6px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--paper-3);
+  }
+
+  .mask-row {
+    display: grid;
+    grid-template-columns: 20px repeat(6, minmax(0, 1fr));
+    gap: 3px;
+    align-items: stretch;
+  }
+
+  .mask-row__label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: var(--ink-faint);
+  }
+
+  .mask-row.is-query .mask-row__label {
+    color: var(--accent-ink);
+    font-weight: 600;
+  }
+
+  .mask-row.is-query .mask-cell {
+    outline: 1px solid var(--accent);
+    outline-offset: 1px;
+  }
+
+  .mask-cell {
+    aspect-ratio: 1;
+    padding: 0;
+    border: 0;
+    border-radius: 2px;
+    background: color-mix(in srgb, var(--accent) calc(var(--w) * 100%), var(--paper-2));
+    cursor: pointer;
+    transition: transform 0.1s var(--ease);
+  }
+
+  .mask-cell:hover,
+  .mask-cell:focus-visible {
+    transform: scale(1.06);
+    outline: 1px solid var(--ink);
+    outline-offset: 1px;
+  }
+
+  .mask-cell.is-masked {
+    background: repeating-linear-gradient(
+      135deg,
+      var(--paper-2) 0 3px,
+      var(--line) 3px 4px
+    );
+    cursor: default;
+  }
+
+  .mask-cell.is-masked:hover {
+    transform: none;
+    outline: none;
+  }
+
+  .mask-axis {
+    display: block;
+    margin-top: 6px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    text-align: right;
+    color: var(--ink-faint);
+  }
+
+  .mask-actions {
+    margin: 18px 0 16px;
+  }
+
+  .mask-query {
+    font-size: 10.5px;
+    color: var(--ink-faint);
+  }
+
+  .mask-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 16px;
+  }
+
+  .mask-table th {
+    padding: 0 8px 7px;
+    text-align: left;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .mask-table td {
+    padding: 7px 8px;
+    border-bottom: 1px solid var(--line);
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .mask-table tr:last-child td {
+    border-bottom: 0;
+  }
+
+  .mask-key {
+    width: 30px;
+    color: var(--ink) !important;
+  }
+
+  .mask-readout {
+    margin: 0;
+  }
+
+  .widget__foot {
+    margin: 16px 0 0;
+    padding-top: 14px;
+    border-top: 1px dashed var(--line);
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: var(--ink-faint);
+  }
+
+  @media (max-width: 700px) {
+    .mask-compare {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 18px;
+    }
+  }
+</style>
+
+<script>
+  const widget = document.querySelector<HTMLElement>('[data-mask-widget]');
+  if (widget) {
+    const TOKENS = ['猫', '坐', '在', '垫', '子', '上'];
+    let selected = 3;
+
+    const scores = TOKENS.map((_, row) =>
+      TOKENS.map((_, column) => {
+        const raw = 1.25 * Math.sin((row + 1) * (column + 1) * 0.9) + 0.7 * Math.cos((row - column) * 1.7);
+        return raw;
+      }),
+    );
+
+    const softmax = (values: number[]) => {
+      const max = Math.max(...values);
+      const exps = values.map((value) => Math.exp(value - max));
+      const total = exps.reduce((sum, value) => sum + value, 0);
+      return exps.map((value) => value / total);
+    };
+
+    const unmasked = scores.map((row) => softmax(row));
+    const masked = scores.map((row, rowIndex) =>
+      softmax(row.map((value, column) => (column > rowIndex ? -1e9 : value))),
+    );
+
+    const rows = [...widget.querySelectorAll<HTMLElement>('.mask-row')];
+    const cells = [...widget.querySelectorAll<HTMLButtonElement>('.mask-cell')];
+    const tableRows = [...widget.querySelectorAll<HTMLTableRowElement>('[data-mask-rows] tr')];
+    const queryLabel = widget.querySelector<HTMLElement>('[data-query-label]')!;
+    const outVisible = widget.querySelector<HTMLElement>('[data-out-visible]')!;
+    const outMasked = widget.querySelector<HTMLElement>('[data-out-masked]')!;
+    const outSum = widget.querySelector<HTMLElement>('[data-out-sum]')!;
+    const outTop = widget.querySelector<HTMLElement>('[data-out-top]')!;
+    const summary = widget.querySelector<HTMLElement>('[data-mask-summary]')!;
+
+    const render = () => {
+      rows.forEach((row) => row.classList.toggle('is-query', Number(row.dataset.row) === selected));
+
+      const offRow = unmasked[selected];
+      const onRow = masked[selected];
+      const visible = selected + 1;
+      const sum = onRow.reduce((acc, value) => acc + value, 0);
+      const topIndex = onRow.reduce((best, value, index) => (value > onRow[best] ? index : best), 0);
+
+      queryLabel.textContent = `query ${selected + 1} / 6 ·「${TOKENS[selected]}」`;
+      outVisible.textContent = `${visible} / 6`;
+      outMasked.textContent = `${6 - visible} / 6`;
+      outSum.textContent = sum.toFixed(3);
+      outTop.textContent = `${(onRow[topIndex] * 100).toFixed(1)}%`;
+
+      tableRows.forEach((row, column) => {
+        row.querySelector<HTMLElement>('[data-off]')!.textContent = `${(offRow[column] * 100).toFixed(1)}%`;
+        row.querySelector<HTMLElement>('[data-on]')!.textContent =
+          column > selected ? '0.0%' : `${(onRow[column] * 100).toFixed(1)}%`;
+      });
+
+      summary.textContent =
+        selected === 0
+          ? '当前 query 是句首「猫」。它只能看见自己，mask 后这一行只剩一个非零权重，值恒为 100%。'
+          : `当前 query 是「${TOKENS[selected]}」。加 mask 后，它只能看见前 ${visible} 个位置；` +
+            `右侧 ${6 - visible} 个 token 的权重被压成 0。`;
+    };
+
+    cells.forEach((cell) => {
+      cell.addEventListener('click', () => {
+        if (cell.classList.contains('is-masked')) return;
+        selected = Number(cell.dataset.row);
+        render();
+      });
+    });
+
+    widget.querySelector('[data-prev]')?.addEventListener('click', () => {
+      selected = (selected + 5) % 6;
+      render();
+    });
+
+    widget.querySelector('[data-next]')?.addEventListener('click', () => {
+      selected = (selected + 1) % 6;
+      render();
+    });
+
+    render();
+  }
+</script>

@@ -43,7 +43,7 @@ const snippet = `fn sample_next(logits: &TensorValue, vocab: usize, temperature:
     { label: 'Decoder Engine 深度解析', href: '/docs/decoder-engine' },
     { label: '系统架构 · 生成路径', href: '/docs/architecture' },
   ]}
-  next={{ href: '/learn/tensor-shape', title: '回到第一个实验' }}
+  next={{ href: '/learn/training', title: '一步更新里，参数动了多少' }}
 >
   <p>
     上一页把 logits 变成了概率分布。但“分布”还不是“输出”：模型给出的是「的 52%、一 26%、是 13%……」，真正写进文本的只能是一个 token。
@@ -482,3 +482,31 @@ const snippet = `fn sample_next(logits: &TensorValue, vocab: usize, temperature:
     render();
   }
 </script>
+
+<style is:global>
+  /* The sample log is rebuilt with innerHTML, so its chips need unscoped rules. */
+  .sample-log span:not(.sample-log__empty) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 5px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: var(--paper);
+    font-size: 12px;
+    color: var(--ink);
+  }
+
+  .sample-log span.is-latest {
+    border-color: var(--accent);
+    color: var(--accent-ink);
+  }
+
+  .sample-log__empty {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--ink-faint);
+  }
+</style>

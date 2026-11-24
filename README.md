@@ -290,6 +290,24 @@ device; `Device::Cuda` can be passed to `CandleBackend::new` where a GPU is
 available. Candle 0.11 keeps softmax in `candle-nn`, so the backend composes it
 from `max_keepdim` / `exp` / `sum_keepdim` rather than pulling in that crate.
 
+Autograd ops can be routed through a backend for a scoped region:
+
+```rust
+use std::sync::Arc;
+use mini_llm_autograd::backend::with_backend;
+use mini_llm_backend::CandleBackend;
+
+let logits = with_backend(Arc::new(CandleBackend::cpu()), || {
+    model.forward(&tokens, 1)
+})?;
+```
+
+The selection is thread-local and restored when the closure returns (even on
+panic), and the default remains the CPU reference. Only forward kernels
+(`matmul`, `softmax_rows`) go through the backend; backward still uses the CPU
+tensor ops, so this currently accelerates inference-style passes. The CLI does
+not expose a backend flag yet; call `with_backend` from application code.
+
 ## Performance notes
 
 `cargo run --release -p mini-llm-cli -- bench` prints the numbers this project is
@@ -297,31 +315,37 @@ optimized against. Timings are the best of three rounds of ten iterations, which
 removes most of the background-load noise on a laptop:
 
 ```text
-matmul  64x64 x64 :     0.02 ms  29404.8 MFLOP/s
-matmul 128x128x128:     0.16 ms  25884.4 MFLOP/s
-matmul 256x256x256:     0.72 ms  46289.0 MFLOP/s
-forward (hidden  32, block 16, batch 4):     1.60 ms   1.6 MB alloc
-forward (hidden 128, block 32, batch 4):    13.29 ms  10.0 MB alloc
-forward (hidden 256, block 32, batch 4):    26.84 ms  18.1 MB alloc
-forward (hidden 512, block 32, batch 4):    65.58 ms  35.0 MB alloc
-train step (hidden  32, block 16, batch 2):  2.23 ms   2.0 MB alloc
-train step (hidden 128, block 32, batch 2): 24.11 ms  16.6 MB alloc
-train step (hidden 256, block 32, batch 2): 65.02 ms  41.9 MB alloc
-generate 32 tokens (KV cache):                5.10 ms
-clone 1024x1024 (4 MB shared buffer):        0.064 us
+matmul  64x64 x64 :     0.02 ms  27754.8 MFLOP/s
+matmul 128x128x128:     0.21 ms  19795.7 MFLOP/s
+matmul 256x256x256:     0.36 ms  92943.4 MFLOP/s
+forward (hidden  32, block 16, batch 4):     2.03 ms   1.6 MB alloc
+forward (hidden 128, block 32, batch 4):    16.14 ms  10.0 MB alloc
+forward (hidden 256, block 32, batch 4):    32.29 ms  18.1 MB alloc
+forward (hidden 512, block 32, batch 4):    71.48 ms  35.0 MB alloc
+train step (hidden  32, block 16, batch 2):  2.84 ms   2.0 MB alloc
+train step (hidden 128, block 32, batch 2): 26.00 ms  16.6 MB alloc
+train step (hidden 256, block 32, batch 2): 80.23 ms  41.9 MB alloc
+generate 32 tokens (KV cache):                5.27 ms
+clone 1024x1024 (4 MB shared buffer):        0.087 us
 ```
+
+Even with best-of-three, values still move with background load: `matmul 256³`
+has measured 0.36–0.45 ms and the 512-wide forward 53–72 ms on the same machine.
+Compare a change against the previous run on the same machine rather than across
+machines.
 
 Design choices behind those numbers:
 
-- **Large matmuls run row-parallel.** Products above ~4M multiply-adds split
-  rows across threads with `std::thread::scope`, and the thread count is capped
-  by `work / 2M` so medium matrices do not pay for a core per row. Each output
-  element keeps its original accumulation order, so results are bit-identical to
-  the sequential kernel (covered by a test) and training stays reproducible.
-  Below the threshold everything stays on the calling thread. Reducing the thread
-  count alone took `matmul 256³` from 1.46 ms to ~0.85 ms; accumulating four
-  output rows per pass over `right` (so each of its rows is loaded once and used
-  four times) brought it to ~0.70 ms and the 512-wide forward to ~74 ms.
+- **Large matmuls run row-parallel on a rayon pool.** Products above ~1M
+  multiply-adds are split into row chunks that rayon schedules on a persistent
+  worker pool, so a matmul pays no thread-spawn cost. The chunk count is four per
+  thread and the thread count is capped by `work / 2M`, so medium matrices do not
+  oversubscribe. Each output element keeps its original accumulation order, so
+  results are bit-identical to the sequential kernel (covered by a test) and
+  training stays reproducible. Below the threshold everything stays on the
+  calling thread. Four-row register blocking means each row of `right` is loaded
+  once and reused four times. An eight-row variant was tried and rejected: the
+  extra accumulators spill and it showed no consistent gain.
 - **Tensor buffers are `Arc<Vec<f32>>`.** Cloning a tensor is a refcount bump
   (~0.08 µs for 4 MB) instead of a copy. The autograd engine clones node values
   on every op, so this turns an O(size) cost into O(1).

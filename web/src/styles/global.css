@@ -923,6 +923,77 @@ html[data-theme="dark"] .theme-icon--sun {
   background: var(--accent);
 }
 
+.mini-loss {
+  width: 168px;
+  height: auto;
+  overflow: visible;
+}
+
+.mini-loss .axis {
+  fill: none;
+  stroke: var(--line-strong);
+  stroke-width: 1.2;
+}
+
+.mini-loss .curve {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.mini-loss circle {
+  fill: var(--accent);
+  stroke: var(--paper-3);
+  stroke-width: 2;
+}
+
+.mini-cache {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.mini-cache span {
+  width: 18px;
+  height: 34px;
+  border: 1px solid var(--line-strong);
+  border-radius: 3px;
+  background: var(--paper-2);
+}
+
+.mini-cache span.is-filled {
+  background: var(--line-strong);
+  border-color: var(--line-strong);
+}
+
+.mini-cache span.is-active {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.mini-mask {
+  display: grid;
+  grid-template-columns: repeat(6, 16px);
+  gap: 3px;
+}
+
+.mini-mask span {
+  height: 16px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--accent) calc(var(--w) * 100%), var(--paper-3));
+}
+
+.mini-mask span.is-masked {
+  background: var(--paper-2);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.mini-mask span.is-active {
+  background: var(--accent);
+}
+
 /* --------------------------------------------------------------------------
    Roadmap
    -------------------------------------------------------------------------- */
@@ -1527,6 +1598,131 @@ html[data-theme="dark"] .prose .astro-code span {
   color: var(--accent-ink);
   border-left-color: var(--accent);
   font-weight: 550;
+}
+
+/* --------------------------------------------------------------------------
+   Docs reading shell (wide screens)
+   The page itself never scrolls here: the navigation and the table of
+   contents stay put, and only the article column moves.
+   -------------------------------------------------------------------------- */
+
+@media (min-width: 1121px) {
+  body.page-docs {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  body.page-docs .site-header {
+    position: relative;
+    flex: 0 0 auto;
+  }
+
+  body.page-docs main {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  /* The article carries its own closing block; a full site footer would eat
+     the reading pane, so it is left out of this shell. */
+  body.page-docs .site-footer {
+    display: none;
+  }
+
+  body.page-docs .docs {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: 100%;
+    padding-block: 0;
+    align-items: stretch;
+    /* Pinned contents get a little more room for their one-line labels. */
+    grid-template-columns: 216px minmax(0, 1fr) clamp(208px, 14vw, 280px);
+  }
+
+  body.page-docs .docs__main {
+    height: 100%;
+    min-width: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+    scroll-behavior: smooth;
+    padding: 44px 0 96px;
+  }
+
+  body.page-docs .docs__main :is(h1, h2, h3, h4) {
+    scroll-margin-top: 24px;
+  }
+
+  /* The navigation keeps its own (thin) scrollbar: the document tree is longer
+     than any viewport. */
+  body.page-docs .docs__sidebar {
+    position: static;
+    height: 100%;
+    max-height: none;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 44px 0 24px;
+    scrollbar-width: thin;
+  }
+
+  /* The table of contents is pinned: it never scrolls, it fades when it does
+     not fit instead of growing its own scrollbar. */
+  body.page-docs .docs__toc {
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    padding-top: 44px;
+  }
+
+  body.page-docs .toc {
+    position: static;
+    max-height: 100%;
+    overflow: hidden;
+    padding-bottom: 24px;
+    -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent);
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 28px), transparent);
+  }
+
+  /* Pinned contents have to fit the rail: one line per entry, full title on
+     hover. */
+  body.page-docs .toc a {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* The shell exists for the screen only: printing restores normal flow so the
+   whole article still reaches paper. */
+@media print {
+  body.page-docs {
+    display: block;
+    height: auto;
+    overflow: visible;
+  }
+
+  body.page-docs .docs {
+    display: block;
+    height: auto;
+    padding-block: 24px;
+  }
+
+  body.page-docs .docs__main {
+    height: auto;
+    overflow: visible;
+    padding: 0;
+  }
+
+  body.page-docs .docs__sidebar,
+  body.page-docs .docs__toc {
+    display: none;
+  }
 }
 
 /* --------------------------------------------------------------------------
@@ -2193,6 +2389,10 @@ input[type="range"]::-moz-range-thumb {
 
 @media (prefers-reduced-motion: reduce) {
   html {
+    scroll-behavior: auto;
+  }
+
+  body.page-docs .docs__main {
     scroll-behavior: auto;
   }
 

@@ -29,6 +29,8 @@ pub enum AutogradError {
         len: usize,
         size: usize,
     },
+    /// An explicitly selected backend kernel failed.
+    Backend(String),
 }
 
 impl Display for AutogradError {
@@ -73,6 +75,7 @@ impl Display for AutogradError {
                 start + len,
                 size
             ),
+            Self::Backend(message) => write!(f, "backend error: {message}"),
         }
     }
 }

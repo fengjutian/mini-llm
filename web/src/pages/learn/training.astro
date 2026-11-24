@@ -1,0 +1,525 @@
+---
+import LessonLayout from '../../layouts/LessonLayout.astro';
+import { Code } from 'astro:components';
+
+type OptimizerKind = 'sgd' | 'momentum' | 'adamw';
+
+const TARGET = 3;
+const START = -2;
+const STEPS = 40;
+const initial = { optimizer: 'adamw' as OptimizerKind, lr: 0.2, momentum: 0.9 };
+
+const lossAt = (w: number) => 0.5 * (w - TARGET) ** 2;
+
+const run = (kind: OptimizerKind, lr: number, momentum: number) => {
+  let w = START;
+  let velocity = 0;
+  let first = 0;
+  let second = 0;
+  const losses = [lossAt(w)];
+  for (let step = 1; step <= STEPS; step += 1) {
+    const gradient = w - TARGET;
+    if (kind === 'sgd') {
+      w -= lr * gradient;
+    } else if (kind === 'momentum') {
+      velocity = momentum * velocity + gradient;
+      w -= lr * velocity;
+    } else {
+      first = 0.9 * first + 0.1 * gradient;
+      second = 0.999 * second + 0.001 * gradient * gradient;
+      const mHat = first / (1 - 0.9 ** step);
+      const vHat = second / (1 - 0.999 ** step);
+      w = w * (1 - lr * 0.01) - (lr * mHat) / (Math.sqrt(vHat) + 1e-8);
+    }
+    losses.push(lossAt(w));
+  }
+  return losses;
+};
+
+const curves = {
+  sgd: run('sgd', initial.lr, initial.momentum),
+  momentum: run('momentum', initial.lr, initial.momentum),
+  adamw: run('adamw', initial.lr, initial.momentum),
+};
+
+const LOG_MIN = -6;
+const LOG_MAX = 2;
+const toX = (step: number) => 56 + (step / STEPS) * 560;
+const toY = (loss: number) => {
+  const log = Math.log10(Math.max(loss, 1e-9));
+  return 20 + ((LOG_MAX - log) / (LOG_MAX - LOG_MIN)) * 170;
+};
+const polyline = (losses: number[]) =>
+  losses.map((loss, step) => `${toX(step).toFixed(1)},${toY(loss).toFixed(1)}`).join(' ');
+const gridLines = [2, 0, -2, -4, -6];
+
+const formatLoss = (loss: number) =>
+  loss >= 1000 || loss < 0.001 ? loss.toExponential(2) : loss.toFixed(4);
+
+const snippet = `pub fn step(&mut self) -> Result<f32, TrainError> {
+    let batch = self.dataset.sample_batch(self.config.batch_size, &mut self.rng)?;
+    let loss = self.loss(&batch)?;
+    loss.backward()?;
+    let value = loss.data()[0];
+    // Drop the graph before the optimizer runs: it is what keeps parameter
+    // buffers shared, and a unique buffer lets update_value mutate in place.
+    drop(loss);
+    let parameters = &self.parameters;
+    self.optimizer.step(parameters)?;
+    for parameter in parameters {
+        parameter.zero_grad();
+    }
+    Ok(value)
+}`;
+---
+
+<LessonLayout
+  index="07"
+  tag="训练循环"
+  title="一步更新里，参数动了多少"
+  summary="前向、反向、优化器更新、清梯度，训练循环只有四步。学习率和优化器决定每一步走多远，也决定 loss 曲线是一路向下、慢慢爬，还是直接发散。"
+  time="9 分钟"
+  points={[
+    '训练一步 = forward + backward + optimizer.step + zero_grad。',
+    'SGD 直接沿负梯度走；动量累积历史方向，能穿过平坦区。',
+    'AdamW 维护一阶、二阶矩并做偏差修正，再解耦地施加 weight decay。',
+    '学习率过大时 loss 会震荡或发散，曲线是最直接的诊断工具。',
+  ]}
+  links={[
+    { label: 'Training Engine 深度解析', href: '/docs/training-engine' },
+    { label: '神经网络基础 · 优化器', href: '/docs/neural-network-engine' },
+  ]}
+  next={{ href: '/learn/kv-cache', title: '为什么第二个 token 更快' }}
+>
+  <p>
+    上一页只关心“梯度怎么来的”。这一页把梯度真正用掉：优化器读取每个参数的 <code>grad</code>，按某种规则改写下参数值，然后清空梯度，等待下一批数据。
+    整个训练循环就是这句话重复很多次。
+  </p>
+  <p>
+    为了看清不同优化器的差别，这里把问题缩到一维：最小化
+    <code>L(w) = ½(w − 3)²</code>，从 <code>w = −2</code> 出发，梯度就是 <code>w − 3</code>。没有随机性，没有小批量，
+    只剩下“每一步走多远”这一件事。
+  </p>
+
+  <div class="formula">
+    L(w) = ½(w − 3)² &nbsp;<span class="text-dim">// 最优点 w* = 3</span><br />
+    ∇L = w − 3 &nbsp;<span class="text-dim">// 一维，所以“梯度”就是一个数</span><br />
+    SGD: w ← w − lr · ∇L<br />
+    Momentum: v ← m·v + ∇L, &nbsp; w ← w − lr·v
+  </div>
+
+  <div class="widget" data-training-widget>
+    <div class="widget__head">
+      <h2 class="widget__title">loss(w) over 40 steps</h2>
+      <span class="widget__hint">切换优化器、拖动学习率，对比三条曲线</span>
+    </div>
+    <div class="widget__body">
+      <div class="opt-row">
+        <div class="opt-chips" role="group" aria-label="优化器">
+          <button class="chip" type="button" data-optimizer="sgd" aria-pressed="false">SGD</button>
+          <button class="chip" type="button" data-optimizer="momentum" aria-pressed="false">Momentum</button>
+          <button class="chip" type="button" data-optimizer="adamw" aria-pressed="true">AdamW</button>
+        </div>
+        <span class="opt-note mono">目标 w* = 3</span>
+      </div>
+
+      <div class="loss-chart-wrap">
+        <svg class="loss-chart" viewBox="0 0 640 250" role="img" aria-label="三种优化器在二次损失上的下降曲线">
+          <defs>
+            <clipPath id="loss-plot">
+              <rect x="56" y="20" width="560" height="170" />
+            </clipPath>
+          </defs>
+          {gridLines.map((log) => (
+            <g>
+              <line class="loss-grid" x1="56" y1={toY(10 ** log)} x2="616" y2={toY(10 ** log)} />
+              <text class="loss-axis-label" x="48" y={toY(10 ** log) + 3}>{log === 0 ? '1' : `1e${log}`}</text>
+            </g>
+          ))}
+          <line class="loss-axis" x1="56" y1="20" x2="56" y2="190" />
+          <line class="loss-axis" x1="56" y1="190" x2="616" y2="190" />
+          <g clip-path="url(#loss-plot)">
+            <polyline class="loss-line is-sgd" data-line="sgd" points={polyline(curves.sgd)} />
+            <polyline class="loss-line is-momentum" data-line="momentum" points={polyline(curves.momentum)} />
+            <polyline class="loss-line is-adamw is-active" data-line="adamw" points={polyline(curves.adamw)} />
+          </g>
+          {[0, 10, 20, 30, 40].map((step) => (
+            <g>
+              <line class="loss-tick" x1={toX(step)} y1="190" x2={toX(step)} y2="195" />
+              <text class="loss-axis-label" x={toX(step)} y="210">{step}</text>
+            </g>
+          ))}
+          <text class="loss-axis-label loss-axis-label--x" x="616" y="226">step</text>
+          <circle class="loss-end is-adamw" data-end="adamw" cx={toX(STEPS)} cy={toY(curves.adamw[STEPS])} r="4" />
+          <circle class="loss-end is-sgd" data-end="sgd" cx={toX(STEPS)} cy={toY(curves.sgd[STEPS])} r="3" />
+          <circle class="loss-end is-momentum" data-end="momentum" cx={toX(STEPS)} cy={toY(curves.momentum[STEPS])} r="3" />
+        </svg>
+      </div>
+
+      <div class="loss-controls">
+        <label class="loss-slider">
+          <span>学习率 lr</span>
+          <input type="range" min="0.02" max="2.5" step="0.01" value={initial.lr} data-lr />
+          <output data-lr-out>{initial.lr.toFixed(2)}</output>
+        </label>
+        <label class="loss-slider" data-momentum-row hidden>
+          <span>动量 m</span>
+          <input type="range" min="0" max="0.99" step="0.01" value={initial.momentum} data-momentum />
+          <output data-momentum-out>{initial.momentum.toFixed(2)}</output>
+        </label>
+      </div>
+
+      <dl class="readout loss-readout">
+        <div><dt>最终 loss</dt><dd data-out-final>{formatLoss(curves.adamw[STEPS])}</dd></div>
+        <div><dt>最低 loss</dt><dd data-out-best>{formatLoss(Math.min(...curves.adamw))}</dd></div>
+        <div><dt>最终 w</dt><dd data-out-w>—</dd></div>
+        <div><dt>曲线状态</dt><dd data-out-state>收敛</dd></div>
+      </dl>
+
+      <p class="widget__foot" data-training-summary>
+        默认学习率下，SGD 沿梯度稳定下降，Momentum 会先积累速度，AdamW 前几步更谨慎。
+        三条线的形状不同，但都在往 w* = 3 靠近。
+      </p>
+    </div>
+  </div>
+
+  <h2>三种更新规则</h2>
+  <p>
+    <strong>SGD</strong> 最直接：每个参数沿自己的负梯度走一步，步长由学习率决定。它的问题是对曲率敏感——方向陡的地方步子太大，
+    平坦的地方又几乎不动。
+  </p>
+  <p>
+    <strong>Momentum</strong> 给梯度加了一个速度缓冲：<code>v ← m·v + g</code>，再用 <code>v</code> 更新。方向一致的梯度会越积越快，
+    来回震荡的分量则互相抵消。它没有改变“看哪个梯度”，只是改变了“怎么走”。
+  </p>
+  <p>
+    <strong>AdamW</strong> 同时估计梯度的一阶矩和二阶矩，用 <code>m̂ / (√v̂ + ε)</code> 给每个参数一个近似归一化的步长，因此对尺度差异更宽容。
+    权重衰减是解耦的：先乘 <code>(1 − lr·wd)</code>，再走梯度步，而不是把 <code>wd·w</code> 混进梯度里。
+  </p>
+
+  <div class="formula">
+    m ← β₁m + (1−β₁)g, &nbsp; v ← β₂v + (1−β₂)g²<br />
+    m̂ = m / (1−β₁<sup>t</sup>), &nbsp; v̂ = v / (1−β₂<sup>t</sup>)<br />
+    w ← w·(1 − lr·wd) − lr · m̂ / (√v̂ + ε)<br />
+    <span class="text-dim">// β₁ = 0.9, β₂ = 0.999, ε = 1e-8, wd = 0.01</span>
+  </div>
+
+  <h2>怎么看 loss 曲线</h2>
+  <p>
+    把学习率拖到 1.0 附近，SGD 会在最优点两侧来回跳；再大一点，loss 直接指数上升。这不是数值 bug，而是步长超过了二次函数的稳定范围。
+    拖到 0.02，曲线又几乎水平——参数在动，但 40 步远远不够。真实训练里，学习率通常配合 warmup 和衰减，先小后大再变小。
+  </p>
+  <p>
+    这条曲线是确定性的，所以能清楚看到“优化器差异”；真实训练还会叠加小批量采样噪声、学习率调度和权重衰减，曲线更抖。
+    但判断标准没变：是否持续下降、是否震荡、是否在训练集上过早压平。
+  </p>
+
+  <h2>在 mini-llm 里</h2>
+  <div class="code-card">
+    <div class="code-card__head mono">crates/mini-llm-train/src/lib.rs</div>
+    <Code code={snippet} lang="rust" theme="github-dark-dimmed" />
+  </div>
+  <p>
+    注意 <code>drop(loss)</code> 那一行：loss 的计算图持有参数的共享缓冲区，先释放图，优化器才能用 <code>update_value</code> 原地改写参数，
+    而不是复制一份。更新完再统一 <code>zero_grad</code>，避免这一步的梯度被下一步累加。
+  </p>
+  <p>
+    优化器状态用参数的图节点 <code>id()</code> 做键。前向每次都会重建计算图，但叶子参数的节点身份不变，所以 AdamW 的
+    <code>m</code>、<code>v</code> 能跨 step 对上同一个参数。
+  </p>
+
+  <div class="note">
+    <strong>这一页的边界</strong>
+    示例是一维二次函数，没有随机梯度，也没有学习率调度；它只演示更新规则本身。真实模型里，同一个学习率对不同参数的影响不同，
+    这也是 Adam 系列流行的原因之一。
+  </div>
+</LessonLayout>
+
+<style>
+  .opt-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .opt-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+  }
+
+  .opt-note {
+    font-size: 10.5px;
+    color: var(--ink-faint);
+  }
+
+  .loss-chart-wrap {
+    margin: 16px 0 2px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+    overflow-x: auto;
+  }
+
+  .loss-chart {
+    width: 100%;
+    min-width: 520px;
+    height: auto;
+  }
+
+  .loss-grid {
+    stroke: var(--line);
+    stroke-width: 1;
+    stroke-dasharray: 2 4;
+  }
+
+  .loss-axis {
+    stroke: var(--line-strong);
+    stroke-width: 1;
+  }
+
+  .loss-tick {
+    stroke: var(--line-strong);
+    stroke-width: 1;
+  }
+
+  .loss-axis-label {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    fill: var(--ink-faint);
+    text-anchor: end;
+  }
+
+  .loss-axis-label--x {
+    text-anchor: end;
+  }
+
+  .loss-line {
+    fill: none;
+    stroke-width: 1.5;
+    opacity: 0.32;
+    transition: opacity 0.2s var(--ease), stroke-width 0.2s var(--ease);
+  }
+
+  .loss-line.is-sgd {
+    stroke: var(--ink-faint);
+  }
+
+  .loss-line.is-momentum {
+    stroke: var(--jade);
+  }
+
+  .loss-line.is-adamw {
+    stroke: var(--accent);
+  }
+
+  .loss-line.is-active {
+    opacity: 1;
+    stroke-width: 2.3;
+  }
+
+  .loss-end {
+    stroke: var(--paper-2);
+    stroke-width: 1.5;
+    opacity: 0.4;
+  }
+
+  .loss-end.is-sgd {
+    fill: var(--ink-faint);
+  }
+
+  .loss-end.is-momentum {
+    fill: var(--jade);
+  }
+
+  .loss-end.is-adamw {
+    fill: var(--accent);
+    opacity: 1;
+  }
+
+  .loss-end.is-active {
+    opacity: 1;
+  }
+
+  .loss-controls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 24px;
+    margin: 14px 0 18px;
+  }
+
+  .loss-slider {
+    display: grid;
+    grid-template-columns: 74px minmax(0, 1fr) 42px;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--ink-soft);
+  }
+
+  .loss-slider[hidden] {
+    display: none;
+  }
+
+  .loss-slider output {
+    text-align: right;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .loss-readout {
+    margin: 0;
+  }
+
+  .widget__foot {
+    margin: 16px 0 0;
+    padding-top: 14px;
+    border-top: 1px dashed var(--line);
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: var(--ink-faint);
+  }
+
+  @media (max-width: 640px) {
+    .loss-controls {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>
+
+<script>
+  const widget = document.querySelector<HTMLElement>('[data-training-widget]');
+  if (widget) {
+    type Kind = 'sgd' | 'momentum' | 'adamw';
+    const TARGET = 3;
+    const START = -2;
+    const STEPS = 40;
+    const LOG_MIN = -6;
+    const LOG_MAX = 2;
+
+    let optimizer: Kind = 'adamw';
+    let lr = 0.2;
+    let momentum = 0.9;
+
+    const lossAt = (w: number) => 0.5 * (w - TARGET) ** 2;
+    const run = (kind: Kind) => {
+      let w = START;
+      let velocity = 0;
+      let first = 0;
+      let second = 0;
+      const losses = [lossAt(w)];
+      for (let step = 1; step <= STEPS; step += 1) {
+        const gradient = w - TARGET;
+        if (kind === 'sgd') {
+          w -= lr * gradient;
+        } else if (kind === 'momentum') {
+          velocity = momentum * velocity + gradient;
+          w -= lr * velocity;
+        } else {
+          first = 0.9 * first + 0.1 * gradient;
+          second = 0.999 * second + 0.001 * gradient * gradient;
+          const mHat = first / (1 - 0.9 ** step);
+          const vHat = second / (1 - 0.999 ** step);
+          w = w * (1 - lr * 0.01) - (lr * mHat) / (Math.sqrt(vHat) + 1e-8);
+        }
+        losses.push(lossAt(w));
+      }
+      return { losses, w };
+    };
+
+    const lines = {
+      sgd: widget.querySelector<SVGPolylineElement>('[data-line="sgd"]')!,
+      momentum: widget.querySelector<SVGPolylineElement>('[data-line="momentum"]')!,
+      adamw: widget.querySelector<SVGPolylineElement>('[data-line="adamw"]')!,
+    };
+    const ends = {
+      sgd: widget.querySelector<SVGCircleElement>('[data-end="sgd"]')!,
+      momentum: widget.querySelector<SVGCircleElement>('[data-end="momentum"]')!,
+      adamw: widget.querySelector<SVGCircleElement>('[data-end="adamw"]')!,
+    };
+    const chips = [...widget.querySelectorAll<HTMLButtonElement>('[data-optimizer]')];
+    const lrInput = widget.querySelector<HTMLInputElement>('[data-lr]')!;
+    const lrOut = widget.querySelector<HTMLOutputElement>('[data-lr-out]')!;
+    const momentumRow = widget.querySelector<HTMLElement>('[data-momentum-row]')!;
+    const momentumInput = widget.querySelector<HTMLInputElement>('[data-momentum]')!;
+    const momentumOut = widget.querySelector<HTMLOutputElement>('[data-momentum-out]')!;
+    const outFinal = widget.querySelector<HTMLElement>('[data-out-final]')!;
+    const outBest = widget.querySelector<HTMLElement>('[data-out-best]')!;
+    const outW = widget.querySelector<HTMLElement>('[data-out-w]')!;
+    const outState = widget.querySelector<HTMLElement>('[data-out-state]')!;
+    const summary = widget.querySelector<HTMLElement>('[data-training-summary]')!;
+
+    const toX = (step: number) => 56 + (step / STEPS) * 560;
+    const toY = (loss: number) => {
+      const log = Math.log10(Math.max(loss, 1e-9));
+      return 20 + ((LOG_MAX - log) / (LOG_MAX - LOG_MIN)) * 170;
+    };
+
+    const formatLoss = (loss: number) =>
+      loss >= 1000 || loss < 0.001 ? loss.toExponential(2) : loss.toFixed(4);
+
+    const render = () => {
+      const results = {
+        sgd: run('sgd'),
+        momentum: run('momentum'),
+        adamw: run('adamw'),
+      };
+
+      (Object.keys(results) as Kind[]).forEach((kind) => {
+        const result = results[kind];
+        lines[kind].setAttribute(
+          'points',
+          result.losses.map((loss, step) => `${toX(step).toFixed(1)},${toY(loss).toFixed(1)}`).join(' '),
+        );
+        ends[kind].setAttribute('cx', toX(STEPS).toFixed(1));
+        ends[kind].setAttribute('cy', toY(result.losses[STEPS]).toFixed(1));
+        lines[kind].classList.toggle('is-active', kind === optimizer);
+        ends[kind].classList.toggle('is-active', kind === optimizer);
+      });
+
+      chips.forEach((chip) => {
+        chip.setAttribute('aria-pressed', String(chip.dataset.optimizer === optimizer));
+      });
+      momentumRow.hidden = optimizer !== 'momentum';
+
+      const current = results[optimizer];
+      const finalLoss = current.losses[STEPS];
+      const bestLoss = Math.min(...current.losses);
+      outFinal.textContent = formatLoss(finalLoss);
+      outBest.textContent = formatLoss(bestLoss);
+      outW.textContent = current.w.toFixed(4);
+
+      const diverged = !Number.isFinite(finalLoss) || finalLoss > lossAt(START) * 1.5;
+      const converged = finalLoss < lossAt(START) * 0.01;
+      outState.textContent = diverged ? '发散 / 震荡' : converged ? '已收敛' : '仍在下降';
+
+      const label = optimizer === 'sgd' ? 'SGD' : optimizer === 'momentum' ? 'Momentum' : 'AdamW';
+      summary.textContent = diverged
+        ? `${label} 在当前学习率下已经发散：步长超过了损失的稳定范围，loss 曲线向上冲出画面。把 lr 拉回 0.2 附近再试试。`
+        : `当前 ${label}，lr = ${lr.toFixed(2)}。40 步后 loss 从 ${lossAt(START).toFixed(2)} 降到 ${formatLoss(finalLoss)}，参数 w 落在 ${current.w.toFixed(3)}，目标是 ${TARGET}。`;
+    };
+
+    chips.forEach((chip) => {
+      chip.addEventListener('click', () => {
+        optimizer = chip.dataset.optimizer as Kind;
+        render();
+      });
+    });
+
+    lrInput.addEventListener('input', () => {
+      lr = Number(lrInput.value);
+      lrOut.textContent = lr.toFixed(2);
+      render();
+    });
+
+    momentumInput.addEventListener('input', () => {
+      momentum = Number(momentumInput.value);
+      momentumOut.textContent = momentum.toFixed(2);
+      render();
+    });
+
+    render();
+  }
+</script>

@@ -71,11 +71,11 @@ MVP Tensor 使用连续 row-major `Arc<Vec<f32>>` 存储。共享缓冲让 `Tens
 - 非法维度通过 `Result` 返回错误。
 - 逐元素算子采用 NumPy 风格的右对齐广播：维度相等或其中一个为 1 时兼容，
   否则返回 `ShapeMismatch`；反向传播用 `sum_to` 把梯度归约回原形状。
-- 矩阵乘法在 work ≥ 4M 次乘加时按行切分到多个线程（`std::thread::scope`），
-  线程数上限为 `min(核数, work / 2M)`，避免中等矩阵为每行都付线程启动开销。
-  每个线程内一次累积 4 个输出行，使 `right` 的一行只加载一次、复用四次。
-  每个输出元素的累加顺序与串行版本一致，因此结果逐位相同，训练可复现；
-  小矩阵仍在调用线程上串行计算。
+- 矩阵乘法在 work ≥ 1M 次乘加时按行切块，交给 rayon 的常驻线程池执行
+  （每次调用不再 spawn 线程），每线程约 4 个块以平衡负载；线程数上限为
+  `min(核数, work / 2M)`，避免中等矩阵过度订阅。每个线程内一次累积 4 个输出
+  行，使 `right` 的一行只加载一次、复用四次。每个输出元素的累加顺序与串行
+  版本一致，因此结果逐位相同，训练可复现；小矩阵仍在调用线程上串行计算。
 
 Autograd 只依赖 tensor：节点保存 `value`、`requires_grad`、可选 `grad`、
 父节点以及一个 `Fn(&Tensor) -> Vec<Tensor>` 的 backward 闭包。图按需构建，
@@ -153,4 +153,7 @@ mini-llm-cli
 
 - React Research Studio 消费 `traces/*.jsonl`，不需要改动训练代码。
 - `backend -> tensor abstraction`：让更多 kernel（softmax、LayerNorm）走同一 seam。
+- autograd 通过 `backend::with_backend(Arc<dyn Backend>, ...)` 在作用域内把
+  `matmul` / `softmax_rows` 交给指定 backend；选择是线程本地且可嵌套，默认仍是
+  CPU 参考实现。反向传播暂时仍走 CPU 张量算子。
 - `model` 不应反向依赖 `cli` 或 UI。

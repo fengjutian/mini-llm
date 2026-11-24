@@ -40,7 +40,8 @@
 //!
 //! ## Limitations
 //!
-//! - `f32` only, single-threaded, CPU only.
+//! - `f32` only, CPU by default (see [`backend`] to run forward kernels through
+//!   an accelerated backend).
 //! - Binary operations broadcast NumPy-style, but broadcasting is materialized
 //!   in the forward pass rather than fused with the kernel.
 //! - Parameters can be replaced in place with `set_value`, but there is no
@@ -48,6 +49,7 @@
 //! - No higher-order gradients.
 //! - Graph nodes live as long as any [`TensorValue`] handle referencing them.
 
+pub mod backend;
 mod error;
 mod graph;
 mod ops;

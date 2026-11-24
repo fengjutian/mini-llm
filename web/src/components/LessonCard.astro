@@ -58,6 +58,34 @@ const { lesson } = Astro.props;
         ))}
       </div>
     )}
+    {lesson.visual === 'loss' && (
+      <svg class="mini-loss" viewBox="0 0 152 92" aria-hidden="true">
+        <path class="axis" d="M12 8 V78 H144" />
+        <polyline class="curve" points="16,20 30,38 44,52 58,43 72,57 86,61 100,64 114,66 128,67" />
+        <circle cx="128" cy="67" r="3.5" />
+      </svg>
+    )}
+    {lesson.visual === 'cache' && (
+      <div class="mini-cache" aria-hidden="true">
+        {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
+          <span class:list={{ 'is-filled': i < 6, 'is-active': i === 5 }} />
+        ))}
+      </div>
+    )}
+    {lesson.visual === 'mask' && (
+      <div class="mini-mask" aria-hidden="true">
+        {Array.from({ length: 36 }).map((_, i) => {
+          const row = Math.floor(i / 6);
+          const column = i % 6;
+          return (
+            <span
+              class:list={{ 'is-masked': column > row, 'is-active': column === row }}
+              style={`--w:${0.2 + ((row * 2 + column) % 5) * 0.12}`}
+            />
+          );
+        })}
+      </div>
+    )}
   </div>
   <div class="lesson-card__body">
     <span class="lesson-card__tag">

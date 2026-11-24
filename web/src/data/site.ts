@@ -15,7 +15,16 @@ export const NAV = [
   { href: '/docs', label: '知识地图' },
 ] as const;
 
-export type LessonVisual = 'tensor' | 'softmax' | 'attention' | 'autograd' | 'rope' | 'sampling';
+export type LessonVisual =
+  | 'tensor'
+  | 'softmax'
+  | 'attention'
+  | 'autograd'
+  | 'rope'
+  | 'sampling'
+  | 'loss'
+  | 'cache'
+  | 'mask';
 
 export type Lesson = {
   href: string;
@@ -87,6 +96,36 @@ export const LESSONS: Lesson[] = [
       '模型给的是分布，不是答案。温度缩放分布，采样再从里面掷骰子；temperature = 0 时才退化成贪心。',
     visual: 'sampling',
     time: '6 分钟',
+  },
+  {
+    href: '/learn/training',
+    index: '07',
+    tag: '训练循环',
+    title: '一步更新里，参数动了多少',
+    summary:
+      '前向、反向、优化器更新、清梯度，训练循环只有四步。学习率和优化器决定每一步走多远，也决定 loss 曲线收敛还是发散。',
+    visual: 'loss',
+    time: '9 分钟',
+  },
+  {
+    href: '/learn/kv-cache',
+    index: '08',
+    tag: '推理',
+    title: '为什么第二个 token 更快',
+    summary:
+      '前面的 token 不会变，它们的 K、V 也就不需要重算。KV Cache 把历史存下来，每步只处理新 token，注意力计算量从平方级降回线性。',
+    visual: 'cache',
+    time: '8 分钟',
+  },
+  {
+    href: '/learn/causal-mask',
+    index: '09',
+    tag: '掩码',
+    title: '模型为什么不能偷看答案',
+    summary:
+      '训练时整句话一次性进入注意力。causal mask 把每个位置与未来位置之间的分数设为 −∞，第 t 个 token 只能看见 ≤ t 的内容。',
+    visual: 'mask',
+    time: '7 分钟',
   },
 ];
 

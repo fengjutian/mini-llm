@@ -2,6 +2,8 @@
 
 use std::sync::Arc;
 
+use rayon::prelude::*;
+
 use crate::error::TensorError;
 use crate::tensor::Tensor;
 
@@ -161,17 +163,17 @@ impl Tensor {
         let right = other.data.as_slice();
         let mut output = vec![0.0; m * n];
 
-        // Large products split the rows across cores. Each output element is
-        // still accumulated in the same order, so results are bit-identical to
-        // the sequential kernel.
+        // Large products split the rows across the rayon pool. Each output
+        // element is still accumulated in the same order, so results are
+        // bit-identical to the sequential kernel.
         let work = m.saturating_mul(n).saturating_mul(k_left);
         let threads = if work >= PARALLEL_MATMUL_WORK {
             let cores = std::thread::available_parallelism()
                 .map(|value| value.get())
                 .unwrap_or(1);
-            // Give each thread a meaningful chunk instead of always spawning
-            // one per core: medium matrices lose more to spawn overhead than
-            // they gain from the extra parallelism.
+            // Give each thread a meaningful chunk instead of always using one
+            // per core: medium matrices lose more to scheduling than they gain
+            // from the extra parallelism.
             let useful = work / WORK_PER_THREAD;
             cores.min(m).min(useful.max(1))
         } else {
@@ -181,22 +183,22 @@ impl Tensor {
         if threads <= 1 {
             multiply_rows(left, right, &mut output, 0, k_left, n);
         } else {
-            let rows_per_thread = m.div_ceil(threads);
-            std::thread::scope(|scope| {
-                for (chunk_index, chunk) in output.chunks_mut(rows_per_thread * n).enumerate() {
-                    let first_row = chunk_index * rows_per_thread;
-                    scope.spawn(move || {
-                        multiply_rows(left, right, chunk, first_row, k_left, n);
-                    });
-                }
-            });
+            // More chunks than threads keeps the pool balanced when some rows
+            // finish early; rayon's persistent workers avoid a spawn per call.
+            let chunk_rows = m.div_ceil(threads * 4).max(1);
+            output
+                .par_chunks_mut(chunk_rows * n)
+                .enumerate()
+                .for_each(|(chunk_index, chunk)| {
+                    multiply_rows(left, right, chunk, chunk_index * chunk_rows, k_left, n);
+                });
         }
         Self::new(output, vec![m, n])
     }
 }
 
 /// Multiply-adds below this count stay on the calling thread.
-const PARALLEL_MATMUL_WORK: usize = 4_000_000;
+const PARALLEL_MATMUL_WORK: usize = 1_000_000;
 
 /// Minimum multiply-adds handed to one thread once parallelism kicks in.
 const WORK_PER_THREAD: usize = 2_000_000;
@@ -206,6 +208,9 @@ const WORK_PER_THREAD: usize = 2_000_000;
 /// Four output rows are accumulated at a time so each row of `right` is loaded
 /// once and used four times. Row-wise accumulation order is unchanged, so the
 /// result is bit-identical to the simple per-row loop.
+///
+/// An eight-row variant was measured against this one and showed no consistent
+/// gain (the extra accumulators spill), so the simpler four-row block is kept.
 fn multiply_rows(
     left: &[f32],
     right: &[f32],

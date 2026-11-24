@@ -686,6 +686,7 @@ dependencies = [
 name = "mini-llm-autograd"
 version = "0.1.0"
 dependencies = [
+ "mini-llm-backend",
  "mini-llm-tensor",
 ]
 
@@ -745,6 +746,9 @@ dependencies = [
 [[package]]
 name = "mini-llm-tensor"
 version = "0.1.0"
+dependencies = [
+ "rayon",
+]
 
 [[package]]
 name = "mini-llm-trace"

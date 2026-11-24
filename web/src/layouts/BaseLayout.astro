@@ -8,9 +8,10 @@ interface Props {
   title?: string;
   description?: string;
   type?: 'website' | 'article';
+  bodyClass?: string;
 }
 
-const { title, description = SITE.description, type = 'website' } = Astro.props;
+const { title, description = SITE.description, type = 'website', bodyClass } = Astro.props;
 const pageTitle = !title || title.includes(SITE.name) ? (title ?? SITE.title) : `${title} · ${SITE.name}`;
 // Absolute URLs are only emitted when the deployment sets `site` in the Astro
 // config (see `SITE_URL` in web/README.md); otherwise the page stays portable.
@@ -75,7 +76,7 @@ const ogImage = Astro.site ? new URL('/og.svg', Astro.site) : null;
     </script>
   </head>
 
-  <body>
+  <body class={bodyClass}>
     <a class="skip-link" href="#main">跳到主要内容</a>
     <Header />
     <main id="main">

@@ -53,7 +53,10 @@ impl TensorValue {
 
     /// Row-wise softmax of a rank-2 value.
     pub fn softmax_rows(&self) -> Result<TensorValue, AutogradError> {
-        let value = self.value().softmax_rows()?;
+        let input = self.value();
+        let value = crate::backend::current()
+            .softmax_rows(&input)
+            .map_err(|error| AutogradError::Backend(error.to_string()))?;
         let saved = value.clone();
         self.unary("softmax_rows", value, move |g| {
             let shape = saved.shape().to_vec();

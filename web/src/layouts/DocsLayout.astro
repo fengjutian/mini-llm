@@ -48,12 +48,21 @@ const proseHeadings = headings.filter(
 const structural = proseHeadings.filter((heading) => isStructural(heading.text));
 const usable = structural.length >= 4 ? structural : proseHeadings;
 const levelTwo = usable.filter((heading) => heading.depth === 2);
-// Long documents get a chapter/section-level contents only.
-const tocHeadings = levelTwo.length <= 10 ? usable : levelTwo;
+const levelOne = headings.filter(
+  (heading) => heading.depth === 1 && isContentHeading(heading.text) && isStructural(heading.text),
+);
+// The table of contents is pinned beside the article and never scrolls, so it
+// has to fit one viewport. Long documents step down to a coarser outline
+// instead of growing a list that would be cut off.
+const maxTocEntries = 18;
+let tocHeadings = usable;
+if (usable.length > maxTocEntries && levelTwo.length > 0) {
+  tocHeadings = levelTwo.length <= maxTocEntries || levelOne.length < 3 ? levelTwo : levelOne;
+}
 const partLabel = part ? `第 ${String(part).padStart(2, '0')} 部分` : null;
 ---
 
-<BaseLayout title={title} description={description} type="article">
+<BaseLayout title={title} description={description} type="article" bodyClass="page-docs">
   <div class="reading-progress" data-reading-progress aria-hidden="true"></div>
   <div class="shell docs">
     <details class="docs__sidebar" open data-doc-nav>
@@ -61,7 +70,7 @@ const partLabel = part ? `第 ${String(part).padStart(2, '0')} 部分` : null;
       <DocsSidebar entries={entries} current={current} />
     </details>
 
-    <div>
+    <div class="docs__main" data-docs-scroll>
       <header class="doc-head">
         <div class="doc-head__kicker">
           <span>{series ?? section}{partLabel ? ` · ${partLabel}` : ''}</span>
@@ -104,6 +113,9 @@ const partLabel = part ? `第 ${String(part).padStart(2, '0')} 部分` : null;
 <script>
   const toc = document.querySelector<HTMLElement>('[data-toc]');
   const article = document.querySelector<HTMLElement>('[data-article]');
+  // On wide screens the article column is its own scroll container (`body.page-docs`);
+  // on narrow screens the document itself scrolls.
+  const scroller = document.querySelector<HTMLElement>('[data-docs-scroll]');
 
   if (toc && article) {
     const progress = document.querySelector<HTMLElement>('[data-reading-progress]');
@@ -113,7 +125,10 @@ const partLabel = part ? `第 ${String(part).padStart(2, '0')} 部分` : null;
       if (id) links.set(id, link);
     });
 
-    const headings = [...article.querySelectorAll<HTMLElement>('h2[id], h3[id]')];
+    const headings = [...article.querySelectorAll<HTMLElement>('h1[id], h2[id], h3[id]')];
+    // The outline can be chapter-level (H1) for long documents, so every
+    // heading that owns a table-of-contents link can become the active entry.
+    const linkedHeadings = headings.filter((heading) => links.has(heading.id));
 
     // Make section headings linkable: append a small anchor that appears on hover.
     headings.forEach((heading) => {
@@ -131,11 +146,12 @@ const partLabel = part ? `第 ${String(part).padStart(2, '0')} 部分` : null;
       ticking = false;
       if (headings.length === 0) return;
 
-      const offset = 96;
-      const firstLinked = headings.find((heading) => links.has(heading.id));
-      let activeId = firstLinked?.id ?? headings[0].id;
+      // Headings are compared against the top edge of whichever box scrolls.
+      const viewportTop = scroller ? scroller.getBoundingClientRect().top : 0;
+      const offset = viewportTop + 28;
+      let activeId = linkedHeadings[0]?.id ?? headings[0].id;
 
-      for (const heading of headings) {
+      for (const heading of linkedHeadings) {
         if (heading.getBoundingClientRect().top <= offset) {
           activeId = heading.id;
         } else {
@@ -143,18 +159,25 @@ const partLabel = part ? `第 ${String(part).padStart(2, '0')} 部分` : null;
         }
       }
 
-      // Near the bottom of the page, highlight the last heading.
-      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 40) {
-        activeId = headings[headings.length - 1].id;
-      }
+      // Near the end of the content, highlight the last heading.
+      const atEnd = scroller
+        ? scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 4
+        : window.innerHeight + window.scrollY >= document.body.offsetHeight - 40;
+      if (atEnd && linkedHeadings.length > 0) activeId = linkedHeadings[linkedHeadings.length - 1].id;
 
       links.forEach((link, id) => link.classList.toggle('is-active', id === activeId));
 
       if (progress) {
-        const rect = article.getBoundingClientRect();
-        const distance = rect.height - window.innerHeight;
-        const scrolled = Math.min(Math.max(-rect.top, 0), Math.max(distance, 1));
-        progress.style.width = distance > 0 ? `${(scrolled / distance) * 100}%` : '0%';
+        if (scroller) {
+          const distance = scroller.scrollHeight - scroller.clientHeight;
+          const ratio = distance > 0 ? scroller.scrollTop / distance : 0;
+          progress.style.width = `${Math.min(Math.max(ratio, 0), 1) * 100}%`;
+        } else {
+          const rect = article.getBoundingClientRect();
+          const distance = rect.height - window.innerHeight;
+          const scrolled = Math.min(Math.max(-rect.top, 0), Math.max(distance, 1));
+          progress.style.width = distance > 0 ? `${(scrolled / distance) * 100}%` : '0%';
+        }
       }
     };
 
@@ -164,7 +187,11 @@ const partLabel = part ? `第 ${String(part).padStart(2, '0')} 部分` : null;
       requestAnimationFrame(update);
     };
 
-    window.addEventListener('scroll', requestUpdate, { passive: true });
+    if (scroller) {
+      scroller.addEventListener('scroll', requestUpdate, { passive: true });
+    } else {
+      window.addEventListener('scroll', requestUpdate, { passive: true });
+    }
     window.addEventListener('resize', requestUpdate);
     update();
   }

@@ -36,6 +36,7 @@ opt-level = 1
 
 [workspace.dependencies]
 mini-llm-tensor = { path = "crates/mini-llm-tensor" }
+rayon = "1"
 mini-llm-random = { path = "crates/mini-llm-random" }
 mini-llm-autograd = { path = "crates/mini-llm-autograd" }
 mini-llm-nn = { path = "crates/mini-llm-nn" }

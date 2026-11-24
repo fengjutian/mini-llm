@@ -1,0 +1,347 @@
+---
+import LessonLayout from '../../layouts/LessonLayout.astro';
+import { Code } from 'astro:components';
+
+const initialSteps = 8;
+const maxSteps = 12;
+const steps = Array.from({ length: initialSteps }, (_, i) => i + 1);
+const offline = steps.reduce((sum, step) => sum + step, 0);
+const online = steps.length;
+
+const snippet = `// Append one row per key/value head, then reuse it for every query
+// head in the group. (Appending inside the query-head loop would store
+// the same token \`group\` times and double the cache work.)
+for kv_head in 0..self.num_kv_heads {
+    let k = key.slice_cols(kv_head * self.head_dim, self.head_dim)?;
+    let v = value.slice_cols(kv_head * self.head_dim, self.head_dim)?;
+    cache.keys[kv_head].append_row(k.value().data())?;
+    cache.values[kv_head].append_row(v.value().data())?;
+}`;
+---
+
+<LessonLayout
+  index="08"
+  tag="推理"
+  title="为什么第二个 token 更快"
+  summary="生成第 t 个 token 时，前面 token 的 K、V 不会变。把它们缓存下来，每步只算新 token 的 Q、K、V；单步注意力从 O(t²) 降到 O(t)，代价是一块随上下文增长的显存。"
+  time="8 分钟"
+  points={[
+    '自回归生成中，历史 token 的 K、V 一旦算完就不再改变。',
+    'KV Cache 每步只 append 新 token 的 K、V，Q 只算当前这一个。',
+    '单步从 O(t²) 降到 O(t)，但整段生成仍是 O(n²)。',
+    'cache 占显存；GQA 让多个 query head 共享一组 K、V，直接减小 cache。',
+  ]}
+  links={[
+    { label: 'Decoder Engine 深度解析', href: '/docs/decoder-engine' },
+    { label: 'Transformer Block 剖析', href: '/docs/transformer-block' },
+  ]}
+  next={{ href: '/learn/causal-mask', title: '模型为什么不能偷看答案' }}
+>
+  <p>
+    生成是逐 token 进行的：把前缀喂进模型，取最后一个位置的 logits，采样出下一个 token，再把它接回前缀。最朴素的做法是每一步都重新跑一遍完整前缀，
+    于是第 1 步算 1 个位置，第 2 步算 2 个，第 n 步算 n 个——总共 <code>n(n+1)/2</code> 次。
+  </p>
+  <p>
+    但第 t 步和第 t−1 步之间，前缀只多了一个 token。前面所有位置的 Key 和 Value 在每一层里都是同一组数，重新算一遍纯属浪费。
+    <strong>KV Cache 就是把它们按层存下来，下一步直接接着用。</strong>
+  </p>
+
+  <div class="formula">
+    无 cache：第 t 步处理 t 个位置 &nbsp;<span class="text-dim">// 累计 1 + 2 + … + n</span><br />
+    有 cache：第 t 步只处理 1 个新位置 &nbsp;<span class="text-dim">// 累计 n</span><br />
+    单步注意力：O(t²) → O(t)<br />
+    <span class="text-dim">// 注意：整段生成仍是 O(n²)，cache 去掉的是重复计算，不是注意力本身</span>
+  </div>
+
+  <div class="widget" data-cache-widget>
+    <div class="widget__head">
+      <h2 class="widget__title">每步要处理多少个位置</h2>
+      <span class="widget__hint">一根柱子 = 一步；高度 = 这一步算了几个位置</span>
+    </div>
+    <div class="widget__body">
+      <div class="cache-legend">
+        <span><i class="key key--off"></i>全量重算</span>
+        <span><i class="key key--on"></i>KV Cache</span>
+        <span class="mono">最多 12 步</span>
+      </div>
+
+      <div class="cache-lanes">
+        <div class="cache-lane">
+          <span class="cache-lane__label">无 cache</span>
+          <div class="cache-bars" data-bars="off">
+            {Array.from({ length: maxSteps }, (_, i) => i + 1).map((step) => (
+              <span
+                class:list={['cache-bar', 'is-off', { 'is-future': step > initialSteps }]}
+                style={`--h:${step * 9}px`}
+                title={`第 ${step} 步：${step} 个位置`}
+              >
+                <i>{step}</i>
+              </span>
+            ))}
+          </div>
+        </div>
+        <div class="cache-lane">
+          <span class="cache-lane__label">KV Cache</span>
+          <div class="cache-bars" data-bars="on">
+            {Array.from({ length: maxSteps }, (_, i) => i + 1).map((step) => (
+              <span
+                class:list={['cache-bar', 'is-on', { 'is-future': step > initialSteps }]}
+                style={`--h:9px`}
+                title={`第 ${step} 步：1 个位置`}
+              >
+                <i>1</i>
+              </span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div class="control-row cache-actions">
+        <button class="chip" type="button" data-grow="1">再生成 1 个</button>
+        <button class="chip" type="button" data-grow="4">再生成 4 个</button>
+        <button class="chip" type="button" data-cache-reset>重置</button>
+        <span class="cache-progress mono" data-cache-progress>{initialSteps} / {maxSteps} 步</span>
+      </div>
+
+      <dl class="readout cache-readout">
+        <div><dt>已生成</dt><dd data-out-steps>{initialSteps}</dd></div>
+        <div><dt>无 cache 计算</dt><dd data-out-offline>{offline}</dd></div>
+        <div><dt>有 cache 计算</dt><dd data-out-online>{online}</dd></div>
+        <div><dt>省下的比例</dt><dd data-out-saved>{((1 - online / offline) * 100).toFixed(1)}%</dd></div>
+      </dl>
+
+      <p class="widget__foot" data-cache-summary>
+        生成 8 个 token，全量重算需要处理 36 个位置，KV Cache 只需要 8 个。上下文越长，差距越大。
+      </p>
+    </div>
+  </div>
+
+  <h2>Cache 里到底存了什么</h2>
+  <p>
+    每个 Transformer 层的注意力都会把输入投影成 Q、K、V。对当前 token 来说，Q 只在这一步用一次，没必要存；K 和 V 却会被之后所有 token 反复查询，
+    所以要缓存。形状上，每个 KV head 各有一份 <code>[已生成长度, head_dim]</code> 的 K 和 V，层与层之间互不共享。
+  </p>
+  <p>
+    这也是 GQA 的价值：多个 query head 可以共享同一组 K、V。如果 <code>num_heads = 32</code>、<code>num_kv_heads = 8</code>，
+    每层只需要存 8 份 KV，而不是 32 份。计算时由 <code>group = num_heads / num_kv_heads</code> 把 query head 映射到对应的 KV head。
+  </p>
+
+  <h2>它不是“把注意力变成 O(1)”</h2>
+  <p>
+    第 t 步虽然只算 1 个新的 query，但这个 query 仍要和缓存的 t 个 key 做点积，所以单步注意力是 <code>O(t)</code>，整段生成累计仍是
+    <code>O(n²)</code>。KV Cache 省掉的是“把历史 token 重新投影成 K、V，再重算它们的注意力”这一大块重复工作；
+    真正把长上下文注意力降到次二次，需要另一类算法。
+  </p>
+  <p>
+    实际推理还分两个阶段：<strong>prefill</strong> 一次处理整段 prompt，算力密集；<strong>decode</strong> 每次只处理一个 token，受显存带宽限制。
+    KV Cache 让 decode 阶段不必回看整个前缀，但 cache 本身会随长度线性增长，长上下文时显存往往先成为瓶颈。
+  </p>
+
+  <h2>在 mini-llm 里</h2>
+  <div class="code-card">
+    <div class="code-card__head mono">crates/mini-llm-model/src/attention.rs</div>
+    <Code code={snippet} lang="rust" theme="github-dark-dimmed" />
+  </div>
+  <p>
+    <code>AttentionCache</code> 为每个 KV head 保存一个 <code>[len, head_dim]</code> 张量，<code>append_row</code> 负责把新 token 接在末尾。
+    <code>forward_step</code> 只接收当前 token 与位置，注意力分数用“1 行 query × 已缓存 key”计算。仓库还保留了一个
+    <code>generate_uncached</code>，专门用来和带 cache 的 <code>generate</code> 对照，测试会断言两者输出一致。
+  </p>
+  <p>
+    缓存也带来边界条件：KV head 数量必须和配置匹配，否则返回 <code>CacheHeadMismatch</code>；使用可学习位置编码时，生成到
+    <code>max_seq_len</code> 就必须停下；RoPE 的位置索引可以继续增长，但超出训练上下文后效果会下降。
+  </p>
+
+  <div class="note">
+    <strong>别把 cache 和训练混在一起</strong>
+    训练时整段序列并行计算，每个位置都要参与 loss，没有“只算新 token”这回事，所以训练不使用 KV Cache。它是推理期的优化，
+    改变的是计算顺序，不改变模型参数。
+  </div>
+</LessonLayout>
+
+<style>
+  .cache-legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 16px;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--ink-faint);
+  }
+
+  .cache-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .cache-legend .mono {
+    margin-left: auto;
+  }
+
+  .key {
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+  }
+
+  .key--off {
+    background: var(--line-strong);
+  }
+
+  .key--on {
+    background: var(--accent);
+  }
+
+  .cache-lanes {
+    display: grid;
+    gap: 10px;
+    margin: 18px 0 6px;
+  }
+
+  .cache-lane {
+    display: grid;
+    grid-template-columns: 62px minmax(0, 1fr);
+    align-items: end;
+    gap: 12px;
+  }
+
+  .cache-lane__label {
+    padding-bottom: 3px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    color: var(--ink-faint);
+    text-align: right;
+  }
+
+  .cache-bars {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    align-items: end;
+    gap: 5px;
+    min-height: 20px;
+    padding-bottom: 2px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .cache-bar {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    width: 100%;
+    height: var(--h);
+    min-height: 9px;
+    border-radius: 2px 2px 0 0;
+    transition: height 0.18s var(--ease);
+  }
+
+  .cache-bar.is-future {
+    display: none;
+  }
+
+  .cache-bar i {
+    position: absolute;
+    top: -13px;
+    font-family: var(--font-mono);
+    font-size: 8px;
+    font-style: normal;
+    color: var(--ink-faint);
+  }
+
+  .cache-bar.is-off {
+    background: var(--line-strong);
+  }
+
+  .cache-bar.is-on {
+    background: color-mix(in srgb, var(--accent) 70%, var(--paper-2));
+  }
+
+  .cache-bar.is-new {
+    background: var(--accent);
+  }
+
+  .cache-actions {
+    margin: 16px 0 16px;
+  }
+
+  .cache-progress {
+    font-size: 10.5px;
+    color: var(--ink-faint);
+  }
+
+  .cache-readout {
+    margin: 0;
+  }
+
+  .widget__foot {
+    margin: 16px 0 0;
+    padding-top: 14px;
+    border-top: 1px dashed var(--line);
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: var(--ink-faint);
+  }
+</style>
+
+<script>
+  const widget = document.querySelector<HTMLElement>('[data-cache-widget]');
+  if (widget) {
+    const MAX_STEPS = 12;
+    let steps = 8;
+
+    const offBars = widget.querySelector<HTMLElement>('[data-bars="off"]')!;
+    const onBars = widget.querySelector<HTMLElement>('[data-bars="on"]')!;
+    const progress = widget.querySelector<HTMLElement>('[data-cache-progress]')!;
+    const outSteps = widget.querySelector<HTMLElement>('[data-out-steps]')!;
+    const outOffline = widget.querySelector<HTMLElement>('[data-out-offline]')!;
+    const outOnline = widget.querySelector<HTMLElement>('[data-out-online]')!;
+    const outSaved = widget.querySelector<HTMLElement>('[data-out-saved]')!;
+    const summary = widget.querySelector<HTMLElement>('[data-cache-summary]')!;
+
+    const buildBars = () => {
+      const offList = [...offBars.children] as HTMLElement[];
+      const onList = [...onBars.children] as HTMLElement[];
+      offList.forEach((bar, index) => {
+        bar.classList.toggle('is-future', index >= steps);
+        bar.classList.toggle('is-new', index === steps - 1);
+      });
+      onList.forEach((bar, index) => {
+        bar.classList.toggle('is-future', index >= steps);
+        bar.classList.toggle('is-new', index === steps - 1);
+      });
+    };
+
+    const render = () => {
+      const offline = (steps * (steps + 1)) / 2;
+      const online = steps;
+      buildBars();
+      progress.textContent = `${steps} / ${MAX_STEPS} 步`;
+      outSteps.textContent = String(steps);
+      outOffline.textContent = String(offline);
+      outOnline.textContent = String(online);
+      outSaved.textContent = steps === 0 ? '—' : `${((1 - online / offline) * 100).toFixed(1)}%`;
+      summary.textContent =
+        steps === 0
+          ? '从零开始：每点一次，两侧各新增一根柱子，看看高度差如何被拉开。'
+          : `生成 ${steps} 个 token：全量重算要处理 ${offline} 个位置，KV Cache 只需要 ${online} 个，` +
+            `当前这一步的处理量是 ${steps} : 1。上下文再长，比值只会更悬殊。`;
+    };
+
+    widget.querySelectorAll<HTMLButtonElement>('[data-grow]').forEach((button) => {
+      button.addEventListener('click', () => {
+        steps = Math.min(MAX_STEPS, steps + Number(button.dataset.grow));
+        render();
+      });
+    });
+
+    widget.querySelector('[data-cache-reset]')?.addEventListener('click', () => {
+      steps = 0;
+      render();
+    });
+
+    render();
+  }
+</script>

@@ -11,7 +11,7 @@ const { headings } = Astro.props;
   <ol>
     {headings.map((heading) => (
       <li data-depth={heading.depth}>
-        <a href={`#${heading.slug}`}>{heading.text}</a>
+        <a href={`#${heading.slug}`} title={heading.text}>{heading.text}</a>
       </li>
     ))}
   </ol>
