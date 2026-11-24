@@ -3,7 +3,7 @@
 //! The architecture is configurable: LayerNorm or RMSNorm, learned positions or
 //! RoPE, a ReLU MLP or SwiGLU, and dense or grouped-query attention. Generation
 //! uses a KV cache so each new token costs one token of compute instead of a
-//! full window.
+//! full window. [Sampling] controls temperature, top-k and top-p.
 
 use std::cell::RefCell;
 
@@ -35,6 +35,44 @@ pub struct TinyGpt {
     lm_head: Linear,
     /// Causal mask for the last `(batch, seq)` pair; rebuilt only on change.
     mask_cache: RefCell<Option<((usize, usize), Tensor)>>,
+}
+
+/// Sampling controls for [`TinyGpt::generate_with`].
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Sampling {
+    /// `<= 0.0` selects the argmax (greedy decoding).
+    pub temperature: f32,
+    /// Keep only the `k` most likely tokens before sampling.
+    pub top_k: Option<usize>,
+    /// Keep the smallest prefix of tokens whose probability mass reaches `p`.
+    pub top_p: Option<f32>,
+}
+
+impl Sampling {
+    pub fn greedy() -> Self {
+        Self {
+            temperature: 0.0,
+            top_k: None,
+            top_p: None,
+        }
+    }
+
+    pub fn with_temperature(temperature: f32) -> Self {
+        Self {
+            temperature,
+            ..Self::greedy()
+        }
+    }
+
+    pub fn top_k(mut self, k: usize) -> Self {
+        self.top_k = Some(k.max(1));
+        self
+    }
+
+    pub fn top_p(mut self, p: f32) -> Self {
+        self.top_p = Some(p.clamp(0.0, 1.0));
+        self
+    }
 }
 
 impl TinyGpt {
@@ -259,6 +297,22 @@ impl TinyGpt {
         temperature: f32,
         rng: &mut Rng,
     ) -> Result<Vec<usize>, ModelError> {
+        self.generate_with(
+            prompt,
+            max_new_tokens,
+            Sampling::with_temperature(temperature),
+            rng,
+        )
+    }
+
+    /// Autoregressive sampling with explicit temperature, top-k and top-p.
+    pub fn generate_with(
+        &self,
+        prompt: &[usize],
+        max_new_tokens: usize,
+        sampling: Sampling,
+        rng: &mut Rng,
+    ) -> Result<Vec<usize>, ModelError> {
         if prompt.is_empty() {
             return Err(ModelError::EmptyPrompt);
         }
@@ -284,7 +338,7 @@ impl TinyGpt {
 
         let mut tokens = prompt.to_vec();
         for _ in 0..max_new_tokens {
-            let next = sample_next(&logits, self.config.vocab_size, temperature, rng)?;
+            let next = sample_next(&logits, self.config.vocab_size, sampling, rng)?;
             tokens.push(next);
 
             if self.position_embedding.is_some() && tokens.len() >= self.config.max_seq_len {
@@ -293,6 +347,89 @@ impl TinyGpt {
             logits = self.step_token(next, tokens.len() - 1, &mut caches)?;
         }
         Ok(tokens)
+    }
+
+    /// Generates continuations for several prompts in one batched forward pass.
+    ///
+    /// The causal mask keeps samples independent; shorter prompts are padded on
+    /// the right with token 0, and padding cannot affect a real position because
+    /// attention only looks left. Each sequence stops at `max_seq_len`, so keep
+    /// `prompt length + max_new_tokens` within that limit. This path does not use
+    /// the KV cache: every step recomputes the window (the cached path supports
+    /// one sequence).
+    pub fn generate_batch(
+        &self,
+        prompts: &[Vec<usize>],
+        max_new_tokens: usize,
+        sampling: Sampling,
+        rng: &mut Rng,
+    ) -> Result<Vec<Vec<usize>>, ModelError> {
+        if prompts.is_empty() {
+            return Err(ModelError::EmptyPrompt);
+        }
+        let mut width = 0usize;
+        for prompt in prompts {
+            if prompt.is_empty() {
+                return Err(ModelError::EmptyPrompt);
+            }
+            if let Some(&index) = prompt.iter().find(|&&index| index >= self.config.vocab_size) {
+                return Err(ModelError::TokenOutOfRange {
+                    index,
+                    vocab_size: self.config.vocab_size,
+                });
+            }
+            width = width.max(prompt.len());
+        }
+
+        let batch = prompts.len();
+        let mut sequences: Vec<Vec<usize>> = prompts
+            .iter()
+            .map(|prompt| {
+                let mut sequence = prompt.clone();
+                sequence.resize(width, 0);
+                sequence
+            })
+            .collect();
+        let mut lengths: Vec<usize> = prompts.iter().map(Vec::len).collect();
+        let mut active = vec![true; batch];
+
+        for _ in 0..max_new_tokens {
+            if !active.iter().any(|flag| *flag) {
+                break;
+            }
+
+            let inputs: Vec<usize> = sequences.iter().flatten().copied().collect();
+            let logits = self.forward(&inputs, batch)?;
+            let data = logits.data();
+            let sampled_width = width;
+
+            for index in 0..batch {
+                if !active[index] {
+                    continue;
+                }
+                let row = (index * sampled_width + lengths[index] - 1) * self.config.vocab_size;
+                let last = &data[row..row + self.config.vocab_size];
+                let next = sample_from_last(last, sampling, rng)?;
+
+                if lengths[index] == width {
+                    for sequence in &mut sequences {
+                        sequence.push(0);
+                    }
+                    width += 1;
+                }
+                sequences[index][lengths[index]] = next;
+                lengths[index] += 1;
+                if lengths[index] >= self.config.max_seq_len {
+                    active[index] = false;
+                }
+            }
+        }
+
+        Ok(sequences
+            .into_iter()
+            .zip(lengths)
+            .map(|(sequence, length)| sequence[..length].to_vec())
+            .collect())
     }
 
     /// Reference generation without a KV cache: recomputes the whole window at
@@ -312,7 +449,12 @@ impl TinyGpt {
             let start = tokens.len().saturating_sub(self.config.max_seq_len);
             let window = &tokens[start..];
             let logits = self.forward(window, 1)?;
-            let next = sample_next(&logits, self.config.vocab_size, temperature, rng)?;
+            let next = sample_next(
+                &logits,
+                self.config.vocab_size,
+                Sampling::with_temperature(temperature),
+                rng,
+            )?;
             tokens.push(next);
         }
         Ok(tokens)
@@ -322,20 +464,85 @@ impl TinyGpt {
 fn sample_next(
     logits: &TensorValue,
     vocab: usize,
-    temperature: f32,
+    sampling: Sampling,
     rng: &mut Rng,
 ) -> Result<usize, ModelError> {
     let values = logits.value();
     let rows = values.shape()[0];
     let last = &values.data()[(rows - 1) * vocab..rows * vocab];
-    if temperature <= 0.0 {
+    sample_from_last(last, sampling, rng)
+}
+
+/// Samples one token from a row of next-token logits.
+fn sample_from_last(
+    last: &[f32],
+    sampling: Sampling,
+    rng: &mut Rng,
+) -> Result<usize, ModelError> {
+    if sampling.temperature <= 0.0 {
         return Ok(argmax(last));
     }
-    let scaled: Vec<f32> = last.iter().map(|value| value / temperature).collect();
+    let vocab = last.len();
+    let scaled: Vec<f32> = last
+        .iter()
+        .map(|value| value / sampling.temperature)
+        .collect();
     let probabilities = Tensor::from_2d(1, vocab, scaled)?
         .softmax_rows()?
         .into_data();
-    Ok(sample(&probabilities, rng))
+
+    let candidates = truncate(&probabilities, sampling);
+    if candidates.len() == probabilities.len() && sampling.top_k.is_none() {
+        // Fast path: keep the original order so plain temperature sampling is
+        // bit-identical to the pre-top-k implementation.
+        return Ok(sample(&probabilities, rng));
+    }
+    Ok(sample_truncated(&candidates, rng))
+}
+
+/// Applies top-k then top-p, returning `(index, probability)` pairs.
+fn truncate(probabilities: &[f32], sampling: Sampling) -> Vec<(usize, f32)> {
+    let mut items: Vec<(usize, f32)> = probabilities.iter().copied().enumerate().collect();
+    if let Some(top_k) = sampling.top_k {
+        if top_k < items.len() {
+            items.sort_by(|left, right| right.1.total_cmp(&left.1));
+            items.truncate(top_k);
+        }
+    }
+    if let Some(top_p) = sampling.top_p {
+        if !items.is_empty() {
+            items.sort_by(|left, right| right.1.total_cmp(&left.1));
+            let mut cumulative = 0.0;
+            let mut keep = 1;
+            for (index, &(_, probability)) in items.iter().enumerate() {
+                cumulative += probability;
+                keep = index + 1;
+                if cumulative >= top_p {
+                    break;
+                }
+            }
+            items.truncate(keep.max(1));
+        }
+    }
+    items
+}
+
+fn sample_truncated(candidates: &[(usize, f32)], rng: &mut Rng) -> usize {
+    let total: f32 = candidates.iter().map(|(_, probability)| probability).sum();
+    if total <= 0.0 {
+        return candidates.first().map(|(index, _)| *index).unwrap_or(0);
+    }
+    let mut threshold = rng.next_f32() * total;
+    for &(index, probability) in candidates {
+        threshold -= probability;
+        if threshold <= 0.0 {
+            return index;
+        }
+    }
+    candidates
+        .last()
+        .map(|(index, _)| *index)
+        .unwrap_or_default()
 }
 
 fn argmax(values: &[f32]) -> usize {

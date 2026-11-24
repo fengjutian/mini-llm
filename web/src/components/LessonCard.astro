@@ -6,6 +6,8 @@ interface Props {
 }
 
 const { lesson } = Astro.props;
+
+const normBars = [16, -24, 38, -12, 52, -30, 20, -8, 34];
 ---
 
 <a class="card lesson-card" href={lesson.href}>
@@ -85,6 +87,45 @@ const { lesson } = Astro.props;
           );
         })}
       </div>
+    )}
+    {lesson.visual === 'norm' && (
+      <svg class="mini-norm" viewBox="0 0 152 92" aria-hidden="true">
+        <line class="axis" x1="6" y1="46" x2="146" y2="46" />
+        {normBars.map((value, i) => (
+          <rect
+            class={i === 4 ? 'is-active' : ''}
+            x={10 + i * 15}
+            y={value > 0 ? 46 - value : 46}
+            width="9"
+            height={Math.abs(value)}
+            rx="2"
+          />
+        ))}
+      </svg>
+    )}
+    {lesson.visual === 'gate' && (
+      <svg class="mini-gate" viewBox="0 0 152 92" aria-hidden="true">
+        <line class="axis" x1="8" y1="46" x2="146" y2="46" />
+        <path class="relu" d="M10 76 H78 L142 12" />
+        <path class="silu" d="M10 72 C34 72 48 54 68 42 C88 30 110 20 142 12" />
+        <line class="marker" x1="62" y1="10" x2="62" y2="82" />
+      </svg>
+    )}
+    {lesson.visual === 'moe' && (
+      <svg class="mini-moe" viewBox="0 0 152 92" aria-hidden="true">
+        <path class="line is-active" d="M22 14 L104 35" />
+        <path class="line" d="M22 28 L104 13" />
+        <path class="line is-active" d="M22 42 L104 57" />
+        <path class="line" d="M22 56 L104 79" />
+        <path class="line is-active" d="M22 70 L104 13" />
+        <path class="line is-active" d="M22 84 L104 57" />
+        {[13, 35, 57, 79].map((y, i) => (
+          <rect class={i === 2 ? 'is-active' : ''} x="104" y={y - 7} width="40" height="14" rx="3" />
+        ))}
+        {[14, 28, 42, 56, 70, 84].map((y) => (
+          <circle cx="22" cy={y} r="2.5" />
+        ))}
+      </svg>
     )}
   </div>
   <div class="lesson-card__body">

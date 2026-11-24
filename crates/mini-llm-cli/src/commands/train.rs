@@ -13,7 +13,7 @@ use mini_llm_train::{
     load_training_checkpoint, save_training_checkpoint, LrSchedule, TrainConfig, Trainer,
 };
 
-use super::{corpus_text, CHECKPOINT_PATH};
+use super::{corpus_text, parse_accumulation, CHECKPOINT_PATH};
 
 const BLOCK_SIZE: usize = 48;
 const BATCH_SIZE: usize = 2;
@@ -155,19 +155,6 @@ fn split_tokens(tokens: &[usize], fraction: f32) -> (Vec<usize>, Vec<usize>) {
     let split = ((tokens.len() as f32) * (1.0 - fraction)) as usize;
     let split = split.clamp(BLOCK_SIZE + 1, tokens.len().saturating_sub(BLOCK_SIZE + 1));
     (tokens[..split].to_vec(), tokens[split..].to_vec())
-}
-
-/// Reads `--accum N` / `--accum=N`; defaults to one micro-batch.
-fn parse_accumulation(arguments: &[String]) -> usize {
-    let mut value = None;
-    for (index, argument) in arguments.iter().enumerate() {
-        if argument == "--accum" {
-            value = arguments.get(index + 1).and_then(|next| next.parse().ok());
-        } else if let Some(rest) = argument.strip_prefix("--accum=") {
-            value = rest.parse().ok();
-        }
-    }
-    value.unwrap_or(1).max(1)
 }
 
 /// Reads `--vocab N` for BPE training; defaults to 512 tokens.

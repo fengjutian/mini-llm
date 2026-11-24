@@ -45,6 +45,19 @@ pub(crate) fn corpus_text(arguments: &[String]) -> (String, String) {
     }
 }
 
+/// Reads `--accum N` / `--accum=N`; defaults to one micro-batch.
+pub(crate) fn parse_accumulation(arguments: &[String]) -> usize {
+    let mut value = None;
+    for (index, argument) in arguments.iter().enumerate() {
+        if argument == "--accum" {
+            value = arguments.get(index + 1).and_then(|next| next.parse().ok());
+        } else if let Some(rest) = argument.strip_prefix("--accum=") {
+            value = rest.parse().ok();
+        }
+    }
+    value.unwrap_or(1).max(1)
+}
+
 /// A short public-domain-style paragraph used for the character-level demo.
 pub(crate) const TINY_CORPUS: &str = "\
 The little language model learns one character at a time. It reads a short story, \

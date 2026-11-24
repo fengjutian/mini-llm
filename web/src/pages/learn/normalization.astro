@@ -1,0 +1,413 @@
+---
+import LessonLayout from '../../layouts/LessonLayout.astro';
+import { Code } from 'astro:components';
+
+const BASE = [0.8, -0.4, 1.2, 0.2, -1.1, 0.6, -0.2, 0.9];
+const EPS = 1e-5;
+
+const mean = (values: number[]) => values.reduce((sum, value) => sum + value, 0) / values.length;
+const variance = (values: number[]) => {
+  const mu = mean(values);
+  return mean(values.map((value) => (value - mu) ** 2));
+};
+
+const layerNorm = (values: number[]) => {
+  const mu = mean(values);
+  const inv = 1 / Math.sqrt(variance(values) + EPS);
+  return values.map((value) => (value - mu) * inv);
+};
+
+const rmsNorm = (values: number[]) => {
+  const ms = mean(values.map((value) => value * value));
+  const inv = 1 / Math.sqrt(ms + EPS);
+  return values.map((value) => value * inv);
+};
+
+const geometry = (values: number[]) => {
+  const maxAbs = Math.max(...values.map((value) => Math.abs(value)), 0.1);
+  return values.map((value, index) => {
+    const height = (Math.abs(value) / maxAbs) * 62;
+    return {
+      x: 16 + index * 34,
+      y: value >= 0 ? 95 - height : 95,
+      height,
+    };
+  });
+};
+
+const initialIn = geometry(BASE);
+const initialOut = geometry(layerNorm(BASE));
+
+const snippet = `// LayerNorm: composed from autograd primitives
+let mean = input.mean_rows_keepdim()?;
+let centered = input.sub(&mean)?;
+let variance = centered.powf(2.0)?.mean_rows_keepdim()?;
+let inv_std = variance.add_scalar(self.eps)?.powf(-0.5)?;
+let normalized = centered.mul(&inv_std)?;
+Ok(normalized.mul(&self.gamma)?.add(&self.beta)?)
+
+// RMSNorm: no mean subtraction, no beta
+let mean_square = input.powf(2.0)?.mean_rows_keepdim()?;
+let inverted_rms = mean_square.add_scalar(self.eps)?.powf(-0.5)?;
+Ok(input.mul(&inverted_rms)?.mul(&self.gamma)?)`;
+---
+
+<LessonLayout
+  index="10"
+  tag="归一化"
+  title="数值为什么要被拉回来"
+  summary="每一层的输出尺度都会漂移。LayerNorm 减去均值再除以标准差，RMSNorm 只除以均方根；两者都把向量拉回可训练的尺度，但保留的信息不同。"
+  time="7 分钟"
+  points={[
+    'LayerNorm 沿最后一维去均值、除标准差，再乘 gamma、加 beta。',
+    'RMSNorm 不减均值、没有 beta，只除以均方根；更便宜，也更常用。',
+    '归一化是每个 token 独立做的，不依赖 batch 统计。',
+    'Transformer 用 pre-norm：x + attn(norm(x))，残差路径保持干净。',
+  ]}
+  links={[
+    { label: 'Transformer Block 剖析', href: '/docs/transformer-block' },
+    { label: '神经网络基础 · 归一化', href: '/docs/neural-network-engine' },
+  ]}
+  next={{ href: '/learn/swiglu', title: '门控怎样决定让什么通过' }}
+>
+  <p>
+    残差连接会把每一层的输出不断加回主路径。如果某一层的数值整体偏大，下一层拿到的输入就会跟着变大，几层之后激活值可能膨胀到 Softmax 饱和、
+    梯度消失；反过来也可能一路缩小到接近 0。归一化层就是插在子层前面的“稳压器”。
+  </p>
+  <p>
+    它保留各维之间的相对差异，同时把整体尺度拉回一个固定范围。对每个 token 的 hidden 向量独立做，因此和 batch 大小、序列长度都无关——
+    这也是它比 BatchNorm 更适合变长文本的原因。
+  </p>
+
+  <div class="formula">
+    LayerNorm: μ = mean(x), &nbsp; σ² = mean((x − μ)²)<br />
+    y = (x − μ) / √(σ² + ε) · γ + β<br /><br />
+    RMSNorm: y = x / √(mean(x²) + ε) · γ<br />
+    <span class="text-dim">// 不减均值，也没有 β；ε = 1e-5</span>
+  </div>
+
+  <div class="widget" data-norm-widget>
+    <div class="widget__head">
+      <h2 class="widget__title">归一化前 / 归一化后</h2>
+      <span class="widget__hint">拖动偏移与缩放，切换两种 norm</span>
+    </div>
+    <div class="widget__body">
+      <div class="norm-mode">
+        <div class="opt-chips" role="group" aria-label="归一化方式">
+          <button class="chip" type="button" data-norm="layer" aria-pressed="true">LayerNorm</button>
+          <button class="chip" type="button" data-norm="rms" aria-pressed="false">RMSNorm</button>
+        </div>
+        <span class="mono norm-note">γ = 1, β = 0</span>
+      </div>
+
+      <div class="norm-charts">
+        <div class="norm-panel">
+          <p class="norm-panel__title">输入 x <span>原始尺度</span></p>
+          <svg class="norm-chart" viewBox="0 0 300 180" role="img" aria-label="归一化前的向量">
+            <line class="norm-axis" x1="10" y1="95" x2="290" y2="95" />
+            {initialIn.map((bar, index) => (
+              <rect
+                class="norm-bar"
+                data-in={index}
+                x={bar.x}
+                y={bar.y}
+                width="18"
+                height={bar.height}
+                rx="2"
+              />
+            ))}
+          </svg>
+        </div>
+        <div class="norm-panel">
+          <p class="norm-panel__title"><span data-norm-title>LayerNorm(x)</span> <span>归一化后</span></p>
+          <svg class="norm-chart" viewBox="0 0 300 180" role="img" aria-label="归一化后的向量">
+            <line class="norm-axis" x1="10" y1="95" x2="290" y2="95" />
+            {initialOut.map((bar, index) => (
+              <rect
+                class="norm-bar is-output"
+                data-out={index}
+                x={bar.x}
+                y={bar.y}
+                width="18"
+                height={bar.height}
+                rx="2"
+              />
+            ))}
+          </svg>
+        </div>
+      </div>
+
+      <div class="norm-controls">
+        <label class="norm-slider">
+          <span>偏移 shift</span>
+          <input type="range" min="-3" max="3" step="0.1" value="0" data-shift />
+          <output data-shift-out>0.0</output>
+        </label>
+        <label class="norm-slider">
+          <span>缩放 scale</span>
+          <input type="range" min="0.2" max="3" step="0.05" value="1" data-scale />
+          <output data-scale-out>1.00</output>
+        </label>
+      </div>
+
+      <dl class="readout norm-readout">
+        <div><dt>输入均值</dt><dd data-out-in-mean>—</dd></div>
+        <div><dt>输入标准差</dt><dd data-out-in-std>—</dd></div>
+        <div><dt>输出均值</dt><dd data-out-out-mean>—</dd></div>
+        <div><dt>输出标准差</dt><dd data-out-out-std>—</dd></div>
+      </dl>
+
+      <p class="widget__foot" data-norm-summary>
+        LayerNorm 把每个向量变成均值 0、标准差 1；因此整体平移或缩放输入，输出形状几乎不变。
+      </p>
+    </div>
+  </div>
+
+  <h2>两者差在哪</h2>
+  <p>
+    LayerNorm 做了两件事：先把向量平移到均值为 0，再缩放到标准差为 1，最后用 <code>γ</code>、<code>β</code> 把需要的尺度和偏移学回来。
+    RMSNorm 省掉了“减均值”和 <code>β</code>，只除以均方根。它假设方向本身已经包含了有用信息，不需要强行把均值压到 0。
+  </p>
+  <p>
+    代价是 RMSNorm 对整体平移不再不敏感：给输入每个分量加 10，输出会明显变化。但在 Transformer 里，这种平移很少单独出现，
+    而少一次归约、少一组参数带来的收益更直接，所以现代模型更偏爱 RMSNorm。
+  </p>
+
+  <h2>为什么是 per-token</h2>
+  <p>
+    自然语言序列长度不固定，同一个 batch 里不同样本的有效长度也不同。如果沿 batch 维统计均值方差，短句和长句会互相污染，
+    推理时 batch=1 更是无法计算。沿最后一维做归一化则完全局部：每个 token 只看自己的 hidden 向量。
+  </p>
+
+  <h2>pre-norm 的位置</h2>
+  <p>
+    mini-llm 的 block 采用 pre-norm：<code>x = x + attn(norm(x))</code>，再接 <code>x = x + ffn(norm(x))</code>。
+    归一化发生在子层内部，残差主路径上没有任何非线性或缩放，梯度可以沿着恒等路径直接回传。这比 post-norm 更容易训练深层网络。
+  </p>
+
+  <h2>在 mini-llm 里</h2>
+  <div class="code-card">
+    <div class="code-card__head mono">crates/mini-llm-nn/src/layernorm.rs · rmsnorm.rs</div>
+    <Code code={snippet} lang="rust" theme="github-dark-dimmed" />
+  </div>
+  <p>
+    两个层都是用 autograd 原语拼出来的，没有手写反向公式：<code>mean_rows_keepdim</code>、<code>powf</code>、<code>mul</code>、<code>add</code>
+    各自注册局部导数，反向传播由引擎自动完成。这也意味着它们的计算图比融合 kernel 长，但每一步都可读、可检查。
+  </p>
+  <p>
+    <code>LayerNorm</code> 有 <code>gamma</code> 和 <code>beta</code> 两个参数；<code>RmsNorm</code> 只有 <code>gamma</code>。
+    两者默认 <code>γ = 1</code>、<code>β = 0</code>，<code>ε = 1e-5</code>。在配置里，<code>tiny</code> 用 LayerNorm，<code>modern</code> 用 RMSNorm。
+  </p>
+
+  <div class="note">
+    <strong>归一化不是“把信息扔掉”</strong>
+    LayerNorm 去掉的是均值和整体尺度，这两个量可以由 <code>γ</code>、<code>β</code> 重新学回来；相对方向和每一维的差异都还在。
+    真正决定表达能力的，是后面的线性层如何利用这些归一化后的坐标。
+  </div>
+</LessonLayout>
+
+<style>
+  .opt-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+  }
+
+  .norm-mode {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .norm-note {
+    font-size: 10.5px;
+    color: var(--ink-faint);
+  }
+
+  .norm-charts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    margin: 18px 0 4px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+  }
+
+  .norm-panel {
+    min-width: 0;
+  }
+
+  .norm-panel__title {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 7px;
+    margin: 0 0 4px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.04em;
+    color: var(--ink);
+  }
+
+  .norm-panel__title span {
+    color: var(--ink-faint);
+  }
+
+  .norm-chart {
+    width: 100%;
+    height: auto;
+  }
+
+  .norm-axis {
+    stroke: var(--line-strong);
+    stroke-width: 1;
+  }
+
+  .norm-bar {
+    fill: var(--line-strong);
+    transition: y 0.12s linear, height 0.12s linear;
+  }
+
+  .norm-bar.is-output {
+    fill: var(--accent);
+  }
+
+  .norm-controls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 24px;
+    margin: 12px 0 18px;
+  }
+
+  .norm-slider {
+    display: grid;
+    grid-template-columns: 74px minmax(0, 1fr) 42px;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--ink-soft);
+  }
+
+  .norm-slider output {
+    text-align: right;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .norm-readout {
+    margin: 0;
+  }
+
+  .widget__foot {
+    margin: 16px 0 0;
+    padding-top: 14px;
+    border-top: 1px dashed var(--line);
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: var(--ink-faint);
+  }
+
+  @media (max-width: 640px) {
+    .norm-charts,
+    .norm-controls {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>
+
+<script>
+  const widget = document.querySelector<HTMLElement>('[data-norm-widget]');
+  if (widget) {
+    const BASE = [0.8, -0.4, 1.2, 0.2, -1.1, 0.6, -0.2, 0.9];
+    const EPS = 1e-5;
+    let mode: 'layer' | 'rms' = 'layer';
+    let shift = 0;
+    let scale = 1;
+
+    const mean = (values: number[]) => values.reduce((sum, value) => sum + value, 0) / values.length;
+    const variance = (values: number[]) => {
+      const mu = mean(values);
+      return mean(values.map((value) => (value - mu) ** 2));
+    };
+    const layerNorm = (values: number[]) => {
+      const mu = mean(values);
+      const inv = 1 / Math.sqrt(variance(values) + EPS);
+      return values.map((value) => (value - mu) * inv);
+    };
+    const rmsNorm = (values: number[]) => {
+      const ms = mean(values.map((value) => value * value));
+      const inv = 1 / Math.sqrt(ms + EPS);
+      return values.map((value) => value * inv);
+    };
+    const std = (values: number[]) => Math.sqrt(variance(values));
+
+    const inBars = [...widget.querySelectorAll<SVGRectElement>('[data-in]')];
+    const outBars = [...widget.querySelectorAll<SVGRectElement>('[data-out]')];
+    const modeButtons = [...widget.querySelectorAll<HTMLButtonElement>('[data-norm]')];
+    const shiftInput = widget.querySelector<HTMLInputElement>('[data-shift]')!;
+    const scaleInput = widget.querySelector<HTMLInputElement>('[data-scale]')!;
+    const shiftOut = widget.querySelector<HTMLOutputElement>('[data-shift-out]')!;
+    const scaleOut = widget.querySelector<HTMLOutputElement>('[data-scale-out]')!;
+    const outTitle = widget.querySelector<HTMLElement>('[data-norm-title]')!;
+    const outInMean = widget.querySelector<HTMLElement>('[data-out-in-mean]')!;
+    const outInStd = widget.querySelector<HTMLElement>('[data-out-in-std]')!;
+    const outOutMean = widget.querySelector<HTMLElement>('[data-out-out-mean]')!;
+    const outOutStd = widget.querySelector<HTMLElement>('[data-out-out-std]')!;
+    const summary = widget.querySelector<HTMLElement>('[data-norm-summary]')!;
+
+    const updateBars = (bars: SVGRectElement[], values: number[]) => {
+      const maxAbs = Math.max(...values.map((value) => Math.abs(value)), 0.1);
+      bars.forEach((bar, index) => {
+        const height = (Math.abs(values[index]) / maxAbs) * 62;
+        bar.setAttribute('y', String(values[index] >= 0 ? 95 - height : 95));
+        bar.setAttribute('height', String(height));
+      });
+    };
+
+    const render = () => {
+      const input = BASE.map((value) => value * scale + shift);
+      const output = mode === 'layer' ? layerNorm(input) : rmsNorm(input);
+      updateBars(inBars, input);
+      updateBars(outBars, output);
+
+      modeButtons.forEach((button) => {
+        button.setAttribute('aria-pressed', String(button.dataset.norm === mode));
+      });
+      outTitle.textContent = mode === 'layer' ? 'LayerNorm(x)' : 'RMSNorm(x)';
+      shiftOut.textContent = shift.toFixed(1);
+      scaleOut.textContent = scale.toFixed(2);
+
+      outInMean.textContent = mean(input).toFixed(3);
+      outInStd.textContent = std(input).toFixed(3);
+      outOutMean.textContent = mean(output).toFixed(3);
+      outOutStd.textContent = std(output).toFixed(3);
+
+      summary.textContent =
+        mode === 'layer'
+          ? `LayerNorm 下，输入均值 ${mean(input).toFixed(2)}、标准差 ${std(input).toFixed(2)}，输出被拉成均值 ${mean(output).toFixed(3)}、标准差 ${std(output).toFixed(3)}。整体平移或缩放只改变输入，不改变输出形状。`
+          : `RMSNorm 下，输出均方根约 1，但均值仍是 ${mean(output).toFixed(3)}。它不消除整体平移，也不使用 β；换来的是更少的计算和参数。`;
+    };
+
+    modeButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        mode = button.dataset.norm as 'layer' | 'rms';
+        render();
+      });
+    });
+
+    shiftInput.addEventListener('input', () => {
+      shift = Number(shiftInput.value);
+      render();
+    });
+
+    scaleInput.addEventListener('input', () => {
+      scale = Number(scaleInput.value);
+      render();
+    });
+
+    render();
+  }
+</script>

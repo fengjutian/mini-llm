@@ -62,7 +62,7 @@ impl CharTokenizer {
             .collect()
     }
 
-    /// Decodes token ids back into text.
+    /// Encodes token ids back into text.
     pub fn decode(&self, tokens: &[usize]) -> Result<String, DataError> {
         let mut text = String::new();
         for &token in tokens {
@@ -79,38 +79,41 @@ impl CharTokenizer {
     }
 
     /// Encodes `prompt` followed by `response` and returns a loss mask.
-    ///
-    /// `weights[i]` is `1.0` when the target following token `i` belongs to the
-    /// response, and `0.0` for prompt tokens (and for the final token, which has
-    /// no successor). This is exactly the mask
-    /// [`SftDataset`](crate::SftDataset) expects.
     pub fn encode_supervised(
         &self,
         prompt: &str,
         response: &str,
     ) -> Result<(Vec<usize>, Vec<f32>), DataError> {
-        let prompt_tokens = self.encode(prompt)?;
-        let response_tokens = self.encode(response)?;
-        if response_tokens.is_empty() {
-            return Err(DataError::EmptyResponse);
-        }
-
-        let prompt_len = prompt_tokens.len();
-        let mut tokens = prompt_tokens;
-        tokens.extend(response_tokens);
-
-        let mut weights = vec![0.0f32; tokens.len()];
-        // Predicting the first response token is supervised by the last prompt
-        // position, so masking starts one token before the response.
-        let first_supervised = prompt_len.saturating_sub(1);
-        for weight in weights.iter_mut().skip(first_supervised) {
-            *weight = 1.0;
-        }
-        if let Some(last) = weights.last_mut() {
-            *last = 0.0;
-        }
-        Ok((tokens, weights))
+        build_supervised(self.encode(prompt)?, self.encode(response)?)
     }
+}
+
+/// Concatenates prompt and response tokens and masks the prompt out of the loss.
+///
+/// Predicting the first response token is supervised by the last prompt
+/// position, so masking starts one token before the response; the final token
+/// has no successor and is also masked.
+fn build_supervised(
+    prompt_tokens: Vec<usize>,
+    response_tokens: Vec<usize>,
+) -> Result<(Vec<usize>, Vec<f32>), DataError> {
+    if response_tokens.is_empty() {
+        return Err(DataError::EmptyResponse);
+    }
+
+    let prompt_len = prompt_tokens.len();
+    let mut tokens = prompt_tokens;
+    tokens.extend(response_tokens);
+
+    let mut weights = vec![0.0f32; tokens.len()];
+    let first_supervised = prompt_len.saturating_sub(1);
+    for weight in weights.iter_mut().skip(first_supervised) {
+        *weight = 1.0;
+    }
+    if let Some(last) = weights.last_mut() {
+        *last = 0.0;
+    }
+    Ok((tokens, weights))
 }
 
 /// A vocabulary that is either character-level or byte-level BPE.
@@ -142,6 +145,17 @@ impl Tokenizer {
             Self::Char(tokenizer) => tokenizer.vocab_size(),
             Self::Bpe(tokenizer) => tokenizer.vocab_size(),
         }
+    }
+
+    /// Encodes a prompt/response pair and returns the loss mask.
+    ///
+    /// Works for both vocabularies, so SFT can use a BPE checkpoint.
+    pub fn encode_supervised(
+        &self,
+        prompt: &str,
+        response: &str,
+    ) -> Result<(Vec<usize>, Vec<f32>), DataError> {
+        build_supervised(self.encode(prompt)?, self.encode(response)?)
     }
 
     pub fn as_bpe(&self) -> Option<&BpeTokenizer> {

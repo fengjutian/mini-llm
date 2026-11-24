@@ -1,5 +1,6 @@
 //! Samples text from the saved checkpoint with the KV-cached generator.
 
+use mini_llm_model::Sampling;
 use mini_llm_nn::Rng;
 use mini_llm_train::load_checkpoint;
 
@@ -10,18 +11,61 @@ const DEFAULT_TOKENS: usize = 14;
 const DEFAULT_TEMPERATURE: f32 = 0.3;
 
 pub fn run(arguments: &[String]) {
-    let prompt = arguments
+    let mut positional = Vec::new();
+    let mut top_k = None;
+    let mut top_p = None;
+    let mut batch = 1usize;
+    let mut index = 0;
+    while index < arguments.len() {
+        let argument = &arguments[index];
+        if argument == "--top-k" {
+            top_k = arguments
+                .get(index + 1)
+                .and_then(|value| value.parse().ok());
+            index += 2;
+        } else if let Some(value) = argument.strip_prefix("--top-k=") {
+            top_k = value.parse().ok();
+            index += 1;
+        } else if argument == "--batch" {
+            batch = arguments
+                .get(index + 1)
+                .and_then(|value| value.parse().ok())
+                .unwrap_or(1);
+            index += 2;
+        } else if let Some(value) = argument.strip_prefix("--batch=") {
+            batch = value.parse().unwrap_or(1);
+            index += 1;
+        } else if argument == "--top-p" {
+            top_p = arguments
+                .get(index + 1)
+                .and_then(|value| value.parse().ok());
+            index += 2;
+        } else if let Some(value) = argument.strip_prefix("--top-p=") {
+            top_p = value.parse().ok();
+            index += 1;
+        } else {
+            positional.push(argument.clone());
+            index += 1;
+        }
+    }
+
+    let prompt = positional
         .first()
         .map(String::as_str)
         .unwrap_or(DEFAULT_PROMPT);
-    let count = arguments
+    let count = positional
         .get(1)
         .and_then(|value| value.parse().ok())
         .unwrap_or(DEFAULT_TOKENS);
-    let temperature = arguments
+    let temperature = positional
         .get(2)
         .and_then(|value| value.parse().ok())
         .unwrap_or(DEFAULT_TEMPERATURE);
+    let sampling = Sampling {
+        temperature,
+        top_k,
+        top_p,
+    };
 
     let (model, tokenizer) = match load_checkpoint(CHECKPOINT_PATH) {
         Ok(loaded) => loaded,
@@ -50,8 +94,18 @@ pub fn run(arguments: &[String]) {
     };
 
     let mut rng = Rng::new(2024);
-    let generated = model
-        .generate(&encoded, count, temperature, &mut rng)
-        .expect("generate");
-    println!("{}", tokenizer.decode(&generated).expect("decode"));
+    if batch > 1 {
+        let prompts = vec![encoded.clone(); batch];
+        let generated = model
+            .generate_batch(&prompts, count, sampling, &mut rng)
+            .expect("generate");
+        for (index, tokens) in generated.iter().enumerate() {
+            println!("  [{index}] {}", tokenizer.decode(tokens).expect("decode"));
+        }
+    } else {
+        let generated = model
+            .generate_with(&encoded, count, sampling, &mut rng)
+            .expect("generate");
+        println!("{}", tokenizer.decode(&generated).expect("decode"));
+    }
 }

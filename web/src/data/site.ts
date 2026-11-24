@@ -24,7 +24,10 @@ export type LessonVisual =
   | 'sampling'
   | 'loss'
   | 'cache'
-  | 'mask';
+  | 'mask'
+  | 'norm'
+  | 'gate'
+  | 'moe';
 
 export type Lesson = {
   href: string;
@@ -126,6 +129,36 @@ export const LESSONS: Lesson[] = [
       '训练时整句话一次性进入注意力。causal mask 把每个位置与未来位置之间的分数设为 −∞，第 t 个 token 只能看见 ≤ t 的内容。',
     visual: 'mask',
     time: '7 分钟',
+  },
+  {
+    href: '/learn/normalization',
+    index: '10',
+    tag: '归一化',
+    title: '数值为什么要被拉回来',
+    summary:
+      '每层输出都会漂移。LayerNorm 减去均值再除以标准差，RMSNorm 只除以均方根；两者都把向量拉回可训练的尺度，但保留的信息不同。',
+    visual: 'norm',
+    time: '7 分钟',
+  },
+  {
+    href: '/learn/swiglu',
+    index: '11',
+    tag: '前馈网络',
+    title: '门控怎样决定让什么通过',
+    summary:
+      'SwiGLU 不是换了个激活函数：一路投影产生门，另一路产生内容，逐元素相乘后再投影回去。三个矩阵，换来更平滑的筛选。',
+    visual: 'gate',
+    time: '8 分钟',
+  },
+  {
+    href: '/learn/moe',
+    index: '12',
+    tag: 'MoE',
+    title: '为什么每次只唤醒一部分专家',
+    summary:
+      'MoE 把一个大 FFN 换成多个专家，路由器给每个 token 打分，只保留 top-k 个专家的加权输出。参数变多，但单 token 的计算路径不变宽。',
+    visual: 'moe',
+    time: '9 分钟',
   },
 ];
 

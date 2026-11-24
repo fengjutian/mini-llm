@@ -1,6 +1,8 @@
 //! End-to-end tests for the Tiny GPT model.
 
-use mini_llm_model::{FeedForwardKind, ModelConfig, ModelError, NormKind, PositionKind, TinyGpt};
+use mini_llm_model::{
+    FeedForwardKind, ModelConfig, ModelError, NormKind, PositionKind, Sampling, TinyGpt,
+};
 use mini_llm_nn::Rng;
 
 fn tiny_config() -> ModelConfig {
@@ -318,4 +320,112 @@ fn cached_mask_stays_correct_across_shapes() {
     // A different (batch, seq) must rebuild the mask and still run.
     let batched = model.forward(&[1, 2, 3, 4, 5, 6], 2).unwrap();
     assert_eq!(batched.shape(), &[6, 8]);
+}
+
+#[test]
+fn top_k_one_and_top_p_zero_match_greedy() {
+    let model = modern_model();
+    let prompt = [1usize, 2, 3];
+
+    let greedy = model.generate(&prompt, 10, 0.0, &mut Rng::new(5)).unwrap();
+    let top_k = model
+        .generate_with(
+            &prompt,
+            10,
+            Sampling::with_temperature(1.0).top_k(1),
+            &mut Rng::new(5),
+        )
+        .unwrap();
+    let top_p = model
+        .generate_with(
+            &prompt,
+            10,
+            Sampling::with_temperature(1.0).top_p(0.0),
+            &mut Rng::new(5),
+        )
+        .unwrap();
+
+    assert_eq!(greedy, top_k);
+    assert_eq!(greedy, top_p);
+}
+
+#[test]
+fn plain_temperature_sampling_is_unchanged() {
+    let model = modern_model();
+    let prompt = [1usize, 2, 3];
+    let legacy = model.generate(&prompt, 10, 0.8, &mut Rng::new(7)).unwrap();
+    let explicit = model
+        .generate_with(
+            &prompt,
+            10,
+            Sampling::with_temperature(0.8),
+            &mut Rng::new(7),
+        )
+        .unwrap();
+    assert_eq!(legacy, explicit);
+}
+
+#[test]
+fn top_p_keeps_only_the_probability_head() {
+    let model = modern_model();
+    let prompt = [1usize, 2, 3];
+    // p = 0 means "keep the single most likely token".
+    let filtered = model
+        .generate_with(
+            &prompt,
+            6,
+            Sampling::with_temperature(0.5).top_p(0.0),
+            &mut Rng::new(3),
+        )
+        .unwrap();
+    let greedy = model.generate(&prompt, 6, 0.0, &mut Rng::new(3)).unwrap();
+    assert_eq!(filtered, greedy);
+}
+
+#[test]
+fn batch_generation_matches_individual_greedy_runs() {
+    let model = modern_model();
+    let prompts = vec![vec![1usize, 2, 3], vec![1, 2, 3]];
+    let singles: Vec<Vec<usize>> = prompts
+        .iter()
+        .map(|prompt| model.generate(prompt, 5, 0.0, &mut Rng::new(9)).unwrap())
+        .collect();
+    let batch = model
+        .generate_batch(&prompts, 5, Sampling::greedy(), &mut Rng::new(9))
+        .unwrap();
+    assert_eq!(singles, batch);
+}
+
+#[test]
+fn batch_generation_pads_shorter_prompts_without_changing_them() {
+    let model = modern_model();
+    let short = vec![1usize];
+    let single = model.generate(&short, 4, 0.0, &mut Rng::new(2)).unwrap();
+    let batch = model
+        .generate_batch(
+            &[short, vec![1, 2, 3, 4]],
+            4,
+            Sampling::greedy(),
+            &mut Rng::new(2),
+        )
+        .unwrap();
+
+    assert_eq!(batch[0], single, "padding must not change the short prompt");
+    assert_eq!(batch[1].len(), 4 + 4);
+    assert!(batch[1].starts_with(&[1, 2, 3, 4]));
+}
+
+#[test]
+fn batch_generation_rejects_empty_input() {
+    let model = modern_model();
+    assert!(matches!(
+        model.generate_batch(&[], 4, Sampling::greedy(), &mut Rng::new(1)),
+        Err(ModelError::EmptyPrompt)
+    ));
+    assert!(matches!(
+        model.generate_batch(&[vec![]], 4, Sampling::greedy(), &mut Rng::new(1)),
+        Err(ModelError::EmptyPrompt)
+    ));
+}
+", batch[1]);
 }

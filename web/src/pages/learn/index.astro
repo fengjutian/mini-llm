@@ -6,15 +6,16 @@ import { LESSONS } from '../../data/site';
 
 <BaseLayout
   title="概念图解"
-  description="九个可交互的 LLM 概念实验：张量形状、Softmax、注意力、反向传播、RoPE、采样、训练循环、KV Cache 与因果掩码。每个实验都对应 mini-llm 中已经跑通的 Rust 代码。"
+  description="十二个可交互的 LLM 概念实验：张量形状、Softmax、注意力、反向传播、RoPE、采样、训练循环、KV Cache、因果掩码、归一化、SwiGLU 与 MoE。每个实验都对应 mini-llm 中已经跑通的 Rust 代码。"
 >
   <section class="learn-hero">
     <div class="shell">
       <p class="eyebrow">概念图解</p>
-      <h1>九个实验，建立 LLM 的直觉骨架</h1>
+      <h1>十二个实验，建立 LLM 的直觉骨架</h1>
       <p class="learn-hero__lead">
-        大模型的公式不算多，难的是把符号和真实的数据流动对应起来。这九个页面用最小的例子、可拖动的参数，把
-        <strong>形状 → 概率 → 注意力 → 梯度 → 位置 → 采样 → 训练 → 缓存 → 掩码</strong> 这条链条走一遍。公式旁边就是仓库里对应的实现。
+        大模型的公式不算多，难的是把符号和真实的数据流动对应起来。这十二个页面用最小的例子、可拖动的参数，把
+        <strong>形状 → 概率 → 注意力 → 梯度 → 位置 → 采样 → 训练 → 缓存 → 掩码 → 归一化 → 门控 → 专家</strong>
+        这条链条走一遍。公式旁边就是仓库里对应的实现。
       </p>
       <div class="learn-hero__hint">
         <span class="mono">建议顺序</span>
@@ -26,7 +27,10 @@ import { LESSONS } from '../../data/site';
         <span>06 采样</span><span class="sep" aria-hidden="true">→</span>
         <span>07 训练</span><span class="sep" aria-hidden="true">→</span>
         <span>08 缓存</span><span class="sep" aria-hidden="true">→</span>
-        <span>09 掩码</span>
+        <span>09 掩码</span><span class="sep" aria-hidden="true">→</span>
+        <span>10 归一化</span><span class="sep" aria-hidden="true">→</span>
+        <span>11 门控</span><span class="sep" aria-hidden="true">→</span>
+        <span>12 MoE</span>
       </div>
     </div>
   </section>

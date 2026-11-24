@@ -182,6 +182,12 @@ SFT 语料仅用于展示掩码机制。
 - [x] Gradient accumulation (`--accum N`)
 - [x] File corpus loading (`--corpus PATH`)
 - [x] Byte-level BPE tokenizer (`--bpe --vocab N`) and checkpoint v4 tokenizer tag
+- [x] O(n log n) BPE encoding (linked list + min-heap)
+- [x] SFT with either tokenizer (`Tokenizer::encode_supervised`, `sft --bpe`)
+- [x] Temperature / top-k / top-p sampling (`Sampling`, `generate --top-k/--top-p`)
+- [x] `sft --accum N` and cached BPE merge ranks
+- [x] CI: fmt, clippy, tests, Candle parity and site build
+- [x] Batched generation (`generate --batch N`, causal-mask isolation, no batched KV cache yet)
 
 实现拆分：
 

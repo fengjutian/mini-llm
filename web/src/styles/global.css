@@ -994,6 +994,73 @@ html[data-theme="dark"] .theme-icon--sun {
   background: var(--accent);
 }
 
+.mini-norm,
+.mini-gate,
+.mini-moe {
+  width: 168px;
+  height: auto;
+  overflow: visible;
+}
+
+.mini-norm .axis,
+.mini-gate .axis {
+  stroke: var(--line-strong);
+  stroke-width: 1;
+}
+
+.mini-norm rect {
+  fill: var(--line-strong);
+}
+
+.mini-norm rect.is-active {
+  fill: var(--accent);
+}
+
+.mini-gate .relu {
+  fill: none;
+  stroke: var(--line-strong);
+  stroke-width: 1.6;
+  stroke-dasharray: 3 3;
+}
+
+.mini-gate .silu {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.mini-gate .marker {
+  stroke: var(--ink-faint);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+}
+
+.mini-moe .line {
+  fill: none;
+  stroke: var(--line-strong);
+  stroke-width: 1;
+}
+
+.mini-moe .line.is-active {
+  stroke: var(--accent);
+  stroke-width: 1.5;
+}
+
+.mini-moe rect {
+  fill: var(--paper-2);
+  stroke: var(--line-strong);
+  stroke-width: 1.2;
+}
+
+.mini-moe rect.is-active {
+  fill: var(--accent);
+  stroke: var(--accent);
+}
+
+.mini-moe circle {
+  fill: var(--ink-faint);
+}
+
 /* --------------------------------------------------------------------------
    Roadmap
    -------------------------------------------------------------------------- */

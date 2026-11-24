@@ -194,3 +194,97 @@ fn tokenizer_enum_dispatches_to_both_vocabularies() {
         "abcabc"
     );
 }
+
+/// Reference BPE encoder: rescan for the lowest-ranked pair on every merge.
+fn naive_encode(tokenizer: &BpeTokenizer, text: &str) -> Vec<usize> {
+    use std::collections::HashMap;
+
+    let ranks: HashMap<(u32, u32), u32> = tokenizer
+        .merges()
+        .iter()
+        .enumerate()
+        .map(|(rank, &pair)| (pair, rank as u32))
+        .collect();
+    let mut tokens: Vec<u32> = text.bytes().map(u32::from).collect();
+
+    loop {
+        let mut best: Option<u32> = None;
+        for window in tokens.windows(2) {
+            if let Some(&rank) = ranks.get(&(window[0], window[1])) {
+                if best.is_none_or(|current| rank < current) {
+                    best = Some(rank);
+                }
+            }
+        }
+        let Some(rank) = best else {
+            break;
+        };
+        let pair = tokenizer.merges()[rank as usize];
+        let mut merged = Vec::with_capacity(tokens.len());
+        let mut index = 0;
+        while index < tokens.len() {
+            if index + 1 < tokens.len() && tokens[index] == pair.0 && tokens[index + 1] == pair.1 {
+                merged.push(256 + rank);
+                index += 2;
+            } else {
+                merged.push(tokens[index]);
+                index += 1;
+            }
+        }
+        tokens = merged;
+    }
+
+    tokens.into_iter().map(|token| token as usize).collect()
+}
+
+#[test]
+fn heap_bpe_encode_matches_the_naive_reference() {
+    let text =
+        "the quick brown fox jumps over the lazy dog; the quick brown fox sleeps. 量子计算 🚀";
+    let tokenizer = BpeTokenizer::train(text, 300);
+    for sample in [
+        "the quick brown fox",
+        "lazy dogs jump over the fox",
+        "",
+        "量子计算",
+        "🚀🚀🚀",
+        "aaaabbbbccccdddd",
+    ] {
+        assert_eq!(
+            tokenizer.encode(sample),
+            naive_encode(&tokenizer, sample),
+            "mismatch for {sample:?}"
+        );
+    }
+}
+
+#[test]
+fn tokenizer_supervised_mask_works_for_both_vocabularies() {
+    let chars = Tokenizer::from(CharTokenizer::from_text("User: hello\nBot: hi\n"));
+    let (tokens, weights) = chars
+        .encode_supervised("User: hello\nBot:", " hi\n")
+        .unwrap();
+    assert_eq!(tokens.len(), weights.len());
+    let response_len = chars.encode(" hi\n").unwrap().len();
+    assert_eq!(
+        weights.iter().filter(|weight| **weight > 0.0).count(),
+        response_len
+    );
+    assert_eq!(weights[0], 0.0);
+    assert_eq!(weights.last(), Some(&0.0));
+
+    let bpe = Tokenizer::from(BpeTokenizer::train("User: hello\nBot: hi there\n", 300));
+    let (tokens, weights) = bpe
+        .encode_supervised("User: hello\nBot:", " hi there\n")
+        .unwrap();
+    assert_eq!(tokens.len(), weights.len());
+    let response_tokens = bpe.encode(" hi there\n").unwrap().len();
+    assert_eq!(
+        weights.iter().filter(|weight| **weight > 0.0).count(),
+        response_tokens
+    );
+    assert!(matches!(
+        bpe.encode_supervised("prompt", ""),
+        Err(DataError::EmptyResponse)
+    ));
+}

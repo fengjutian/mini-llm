@@ -5,7 +5,8 @@
 //! replays the merges in the order they were learned, so any UTF-8 input is
 //! representable and unknown characters never fail.
 
-use std::collections::HashMap;
+use std::cmp::Reverse;
+use std::collections::{BinaryHeap, HashMap};
 
 use crate::DataError;
 
@@ -16,6 +17,8 @@ const BASE: u32 = 256;
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct BpeTokenizer {
     merges: Vec<(u32, u32)>,
+    /// Derived from `merges` once, so encoding does not rebuild it per call.
+    ranks: HashMap<(u32, u32), u32>,
 }
 
 impl BpeTokenizer {
@@ -37,7 +40,7 @@ impl BpeTokenizer {
             tokens = merge_pair(&tokens, pair, new_id);
         }
 
-        Self { merges }
+        Self::from_merges(merges).expect("training produces valid merges")
     }
 
     /// Rebuilds a tokenizer from merges, validating that each merge only refers
@@ -49,7 +52,12 @@ impl BpeTokenizer {
                 return Err(DataError::InvalidMerge { index });
             }
         }
-        Ok(Self { merges })
+        let ranks = merges
+            .iter()
+            .enumerate()
+            .map(|(rank, &pair)| (pair, rank as u32))
+            .collect();
+        Ok(Self { merges, ranks })
     }
 
     pub fn merges(&self) -> &[(u32, u32)] {
@@ -60,35 +68,70 @@ impl BpeTokenizer {
         BASE as usize + self.merges.len()
     }
 
-    fn ranks(&self) -> HashMap<(u32, u32), u32> {
-        self.merges
-            .iter()
-            .enumerate()
-            .map(|(rank, &pair)| (pair, rank as u32))
-            .collect()
-    }
-
     /// Encodes `text` by repeatedly applying the lowest-ranked available merge.
+    ///
+    /// The sequence is kept as a doubly linked list and candidate merges live in
+    /// a min-heap keyed by merge rank, so this is O(n log n) rather than
+    /// rescanning the whole sequence per merge.
     pub fn encode(&self, text: &str) -> Vec<usize> {
-        let ranks = self.ranks();
-        let mut tokens: Vec<u32> = text.bytes().map(u32::from).collect();
-
-        loop {
-            let mut best: Option<(u32, (u32, u32))> = None;
-            for window in tokens.windows(2) {
-                if let Some(&rank) = ranks.get(&(window[0], window[1])) {
-                    if best.is_none_or(|(best_rank, _)| rank < best_rank) {
-                        best = Some((rank, (window[0], window[1])));
-                    }
-                }
-            }
-            let Some((rank, pair)) = best else {
-                break;
-            };
-            tokens = merge_pair(&tokens, pair, BASE + rank);
+        let bytes: Vec<u32> = text.bytes().map(u32::from).collect();
+        if bytes.len() < 2 || self.merges.is_empty() {
+            return bytes.into_iter().map(|byte| byte as usize).collect();
         }
 
-        tokens.into_iter().map(|token| token as usize).collect()
+        let ranks = &self.ranks;
+        let mut symbols: Vec<Symbol> = bytes
+            .iter()
+            .enumerate()
+            .map(|(index, &id)| Symbol {
+                id,
+                prev: index.checked_sub(1),
+                next: (index + 1 < bytes.len()).then_some(index + 1),
+                alive: true,
+            })
+            .collect();
+
+        let mut heap: BinaryHeap<Reverse<(u32, usize)>> = BinaryHeap::new();
+        for left in 0..symbols.len() - 1 {
+            push_candidate(&symbols, ranks, &mut heap, left, left + 1);
+        }
+
+        while let Some(Reverse((rank, left))) = heap.pop() {
+            if !symbols[left].alive {
+                continue;
+            }
+            let Some(right) = symbols[left].next else {
+                continue;
+            };
+            if !symbols[right].alive
+                || ranks.get(&(symbols[left].id, symbols[right].id)) != Some(&rank)
+            {
+                continue;
+            }
+
+            symbols[left].id = BASE + rank;
+            symbols[right].alive = false;
+            let after = symbols[right].next;
+            symbols[left].next = after;
+            if let Some(after) = after {
+                symbols[after].prev = Some(left);
+            }
+
+            if let Some(before) = symbols[left].prev {
+                push_candidate(&symbols, ranks, &mut heap, before, left);
+            }
+            if let Some(after) = symbols[left].next {
+                push_candidate(&symbols, ranks, &mut heap, left, after);
+            }
+        }
+
+        let mut output = Vec::with_capacity(symbols.len());
+        let mut cursor = Some(0);
+        while let Some(index) = cursor {
+            output.push(symbols[index].id as usize);
+            cursor = symbols[index].next;
+        }
+        output
     }
 
     /// Decodes token ids back into text.
@@ -154,4 +197,28 @@ fn most_frequent_pair(tokens: &[u32]) -> Option<(u32, u32)> {
                 .then_with(|| right_pair.cmp(left_pair))
         })
         .map(|(pair, _)| pair)
+}
+
+/// One node of the linked list used during encoding.
+struct Symbol {
+    id: u32,
+    prev: Option<usize>,
+    next: Option<usize>,
+    alive: bool,
+}
+
+/// Pushes `(left, right)` as a merge candidate when that pair has a rank.
+fn push_candidate(
+    symbols: &[Symbol],
+    ranks: &HashMap<(u32, u32), u32>,
+    heap: &mut BinaryHeap<Reverse<(u32, usize)>>,
+    left: usize,
+    right: usize,
+) {
+    if !symbols[left].alive || !symbols[right].alive {
+        return;
+    }
+    if let Some(&rank) = ranks.get(&(symbols[left].id, symbols[right].id)) {
+        heap.push(Reverse((rank, left)));
+    }
 }

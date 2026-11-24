@@ -1,0 +1,395 @@
+---
+import LessonLayout from '../../layouts/LessonLayout.astro';
+import { Code } from 'astro:components';
+
+const X_MIN = -4;
+const X_MAX = 4;
+const Y_MIN = -4;
+const Y_MAX = 4;
+const STEPS = 64;
+
+const toX = (x: number) => 48 + ((x - X_MIN) / (X_MAX - X_MIN)) * 560;
+const toY = (y: number) => 20 + ((Y_MAX - y) / (Y_MAX - Y_MIN)) * 180;
+
+const silu = (x: number) => x / (1 + Math.exp(-x));
+const xs = Array.from({ length: STEPS + 1 }, (_, i) => X_MIN + (i / STEPS) * (X_MAX - X_MIN));
+const line = (fn: (x: number) => number) =>
+  xs.map((x) => `${toX(x).toFixed(1)},${toY(Math.max(Y_MIN, Math.min(Y_MAX, fn(x)))).toFixed(1)}`).join(' ');
+
+const reluPoints = line((x) => Math.max(0, x));
+const siluPoints = line(silu);
+const productPoints = line((x) => silu(x) * 1.5);
+
+const initialX = 1.5;
+const initialUp = 1.5;
+
+const snippet = `let gate = self.gate.forward(input)?;       // W1 x
+let activated = gate.mul(&gate.sigmoid()?)?;  // SiLU(W1 x)
+let up = self.up.forward(input)?;             // W3 x
+self.down.forward(&activated.mul(&up)?)      // W2 (gate ⊙ up)`;
+---
+
+<LessonLayout
+  index="11"
+  tag="前馈网络"
+  title="门控怎样决定让什么通过"
+  summary="SwiGLU 不是换了个激活函数：一路投影产生门，另一路产生内容，逐元素相乘后再投影回去。三个矩阵，换来更平滑的筛选。"
+  time="8 分钟"
+  points={[
+    'FFN 占 Transformer 参数的大头，通常先升维再降维。',
+    'SwiGLU 用 W1 产生门、W3 产生内容，相乘后由 W2 投回 hidden。',
+    'SiLU(x) = x·σ(x) 平滑且非单调，负值不会被直接截成 0。',
+    'mini-llm 的 modern 配置用 SwiGLU；tiny 仍用 ReLU 的两层 MLP。',
+  ]}
+  links={[
+    { label: '神经网络基础 · 前馈层', href: '/docs/neural-network-engine' },
+    { label: 'Transformer Block 剖析', href: '/docs/transformer-block' },
+  ]}
+  next={{ href: '/learn/moe', title: '为什么每次只唤醒一部分专家' }}
+>
+  <p>
+    Transformer block 里，注意力负责“在 token 之间交换信息”，前馈网络负责“在每个 token 内部做变换”。后者通常占掉大部分参数：
+    先升到 4 倍宽，过激活，再降回原维度。
+  </p>
+  <p>
+    最朴素的形式是 <code>W2 · ReLU(W1 x)</code>。ReLU 的问题是硬截断：负半轴梯度为 0，信息一旦落到负区就再也回不来。
+    SwiGLU 换了个思路——不是“激活后继续”，而是<strong>用一条通路生成门，去控制另一条通路</strong>。
+  </p>
+
+  <div class="formula">
+    g = SiLU(W1 x) = W1x ⊙ σ(W1x)<br />
+    u = W3 x<br />
+    h = g ⊙ u &nbsp;<span class="text-dim">// 逐元素相乘，门控制内容</span><br />
+    y = W2 h
+  </div>
+
+  <div class="widget" data-gate-widget>
+    <div class="widget__head">
+      <h2 class="widget__title">一条门控通路</h2>
+      <span class="widget__hint">固定 up，拖动 x 观察门如何缩放内容</span>
+    </div>
+    <div class="widget__body">
+      <div class="gate-chart-wrap">
+        <svg class="gate-chart" viewBox="0 0 640 240" role="img" aria-label="ReLU、SiLU 与门控输出曲线">
+          <line class="gate-axis" x1="48" y1={toY(0)} x2="608" y2={toY(0)} />
+          <line class="gate-axis" x1="48" y1="20" x2="48" y2="200" />
+          {[-4, -2, 0, 2, 4].map((tick) => (
+            <g>
+              <line class="gate-tick" x1={toX(tick)} y1={toY(0)} x2={toX(tick)} y2={toY(0) + 5} />
+              <text class="gate-label" x={toX(tick)} y={toY(0) + 20}>{tick}</text>
+            </g>
+          ))}
+          {[-4, -2, 0, 2, 4].map((tick) => (
+            <text class="gate-label gate-label--y" x="40" y={toY(tick) + 3}>{tick}</text>
+          ))}
+          <text class="gate-label gate-label--end" x="608" y={toY(0) + 38}>x</text>
+          <polyline class="gate-curve is-relu" points={reluPoints} />
+          <polyline class="gate-curve is-silu" points={siluPoints} />
+          <polyline class="gate-curve is-product" data-product points={productPoints} />
+          <line class="gate-marker" data-marker-line x1={toX(initialX)} y1="20" x2={toX(initialX)} y2="200" />
+          <circle class="gate-dot is-silu" data-dot="silu" cx={toX(initialX)} cy={toY(silu(initialX))} r="4" />
+          <circle class="gate-dot is-product" data-dot="product" cx={toX(initialX)} cy={toY(silu(initialX) * initialUp)} r="4" />
+        </svg>
+      </div>
+
+      <div class="gate-legend">
+        <span><i class="key key--relu"></i>ReLU(x)</span>
+        <span><i class="key key--silu"></i>SiLU(x) = 门</span>
+        <span><i class="key key--product"></i>门 × up</span>
+      </div>
+
+      <div class="gate-controls">
+        <label class="gate-slider">
+          <span>输入 x</span>
+          <input type="range" min="-4" max="4" step="0.1" value={initialX} data-gate-x />
+          <output data-gate-x-out>{initialX.toFixed(1)}</output>
+        </label>
+        <label class="gate-slider">
+          <span>up</span>
+          <input type="range" min="-2" max="2" step="0.1" value={initialUp} data-gate-up />
+          <output data-gate-up-out>{initialUp.toFixed(1)}</output>
+        </label>
+      </div>
+
+      <dl class="readout gate-readout">
+        <div><dt>门 SiLU(x)</dt><dd data-out-gate>—</dd></div>
+        <div><dt>内容 up</dt><dd data-out-up>—</dd></div>
+        <div><dt>输出 门×up</dt><dd data-out-product>—</dd></div>
+        <div><dt>相对通过率</dt><dd data-out-ratio>—</dd></div>
+      </dl>
+
+      <p class="widget__foot" data-gate-summary>
+        x 为正时，门接近 x，内容基本原样通过；x 为负时，门变成小的负值，输出被压弱并翻转符号。
+      </p>
+    </div>
+  </div>
+
+  <h2>SiLU 特别在哪</h2>
+  <p>
+    <code>SiLU(x) = x·σ(x)</code> 可以看成“用 sigmoid 给自己打分”。它在负半轴不是 0，而是一个很小的负数，最小值大约在
+    <code>x ≈ −1.28</code> 处；在正半轴逐渐接近恒等映射。这个平滑、非单调的形状让梯度不会像 ReLU 那样在 0 处突然断掉。
+  </p>
+  <p>
+    上面的图把一个通道的 <code>up</code> 固定成标量，只让门随 <code>x</code> 变化；真实模型里 <code>up</code> 也是输入的函数，
+    每个通道各有自己的门和内容。
+  </p>
+  <p>
+    单独看 SiLU 只是激活函数；SwiGLU 的关键是把它当<strong>门</strong>用：门和内容来自两组独立的投影，所以模型可以学出
+    “这个通道该放大、该抑制，还是该反号”。乘法让两个线性变换之间产生交互，而不是简单串联。
+  </p>
+
+  <h2>三个矩阵的账</h2>
+  <p>
+    普通 MLP 是 <code>hidden → 4·hidden → hidden</code>，两个矩阵；SwiGLU 需要 gate、up、down 三个矩阵。如果保持同样的 inner 维度，
+    参数量会变成 1.5 倍。很多现代模型会把 inner 调到约 <code>8/3·hidden</code> 来对齐参数预算；mini-llm 为了代码简单仍用
+    <code>4·hidden</code>，所以 <code>modern</code> 配置的 FFN 参数确实更多。
+  </p>
+
+  <h2>在 mini-llm 里</h2>
+  <div class="code-card">
+    <div class="code-card__head mono">crates/mini-llm-nn/src/swiglu.rs</div>
+    <Code code={snippet} lang="rust" theme="github-dark-dimmed" />
+  </div>
+  <p>
+    <code>gate.mul(&gate.sigmoid())</code> 就是 SiLU，因为 <code>sigmoid</code> 已在 autograd 里注册了导数；再与 <code>up</code>
+    逐元素相乘，最后过 <code>down</code>。整个前馈层没有手写反向传播。
+  </p>
+  <p>
+    配置层面，<code>FeedForwardKind::Relu</code> 走两层 MLP，<code>FeedForwardKind::SwiGlu</code> 走门控版本；
+    当 <code>num_experts &gt; 1</code> 时，每个专家本身也是一个 SwiGLU。也就是说，MoE 并没有换掉前馈层的内部结构，只是把多个 SwiGLU 并行摆放。
+  </p>
+
+  <div class="note">
+    <strong>门控不是注意力</strong>
+    注意力的权重在 token 之间归一化，决定“看谁”；SwiGLU 的门在同一 token 的各个通道之间逐元素作用，决定“让哪一维通过”。
+    两者都叫 gating，但作用维度和语义完全不同。
+  </div>
+</LessonLayout>
+
+<style>
+  .gate-chart-wrap {
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+
+  .gate-chart {
+    width: 100%;
+    min-width: 520px;
+    height: auto;
+  }
+
+  .gate-axis {
+    stroke: var(--line-strong);
+    stroke-width: 1;
+  }
+
+  .gate-tick {
+    stroke: var(--line-strong);
+    stroke-width: 1;
+  }
+
+  .gate-curve {
+    fill: none;
+    stroke-width: 1.8;
+  }
+
+  .gate-curve.is-relu {
+    stroke: var(--line-strong);
+    stroke-dasharray: 4 4;
+  }
+
+  .gate-curve.is-silu {
+    stroke: var(--ink-faint);
+  }
+
+  .gate-curve.is-product {
+    stroke: var(--accent);
+    stroke-width: 2.2;
+  }
+
+  .gate-marker {
+    stroke: var(--ink-faint);
+    stroke-width: 1;
+    stroke-dasharray: 3 4;
+  }
+
+  .gate-dot {
+    stroke: var(--paper-2);
+    stroke-width: 2;
+  }
+
+  .gate-dot.is-silu {
+    fill: var(--ink-faint);
+  }
+
+  .gate-dot.is-product {
+    fill: var(--accent);
+  }
+
+  .gate-label {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    fill: var(--ink-faint);
+    text-anchor: middle;
+  }
+
+  .gate-label--y {
+    text-anchor: end;
+  }
+
+  .gate-label--end {
+    text-anchor: end;
+  }
+
+  .gate-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    margin: 10px 0 0;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--ink-faint);
+  }
+
+  .gate-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .key {
+    width: 12px;
+    height: 2px;
+    border-radius: 1px;
+  }
+
+  .key--relu {
+    background: var(--line-strong);
+  }
+
+  .key--silu {
+    background: var(--ink-faint);
+  }
+
+  .key--product {
+    background: var(--accent);
+  }
+
+  .gate-controls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 24px;
+    margin: 14px 0 18px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+  }
+
+  .gate-slider {
+    display: grid;
+    grid-template-columns: 50px minmax(0, 1fr) 40px;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--ink-soft);
+  }
+
+  .gate-slider output {
+    text-align: right;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .gate-readout {
+    margin: 0;
+  }
+
+  .widget__foot {
+    margin: 16px 0 0;
+    padding-top: 14px;
+    border-top: 1px dashed var(--line);
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: var(--ink-faint);
+  }
+
+  @media (max-width: 640px) {
+    .gate-controls {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>
+
+<script>
+  const widget = document.querySelector<HTMLElement>('[data-gate-widget]');
+  if (widget) {
+    const X_MIN = -4;
+    const X_MAX = 4;
+    const Y_MIN = -4;
+    const Y_MAX = 4;
+    const STEPS = 64;
+    const toX = (x: number) => 48 + ((x - X_MIN) / (X_MAX - X_MIN)) * 560;
+    const toY = (y: number) => 20 + ((Y_MAX - y) / (Y_MAX - Y_MIN)) * 180;
+    const clamp = (value: number) => Math.max(Y_MIN, Math.min(Y_MAX, value));
+    const silu = (x: number) => x / (1 + Math.exp(-x));
+
+    let x = 1.5;
+    let up = 1.5;
+
+    const productLine = widget.querySelector<SVGPolylineElement>('[data-product]')!;
+    const markerLine = widget.querySelector<SVGLineElement>('[data-marker-line]')!;
+    const siluDot = widget.querySelector<SVGCircleElement>('[data-dot="silu"]')!;
+    const productDot = widget.querySelector<SVGCircleElement>('[data-dot="product"]')!;
+    const xInput = widget.querySelector<HTMLInputElement>('[data-gate-x]')!;
+    const upInput = widget.querySelector<HTMLInputElement>('[data-gate-up]')!;
+    const xOut = widget.querySelector<HTMLOutputElement>('[data-gate-x-out]')!;
+    const upOut = widget.querySelector<HTMLOutputElement>('[data-gate-up-out]')!;
+    const outGate = widget.querySelector<HTMLElement>('[data-out-gate]')!;
+    const outUp = widget.querySelector<HTMLElement>('[data-out-up]')!;
+    const outProduct = widget.querySelector<HTMLElement>('[data-out-product]')!;
+    const outRatio = widget.querySelector<HTMLElement>('[data-out-ratio]')!;
+    const summary = widget.querySelector<HTMLElement>('[data-gate-summary]')!;
+
+    const render = () => {
+      const points: string[] = [];
+      for (let step = 0; step <= STEPS; step += 1) {
+        const sample = X_MIN + (step / STEPS) * (X_MAX - X_MIN);
+        points.push(`${toX(sample).toFixed(1)},${toY(clamp(silu(sample) * up)).toFixed(1)}`);
+      }
+      productLine.setAttribute('points', points.join(' '));
+
+      const gate = silu(x);
+      const product = gate * up;
+      markerLine.setAttribute('x1', toX(x).toFixed(1));
+      markerLine.setAttribute('x2', toX(x).toFixed(1));
+      siluDot.setAttribute('cx', toX(x).toFixed(1));
+      siluDot.setAttribute('cy', toY(clamp(gate)).toFixed(1));
+      productDot.setAttribute('cx', toX(x).toFixed(1));
+      productDot.setAttribute('cy', toY(clamp(product)).toFixed(1));
+
+      xOut.textContent = x.toFixed(1);
+      upOut.textContent = up.toFixed(1);
+      outGate.textContent = gate.toFixed(3);
+      outUp.textContent = up.toFixed(2);
+      outProduct.textContent = product.toFixed(3);
+      outRatio.textContent = `${(Math.abs(gate) * 100).toFixed(1)}%`;
+
+      summary.textContent =
+        x >= 0
+          ? `x = ${x.toFixed(1)} 时，门是 ${gate.toFixed(2)}，内容 ${up.toFixed(2)} 被放大到 ${product.toFixed(2)}。正半轴的门接近恒等映射。`
+          : `x = ${x.toFixed(1)} 时，门是 ${gate.toFixed(2)}，输出 ${product.toFixed(2)}。负半轴的门很小且为负，相当于“压弱并翻转符号”。`;
+    };
+
+    xInput.addEventListener('input', () => {
+      x = Number(xInput.value);
+      render();
+    });
+
+    upInput.addEventListener('input', () => {
+      up = Number(upInput.value);
+      render();
+    });
+
+    render();
+  }
+</script>

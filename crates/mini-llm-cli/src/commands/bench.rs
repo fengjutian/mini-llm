@@ -7,7 +7,7 @@ use std::alloc::{GlobalAlloc, Layout, System};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Instant;
 
-use mini_llm_data::{CharTokenizer, TextDataset};
+use mini_llm_data::{BpeTokenizer, CharTokenizer, TextDataset};
 use mini_llm_model::{ModelConfig, TinyGpt};
 use mini_llm_nn::Rng;
 use mini_llm_tensor::Tensor;
@@ -68,6 +68,7 @@ pub fn run() {
         benchmark_train_step(hidden, block, batch);
     }
     benchmark_generation();
+    benchmark_bpe_encode();
     benchmark_tensor_clone();
 }
 
@@ -200,5 +201,24 @@ fn benchmark_tensor_clone() {
     println!(
         "  clone 1024x1024 (4 MB shared buffer):             {:>8.3} us (checksum {checksum})",
         per_clone * 1e6
+    );
+}
+
+/// Throughput of the linked-list + heap BPE encoder.
+fn benchmark_bpe_encode() {
+    let corpus: String = (0..500)
+        .map(|index| format!("token{index} jumps over the lazy dog {index}. "))
+        .collect();
+    let tokenizer = BpeTokenizer::train(&corpus, 512);
+    let text = corpus.repeat(4);
+    let (seconds, _) = measure(3, || {
+        let _ = tokenizer.encode(&text);
+    });
+    let megabytes = text.len() as f64 / 1e6;
+    println!(
+        "  bpe encode ({} KB, {} merges): {:>8.2} MB/s",
+        text.len() / 1024,
+        tokenizer.vocab_size() - 256,
+        megabytes / seconds
     );
 }

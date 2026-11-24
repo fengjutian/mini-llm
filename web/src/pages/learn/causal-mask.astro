@@ -57,7 +57,7 @@ const snippet = `pub fn causal_batch_mask(batch: usize, seq: usize) -> Vec<f32> 
     { label: 'Transformer Block 剖析', href: '/docs/transformer-block' },
     { label: '系统架构 · Attention 数据约定', href: '/docs/architecture' },
   ]}
-  next={{ href: '/learn/tensor-shape', title: '回到第一个实验' }}
+  next={{ href: '/learn/normalization', title: '数值为什么要被拉回来' }}
 >
   <p>
     自回归语言模型的训练目标是：给定前 <code>t</code> 个 token，预测第 <code>t+1</code> 个。如果训练时把整句话一次性送进 Transformer，

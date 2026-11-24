@@ -54,6 +54,7 @@ cargo run -p mini-llm-cli -- train 200 --bpe --vocab 300 --corpus examples/corpu
 cargo run -p mini-llm-cli -- train 200 --resume   # continue from the saved step
 cargo run -p mini-llm-cli -- eval        # validation loss of the saved checkpoint
 cargo run -p mini-llm-cli -- generate "The little language model learns " 14 0.3
+cargo run -p mini-llm-cli -- generate "The " 20 0.8 --top-k 20 --top-p 0.9
 cargo run -p mini-llm-cli -- sft         # supervised fine-tuning with prompt masking
 cargo run -p mini-llm-cli -- lora        # adapt a frozen classifier with low-rank adapters
 cargo run -p mini-llm-cli -- dpo         # preference optimization on a toy policy
@@ -78,9 +79,9 @@ The training loop includes what a real run needs:
   RNG state and Adam first/second moments, so `--resume` continues the same run
   instead of restarting the optimizer. A test asserts that a resumed step is
   bit-identical to the uninterrupted one.
-- **Gradient accumulation** — `--accum N` averages N micro-batches before one
-  optimizer update, trading time for a larger effective batch
-  (`batch_size × N`); a test checks that accumulating two identical batches
+- **Gradient accumulation** — `--accum N` (`train` and `sft`) averages N
+  micro-batches before one optimizer update, trading time for a larger effective
+  batch (`batch_size × N`); a test checks that accumulating two identical batches
   matches a plain single-batch step.
 - **Any UTF-8 text corpus** — `--corpus PATH` builds the vocabulary from that
   file instead of the built-in paragraph; the checkpoint records the vocabulary,
@@ -90,6 +91,8 @@ The training loop includes what a real run needs:
   merges from the corpus (default 512) instead of one token per character. BPE
   covers every byte, so unknown characters never fail; the checkpoint tags which
   tokenizer it used (format version 4) and `generate`/`eval` decode accordingly.
+  Encoding keeps the sequence in a linked list and candidates in a min-heap, so
+  it is O(n log n) rather than rescanning per merge.
 
 ## Autograd engine
 
@@ -164,7 +167,7 @@ initialization. Normalization, embedding lookups, SwiGLU shapes, MoE routing,
 optimizer updates and XOR convergence are covered in
 `crates/mini-llm-nn/tests/modules.rs`.
 
-Known limitations: no dropout, no fused kernels, no learning-rate schedule.
+Known limitations: no dropout and no fused kernels.
 
 ## Tiny GPT
 
@@ -234,9 +237,11 @@ output: The little language model learns one character
 ```
 
 Known limitations: MoE execution is dense (all experts run; only the gates are
-sparse), RoPE generation degrades past the trained context, the KV cache only
-supports batch size 1, there is no dropout or learning-rate schedule, and unknown
-characters are rejected rather than byte-encoded.
+sparse) and RoPE generation degrades past the trained context. Sampling supports
+temperature, top-k and top-p (`Sampling`, exposed as `generate --top-k/--top-p`).
+`generate_batch` runs several sequences in one batched forward pass (with
+right-padding and a causal mask so samples stay independent), but it recomputes
+the window each step; the KV-cached path still handles one sequence.
 
 > Note: because the kernels are scalar loops, the workspace sets
 > `[profile.dev] opt-level = 2`. Without it the Tiny GPT demo is roughly an order
@@ -261,17 +266,20 @@ sum. `batch.weights` carries the mask through the trainer, so SFT and
 pretraining share one training loop.
 
 ```rust
-use mini_llm_data::{CharTokenizer, SftDataset};
+use mini_llm_data::{Tokenizer, SftDataset};
 use mini_llm_model::{ModelConfig, TinyGpt};
 use mini_llm_nn::Rng;
 use mini_llm_train::{TrainConfig, Trainer};
 
-let tokenizer = CharTokenizer::from_text(corpus);
+let tokenizer = Tokenizer::from(CharTokenizer::from_text(corpus)); // or a BpeTokenizer
 let (tokens, weights) = tokenizer.encode_supervised(prompt, response)?;
 let dataset = SftDataset::new(tokens, weights, block_size)?;
 let mut trainer = Trainer::new(model, dataset, TrainConfig::default());
 trainer.train(400, |_| {})?;
 ```
+
+`Tokenizer::encode_supervised` works for both vocabularies, so SFT can run with a
+BPE checkpoint; `cargo run -p mini-llm-cli -- sft --bpe` exercises that path.
 
 `LoraLinear` starts as the identity update (`B = 0`) and reports only `A` and
 `B` from `parameters()`, so an optimizer that receives `model.parameters()`
@@ -516,6 +524,18 @@ and re-exports.
 - `candle` (feature-gated): the accelerated seam in `mini-llm-backend`; parity
   with the reference kernel is checked in `crates/mini-llm-backend/tests/parity.rs`.
 - Future backends implement `Backend` and reuse the same parity harness.
+
+## Continuous integration
+
+`.github/workflows/ci.yml` runs three jobs on every push and pull request:
+
+- `cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets -- -D warnings`
+  and `cargo test --workspace`;
+- `cargo test -p mini-llm-backend --features candle` for the Candle parity suite;
+- `pnpm install --frozen-lockfile && pnpm run build` for the Astro site.
+
+The same commands can be run locally; `cargo test --workspace` is the quickest
+gate before committing.
 
 ## Non-goals for v0.1
 

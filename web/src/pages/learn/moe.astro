@@ -1,0 +1,472 @@
+---
+import LessonLayout from '../../layouts/LessonLayout.astro';
+import { Code } from 'astro:components';
+
+const TOKENS = ['猫', '坐', '在', '垫', '子', '上'];
+const EXPERTS = ['E0', 'E1', 'E2', 'E3'];
+const INITIAL_K = 2;
+const INITIAL_ROW = 0;
+
+const logits = TOKENS.map((_, row) =>
+  EXPERTS.map((_, expert) => {
+    const base = 1.55 * Math.sin((row + 1) * (expert + 2) * 0.7) + 0.85 * Math.cos((row - expert) * 0.55);
+    return base + (expert === row % EXPERTS.length ? 0.7 : 0);
+  }),
+);
+
+const softmax = (values: number[]) => {
+  const max = Math.max(...values);
+  const exps = values.map((value) => Math.exp(value - max));
+  const total = exps.reduce((sum, value) => sum + value, 0);
+  return exps.map((value) => value / total);
+};
+
+const probabilities = logits.map((row) => softmax(row));
+const topIndices = (row: number[], k: number) =>
+  row
+    .map((value, index) => ({ value, index }))
+    .sort((left, right) => right.value - left.value)
+    .slice(0, k)
+    .map((entry) => entry.index);
+
+const initialTop = probabilities.map((row) => topIndices(row, INITIAL_K));
+const rowMax = (row: number[]) => Math.max(...row, 1e-9);
+const shade = (value: number, max: number) => (value / max).toFixed(3);
+
+const loadCounts = EXPERTS.map(
+  (_, expert) => TOKENS.filter((_, row) => topIndices(probabilities[row], 1)[0] === expert).length,
+);
+const maxLoad = Math.max(...loadCounts, 1);
+
+const snippet = `let probabilities = self.router.forward(input)?.softmax_rows()?;
+let mask = top_k_mask(&probabilities.data(), rows, self.num_experts, self.top_k);
+let gate = probabilities.mul(&mask_tensor)?;
+
+for (index, expert) in self.experts.iter().enumerate() {
+    let weight = gate.slice_cols(index, 1)?;
+    let transformed = expert.forward(input)?;
+    let contribution = transformed.mul(&weight)?;
+    output = Some(match output {
+        Some(accumulated) => accumulated.add(&contribution)?,
+        None => contribution,
+    });
+}`;
+---
+
+<LessonLayout
+  index="12"
+  tag="MoE"
+  title="为什么每次只唤醒一部分专家"
+  summary="MoE 把一个大 FFN 换成多个专家，路由器给每个 token 打分，只保留 top-k 个专家的加权输出。参数变多，但单 token 的计算路径不变宽。"
+  time="9 分钟"
+  points={[
+    'router 把 hidden 映射成每个专家的分数，再逐行 Softmax。',
+    'top-k mask 只保留分数最高的 k 个专家，其余权重清零。',
+    '专家输出按 gate 加权求和；每个专家本身仍是一个 SwiGLU。',
+    'mini-llm 目前是 dense execution：所有专家都算，只是 gate 为 0。',
+  ]}
+  links={[
+    { label: '系统架构 · FFN 与 MoE', href: '/docs/architecture' },
+    { label: 'Transformer Block 剖析', href: '/docs/transformer-block' },
+  ]}
+  next={{ href: '/learn/tensor-shape', title: '回到第一个实验' }}
+>
+  <p>
+    稠密 FFN 对每个 token 都执行同一套矩阵。想把模型容量做大，最直接的办法是把 FFN 变宽，但这样每个 token 的计算量也会一起变大。
+    MoE 的做法是<strong>把参数和计算解耦</strong>：摆很多个专家，每个 token 只走其中少数几个。
+  </p>
+  <p>
+    路由发生在专家之前：一个不带 bias 的线性层把 hidden 映射成 <code>E</code> 个分数，Softmax 变成分布，再取 top-k。
+    选中专家的输出按它们各自的概率加权求和。
+  </p>
+
+  <div class="formula">
+    logits = router(x) &nbsp;<span class="text-dim">// [tokens, experts]</span><br />
+    p = softmax<sub>row</sub>(logits)<br />
+    mask = top-k(p) &nbsp;<span class="text-dim">// 选中位置为 1，其余为 0</span><br />
+    y = Σ<sub>e</sub> (p ⊙ mask)<sub>e</sub> · expert<sub>e</sub>(x)
+  </div>
+
+  <div class="widget" data-moe-widget>
+    <div class="widget__head">
+      <h2 class="widget__title">tokens × experts 路由矩阵</h2>
+      <span class="widget__hint">点击一行查看该 token 的路由；拖动 top-k</span>
+    </div>
+    <div class="widget__body">
+      <div class="moe-matrix-wrap">
+        <div class="moe-matrix">
+          <div class="moe-row moe-row--head">
+            <span></span>
+            {EXPERTS.map((expert) => <span class="moe-head">{expert}</span>)}
+          </div>
+          {TOKENS.map((token, row) => (
+            <div class:list={['moe-row', { 'is-query': row === INITIAL_ROW }]} data-moe-row={row}>
+              <span class="moe-token">{token}</span>
+              {probabilities[row].map((probability, expert) => (
+                <button
+                  class:list={[
+                    'moe-cell',
+                    {
+                      'is-selected': initialTop[row].includes(expert),
+                      'is-query': row === INITIAL_ROW,
+                    },
+                  ]}
+                  type="button"
+                  data-moe-row={row}
+                  data-moe-col={expert}
+                  style={`--w:${shade(probability, rowMax(probabilities[row]))}`}
+                  aria-label={`token ${row + 1}，专家 ${expert + 1}，概率 ${(probability * 100).toFixed(1)}%`}
+                  title={`p = ${(probability * 100).toFixed(1)}%`}
+                >
+                  <span class="visually-hidden">{(probability * 100).toFixed(1)}%</span>
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div class="moe-controls">
+        <label class="moe-slider">
+          <span>top-k</span>
+          <input type="range" min="1" max="4" step="1" value={INITIAL_K} data-top-k />
+          <output data-top-k-out>{INITIAL_K}</output>
+        </label>
+        <span class="moe-note mono" data-moe-selected>query：猫 · 选中 2 / 4</span>
+      </div>
+
+      <div class="moe-loads">
+        {EXPERTS.map((expert, index) => (
+          <div class="moe-load">
+            <div class="moe-load__head">
+              <span>{expert}</span>
+              <span class="mono" data-load-count={index}>{loadCounts[index]}</span>
+            </div>
+            <div class="moe-load__track">
+              <span class="moe-load__bar" data-load-bar={index} style={`width:${(loadCounts[index] / maxLoad) * 100}%`}></span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <dl class="readout moe-readout">
+        <div><dt>激活比例</dt><dd data-out-active>2 / 4</dd></div>
+        <div><dt>选中权重和</dt><dd data-out-weight>—</dd></div>
+        <div><dt>top-1 最忙</dt><dd data-out-busy>—</dd></div>
+        <div><dt>路由熵</dt><dd data-out-entropy>—</dd></div>
+      </dl>
+
+      <p class="widget__foot" data-moe-summary>
+        top-k = 2 时，每个 token 只把权重留给分数最高的两个专家；另外两个 gate 为 0。
+      </p>
+    </div>
+  </div>
+
+  <h2>参数量与计算量不是一回事</h2>
+  <p>
+    如果有 8 个专家、每个都和一个稠密 FFN 同样大，总参数量就是原来的 8 倍；但 top-2 路由意味着每个 token 只“使用”其中 2 个，
+    计算量大致是原来的 2 倍，而不是 8 倍。容量上去了，单 token 的 FLOPs 没有同比增长，这是 MoE 最核心的取舍。
+  </p>
+  <p>
+    代价是显存：所有专家的参数都得放得下，即使这一步只用到两个。分布式训练还要处理专家并行、all-to-all 通信和负载均衡。
+    如果路由器总把 token 送给少数专家，其余专家就学不到东西，所以真实系统通常额外加一个 load-balancing loss。mini-llm 没有实现这个辅助损失，
+    这里只展示路由机制本身。
+  </p>
+
+  <h2>“只唤醒”是逻辑上的</h2>
+  <p>
+    <strong>当前实现会计算所有专家</strong>，再用 top-k mask 把未选中专家的 gate 置零，最后加权求和。这是 dense execution：
+    数学结果与稀疏执行一致，但省不下算力。真正的稀疏调度需要按 token 分组、只调用被选中的专家，属于加速后端的优化，mini-llm 把它明确留在了 TODO 一侧。
+  </p>
+  <p>
+    另外，gate 在 mask 之后没有重新归一化，所以 top-2 的权重和通常小于 1。模型在训练中会适应这个尺度；如果你改成“选中后重新 Softmax”，
+    那就是另一种路由定义，需要同步调整初始化与学习率。
+  </p>
+
+  <h2>在 mini-llm 里</h2>
+  <div class="code-card">
+    <div class="code-card__head mono">crates/mini-llm-nn/src/moe.rs</div>
+    <Code code={snippet} lang="rust" theme="github-dark-dimmed" />
+  </div>
+  <p>
+    <code>top_k_mask</code> 对每一行按概率降序排序，把前 k 个位置写成 1；<code>gate</code> 就是概率与 mask 的逐元素乘积。
+    每个专家是一个 <code>SwiGlu</code>，所以 MoE 是“多个门控 FFN + 一个路由器”，而不是另一种注意力。
+  </p>
+  <p>
+    模型配置里，<code>num_experts &gt; 1</code> 时 block 会自动构造 <code>Moe</code>；专家数不少于 4 时 top-k 取 2，否则取 1。
+    <code>routing_probabilities</code> 和 <code>routing_counts</code> 是公开的检查接口，可以直接把路由行为打印出来，而不是靠猜。
+  </p>
+
+  <div class="note">
+    <strong>一句话总结</strong>
+    稠密模型让所有参数参与每个 token；MoE 让路由器决定“这一次叫哪几位专家”，用更大的参数池换更稀疏的计算路径。
+  </div>
+</LessonLayout>
+
+<style>
+  .moe-matrix-wrap {
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .moe-matrix {
+    display: grid;
+    gap: 3px;
+    min-width: 300px;
+    max-width: 560px;
+  }
+
+  .moe-row {
+    display: grid;
+    grid-template-columns: 28px repeat(4, minmax(0, 1fr));
+    gap: 3px;
+    align-items: stretch;
+  }
+
+  .moe-row--head {
+    margin-bottom: 2px;
+  }
+
+  .moe-head,
+  .moe-token {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    color: var(--ink-faint);
+  }
+
+  .moe-token {
+    font-family: var(--font-sans);
+    font-size: 11px;
+  }
+
+  .moe-row.is-query .moe-token {
+    color: var(--accent-ink);
+    font-weight: 600;
+  }
+
+  .moe-cell {
+    aspect-ratio: 1.45;
+    padding: 0;
+    border: 0;
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--accent) calc(var(--w) * 72%), var(--paper-2));
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.1s var(--ease);
+  }
+
+  .moe-cell:hover,
+  .moe-cell:focus-visible {
+    outline: 1px solid var(--ink);
+    outline-offset: 1px;
+    transform: translateY(-1px);
+  }
+
+  .moe-cell.is-selected::after {
+    content: "";
+    position: absolute;
+    inset: 3px;
+    border: 1px solid var(--ink);
+    border-radius: 2px;
+    pointer-events: none;
+  }
+
+  .moe-row.is-query .moe-cell {
+    box-shadow: inset 0 0 0 1px var(--accent);
+  }
+
+  .moe-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 24px;
+    margin: 16px 0 18px;
+  }
+
+  .moe-slider {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) 24px;
+    align-items: center;
+    gap: 10px;
+    width: min(320px, 100%);
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--ink-soft);
+  }
+
+  .moe-slider output {
+    text-align: right;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .moe-note {
+    font-size: 10.5px;
+    color: var(--ink-faint);
+  }
+
+  .moe-loads {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .moe-load {
+    padding: 10px 11px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--paper);
+  }
+
+  .moe-load__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--ink-faint);
+  }
+
+  .moe-load__head span:last-child {
+    color: var(--ink);
+  }
+
+  .moe-load__track {
+    height: 5px;
+    margin-top: 8px;
+    border-radius: 3px;
+    background: var(--paper-3);
+    overflow: hidden;
+  }
+
+  .moe-load__bar {
+    display: block;
+    height: 100%;
+    background: var(--accent);
+    transition: width 0.16s var(--ease);
+  }
+
+  .moe-readout {
+    margin: 0;
+  }
+
+  .widget__foot {
+    margin: 16px 0 0;
+    padding-top: 14px;
+    border-top: 1px dashed var(--line);
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: var(--ink-faint);
+  }
+
+  @media (max-width: 560px) {
+    .moe-loads {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+</style>
+
+<script>
+  const widget = document.querySelector<HTMLElement>('[data-moe-widget]');
+  if (widget) {
+    const TOKENS = ['猫', '坐', '在', '垫', '子', '上'];
+    const EXPERTS = ['E0', 'E1', 'E2', 'E3'];
+    let topK = 2;
+    let selectedRow = 0;
+
+    const logits = TOKENS.map((_, row) =>
+      EXPERTS.map((_, expert) => {
+        const base = 1.55 * Math.sin((row + 1) * (expert + 2) * 0.7) + 0.85 * Math.cos((row - expert) * 0.55);
+        return base + (expert === row % EXPERTS.length ? 0.7 : 0);
+      }),
+    );
+
+    const softmax = (values: number[]) => {
+      const max = Math.max(...values);
+      const exps = values.map((value) => Math.exp(value - max));
+      const total = exps.reduce((sum, value) => sum + value, 0);
+      return exps.map((value) => value / total);
+    };
+
+    const probabilities = logits.map((row) => softmax(row));
+    const topIndices = (row: number[], k: number) =>
+      row
+        .map((value, index) => ({ value, index }))
+        .sort((left, right) => right.value - left.value)
+        .slice(0, k)
+        .map((entry) => entry.index);
+
+    const cells = [...widget.querySelectorAll<HTMLButtonElement>('.moe-cell')];
+    const rows = [...widget.querySelectorAll<HTMLElement>('.moe-row[data-moe-row]')];
+    const kInput = widget.querySelector<HTMLInputElement>('[data-top-k]')!;
+    const kOut = widget.querySelector<HTMLOutputElement>('[data-top-k-out]')!;
+    const selectedLabel = widget.querySelector<HTMLElement>('[data-moe-selected]')!;
+    const outActive = widget.querySelector<HTMLElement>('[data-out-active]')!;
+    const outWeight = widget.querySelector<HTMLElement>('[data-out-weight]')!;
+    const outBusy = widget.querySelector<HTMLElement>('[data-out-busy]')!;
+    const outEntropy = widget.querySelector<HTMLElement>('[data-out-entropy]')!;
+    const summary = widget.querySelector<HTMLElement>('[data-moe-summary]')!;
+
+    const render = () => {
+      const selected = topIndices(probabilities[selectedRow], topK);
+      cells.forEach((cell) => {
+        const row = Number(cell.dataset.moeRow);
+        const expert = Number(cell.dataset.moeCol);
+        cell.classList.toggle('is-selected', row === selectedRow && selected.includes(expert));
+      });
+
+      rows.forEach((row) => {
+        const index = Number(row.dataset.moeRow);
+        row.classList.toggle('is-query', index === selectedRow);
+      });
+
+      const selectedWeight = selected.reduce((sum, expert) => sum + probabilities[selectedRow][expert], 0);
+      const entropy = -probabilities[selectedRow].reduce(
+        (sum, value) => sum + (value > 0 ? value * Math.log2(value) : 0),
+        0,
+      );
+
+      const loads = EXPERTS.map(
+        (_, expert) => TOKENS.filter((__, row) => topIndices(probabilities[row], 1)[0] === expert).length,
+      );
+      const busiest = loads.reduce((best, count, index) => (count > loads[best] ? index : best), 0);
+
+      EXPERTS.forEach((_, index) => {
+        widget.querySelector<HTMLElement>(`[data-load-count="${index}"]`)!.textContent = String(loads[index]);
+        widget.querySelector<HTMLElement>(`[data-load-bar="${index}"]`)!.style.width =
+          `${(loads[index] / Math.max(...loads, 1)) * 100}%`;
+      });
+
+      kOut.textContent = String(topK);
+      selectedLabel.textContent = `query：${TOKENS[selectedRow]} · 选中 ${topK} / 4`;
+      outActive.textContent = `${topK} / 4`;
+      outWeight.textContent = selectedWeight.toFixed(3);
+      outBusy.textContent = `${EXPERTS[busiest]} · ${loads[busiest]} token`;
+      outEntropy.textContent = entropy.toFixed(2);
+
+      const chosen = selected.map((expert) => EXPERTS[expert]).join(' + ');
+      summary.textContent =
+        topK === 4
+          ? 'top-k = 4：所有专家都保留权重，MoE 退化成稠密混合，激活比例 100%。'
+          : `top-k = ${topK}：token「${TOKENS[selectedRow]}」选中 ${chosen}，选中权重和 ${selectedWeight.toFixed(3)}；未选中的专家 gate 为 0。`;
+    };
+
+    cells.forEach((cell) => {
+      cell.addEventListener('click', () => {
+        selectedRow = Number(cell.dataset.moeRow);
+        render();
+      });
+    });
+
+    kInput.addEventListener('input', () => {
+      topK = Number(kInput.value);
+      render();
+    });
+
+    render();
+  }
+</script>
