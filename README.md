@@ -297,10 +297,10 @@ around ±20%, so treat them as ratios):
 matmul  64x64 x64 :     0.04 ms  13958.7 MFLOP/s
 matmul 128x128x128:     0.23 ms  18176.8 MFLOP/s
 matmul 256x256x256:     1.98 ms  16984.4 MFLOP/s
-forward (hidden  32, block 16, batch 4):     2.17 ms
-forward (hidden 128, block 32, batch 4):    20.65 ms
-train step (hidden  32, block 16, batch 2):  2.25 ms
-train step (hidden 128, block 32, batch 2): 26.91 ms
+forward (hidden  32, block 16, batch 4):     2.17 ms   1.7 MB alloc
+forward (hidden 128, block 32, batch 4):    20.65 ms  10.5 MB alloc
+train step (hidden  32, block 16, batch 2):  2.25 ms   2.0 MB alloc
+train step (hidden 128, block 32, batch 2): 26.91 ms  16.7 MB alloc
 generate 32 tokens (KV cache):                3.49 ms
 clone 1024x1024 (4 MB shared buffer):        0.060 us
 ```
@@ -308,7 +308,7 @@ clone 1024x1024 (4 MB shared buffer):        0.060 us
 Design choices behind those numbers:
 
 - **Tensor buffers are `Arc<Vec<f32>>`.** Cloning a tensor is a refcount bump
-  (~0.04 µs for 4 MB) instead of a copy. The autograd engine clones node values
+  (~0.06 µs for 4 MB) instead of a copy. The autograd engine clones node values
   on every op, so this turns an O(size) cost into O(1).
 - **KV cache appends in place.** `Tensor::append_row` grows the shared buffer with
   `Arc::make_mut`, so a decode step costs O(1) amortized instead of copying the
@@ -317,6 +317,12 @@ Design choices behind those numbers:
   the cache and the attention work.
 - **The causal mask is cached per `(batch, seq)`.** Training reuses the same
   shape every step, so the `[N, N]` mask is built once instead of per forward.
+- **Optimizers update parameters in place.** `Trainer::step` drops the graph
+  after `backward()` (that graph is what keeps parameter buffers shared), then
+  `AdamW`/`Sgd` call `TensorValue::update_value`, which mutates the buffer via
+  `Arc::make_mut`. The allocation counter in `bench` shows the effect
+  (18.7 → 16.7 MB per step at hidden 128); wall-clock time at this scale is
+  compute-bound, so the gain is not visible there.
 - **matmul keeps i-k-j ordering.** A transposed dot-product variant was measured
   ~4× slower (3.7 vs 15.8 GFLOP/s) at these sizes because the inner loop stops
   vectorizing, so it is deliberately not used. The comment in

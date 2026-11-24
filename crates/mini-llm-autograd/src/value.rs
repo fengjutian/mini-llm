@@ -122,6 +122,20 @@ impl TensorValue {
         Ok(())
     }
 
+    /// Applies `update` to a parameter's buffer in place.
+    ///
+    /// When the parameter's tensor is uniquely owned this avoids allocating a
+    /// new buffer (and a new tensor); if a graph node still shares it,
+    /// [`Tensor::data_mut`] falls back to a copy.
+    pub fn update_value(&self, update: impl FnOnce(&mut [f32])) -> Result<(), AutogradError> {
+        let mut node = self.node.borrow_mut();
+        if !node.requires_grad {
+            return Err(AutogradError::NotAParameter);
+        }
+        update(node.value.data_mut());
+        Ok(())
+    }
+
     // ---------------------------------------------------------------------
     // Graph plumbing
     // ---------------------------------------------------------------------

@@ -2,16 +2,17 @@
 import LessonLayout from '../../layouts/LessonLayout.astro';
 import { Code } from 'astro:components';
 
-const snippet = `let x = TensorValue::parameter(vec![2.0], vec![1, 1])?;
+const snippet = `let x = TensorValue::constant(vec![2.0], vec![1, 1])?;
 let w = TensorValue::parameter(vec![3.0], vec![1, 1])?;
-let b = TensorValue::constant(vec![1.0], vec![1, 1])?;
+let b = TensorValue::parameter(vec![1.0], vec![1, 1])?;
+let target = TensorValue::constant(vec![5.0], vec![1, 1])?;
 
 let z = w.matmul(&x)?.add(&b)?;   // forward：记录 z ← w, x, b
 let a = z.relu()?;
 let loss = a.sub(&target)?.powf(2.0)?.mean()?;
 
 loss.backward()?;                 // 反向：一次拿到所有梯度
-assert!(w.grad().is_some());`;
+assert!(w.grad().is_some() && b.grad().is_some());`;
 ---
 
 <LessonLayout

@@ -293,3 +293,21 @@ fn parameter_values_can_be_updated_in_place() {
     );
     assert_ne!(weight.id(), constant.id());
 }
+
+#[test]
+fn update_value_mutates_a_parameter_in_place() {
+    let parameter = TensorValue::parameter(vec![1.0, 2.0], vec![2]).unwrap();
+    parameter
+        .update_value(|data| {
+            data[0] += 10.0;
+            data[1] *= 3.0;
+        })
+        .unwrap();
+    assert_eq!(parameter.data(), &[11.0, 6.0]);
+
+    let constant = TensorValue::constant(vec![1.0], vec![1]).unwrap();
+    assert_eq!(
+        constant.update_value(|_| {}),
+        Err(AutogradError::NotAParameter)
+    );
+}

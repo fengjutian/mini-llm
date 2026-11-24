@@ -7,7 +7,6 @@
 use std::collections::HashMap;
 
 use mini_llm_autograd::TensorValue;
-use mini_llm_tensor::Tensor;
 
 use crate::NnError;
 
@@ -62,30 +61,32 @@ impl Sgd {
 
 impl Optimizer for Sgd {
     fn step(&mut self, parameters: &[TensorValue]) -> Result<(), NnError> {
+        let momentum = self.momentum;
+        let learning_rate = self.lr;
         for parameter in parameters {
             let Some(grad) = parameter.grad() else {
                 continue;
             };
-            let value = parameter.value();
-            let shape = value.shape().to_vec();
-            let mut data = value.data().to_vec();
             let grad_data = grad.data();
 
-            if self.momentum > 0.0 {
+            if momentum > 0.0 {
                 let velocity = self
                     .velocity
                     .entry(parameter.id())
-                    .or_insert_with(|| vec![0.0; data.len()]);
-                for index in 0..data.len() {
-                    velocity[index] = self.momentum * velocity[index] + grad_data[index];
-                    data[index] -= self.lr * velocity[index];
-                }
+                    .or_insert_with(|| vec![0.0; grad_data.len()]);
+                parameter.update_value(|data| {
+                    for index in 0..data.len() {
+                        velocity[index] = momentum * velocity[index] + grad_data[index];
+                        data[index] -= learning_rate * velocity[index];
+                    }
+                })?;
             } else {
-                for index in 0..data.len() {
-                    data[index] -= self.lr * grad_data[index];
-                }
+                parameter.update_value(|data| {
+                    for index in 0..data.len() {
+                        data[index] -= learning_rate * grad_data[index];
+                    }
+                })?;
             }
-            parameter.set_value(Tensor::new(data, shape)?)?;
         }
         Ok(())
     }
@@ -160,33 +161,36 @@ impl Optimizer for AdamW {
         let step = self.step_count;
         let bias1 = 1.0 - self.beta1.powi(step as i32);
         let bias2 = 1.0 - self.beta2.powi(step as i32);
+        let beta1 = self.beta1;
+        let beta2 = self.beta2;
+        let learning_rate = self.lr;
+        let eps = self.eps;
+        let decay = 1.0 - learning_rate * self.weight_decay;
 
         for parameter in parameters {
             let Some(grad) = parameter.grad() else {
                 continue;
             };
-            let value = parameter.value();
-            let shape = value.shape().to_vec();
-            let mut data = value.data().to_vec();
             let grad_data = grad.data();
             let slot = self
                 .slots
                 .entry(parameter.id())
                 .or_insert_with(|| AdamSlot {
-                    m: vec![0.0; data.len()],
-                    v: vec![0.0; data.len()],
+                    m: vec![0.0; grad_data.len()],
+                    v: vec![0.0; grad_data.len()],
                 });
 
-            for index in 0..data.len() {
-                let g = grad_data[index];
-                slot.m[index] = self.beta1 * slot.m[index] + (1.0 - self.beta1) * g;
-                slot.v[index] = self.beta2 * slot.v[index] + (1.0 - self.beta2) * g * g;
-                let m_hat = slot.m[index] / bias1;
-                let v_hat = slot.v[index] / bias2;
-                let decay = 1.0 - self.lr * self.weight_decay;
-                data[index] = data[index] * decay - self.lr * m_hat / (v_hat.sqrt() + self.eps);
-            }
-            parameter.set_value(Tensor::new(data, shape)?)?;
+            parameter.update_value(|data| {
+                for index in 0..data.len() {
+                    let g = grad_data[index];
+                    slot.m[index] = beta1 * slot.m[index] + (1.0 - beta1) * g;
+                    slot.v[index] = beta2 * slot.v[index] + (1.0 - beta2) * g * g;
+                    let m_hat = slot.m[index] / bias1;
+                    let v_hat = slot.v[index] / bias2;
+                    data[index] =
+                        data[index] * decay - learning_rate * m_hat / (v_hat.sqrt() + eps);
+                }
+            })?;
         }
         Ok(())
     }

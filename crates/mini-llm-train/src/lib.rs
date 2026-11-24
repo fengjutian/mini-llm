@@ -136,10 +136,17 @@ impl<D: Dataset> Trainer<D> {
             .sample_batch(self.config.batch_size, &mut self.rng)?;
         let loss = self.loss(&batch)?;
         loss.backward()?;
+        let value = loss.data()[0];
+        // Drop the graph before the optimizer runs: it is what keeps parameter
+        // buffers shared, and a unique buffer lets `update_value` mutate in
+        // place instead of copying.
+        drop(loss);
         let parameters = &self.parameters;
         self.optimizer.step(parameters)?;
-        loss.zero_grad();
-        Ok(loss.data()[0])
+        for parameter in parameters {
+            parameter.zero_grad();
+        }
+        Ok(value)
     }
 
     /// Forward-only loss for a given batch (no gradients are recorded for

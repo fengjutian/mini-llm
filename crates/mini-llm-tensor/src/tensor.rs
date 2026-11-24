@@ -83,6 +83,15 @@ impl Tensor {
         Arc::try_unwrap(self.data).unwrap_or_else(|shared| (*shared).clone())
     }
 
+    /// Mutable access to the buffer.
+    ///
+    /// If another handle still shares the buffer, `Arc::make_mut` copies it
+    /// first; callers such as optimizers get the cheap path when the tensor is
+    /// uniquely owned.
+    pub fn data_mut(&mut self) -> &mut [f32] {
+        Arc::make_mut(&mut self.data).as_mut_slice()
+    }
+
     pub fn rank(&self) -> usize {
         self.shape.len()
     }
