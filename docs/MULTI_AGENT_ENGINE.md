@@ -31,6 +31,10 @@ Multi-Agent Engine 的核心不是简单地启动多个 LLM，而是建立一套
 
 # **一、Multi-Agent Architecture：为什么一个 Agent 不够？**
 
+![多台移动机器人在共享实验场中协同执行任务](assets/images/multi-agent-robot-fleet.png)
+
+_图：多智能体系统不仅要分别规划，还要共享环境状态、避免资源冲突并协调任务分配。本文照片式插图由 AI 生成。_
+
 ## **1.1 单 Agent 架构的局限**
 
 假设用户提出一个复杂任务：

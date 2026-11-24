@@ -10,6 +10,10 @@ _图：纵深安全控制链。从左到右展示本章核心概念之间的数�
 
 ## **一、Security Engine：为什么 Agent 系统需要独立安全架构？**
 
+![基础设施网络运行中心](assets/images/observability-operations-center.jpg)
+
+_图：真实运行中心通过人员、监控系统与控制流程共同维护基础设施安全；Agent Security 同样需要持续监测、权限边界和人工升级机制。图片：USAID Pakistan，Wikimedia Commons，美国公有领域。_
+
 传统软件系统的安全问题，通常集中在身份认证、权限控制、数据保护和网络安全等领域。
 
 例如，一个 Web 系统需要解决：

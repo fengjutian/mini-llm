@@ -6,6 +6,10 @@ _图：Agent 通信协议栈。从左到右展示本章核心概念之间的数�
 
 ## **一、为什么 AI 系统需要 Protocol Engine？**
 
+![数据中心中的服务器机架与网络基础设施](assets/images/runtime-datacenter-racks.jpg)
+
+_图：协议最终承载在真实网络、交换设备和服务器之上；消息格式之外，还需要处理寻址、认证、超时、重试和故障。图片：Carl Lender，Wikimedia Commons，CC BY 2.0。_
+
 前面我们已经构建了 mini-llm 的多个核心模块：
 
 - Transformer Engine：负责模型计算。
