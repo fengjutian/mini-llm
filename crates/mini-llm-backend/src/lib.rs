@@ -121,9 +121,21 @@ mod candle_backend {
         }
 
         fn softmax_rows(&self, input: &Tensor) -> Result<Tensor, BackendError> {
+            // candle-core 0.11 keeps softmax in `candle-nn`; composing it here
+            // avoids pulling that crate in just for one kernel.
             let input = self.to_candle(input)?;
-            let soft = input
-                .softmax_last_dim()
+            let max = input
+                .max_keepdim(D::Minus1)
+                .map_err(|error| BackendError::Backend(error.to_string()))?;
+            let shifted = input
+                .broadcast_sub(&max)
+                .and_then(|value| value.exp())
+                .map_err(|error| BackendError::Backend(error.to_string()))?;
+            let sum = shifted
+                .sum_keepdim(D::Minus1)
+                .map_err(|error| BackendError::Backend(error.to_string()))?;
+            let soft = shifted
+                .broadcast_div(&sum)
                 .map_err(|error| BackendError::Backend(error.to_string()))?;
             Self::from_candle(&soft)
         }
@@ -136,7 +148,7 @@ mod candle_backend {
         ) -> Result<Tensor, BackendError> {
             let input = self.to_candle(input)?;
             let gamma = self.to_candle(gamma)?;
-            let eps = CandleTensor::new(f64::from(eps), &self.device)
+            let eps = CandleTensor::new(eps, &self.device)
                 .map_err(|error| BackendError::Backend(error.to_string()))?;
 
             let mean_square = input

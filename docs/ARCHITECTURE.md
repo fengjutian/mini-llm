@@ -45,7 +45,7 @@ CLI / Future Research Studio
 | mini-llm-train | 训练循环、checkpoint 序列化、DPO/GRPO 配方 | 模型定义、UI |
 | mini-llm-model | 模型配置、Attention / Block / TinyGpt、注意力捕获 | 文件持久化、UI |
 | mini-llm-trace | 训练事件协议、JSONL sink、张量记录 | 训练逻辑、模型结构 |
-| mini-llm-backend | `MatMulBackend` 抽象、CPU 参考实现、可选 Candle | 实验业务规则 |
+| mini-llm-backend | `Backend` 抽象、CPU 参考实现、可选 Candle | 实验业务规则 |
 | mini-llm-cli | 命令行应用（每个命令一个模块） | 核心算法实现 |
 
 模块划分原则：每个 crate 的 `lib.rs` 只做模块声明与 re-export；一个文件只承担

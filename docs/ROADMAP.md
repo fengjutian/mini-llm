@@ -151,7 +151,7 @@ SFT 语料仅用于展示掩码机制。
 - `mini-llm-model`：`TinyGpt::forward_traced` 返回每个 layer、每个 head 的
   注意力矩阵（`AttentionRecord`），形状 `[batch*seq, batch*seq]`；
 - `mini-llm-train`：`Trainer::train_observed` 在训练循环中发出结构化事件；
-- `mini-llm-backend`：`MatMulBackend` trait，`CpuBackend` 始终可用，
+- `mini-llm-backend`：`Backend` trait，`CpuBackend` 始终可用，
   `CandleBackend` 由 `candle` feature 启用；`tests/parity.rs` 对比 CPU 与
   Candle 的矩阵乘法（容差 1e-4）；
 - CLI：`trace` 命令训练 30 步并把事件、注意力矩阵与 logits 写入

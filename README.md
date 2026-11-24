@@ -25,7 +25,7 @@ This repository is a working learning stack, not a production framework:
 - `mini-llm-data`: character tokenizer and next-token window sampling
 - `mini-llm-train`: training loop and a self-describing binary checkpoint format
 - `mini-llm-trace`: structured training events (JSONL) and tensor capture
-- `mini-llm-backend`: `MatMulBackend` seam with a CPU reference and an optional Candle implementation
+- `mini-llm-backend`: `Backend` seam with a CPU reference and an optional Candle implementation
 - CLI demos: hand-checked gradients, linear regression, XOR, a 2D classifier, MoE routing, and Tiny GPT training plus text generation
 - Astro site in `web/`: three interactive concept lessons plus the repository docs
 - Product requirements and architecture documents
@@ -274,18 +274,21 @@ layer 0 head 0: mean max attention 0.424
 wrote 42 events to traces/run-1795482837097.jsonl
 ```
 
-For acceleration, `mini-llm-backend` defines a `MatMulBackend` seam. `CpuBackend`
+For acceleration, `mini-llm-backend` defines a `Backend` seam. `CpuBackend`
 always works; `CandleBackend` is behind a feature flag and is compared against the
-reference kernel by `tests/parity.rs`:
+reference kernels by `tests/parity.rs`. The trait covers matrix multiplication,
+row-wise softmax and RMS normalization; backends that do not override a kernel
+fall back to the CPU implementation.
 
 ```bash
 cargo test -p mini-llm-backend               # CPU reference checks
 cargo test -p mini-llm-backend --features candle   # CPU vs Candle (tolerance 1e-4)
 ```
 
-The parity suite currently compares the in-repo CPU kernel with Candle's CPU
+The parity suite currently compares the in-repo CPU kernels with Candle's CPU
 device; `Device::Cuda` can be passed to `CandleBackend::new` where a GPU is
-available.
+available. Candle 0.11 keeps softmax in `candle-nn`, so the backend composes it
+from `max_keepdim` / `exp` / `sum_keepdim` rather than pulling in that crate.
 
 ## Performance notes
 
@@ -297,10 +300,13 @@ around ±20%, so treat them as ratios):
 matmul  64x64 x64 :     0.04 ms  13958.7 MFLOP/s
 matmul 128x128x128:     0.23 ms  18176.8 MFLOP/s
 matmul 256x256x256:     1.98 ms  16984.4 MFLOP/s
-forward (hidden  32, block 16, batch 4):     2.17 ms   1.7 MB alloc
-forward (hidden 128, block 32, batch 4):    20.65 ms  10.5 MB alloc
+forward (hidden  32, block 16, batch 4):     2.12 ms   1.7 MB alloc
+forward (hidden 128, block 32, batch 4):    19.19 ms  10.5 MB alloc
+forward (hidden 256, block 32, batch 4):    51.12 ms  18.6 MB alloc
+forward (hidden 512, block 32, batch 4):   187.15 ms  35.5 MB alloc
 train step (hidden  32, block 16, batch 2):  2.25 ms   2.0 MB alloc
 train step (hidden 128, block 32, batch 2): 26.91 ms  16.7 MB alloc
+train step (hidden 256, block 32, batch 2): 154.71 ms 42.0 MB alloc
 generate 32 tokens (KV cache):                3.49 ms
 clone 1024x1024 (4 MB shared buffer):        0.060 us
 ```
@@ -329,6 +335,13 @@ Design choices behind those numbers:
   `crates/mini-llm-tensor/src/matrix.rs` records the experiment.
 - **`Trainer` caches parameter handles.** Collecting parameters walks the graph;
   doing it once at construction removes a per-step allocation.
+- **Softmax reuses one scratch row** instead of allocating a `Vec` per row.
+- Scaling the benchmark to hidden 256/512 shows allocation stays proportional to
+  activations (35.5 MB for a 512-wide forward) while time grows faster
+  (187 ms), i.e. the model is compute-bound rather than allocator-bound. That is
+  why a per-step workspace buffer is not implemented yet: it would trim a
+  minority of the allocation volume without changing the runtime. The numbers
+  above are the baseline to revisit when a real model size is in play.
 - The tiny demo model is dominated by per-op overhead and graph bookkeeping, not
   floating-point work, so micro-optimizing kernels further has diminishing
   returns until the model grows.
@@ -407,7 +420,7 @@ mini-llm/
 │   ├── mini-llm-model/    # config, attention, blocks, Tiny GPT
 │   ├── mini-llm-train/    # training loop and checkpoints
 │   ├── mini-llm-trace/    # event protocol, JSONL sink, tensor records
-│   ├── mini-llm-backend/  # MatMulBackend seam + optional Candle backend
+│   ├── mini-llm-backend/  # Backend seam + optional Candle backend
 │   └── mini-llm-cli/      # dispatch in main.rs + one module per command
 └── web/                  # Astro concept site and rendered docs
 ```
@@ -423,7 +436,7 @@ and re-exports.
 - `cpu-edu`: first-principles CPU implementation for learning and correctness.
 - `candle` (feature-gated): the accelerated seam in `mini-llm-backend`; parity
   with the reference kernel is checked in `crates/mini-llm-backend/tests/parity.rs`.
-- Future backends implement `MatMulBackend` and reuse the same parity harness.
+- Future backends implement `Backend` and reuse the same parity harness.
 
 ## Non-goals for v0.1
 
