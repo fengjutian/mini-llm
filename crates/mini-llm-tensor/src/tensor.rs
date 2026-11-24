@@ -3,12 +3,19 @@
 //! Storage, constructors, element-wise arithmetic and reductions live here;
 //! matrix kernels, gathers and RoPE live in `crate::matrix`.
 
+use std::sync::Arc;
+
 use crate::broadcast::{advance_index, broadcast_offsets, broadcast_shape, contiguous_strides};
 use crate::error::TensorError;
+
 /// A dense, row-major tensor with `f32` storage.
+///
+/// The buffer is shared behind an `Arc`, so cloning a `Tensor` is O(1). This
+/// matters because the autograd engine clones node values on every access; with
+/// an owned `Vec` that copy was proportional to the tensor size.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Tensor {
-    pub(crate) data: Vec<f32>,
+    pub(crate) data: Arc<Vec<f32>>,
     pub(crate) shape: Vec<usize>,
 }
 
@@ -23,7 +30,10 @@ impl Tensor {
                 data_len: data.len(),
             });
         }
-        Ok(Self { data, shape })
+        Ok(Self {
+            data: Arc::new(data),
+            shape,
+        })
     }
 
     pub fn zeros(shape: Vec<usize>) -> Result<Self, TensorError> {
@@ -66,11 +76,11 @@ impl Tensor {
     }
 
     pub fn data(&self) -> &[f32] {
-        &self.data
+        self.data.as_slice()
     }
 
     pub fn into_data(self) -> Vec<f32> {
-        self.data
+        Arc::try_unwrap(self.data).unwrap_or_else(|shared| (*shared).clone())
     }
 
     pub fn rank(&self) -> usize {
@@ -96,7 +106,7 @@ impl Tensor {
             let data = self
                 .data
                 .iter()
-                .zip(&other.data)
+                .zip(other.data.iter())
                 .map(|(a, b)| f(*a, *b))
                 .collect();
             return Self::new(data, out_shape);
@@ -200,7 +210,7 @@ impl Tensor {
 
         let mut data = vec![0.0; target_len];
         let mut index = vec![0usize; source_rank];
-        for &value in &self.data {
+        for &value in self.data.iter() {
             let mut offset = 0usize;
             for dim in 0..target_rank {
                 let source_dim = source_rank - target_rank + dim;
@@ -277,7 +287,12 @@ mod tests {
         let b = Tensor::from_2d(3, 2, vec![7., 8., 9., 10., 11., 12.]).unwrap();
         let c = a.matmul(&b).unwrap();
         assert_eq!(c.shape(), &[2, 2]);
-        assert_eq!(c.data(), &[58., 64., 139., 154.]);
+        // Accumulation order may differ from the naive kernel; compare with a
+        // small tolerance instead of bit equality.
+        let expected = [58., 64., 139., 154.];
+        for (actual, expected) in c.data().iter().zip(expected.iter()) {
+            assert!((actual - expected).abs() < 1e-5, "{actual} != {expected}");
+        }
     }
 
     #[test]

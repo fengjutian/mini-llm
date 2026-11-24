@@ -5,7 +5,7 @@
 mod commands;
 
 use commands::{
-    autograd, basics, classify, dpo, generate, grpo, lora, moe, regression, sft, trace, train, xor,
+    autograd, basics, bench, classify, dpo, generate, grpo, lora, moe, regression, sft, trace, train, xor,
 };
 
 fn main() {
@@ -15,6 +15,7 @@ fn main() {
 
     match command {
         "demo" => basics::attention_demo(),
+        "bench" => bench::run(),
         "inspect-config" => basics::inspect_config(),
         "autograd" => autograd::run(),
         "train-line" => regression::run(),
@@ -42,6 +43,7 @@ fn usage() {
     println!();
     println!("Commands:");
     println!("  demo                 scaled dot-product attention walkthrough");
+    println!("  bench                kernel + training micro-benchmarks (use --release)");
     println!("  inspect-config       validate and print the default model configuration");
     println!("  autograd             computation graph + gradients for y = wx + b");
     println!("  train-line           fit y = 2x - 1 with manual SGD");

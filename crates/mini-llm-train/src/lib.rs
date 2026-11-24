@@ -91,18 +91,22 @@ pub struct Trainer<D: Dataset> {
     dataset: D,
     rng: Rng,
     config: TrainConfig,
+    /// Parameter handles collected once; the optimizer mutates them in place.
+    parameters: Vec<TensorValue>,
 }
 
 impl<D: Dataset> Trainer<D> {
     pub fn new(model: TinyGpt, dataset: D, config: TrainConfig) -> Self {
         let optimizer = AdamW::new(config.learning_rate).with_weight_decay(config.weight_decay);
         let rng = Rng::new(config.seed);
+        let parameters = model.parameters();
         Self {
             model,
             optimizer,
             dataset,
             rng,
             config,
+            parameters,
         }
     }
 
@@ -118,8 +122,9 @@ impl<D: Dataset> Trainer<D> {
         &self.config
     }
 
-    pub fn parameters(&self) -> Vec<TensorValue> {
-        self.model.parameters()
+    /// The cached parameter handles, in a stable order.
+    pub fn parameters(&self) -> &[TensorValue] {
+        &self.parameters
     }
 
     /// Samples one batch, computes the loss, backpropagates and updates.
@@ -131,7 +136,8 @@ impl<D: Dataset> Trainer<D> {
             .sample_batch(self.config.batch_size, &mut self.rng)?;
         let loss = self.loss(&batch)?;
         loss.backward()?;
-        self.optimizer.step(&self.parameters())?;
+        let parameters = &self.parameters;
+        self.optimizer.step(parameters)?;
         loss.zero_grad();
         Ok(loss.data()[0])
     }
