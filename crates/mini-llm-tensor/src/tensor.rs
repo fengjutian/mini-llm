@@ -442,6 +442,35 @@ mod tests {
     }
 
     #[test]
+    fn parallel_matmul_matches_the_sequential_reference() {
+        // 128^3 = 2M multiply-adds; combined with 128 rows it crosses the
+        // parallel threshold, so this exercises the threaded path.
+        let size = 128;
+        let values = |scale: f32| -> Vec<f32> {
+            (0..size * size)
+                .map(|index| ((index % 13) as f32 - 6.0) * 0.05 * scale)
+                .collect()
+        };
+        let left = Tensor::from_2d(size, size, values(1.0)).unwrap();
+        let right = Tensor::from_2d(size, size, values(0.5)).unwrap();
+        let product = left.matmul(&right).unwrap();
+
+        let mut expected = vec![0.0f32; size * size];
+        for row in 0..size {
+            for inner in 0..size {
+                let a = left.data()[row * size + inner];
+                for col in 0..size {
+                    expected[row * size + col] += a * right.data()[inner * size + col];
+                }
+            }
+        }
+        assert_eq!(product.shape(), &[size, size]);
+        for (actual, expected) in product.data().iter().zip(expected.iter()) {
+            assert!((actual - expected).abs() < 1e-3, "{actual} != {expected}");
+        }
+    }
+
+    #[test]
     fn append_row_grows_in_place() {
         let mut tensor = Tensor::zeros(vec![0, 2]).unwrap();
         tensor.append_row(&[1.0, 2.0]).unwrap();

@@ -13,5 +13,8 @@ This directory contains local image assets used by docs/ROBOTICS_ENGINE.md.
 | embodied-humanoid-programming.jpg | [Humanoid robot is being programmed](https://commons.wikimedia.org/wiki/File:Humanoid_robot_is_being_programmed.jpg), ZhanatKappassov | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
 | runtime-datacenter-racks.jpg | [Datacenter Server Racks](https://commons.wikimedia.org/wiki/File:Datacenter_Server_Racks_(22370909788).jpg), Carl Lender | [CC BY 2.0](https://creativecommons.org/licenses/by/2.0/) |
 | training-cray-supercomputer.jpg | [Supercomputer](https://commons.wikimedia.org/wiki/File:Supercomputer.jpg), U.S. National Cancer Institute | Public domain in the United States |
+| observability-operations-center.jpg | [Network Operations Center in Lahore](https://commons.wikimedia.org/wiki/File:U.S._Ambassador_and_Power_Information_Technology_Company_CEO_Commemorate_Opening_of_Network_Operations_Center_in_Lahore_(15239121669).jpg), USAID Pakistan | Public domain in the United States |
+| multi-agent-robot-fleet.png | Generated for this repository with OpenAI image generation | AI-generated original |
+| world-model-autonomous-vehicle.png | Generated for this repository with OpenAI image generation | AI-generated original |
 
 The downloaded images are stored without visual modification. Filenames were changed for stable local references.

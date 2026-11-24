@@ -160,16 +160,57 @@ impl Tensor {
         let left = self.data.as_slice();
         let right = other.data.as_slice();
         let mut output = vec![0.0; m * n];
-        for i in 0..m {
-            let row_offset = i * k_left;
-            for k in 0..k_left {
-                let a = left[row_offset + k];
-                let right_offset = k * n;
-                for j in 0..n {
-                    output[i * n + j] += a * right[right_offset + j];
+
+        // Large products split the rows across cores. Each output element is
+        // still accumulated in the same order, so results are bit-identical to
+        // the sequential kernel.
+        let work = m.saturating_mul(n).saturating_mul(k_left);
+        let threads = if work >= PARALLEL_MATMUL_WORK {
+            std::thread::available_parallelism()
+                .map(|value| value.get())
+                .unwrap_or(1)
+                .min(m)
+        } else {
+            1
+        };
+
+        if threads <= 1 {
+            multiply_rows(left, right, &mut output, 0, k_left, n);
+        } else {
+            let rows_per_thread = m.div_ceil(threads);
+            std::thread::scope(|scope| {
+                for (chunk_index, chunk) in output.chunks_mut(rows_per_thread * n).enumerate() {
+                    let first_row = chunk_index * rows_per_thread;
+                    scope.spawn(move || {
+                        multiply_rows(left, right, chunk, first_row, k_left, n);
+                    });
                 }
-            }
+            });
         }
         Self::new(output, vec![m, n])
+    }
+}
+
+/// Multiply-adds below this count stay on the calling thread.
+const PARALLEL_MATMUL_WORK: usize = 4_000_000;
+
+/// Computes `left[first_row.., :] x right` into `output` (`[rows, n]`).
+fn multiply_rows(
+    left: &[f32],
+    right: &[f32],
+    output: &mut [f32],
+    first_row: usize,
+    k: usize,
+    n: usize,
+) {
+    for (local_row, out_row) in output.chunks_mut(n).enumerate() {
+        let row = first_row + local_row;
+        let left_row = &left[row * k..(row + 1) * k];
+        for (inner, &a) in left_row.iter().enumerate() {
+            let right_row = &right[inner * n..(inner + 1) * n];
+            for (out, &b) in out_row.iter_mut().zip(right_row) {
+                *out += a * b;
+            }
+        }
     }
 }

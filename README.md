@@ -31,9 +31,9 @@ This repository is a working learning stack, not a production framework:
 - Product requirements and architecture documents
 
 The tensor implementation is deliberately simple: `f32` plus an `Arc`-backed
-`Vec<f32>`, scalar loops, single-threaded. It is an educational baseline, not a
-high-performance library. Sparse MoE dispatch, GPU acceleration and higher-order
-gradients remain future work.
+`Vec<f32>`, scalar loops, with large matrix products split across cores. It is an
+educational baseline, not a high-performance library. Sparse MoE dispatch, GPU
+acceleration and higher-order gradients remain future work.
 
 ## Quick start
 
@@ -92,8 +92,8 @@ follow NumPy-style right-aligned broadcasting, and gradients are summed back to
 the original shape. Every analytic gradient is verified against central finite
 differences in `crates/mini-llm-autograd/tests/gradients.rs`.
 
-Known limitations: `f32` only, single-threaded, no `no_grad` region, no
-higher-order gradients.
+Known limitations: `f32` only, no `no_grad` region, no higher-order gradients,
+and only `matmul` is parallel (element-wise ops stay on the calling thread).
 
 ## Neural network building blocks
 
@@ -297,24 +297,29 @@ optimized against (release, laptop CPU; run-to-run variance on a busy machine is
 around ±20%, so treat them as ratios):
 
 ```text
-matmul  64x64 x64 :     0.04 ms  13958.7 MFLOP/s
-matmul 128x128x128:     0.23 ms  18176.8 MFLOP/s
-matmul 256x256x256:     1.98 ms  16984.4 MFLOP/s
-forward (hidden  32, block 16, batch 4):     2.12 ms   1.7 MB alloc
-forward (hidden 128, block 32, batch 4):    19.19 ms  10.5 MB alloc
-forward (hidden 256, block 32, batch 4):    51.12 ms  18.6 MB alloc
-forward (hidden 512, block 32, batch 4):   187.15 ms  35.5 MB alloc
-train step (hidden  32, block 16, batch 2):  2.25 ms   2.0 MB alloc
-train step (hidden 128, block 32, batch 2): 26.91 ms  16.7 MB alloc
-train step (hidden 256, block 32, batch 2): 154.71 ms 42.0 MB alloc
-generate 32 tokens (KV cache):                3.49 ms
-clone 1024x1024 (4 MB shared buffer):        0.060 us
+matmul  64x64 x64 :     0.02 ms  26227.5 MFLOP/s
+matmul 128x128x128:     0.18 ms  23151.2 MFLOP/s
+matmul 256x256x256:     1.46 ms  22931.6 MFLOP/s
+forward (hidden  32, block 16, batch 4):     1.99 ms   1.6 MB alloc
+forward (hidden 128, block 32, batch 4):    20.22 ms  10.0 MB alloc
+forward (hidden 256, block 32, batch 4):    38.21 ms  18.1 MB alloc
+forward (hidden 512, block 32, batch 4):    92.92 ms  35.0 MB alloc
+train step (hidden  32, block 16, batch 2):  3.00 ms   2.0 MB alloc
+train step (hidden 128, block 32, batch 2): 40.70 ms  16.6 MB alloc
+train step (hidden 256, block 32, batch 2): 97.50 ms  42.0 MB alloc
+generate 32 tokens (KV cache):                4.78 ms
+clone 1024x1024 (4 MB shared buffer):        0.082 us
 ```
 
 Design choices behind those numbers:
 
+- **Large matmuls run row-parallel.** Products above ~4M multiply-adds split
+  rows across `available_parallelism()` threads with `std::thread::scope`. Each
+  output element keeps its original accumulation order, so results are
+  bit-identical to the sequential kernel (covered by a test) and training stays
+  reproducible. Below the threshold everything stays on the calling thread.
 - **Tensor buffers are `Arc<Vec<f32>>`.** Cloning a tensor is a refcount bump
-  (~0.06 µs for 4 MB) instead of a copy. The autograd engine clones node values
+  (~0.08 µs for 4 MB) instead of a copy. The autograd engine clones node values
   on every op, so this turns an O(size) cost into O(1).
 - **KV cache appends in place.** `Tensor::append_row` grows the shared buffer with
   `Arc::make_mut`, so a decode step costs O(1) amortized instead of copying the

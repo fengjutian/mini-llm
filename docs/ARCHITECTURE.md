@@ -67,6 +67,9 @@ MVP Tensor 使用连续 row-major `Arc<Vec<f32>>` 存储。共享缓冲让 `Tens
 - 非法维度通过 `Result` 返回错误。
 - 逐元素算子采用 NumPy 风格的右对齐广播：维度相等或其中一个为 1 时兼容，
   否则返回 `ShapeMismatch`；反向传播用 `sum_to` 把梯度归约回原形状。
+- 矩阵乘法在 work ≥ 4M 次乘加时按行切分到 `available_parallelism()` 个线程
+  （`std::thread::scope`）。每个输出元素的累加顺序与串行版本一致，因此结果
+  逐位相同，训练可复现；小矩阵仍在调用线程上串行计算。
 
 Autograd 只依赖 tensor：节点保存 `value`、`requires_grad`、可选 `grad`、
 父节点以及一个 `Fn(&Tensor) -> Vec<Tensor>` 的 backward 闭包。图按需构建，
