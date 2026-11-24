@@ -42,12 +42,7 @@ pub trait Backend {
     ///
     /// The default implementation is composed from CPU tensor ops; accelerated
     /// backends override it to keep the whole normalisation on-device.
-    fn rms_norm(
-        &self,
-        input: &Tensor,
-        gamma: &Tensor,
-        eps: f32,
-    ) -> Result<Tensor, BackendError> {
+    fn rms_norm(&self, input: &Tensor, gamma: &Tensor, eps: f32) -> Result<Tensor, BackendError> {
         let mean_square = input.powf(2.0)?.mean_rows_keepdim()?;
         let denominator = mean_square.add_scalar(eps)?.powf(-0.5)?;
         Ok(input.mul(&denominator)?.mul(gamma)?)
@@ -70,7 +65,7 @@ pub use candle_backend::CandleBackend;
 #[cfg(feature = "candle")]
 mod candle_backend {
     use super::*;
-    use candle_core::{D, Device, Tensor as CandleTensor};
+    use candle_core::{Device, Tensor as CandleTensor, D};
 
     /// Candle-backed implementation, run on the CPU device by default.
     pub struct CandleBackend {
@@ -91,8 +86,12 @@ mod candle_backend {
         }
 
         fn to_candle(&self, tensor: &Tensor) -> Result<CandleTensor, BackendError> {
-            CandleTensor::from_vec(tensor.data().to_vec(), tensor.shape().to_vec(), &self.device)
-                .map_err(|error| BackendError::Backend(error.to_string()))
+            CandleTensor::from_vec(
+                tensor.data().to_vec(),
+                tensor.shape().to_vec(),
+                &self.device,
+            )
+            .map_err(|error| BackendError::Backend(error.to_string()))
         }
 
         fn from_candle(tensor: &CandleTensor) -> Result<Tensor, BackendError> {
@@ -112,11 +111,7 @@ mod candle_backend {
     }
 
     impl Backend for CandleBackend {
-        fn matmul(
-            &self,
-            left: &Tensor,
-            right: &Tensor,
-        ) -> Result<Tensor, BackendError> {
+        fn matmul(&self, left: &Tensor, right: &Tensor) -> Result<Tensor, BackendError> {
             let left = self.to_candle(left)?;
             let right = self.to_candle(right)?;
             let product = left

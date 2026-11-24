@@ -36,11 +36,14 @@
 
 ## **一、VLA Engine：什么是 Vision-Language-Action？**
 
+![机器人根据视觉和语言执行抓取](assets/images/robot-gripper-mug.png)
+
+_图：VLA 的目标不是描述画面，而是把视觉观测与语言指令转化为机器人能够执行的动作。本文照片式插图由 AI 生成。_
+
 ### **1. 从 LLM 到 VLM，再到 VLA**
 
 我们可以将 AI 模型的发展分为三个层次。
 
-[How Large Language Models (LLMs) Actually Work | by Farhad Malik | FinTechExplained | Medium](https://images.openai.com/static-rsc-4/lDuHtQygEXA4yAPMdolyejNGN60_fbW0PE3to47o504S06FtPGE8s42E11BDHgRBY69ZhgBdk6IgUCSrjEBBzDc5Pmx8-3Bl_jK0X2Nnq364yHnpW8rT5wlF6qVnKObpArbb_TMVDV-SPQ821svMh-xP2zzr_O353Ncf2QwHHFM?purpose=inline)
 
 **LLM：Large Language Model**
 
@@ -48,7 +51,6 @@
 
 主要解决语言理解、知识表达、推理和文本生成问题。
 
-[Multimodal AI Is Here — And It’s Smarter Than You Think | by Himanshu Saini | Medium](https://images.openai.com/static-rsc-4/S2fFH_FutAJj3YKhoI-t8fJ-BYVaxSfCvNzdkCeRQ7u8tMNok-4SL-9RLqKPNhgaMvdOnjit7sL3QEHILZxgkkvzk_Y3yMFctjAMNNqocO_ebhP0SxqYsHggxxsloIwgvIMGM1isErcPTEg3PPmBOgoqnGdLA29uxsPt_P9Nu7w?purpose=inline)
 
 **VLM：Vision-Language Model**
 
@@ -56,7 +58,6 @@
 
 让模型能够理解图像内容，并结合语言进行推理。
 
-[Embodied Intelligence — CoE on BIRD | IIT Delhi](https://images.openai.com/static-rsc-4/UJDI2uN9O28GlRyx9MccoAXfQOhVKWkbTdCu0gzNjYA1NPCqabLdOyj5OuZ1Fksd0tXH1Llr-1pr5nX2peP56iO39eSdYcL-32x11Fy5oQrukbzuhyI1rq1WOeyfWXSd9RdJW84AlWhy5anMh0BXz3tgWscPM1fQjSfLKB3vUGo?purpose=inline)
 
 **VLA：Vision-Language-Action Model**
 
@@ -113,9 +114,12 @@
 
 ## **二、VLA 的整体架构**
 
+![VLA 多模态到动作管线](assets/diagrams/vla-multimodal-pipeline.svg)
+
+_图：摄像头、机器人状态和语言指令被编码为多模态 Token，策略模型输出动作块，经安全验证后交给执行器。_
+
 一个典型 VLA 系统可以拆分成六个主要部分。
 
-[VLA Models: Why Data-Centric AI Unlocks Next-Gen Robotics](https://images.openai.com/static-rsc-4/QvD-dNBsosRiOMH-jKFSNs0jwRAGJcdxbezeXTDKQbEGseGALGWOwu1gPrgRqjZGwsT3IedTmEIbc04h6bHOOiezA32npA4KHoI0gdM102I8v1gIjsp0EWzUeV6qYtsugY1IRzuzCyJv5xTmb0nQtP3o_f3m_vYcuA348O_u2TI?purpose=inline)
 
 [voxel51.com](https://voxel51.com/blog/vla-models-data-centric-ai-robotics?utm_source=chatgpt.com)
 
@@ -185,7 +189,6 @@ Camera Input            |
 
 假设机器人摄像头拍摄到这样一个场景：
 
-[Until the order beyond the judgment… Google Robot AI 'Geminai' released – Archyde](https://images.openai.com/static-rsc-4/J2Dizzte08z16BzQQdQgpR4ALc8sViCa6hUXI8meGmWd8Ud3TU_kbD3dOrSxnn71u7Rbb3lbuWmh5Flr9XjvBCHMiyvKmXoSfgc8huST7pMYXVbWoCUVGymc1AeERnkx7htnFzZqVqlUujpW2ThBSnHz9lZtht_c1y02NnJgEho?purpose=inline)
 
 [archyde.com](https://www.archyde.com/until-the-order-beyond-the-judgment-google-robot-ai-geminai-released/?utm_source=chatgpt.com)
 
@@ -212,6 +215,10 @@ Camera Input            |
 因此，需要先通过 Vision Encoder 提取视觉特征。
 
 ## **2. Image Patch：把图像切分成视觉 Token**
+
+![图像切分为视觉 Patch Token](assets/diagrams/vla-image-patches.svg)
+
+_图：输入图像按固定网格切成 Patch，经线性投影和位置编码后形成视觉 Token 序列。_
 
 一种经典方法是 Vision Transformer（ViT）。
 
@@ -243,7 +250,6 @@ Camera Input            |
 
 \\[ Z=[z_1,z_2,\ldots,z\_{196}] \\]
 
-[An Image Is Worth 16×16 Words — Vision Transformers — A Visual Walkthrough](https://images.openai.com/static-rsc-4/Ax0Qj5rSoBMLhCnyLtLPK9_83QgFNmeeSz7lva5u6AZo2wXFTGxTWKgC0Neet-7cD73JC9lAbKAI2Y11XGpxLdQ5MHu2bgOp2UVOWW_DYiFx4iSsK228PvkGVyKBNQhxa8lzBUlr2digOWkopCI8ix4dqau9sufdO6B7sQUEq3k?purpose=inline)
 
 [vizuaraai.github.io](https://vizuaraai.github.io/vizuara-ai-daily/vision-transformers-vit/?utm_source=chatgpt.com)
 
@@ -359,7 +365,6 @@ Language Encoder 可以把指令转换为向量：
 
 例如，机器人看到三个杯子：
 
-[Transcrib3D: 3D Referring Expression Resolution through Large Language Models | Toyota Research Institute](https://images.openai.com/static-rsc-4/coP5xFmZB35nEjri-_Gn4XPek9K70ioZVjTX2ChYn5sztL4hDWSEw1BFYsvocO5j0bgacG3f6fgi2NM11WFIqwGlpMF8DWu47d9X4NxKZTVaP2Wa5dgMoct_lE8vaOB5lmT_uMrzt5dcoAjhGELQaVsUyFlQbQUjpFDEvVYynjY?purpose=inline)
 
 [tri.global](https://www.tri.global/research/transcrib3d-3d-referring-expression-resolution-through-large-language-models?utm_source=chatgpt.com)
 
@@ -452,7 +457,6 @@ Action Tokens:
 - 机器人目前处于什么状态？
 - 当前动作应该朝哪个方向变化？
 
-[vision-language-actions-brief-history.pptx](https://images.openai.com/static-rsc-4/QnXYbZMQZmqhwRRuSlp22Ixc_MQIZbQk69KfqHNMJ9-h2jUqT4O-MQhEVOEMmvzzKxEv1LwUru3yIoSsAsmAnA8qCgSeI_h0bGd71Ww-MCD_QgaSBlYmzTDHQooTyZctZpoOS8DXhLq4sqCBTzBaMHojxc3B6dFPJOO7DLMcdFE?purpose=inline)
 
 [slideshare.net](https://www.slideshare.net/slideshow/vision-language-actions-brief-history-pptx/284889819?utm_source=chatgpt.com)
 
@@ -604,6 +608,10 @@ VLA 更适合负责高层和部分中层动作生成。
 
 # **七、Behavior Cloning：如何让机器人从演示中学习？**
 
+![行为克隆训练数据流](assets/diagrams/vla-behavior-cloning.svg)
+
+_图：专家示教产生观测—指令—动作数据；策略通过监督学习模仿专家，但部署后的误差会带来分布偏移。_
+
 VLA 的重要训练方法之一是 Behavior Cloning（行为克隆）。
 
 它的核心思想非常简单：
@@ -739,6 +747,10 @@ Behavior Cloning 通常存在一个重要局限：
 
 # **八、Action Chunking：为什么机器人需要一次预测一段动作？**
 
+![Action Chunk 与滚动时域执行](assets/diagrams/vla-action-chunk-receding-horizon.svg)
+
+_图：模型预测未来 H 步动作，但只执行前 K 步；随后根据新观测重新预测，形成滚动时域控制。_
+
 这是现代 VLA 非常重要的设计方向。
 
 ## **1. 逐步预测动作的问题**
@@ -806,7 +818,6 @@ action_chunk = [    [0.10, 0.20, 0.30],    [0.11, 0.21, 0.31],    [0.12, 0.22, 0
 
 机器人可以先执行其中一部分，然后重新观察环境并生成下一段动作。
 
-[Lesson 4: ACT - Action Chunking with Transformers – Physical AI Laboratory](https://images.openai.com/static-rsc-4/R6PsXdpkOjS01tSPuKmLK_Ja6F_bno-Noqi0emuJqQvCb_7Knpyg_S8E0OcrYCaraS94YIiQ3CN_xM6wIUMMKDHqPia9qQOqhH6d2FB_jpMjarBCdpw2q7bxl0IdIVccPpQ5tR_iqcMYlR3g17duVisEHfdIDRw8WHAK9avHhVI?purpose=inline)
 
 [isprout.com](https://isprout.com/posts/2026-01-15-lesson-4-action-chunking-with-transformers/?utm_source=chatgpt.com)
 
@@ -952,7 +963,6 @@ Diffusion Policy 的核心思想：
 
 推理时，从噪声动作开始，经过多次去噪，得到最终动作序列。
 
-[Why Robots Keep Crashing Into Walls (And How Diffusion Fixed It) – Foundation Models & Robotics](https://images.openai.com/static-rsc-4/0CLuUZZEBmg-OKp_Oz_x-uvOQsQ92uVixgH7bhrE10YdUD9zmxBO1dZdYUHxW99O2MB-2Z5x4r1w_e5YBubCpvuk1WUSMUazGJHsJafk5vX6UFSO2eLE6ElG-l3MqraR_ZE6Sh_itc9NK-QBaJ5NpzlFgny0IEpLcMqGHDDC_Y0?purpose=inline)
 
 [layernorm.dev](https://layernorm.dev/posts/robotics/1-diffusion-policy/index.html?utm_source=chatgpt.com)
 
@@ -1002,6 +1012,10 @@ Diffusion Policy 可以生成一段动作序列：
 另外，Flow Matching 也是动作生成的重要路线，但它与经典扩散模型的训练和采样机制并不完全相同，不能简单视为同一个算法。
 
 # **十、Robot Foundation Model：如何构建通用机器人基础模型？**
+
+![正在被编程调试的人形机器人](assets/images/embodied-humanoid-programming.jpg)
+
+_图：通用机器人基础模型必须适应不同机体、传感器布局与动作空间，而不是假设所有机器人共享同一套控制接口。图片：ZhanatKappassov，Wikimedia Commons，CC0 1.0。_
 
 传统机器人系统通常针对特定设备、特定任务进行开发。
 
@@ -1059,25 +1073,21 @@ Embodiment 指机器人本身的形态和身体结构。
 
 例如：
 
-[6 Axis Articulated Robot, Six Axis Robotic Arm - VEICHI](https://images.openai.com/static-rsc-4/8jUQOmSw3RbWuAO3F-Abre3UNLZsaJ_oIh6jqz3xXuhrqIV8EEhDeAY0eLU_A0uui1RCPNloDxvkBe2LtWBuejJXyrne_j_CYx_N4u9MSZK8F2Sf2OL4MC3_lEPiG6K5KRVZoos6GPgM2nH8kFYavJgz2GyLRNa2J4Bo4rw-KlU?purpose=inline)
 
 **机械臂**
 
 主要关注关节、末端执行器和抓取
 
-[Humanoide Roboter eröffnen neue Chancen für Europas Industrie. Eine Studie von Fraunhofer IPA zeigt das Potenzial der Hardware-Wertschöpfungskette.](https://images.openai.com/static-rsc-4/yWEIWsc7yl_abYcpQiZJ747KwvjK7dOTd9JLyILiPVtH_oxDURHNCNbztLIcdNxW0alTMpqku3qdE3xO2bRA3wNV4BAY4tqQNsojosBqN4ELghUS5WqyLTUvDK1L58EnBpIsrAYnlncPnRaSJeTzjUIJc6eieQeDWf6OO2j4MQk?purpose=inline)
 
 **人形机器人**
 
 涉及双臂、双腿、平衡和全身协调
 
-[Water 2-Realman](https://images.openai.com/static-rsc-4/hoomOskeW1EL4BcxMuOhlGJKZWnxgPfejNjLLIs5-UzVLCzbVZ08w_51anWNTi_Yge5FIpnQ1ULFaQgpes_lN9l8EPjVSbODhbOEC_Ux_R1W0NFrNv24gpM54QZtU1Fkg0S5_l3SRA2gHrddttniJ7NeBXRFjYOL0NdV725XAa4?purpose=inline)
 
 **移动机器人**
 
 主要关注移动、定位和导航
 
-[Weiss Robotics GRIPKIT-CR-PRO Size S - Collaborative Parallel Gripper – Thinkbot Solutions LLC](https://images.openai.com/static-rsc-4/zM04FqC5K45TQ5nDI0IE5WrchlrLRbjqZuWptSbrK416Oe_5TWawxCo_R3FnCC3fDFiiBnGBxVYh1GWd78y4M0PYV_uEiYPqqYygQSZpYk-U1PzPcqdYos7AgTX02BMuCuUct0a5FoLmxW-vQXhqG0npnbyh_w-psofU0zrCxsg?purpose=inline)
 
 **不同夹爪**
 
@@ -1163,7 +1173,6 @@ Robot Foundation Model
 
 它需要与其他 Engine 协作。
 
-[World Models for Embodied AI and Robot Learning](https://images.openai.com/static-rsc-4/FoiVUqpoECaBioUBkbRpHsl5suinkiu4Ey8sgUQ48FM13DJMX0e9bd9QwqVSxT24suxJbpypRw9O3HsPqhBZ1fLhbvjGQHtzN5Muo4OvHCqFsY4x0GCTX13wO9krmBApBwOjDs7WO35LVFZ6AWGhTSL71Ax2bg0UFNVzrrff_R0?purpose=inline)
 
 [fusheng-ji.github.io](https://fusheng-ji.github.io/blog/posts/world-models-for-embodied-ai/?utm_source=chatgpt.com)
 
@@ -1256,7 +1265,6 @@ Robotics Engine 需要检查：
 
 ## **1. 推荐架构**
 
-[Vision-Language-Action and Vision Language Models for Robot Manipulation: A Comprehensive Review Towards Real-World Applications\[v1\] | Preprints.org](https://images.openai.com/static-rsc-4/oR6xjDLt3WzEDqTS9DTidqfZ4PBziUl42T6gTa0VlM6CjunO52eILikaytaRi5Z_lYtMiuwBVqv02W1oLEQSY__9aAp_fhwsF_e1v6EsyshAqM9l_qgMG2zb8fAH95AxijHfz1zXsvHBtB_MYgBisoTAHPDyOV7d7_znyJh3UMg?purpose=inline)
 
 [preprints.org](https://www.preprints.org/manuscript/202606.0400?utm_source=chatgpt.com)
 
@@ -1437,6 +1445,10 @@ class VLAEngine:    def __init__(        self,        vision_encoder,        lan
 - 执行反馈。
 
 # **十四、VLA Engine 应该如何训练和测试？**
+
+![实验室中的机械臂训练与测试场景](assets/images/robot-arm-lab-component.jpg)
+
+_图：VLA 的离线指标必须结合仿真回放、实验室闭环测试和低风险真实设备验证。图片：Nenad Stojković，Wikimedia Commons，CC BY 2.0。_
 
 建议不要一开始就训练一个完整的通用机器人模型。
 
@@ -1665,7 +1677,6 @@ VLA Model Output
 
 回顾整个 VLA Engine，我们可以将其归纳为一条完整链路：
 
-[The Realities of Robot Deployment: What It Takes for Embodied AI to Succeed | by Goh Jia Yi | AI Practice and Data Engineering Practice, GovTech | Jan, 2026 | Medium](https://images.openai.com/static-rsc-4/4h3XyxNmdiBAKRm0G5JQT_bZ-xz6oCiGoUC0xhtO3fGD8k88V5kMAn9Od17-xDQIuQkKH4aQoGZ9X8t5CX-3ZR8eIkP1qmXlTfuAICymTDfJI8O65sEP1hd70UuwupMT-32NVH2Wko7kL5LNBWFrWK4wgSnAPZtDQ1mMZkHplbI?purpose=inline)
 
 [medium.com](https://medium.com/dsaid-govtech/the-realities-of-robot-deployment-what-it-takes-for-embodied-ai-to-succeed-172a8f36fb2c?utm_source=chatgpt.com)
 
