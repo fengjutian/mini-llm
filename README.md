@@ -24,6 +24,8 @@ This repository is a working learning stack, not a production framework:
 - `mini-llm-model`: causal multi-head / grouped-query attention with optional RoPE, a configurable pre-norm block, KV-cache generation, and `TinyGpt`
 - `mini-llm-data`: character tokenizer and next-token window sampling
 - `mini-llm-train`: training loop and a self-describing binary checkpoint format
+- `mini-llm-trace`: structured training events (JSONL) and tensor capture
+- `mini-llm-backend`: `MatMulBackend` seam with a CPU reference and an optional Candle implementation
 - CLI demos: hand-checked gradients, linear regression, XOR, a 2D classifier, MoE routing, and Tiny GPT training plus text generation
 - Astro site in `web/`: three interactive concept lessons plus the repository docs
 - Product requirements and architecture documents
@@ -52,6 +54,7 @@ cargo run -p mini-llm-cli -- sft         # supervised fine-tuning with prompt ma
 cargo run -p mini-llm-cli -- lora        # adapt a frozen classifier with low-rank adapters
 cargo run -p mini-llm-cli -- dpo         # preference optimization on a toy policy
 cargo run -p mini-llm-cli -- grpo        # group relative policy optimization bandit
+cargo run -p mini-llm-cli -- trace       # training events + attention capture (JSONL)
 ```
 
 `train` writes `checkpoints/tiny-gpt.bin`; `generate` loads it and samples with
@@ -238,6 +241,51 @@ trainer.train(400, |_| {})?;
 `B` from `parameters()`, so an optimizer that receives `model.parameters()`
 leaves the base weights untouched — the LoRA demo asserts this explicitly.
 
+## Observability and backends
+
+`mini-llm-trace` defines a small event protocol; `Trainer::train_observed` emits
+`RunStarted`, one `Step` per update, and `RunCompleted` (or `RunFailed`) to any
+`EventSink`. `JsonlSink` writes one JSON object per line, which is enough for a
+UI to tail:
+
+```json
+{"run":"run-1795482837097","event":"step","step":1,"loss":4.017231,"elapsed_ms":3.620,"t_ms":4.038}
+```
+
+`TinyGpt::forward_traced` returns the logits plus one `AttentionRecord` per
+layer and head, so attention maps can be captured after training:
+
+```rust
+let (logits, records) = model.forward_traced(&tokens, 1)?;
+for record in &records {
+    // record.layer, record.head, record.weights.shape() == [seq, seq]
+}
+```
+
+The `trace` command trains for 30 steps, captures 8 attention matrices and the
+logits of one batch, saves a checkpoint, and writes everything to
+`traces/<run_id>.jsonl`:
+
+```text
+model: 19464 params | 30 steps | sink: traces/run-1795482837097.jsonl
+captured 8 attention matrices (seq 16) and logits 16x31
+layer 0 head 0: mean max attention 0.424
+wrote 42 events to traces/run-1795482837097.jsonl
+```
+
+For acceleration, `mini-llm-backend` defines a `MatMulBackend` seam. `CpuBackend`
+always works; `CandleBackend` is behind a feature flag and is compared against the
+reference kernel by `tests/parity.rs`:
+
+```bash
+cargo test -p mini-llm-backend               # CPU reference checks
+cargo test -p mini-llm-backend --features candle   # CPU vs Candle (tolerance 1e-4)
+```
+
+The parity suite currently compares the in-repo CPU kernel with Candle's CPU
+device; `Device::Cuda` can be passed to `CandleBackend::new` where a GPU is
+available.
+
 ## Web site (Astro)
 
 `web/` contains a static Astro site whose goal is to make the concepts behind the
@@ -304,19 +352,24 @@ mini-llm/
 │   ├── mini-llm-data/     # char tokenizer and batch sampling
 │   ├── mini-llm-model/    # config, attention, blocks, Tiny GPT
 │   ├── mini-llm-train/    # training loop and checkpoints
+│   ├── mini-llm-trace/    # event protocol, JSONL sink, tensor records
+│   ├── mini-llm-backend/  # MatMulBackend seam + optional Candle backend
 │   └── mini-llm-cli/      # dispatch in main.rs + one module per command
 └── web/                  # Astro concept site and rendered docs
 ```
 
 Dependencies point upwards only: `cli -> train -> model -> nn -> autograd -> tensor`,
 while `data` depends on `random` (not on `nn`), and `random` only needs `tensor`.
-Every crate's `lib.rs` is limited to module declarations and re-exports.
+`trace` is dependency-free, `train` emits events into it, and `backend` is a
+standalone parity seam. Every crate's `lib.rs` is limited to module declarations
+and re-exports.
 
-## Planned compute backends
+## Compute backends
 
 - `cpu-edu`: first-principles CPU implementation for learning and correctness.
-- `candle`: accelerated backend using Hugging Face Candle, introduced after the CPU path is tested.
-- Future backends should implement the same backend-facing interfaces where practical.
+- `candle` (feature-gated): the accelerated seam in `mini-llm-backend`; parity
+  with the reference kernel is checked in `crates/mini-llm-backend/tests/parity.rs`.
+- Future backends implement `MatMulBackend` and reuse the same parity harness.
 
 ## Non-goals for v0.1
 

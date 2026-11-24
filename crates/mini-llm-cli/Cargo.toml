@@ -11,3 +11,4 @@ mini-llm-nn.workspace = true
 mini-llm-model.workspace = true
 mini-llm-data.workspace = true
 mini-llm-train.workspace = true
+mini-llm-trace.workspace = true

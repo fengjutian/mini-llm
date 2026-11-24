@@ -2,6 +2,7 @@
 
 use mini_llm_autograd::TensorValue;
 use mini_llm_nn::{Linear, Module, Moe, Relu, Rng, SwiGlu};
+use mini_llm_tensor::Tensor;
 
 use crate::attention::{AttentionCache, CausalSelfAttention};
 use crate::norm::NormLayer;
@@ -128,6 +129,27 @@ impl TransformerBlock {
         let attended = self
             .attention
             .forward(&normalized, batch, seq, mask, positions)?;
+        let residual = input.add(&attended)?;
+
+        let normalized = self.norm2.forward(&residual)?;
+        let transformed = self.feed_forward.forward(&normalized)?;
+        Ok(residual.add(&transformed)?)
+    }
+
+    /// Like [`TransformerBlock::forward`], also recording each attention matrix.
+    pub fn forward_traced(
+        &self,
+        input: &TensorValue,
+        batch: usize,
+        seq: usize,
+        mask: &TensorValue,
+        positions: &[usize],
+        capture: &mut Vec<Tensor>,
+    ) -> Result<TensorValue, ModelError> {
+        let normalized = self.norm1.forward(input)?;
+        let attended =
+            self.attention
+                .forward_traced(&normalized, batch, seq, mask, positions, capture)?;
         let residual = input.add(&attended)?;
 
         let normalized = self.norm2.forward(&residual)?;

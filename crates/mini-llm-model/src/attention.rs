@@ -97,6 +97,32 @@ impl CausalSelfAttention {
         mask: &TensorValue,
         positions: &[usize],
     ) -> Result<TensorValue, ModelError> {
+        self.forward_impl(input, batch, seq, mask, positions, None)
+    }
+
+    /// Like [`CausalSelfAttention::forward`], also recording one attention
+    /// matrix per head (shape `[batch * seq, batch * seq]`).
+    pub fn forward_traced(
+        &self,
+        input: &TensorValue,
+        batch: usize,
+        seq: usize,
+        mask: &TensorValue,
+        positions: &[usize],
+        capture: &mut Vec<Tensor>,
+    ) -> Result<TensorValue, ModelError> {
+        self.forward_impl(input, batch, seq, mask, positions, Some(capture))
+    }
+
+    fn forward_impl(
+        &self,
+        input: &TensorValue,
+        batch: usize,
+        seq: usize,
+        mask: &TensorValue,
+        positions: &[usize],
+        mut capture: Option<&mut Vec<Tensor>>,
+    ) -> Result<TensorValue, ModelError> {
         let rows = batch * seq;
         if input.shape() != [rows, self.num_heads * self.head_dim] {
             return Err(ModelError::AttentionInputShape {
@@ -134,6 +160,9 @@ impl CausalSelfAttention {
             let scores = q.matmul(&k.transpose()?)?.scale(scale)?;
             let masked = scores.add(mask)?;
             let weights = masked.softmax_rows()?;
+            if let Some(capture) = capture.as_deref_mut() {
+                capture.push(weights.value());
+            }
             let attended = weights.matmul(&v)?;
 
             let out_weight = self

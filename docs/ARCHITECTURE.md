@@ -38,10 +38,10 @@ CLI / Future Research Studio
 | mini-llm-autograd | 计算图、反向传播、梯度累积 | 优化器状态、模型结构 |
 | mini-llm-nn | Linear / Embedding / Norm / SwiGlu / MoE / 优化器 | 具体任务与数据加载 |
 | mini-llm-data | 字符 tokenizer、窗口批采样 | 模型结构与训练 |
-| mini-llm-train | 训练循环、checkpoint 序列化 | 模型定义、UI |
-| mini-llm-model | 模型配置、Attention / Block / TinyGpt | 文件持久化、UI |
-| mini-llm-backend（planned） | CPU/Candle 后端抽象 | 实验业务规则 |
-| mini-llm-inspector（planned） | Trace、Hook、张量快照 | 修改模型权重 |
+| mini-llm-train | 训练循环、checkpoint 序列化、DPO/GRPO 配方 | 模型定义、UI |
+| mini-llm-model | 模型配置、Attention / Block / TinyGpt、注意力捕获 | 文件持久化、UI |
+| mini-llm-trace | 训练事件协议、JSONL sink、张量记录 | 训练逻辑、模型结构 |
+| mini-llm-backend | `MatMulBackend` 抽象、CPU 参考实现、可选 Candle | 实验业务规则 |
 | mini-llm-cli | 命令行应用（每个命令一个模块） | 核心算法实现 |
 
 模块划分原则：每个 crate 的 `lib.rs` 只做模块声明与 re-export；一个文件只承担
@@ -121,15 +121,17 @@ mini-llm-cli
 - `nn -> autograd + random + tensor`
 - `data -> random`（只复用 `Rng`，不再依赖 nn）
 - `model -> nn + autograd + random + tensor`
-- `train -> model + data + nn + autograd + tensor`
-- `cli -> model + data + nn + train + autograd + tensor`
+- `train -> model + data + nn + autograd + tensor + trace`
+- `trace -> ∅`（纯事件与序列化类型）
+- `backend -> tensor`（可选 `candle` feature）
+- `cli -> model + data + nn + train + trace + autograd + tensor`
 
 本次重构去掉了 `data -> nn` 这条反向依赖：`Rng` 下沉到 `mini-llm-random`，
-数据层不再把整个 autograd 栈带进依赖树。
+数据层不再把整个 autograd 栈带进依赖树。`trace` 与 `backend` 是叶子依赖，
+不反向依赖训练或模型。
 
 后续建议：
 
-- `training -> model + nn + autograd + backend + data`
-- `inspector -> trace protocol`
-- `backend -> tensor abstraction`
+- React Research Studio 消费 `traces/*.jsonl`，不需要改动训练代码。
+- `backend -> tensor abstraction`：让更多 kernel（softmax、LayerNorm）走同一 seam。
 - `model` 不应反向依赖 `cli` 或 UI。

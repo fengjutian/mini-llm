@@ -21,4 +21,4 @@ pub use attention::{
 pub use block::{BlockCache, Mlp, TransformerBlock};
 pub use config::{ConfigError, FeedForwardKind, ModelConfig, NormKind, PositionKind};
 pub use error::ModelError;
-pub use gpt::TinyGpt;
+pub use gpt::{AttentionRecord, TinyGpt};

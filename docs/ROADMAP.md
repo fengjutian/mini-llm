@@ -128,13 +128,34 @@
 已知限制：DPO/GRPO 演示使用玩具策略（单个 Linear），没有真正的多步环境；
 SFT 语料仅用于展示掩码机制。
 
-## Milestone 6 — Accelerated & Observable（下一步）
+## Milestone 6 — Accelerated & Observable
 
-- [ ] Candle backend
-- [ ] CPU/GPU parity tests
-- [ ] Training event protocol
-- [ ] Attention / activation / logits capture
-- [ ] React Research Studio
+- [x] Candle backend
+- [x] CPU/GPU parity tests
+- [x] Training event protocol
+- [x] Attention / activation / logits capture
+- [ ] React Research Studio（顺延）
+
+实现拆分：
+
+- `mini-llm-trace`：`Event`（RunStarted / Step / Tensor / Checkpoint /
+  RunCompleted / RunFailed）、`EventSink`、`MemorySink`、`JsonlSink`；
+- `mini-llm-model`：`TinyGpt::forward_traced` 返回每个 layer、每个 head 的
+  注意力矩阵（`AttentionRecord`），形状 `[batch*seq, batch*seq]`；
+- `mini-llm-train`：`Trainer::train_observed` 在训练循环中发出结构化事件；
+- `mini-llm-backend`：`MatMulBackend` trait，`CpuBackend` 始终可用，
+  `CandleBackend` 由 `candle` feature 启用；`tests/parity.rs` 对比 CPU 与
+  Candle 的矩阵乘法（容差 1e-4）；
+- CLI：`trace` 命令训练 30 步并把事件、注意力矩阵与 logits 写入
+  `traces/<run_id>.jsonl`。
+
+说明：
+
+- 所谓 "CPU/GPU parity" 当前是「本仓库 CPU kernel vs Candle CPU 后端」的
+  数值一致性；Candle 的 `Device::Cuda` 可用同一接口接入，但需要 GPU 环境。
+- Candle 依赖较重，默认不编译：
+  `cargo test -p mini-llm-backend --features candle`。
+- React Research Studio 需要前端工程，暂未实现；JSONL 事件流是它的输入协议。
 
 ## Definition of Done
 

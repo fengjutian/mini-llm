@@ -5,6 +5,7 @@ use std::path::PathBuf;
 use mini_llm_data::{CharTokenizer, TextDataset};
 use mini_llm_model::{ModelConfig, TinyGpt};
 use mini_llm_nn::Rng;
+use mini_llm_trace::{Event, MemorySink};
 use mini_llm_train::{load_checkpoint, save_checkpoint, TrainConfig, TrainError, Trainer};
 
 fn tokenizer() -> CharTokenizer {
@@ -156,4 +157,26 @@ fn checkpoint_preserves_the_modern_architecture() {
     assert_eq!(loaded.config().feed_forward, FeedForwardKind::SwiGlu);
     assert_eq!(loaded.config().num_kv_heads, 1);
     assert_eq!(loaded.num_parameters(), model.num_parameters());
+}
+
+#[test]
+fn observed_training_emits_structured_events() {
+    let mut trainer = trainer(19);
+    let mut sink = MemorySink::default();
+    trainer.train_observed(3, &mut sink).unwrap();
+
+    assert!(matches!(
+        sink.events.first(),
+        Some(Event::RunStarted { .. })
+    ));
+    let steps = sink
+        .events
+        .iter()
+        .filter(|event| matches!(event, Event::Step { .. }))
+        .count();
+    assert_eq!(steps, 3);
+    assert!(matches!(
+        sink.events.last(),
+        Some(Event::RunCompleted { .. })
+    ));
 }

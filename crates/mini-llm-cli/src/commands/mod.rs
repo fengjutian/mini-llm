@@ -10,6 +10,7 @@ pub mod lora;
 pub mod moe;
 pub mod regression;
 pub mod sft;
+pub mod trace;
 pub mod train;
 pub mod xor;
 

@@ -7,6 +7,8 @@ members = [
     "crates/mini-llm-nn",
     "crates/mini-llm-data",
     "crates/mini-llm-train",
+    "crates/mini-llm-trace",
+    "crates/mini-llm-backend",
     "crates/mini-llm-model",
     "crates/mini-llm-cli",
 ]
@@ -25,6 +27,13 @@ opt-level = 2
 [profile.test]
 opt-level = 2
 
+# Third-party dependencies (e.g. candle) do not need full optimization.
+[profile.dev.package."*"]
+opt-level = 1
+
+[profile.test.package."*"]
+opt-level = 1
+
 [workspace.dependencies]
 mini-llm-tensor = { path = "crates/mini-llm-tensor" }
 mini-llm-random = { path = "crates/mini-llm-random" }
@@ -32,4 +41,6 @@ mini-llm-autograd = { path = "crates/mini-llm-autograd" }
 mini-llm-nn = { path = "crates/mini-llm-nn" }
 mini-llm-data = { path = "crates/mini-llm-data" }
 mini-llm-train = { path = "crates/mini-llm-train" }
+mini-llm-trace = { path = "crates/mini-llm-trace" }
+mini-llm-backend = { path = "crates/mini-llm-backend" }
 mini-llm-model = { path = "crates/mini-llm-model" }

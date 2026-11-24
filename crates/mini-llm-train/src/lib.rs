@@ -52,6 +52,7 @@ use mini_llm_autograd::TensorValue;
 use mini_llm_data::{Batch, DataError, Dataset};
 use mini_llm_model::{ModelError, TinyGpt};
 use mini_llm_nn::{AdamW, NnError, Optimizer, Rng};
+use mini_llm_trace::{Event, EventSink};
 
 /// Hyperparameters for [`Trainer`].
 #[derive(Debug, Clone)]
@@ -155,6 +156,46 @@ impl<D: Dataset> Trainer<D> {
             total += self.loss(&batch)?.data()[0];
         }
         Ok(total / batches as f32)
+    }
+
+    /// Runs `steps` updates while emitting structured training events.
+    ///
+    /// The sink receives a `RunStarted`, one `Step` per update, and either
+    /// `RunCompleted` or `RunFailed`.
+    pub fn train_observed(
+        &mut self,
+        steps: usize,
+        sink: &mut dyn EventSink,
+    ) -> Result<(), TrainError> {
+        sink.record(Event::RunStarted {
+            steps,
+            seed: self.config.seed,
+        });
+        let mut last_loss = 0.0;
+        for step in 1..=steps {
+            let started = Instant::now();
+            match self.step() {
+                Ok(loss) => {
+                    last_loss = loss;
+                    sink.record(Event::Step {
+                        step,
+                        loss,
+                        elapsed_ms: started.elapsed().as_secs_f32() * 1_000.0,
+                    });
+                }
+                Err(error) => {
+                    sink.record(Event::RunFailed {
+                        message: error.to_string(),
+                    });
+                    return Err(error);
+                }
+            }
+        }
+        sink.record(Event::RunCompleted {
+            steps,
+            loss: last_loss,
+        });
+        Ok(())
     }
 
     /// Runs `steps` updates, calling `report` after each one.

@@ -10,3 +10,4 @@ mini-llm-nn.workspace = true
 mini-llm-data.workspace = true
 mini-llm-autograd.workspace = true
 mini-llm-tensor.workspace = true
+mini-llm-trace.workspace = true

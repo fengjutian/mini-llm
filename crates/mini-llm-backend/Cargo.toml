@@ -1,0 +1,13 @@
+[package]
+name = "mini-llm-backend"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[features]
+default = []
+candle = ["dep:candle-core"]
+
+[dependencies]
+mini-llm-tensor.workspace = true
+candle-core = { version = "0.11", optional = true }

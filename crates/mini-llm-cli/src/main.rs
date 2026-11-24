@@ -5,7 +5,7 @@
 mod commands;
 
 use commands::{
-    autograd, basics, classify, dpo, generate, grpo, lora, moe, regression, sft, train, xor,
+    autograd, basics, classify, dpo, generate, grpo, lora, moe, regression, sft, trace, train, xor,
 };
 
 fn main() {
@@ -26,6 +26,7 @@ fn main() {
         "sft" => sft::run(rest),
         "dpo" => dpo::run(),
         "grpo" => grpo::run(),
+        "trace" => trace::run(rest),
         "lora" => lora::run(),
         "help" | "--help" | "-h" => usage(),
         other => {
@@ -54,6 +55,7 @@ fn usage() {
     println!("  lora                  fine-tune a frozen classifier with LoRA adapters");
     println!("  dpo                   preference optimization on a toy policy");
     println!("  grpo                  group relative policy optimization on a bandit");
+    println!("  trace                 emit training events + capture attention to traces/");
     println!("  help                 show this message");
     println!();
     println!("checkpoint: {}", commands::CHECKPOINT_PATH);

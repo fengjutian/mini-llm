@@ -266,3 +266,30 @@ fn invalid_configurations_are_rejected() {
     let mut rng = Rng::new(1);
     assert!(TinyGpt::new(config, &mut rng).is_err());
 }
+
+#[test]
+fn traced_forward_records_one_matrix_per_layer_and_head() {
+    let model = modern_model();
+    let tokens = [1, 2, 3, 4, 5, 6, 7, 0];
+    let (logits, records) = model.forward_traced(&tokens, 1).unwrap();
+
+    assert_eq!(logits.shape(), &[8, 8]);
+    let expected = model.config().num_layers * model.config().num_heads;
+    assert_eq!(records.len(), expected);
+
+    for record in &records {
+        assert_eq!(record.weights.shape(), &[8, 8]);
+        for row in record.weights.data().chunks(8) {
+            let sum: f32 = row.iter().sum();
+            assert!((sum - 1.0).abs() < 1e-4, "row does not sum to one: {sum}");
+        }
+    }
+    // Layer-major order: layer 0 heads come before layer 1 heads.
+    let heads_per_layer = model.config().num_heads;
+    assert!(records[..heads_per_layer]
+        .iter()
+        .all(|record| record.layer == 0));
+    assert!(records[heads_per_layer..]
+        .iter()
+        .all(|record| record.layer == 1));
+}

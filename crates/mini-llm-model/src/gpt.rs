@@ -14,6 +14,15 @@ use crate::block::{BlockCache, TransformerBlock};
 use crate::norm::NormLayer;
 use crate::{ModelConfig, ModelError, PositionKind};
 
+/// One captured attention matrix, for inspection and visualization.
+#[derive(Debug, Clone)]
+pub struct AttentionRecord {
+    pub layer: usize,
+    pub head: usize,
+    /// Shape `[batch * seq, batch * seq]`.
+    pub weights: Tensor,
+}
+
 /// A decoder-only Transformer language model.
 pub struct TinyGpt {
     config: ModelConfig,
@@ -82,6 +91,29 @@ impl TinyGpt {
     ///
     /// Returns logits of shape `[batch * seq, vocab_size]`.
     pub fn forward(&self, tokens: &[usize], batch: usize) -> Result<TensorValue, ModelError> {
+        self.forward_impl(tokens, batch, None)
+    }
+
+    /// Runs the model and records every attention matrix.
+    ///
+    /// Returns the logits plus one [`AttentionRecord`] per layer and head, in
+    /// layer-major order. Matrices have shape `[batch * seq, batch * seq]`.
+    pub fn forward_traced(
+        &self,
+        tokens: &[usize],
+        batch: usize,
+    ) -> Result<(TensorValue, Vec<AttentionRecord>), ModelError> {
+        let mut records = Vec::new();
+        let logits = self.forward_impl(tokens, batch, Some(&mut records))?;
+        Ok((logits, records))
+    }
+
+    fn forward_impl(
+        &self,
+        tokens: &[usize],
+        batch: usize,
+        mut capture: Option<&mut Vec<AttentionRecord>>,
+    ) -> Result<TensorValue, ModelError> {
         if batch == 0 {
             return Err(ModelError::BatchMismatch {
                 tokens: tokens.len(),
@@ -129,8 +161,30 @@ impl TinyGpt {
         )?);
 
         let mut hidden = embedded;
-        for block in &self.blocks {
-            hidden = block.forward(&hidden, batch, seq, &mask, &positions)?;
+        for (layer, block) in self.blocks.iter().enumerate() {
+            match capture.as_deref_mut() {
+                Some(records) => {
+                    let mut weights = Vec::new();
+                    hidden = block.forward_traced(
+                        &hidden,
+                        batch,
+                        seq,
+                        &mask,
+                        &positions,
+                        &mut weights,
+                    )?;
+                    for (head, matrix) in weights.into_iter().enumerate() {
+                        records.push(AttentionRecord {
+                            layer,
+                            head,
+                            weights: matrix,
+                        });
+                    }
+                }
+                None => {
+                    hidden = block.forward(&hidden, batch, seq, &mask, &positions)?;
+                }
+            }
         }
         let normalized = self.final_norm.forward(&hidden)?;
         Ok(self.lm_head.forward(&normalized)?)
