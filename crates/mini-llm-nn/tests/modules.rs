@@ -2,7 +2,8 @@
 
 use mini_llm_autograd::TensorValue;
 use mini_llm_nn::{
-    AdamW, Embedding, LayerNorm, Linear, Module, Optimizer, Relu, Rng, Sequential, Sgd, Tanh,
+    AdamW, Embedding, LayerNorm, Linear, Module, Moe, Optimizer, Relu, Rng, RmsNorm, Sequential,
+    Sgd, SwiGlu, Tanh,
 };
 use mini_llm_tensor::Tensor;
 
@@ -195,8 +196,7 @@ fn identical_seeds_give_identical_parameters() {
 }
 
 #[test]
-fn xor_is_learnable_end_to_end() {
-    let mut rng = Rng::new(42);
+fn xor_is_learnable_end_to_end() {    let mut rng = Rng::new(42);
     let model = Sequential::new(vec![
         Box::new(Linear::new(2, 8, &mut rng).unwrap()),
         Box::new(Tanh),
@@ -231,4 +231,77 @@ fn xor_is_learnable_end_to_end() {
             "sample {index}: predicted {prediction}, target {target}"
         );
     }
+}
+
+#[test]
+fn rms_norm_normalizes_root_mean_square() {
+    let layer = RmsNorm::new(4).unwrap();
+    let x = input(vec![1.0, -2.0, 3.0, -4.0, 0.5, 0.5, 0.5, 0.5], vec![2, 4]);
+    let y = layer.forward(&x).unwrap();
+
+    for row in y.data().chunks(4) {
+        let mean_square: f32 = row.iter().map(|value| value * value).sum::<f32>() / 4.0;
+        // gamma = 1 and eps = 1e-5, so the RMS is ~1.
+        assert!(
+            (mean_square - 1.0).abs() < 1e-3,
+            "root mean square {mean_square}"
+        );
+    }
+    assert_eq!(layer.parameters().len(), 1);
+}
+
+#[test]
+fn rms_norm_gradient_reaches_gamma() {
+    let layer = RmsNorm::new(3).unwrap();
+    let x = input(vec![1.0, 2.0, 4.0, 0.5, -1.0, 2.0], vec![2, 3]);
+    let loss = layer.forward(&x).unwrap().powf(2.0).unwrap().mean().unwrap();
+    loss.backward().unwrap();
+    let grad = layer.gamma().grad().unwrap();
+    assert_eq!(grad.shape(), &[3]);
+    assert!(grad.data().iter().any(|value| value.abs() > 1e-6));
+}
+
+#[test]
+fn swiglu_has_three_projections() {
+    let mut rng = Rng::new(31);
+    let layer = SwiGlu::new(4, 8, &mut rng).unwrap();
+    let x = input(vec![0.2; 12], vec![3, 4]);
+    let y = layer.forward(&x).unwrap();
+    assert_eq!(y.shape(), &[3, 4]);
+    // gate + up: 4*8+8 each, down: 8*4+4
+    assert_eq!(layer.num_parameters(), 2 * (4 * 8 + 8) + (8 * 4 + 4));
+}
+
+#[test]
+fn moe_routes_every_row_to_top_k_experts() {
+    let mut rng = Rng::new(41);
+    let layer = Moe::new(4, 8, 3, 1, &mut rng).unwrap();
+    let x = input(vec![0.3; 20], vec![5, 4]);
+    let y = layer.forward(&x).unwrap();
+    assert_eq!(y.shape(), &[5, 4]);
+
+    let counts = layer.routing_counts(&x).unwrap();
+    assert_eq!(counts.len(), 3);
+    assert_eq!(counts.iter().sum::<usize>(), 5);
+    assert_eq!(layer.summary().matches("top-1").count(), 1);
+}
+
+#[test]
+fn moe_backward_reaches_router_and_experts() {
+    let mut rng = Rng::new(43);
+    let layer = Moe::new(4, 8, 2, 1, &mut rng).unwrap();
+    let x = input(vec![0.3; 8], vec![2, 4]);
+    let loss = layer.forward(&x).unwrap().mean().unwrap();
+    loss.backward().unwrap();
+    for parameter in layer.parameters() {
+        assert!(parameter.grad().is_some());
+    }
+}
+
+#[test]
+fn moe_rejects_invalid_top_k() {
+    let mut rng = Rng::new(47);
+    assert!(Moe::new(4, 8, 2, 0, &mut rng).is_err());
+    assert!(Moe::new(4, 8, 2, 3, &mut rng).is_err());
+    assert!(Moe::new(4, 8, 0, 1, &mut rng).is_err());
 }

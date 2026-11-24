@@ -35,17 +35,23 @@ pub mod activation;
 mod embedding;
 mod layernorm;
 mod linear;
+mod moe;
 mod optim;
 mod rng;
+mod rmsnorm;
 mod sequential;
+mod swiglu;
 
 pub use activation::{Relu, Sigmoid, Tanh};
 pub use embedding::Embedding;
 pub use layernorm::LayerNorm;
 pub use linear::Linear;
+pub use moe::Moe;
 pub use optim::{AdamW, Optimizer, Sgd};
 pub use rng::{xavier_uniform, Rng};
+pub use rmsnorm::RmsNorm;
 pub use sequential::Sequential;
+pub use swiglu::SwiGlu;
 
 use std::error::Error;
 use std::fmt::{Display, Formatter};
@@ -91,6 +97,8 @@ pub enum NnError {
     InputWidth { expected: usize, actual: usize },
     /// A token id is outside the embedding vocabulary.
     TokenOutOfRange { index: usize, vocab_size: usize },
+    /// A mixture-of-experts layer got a top-k outside `1..=num_experts`.
+    InvalidTopK { top_k: usize, num_experts: usize },
 }
 
 impl Display for NnError {
@@ -110,6 +118,11 @@ impl Display for NnError {
                 f,
                 "token id {} is outside the vocabulary of size {}",
                 index, vocab_size
+            ),
+            Self::InvalidTopK { top_k, num_experts } => write!(
+                f,
+                "top-k must be between 1 and {}, got {}",
+                num_experts, top_k
             ),
         }
     }

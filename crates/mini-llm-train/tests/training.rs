@@ -18,6 +18,8 @@ fn config(vocab_size: usize) -> ModelConfig {
         num_layers: 1,
         num_heads: 2,
         max_seq_len: 8,
+        num_kv_heads: 2,
+        ..ModelConfig::default()
     }
 }
 
@@ -123,4 +125,35 @@ fn evaluate_returns_a_finite_loss() {
     let loss = trainer.evaluate(2).unwrap();
     assert!(loss.is_finite());
     assert!(loss > 0.0);
+}
+
+#[test]
+fn checkpoint_preserves_the_modern_architecture() {
+    use mini_llm_model::{FeedForwardKind, NormKind, PositionKind};
+
+    let config = ModelConfig {
+        vocab_size: 5,
+        hidden_size: 16,
+        num_layers: 1,
+        num_heads: 2,
+        max_seq_len: 8,
+        num_kv_heads: 1,
+        norm: NormKind::RmsNorm,
+        position: PositionKind::Rope,
+        feed_forward: FeedForwardKind::SwiGlu,
+        num_experts: 1,
+    };
+    let mut rng = Rng::new(23);
+    let model = TinyGpt::new(config, &mut rng).unwrap();
+    let path = temp_path("modern");
+
+    save_checkpoint(&path, &model, &tokenizer()).unwrap();
+    let (loaded, _) = load_checkpoint(&path).unwrap();
+    std::fs::remove_file(&path).ok();
+
+    assert_eq!(loaded.config().norm, NormKind::RmsNorm);
+    assert_eq!(loaded.config().position, PositionKind::Rope);
+    assert_eq!(loaded.config().feed_forward, FeedForwardKind::SwiGlu);
+    assert_eq!(loaded.config().num_kv_heads, 1);
+    assert_eq!(loaded.num_parameters(), model.num_parameters());
 }

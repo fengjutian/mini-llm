@@ -4,14 +4,19 @@ use std::fs;
 use std::path::Path;
 
 use mini_llm_data::CharTokenizer;
-use mini_llm_model::{ModelConfig, TinyGpt};
+use mini_llm_model::{
+    FeedForwardKind, ModelConfig, NormKind, PositionKind, TinyGpt,
+};
 use mini_llm_nn::Rng;
 use mini_llm_tensor::Tensor;
 
 use crate::TrainError;
 
 const MAGIC: &[u8; 8] = b"MINILLM1";
-const VERSION: u32 = 1;
+/// Version 1 stored only the five base dimensions. Version 2 adds the modern
+/// architecture switches; version 1 checkpoints still load with the classic
+/// architecture.
+const VERSION: u32 = 2;
 
 /// Writes `model` and its vocabulary to `path`.
 pub fn save_checkpoint(
@@ -34,6 +39,11 @@ pub fn save_checkpoint(
         config.num_layers,
         config.num_heads,
         config.max_seq_len,
+        config.num_kv_heads,
+        norm_code(config.norm) as usize,
+        position_code(config.position) as usize,
+        feed_forward_code(config.feed_forward) as usize,
+        config.num_experts,
     ] {
         push_u32(&mut bytes, value as u32);
     }
@@ -69,7 +79,7 @@ pub fn load_checkpoint(path: impl AsRef<Path>) -> Result<(TinyGpt, CharTokenizer
         return Err(TrainError::BadMagic);
     }
     let version = reader.u32()?;
-    if version != VERSION {
+    if version != 1 && version != VERSION {
         return Err(TrainError::UnsupportedVersion(version));
     }
 
@@ -78,6 +88,39 @@ pub fn load_checkpoint(path: impl AsRef<Path>) -> Result<(TinyGpt, CharTokenizer
     let num_layers = reader.u32()? as usize;
     let num_heads = reader.u32()? as usize;
     let max_seq_len = reader.u32()? as usize;
+
+    let config = if version == 1 {
+        ModelConfig {
+            vocab_size,
+            hidden_size,
+            num_layers,
+            num_heads,
+            max_seq_len,
+            num_kv_heads: num_heads,
+            norm: NormKind::LayerNorm,
+            position: PositionKind::Learned,
+            feed_forward: FeedForwardKind::Relu,
+            num_experts: 1,
+        }
+    } else {
+        let num_kv_heads = reader.u32()? as usize;
+        let norm = norm_from_code(reader.u32()?)?;
+        let position = position_from_code(reader.u32()?)?;
+        let feed_forward = feed_forward_from_code(reader.u32()?)?;
+        let num_experts = reader.u32()? as usize;
+        ModelConfig {
+            vocab_size,
+            hidden_size,
+            num_layers,
+            num_heads,
+            max_seq_len,
+            num_kv_heads,
+            norm,
+            position,
+            feed_forward,
+            num_experts,
+        }
+    };
 
     let character_count = reader.u32()? as usize;
     if character_count != vocab_size {
@@ -90,13 +133,6 @@ pub fn load_checkpoint(path: impl AsRef<Path>) -> Result<(TinyGpt, CharTokenizer
     }
     let tokenizer = CharTokenizer::from_characters(characters)?;
 
-    let config = ModelConfig {
-        vocab_size,
-        hidden_size,
-        num_layers,
-        num_heads,
-        max_seq_len,
-    };
     let model = TinyGpt::new(config, &mut Rng::new(0))?;
 
     let parameter_count = reader.u32()? as usize;
@@ -134,6 +170,60 @@ pub fn load_checkpoint(path: impl AsRef<Path>) -> Result<(TinyGpt, CharTokenizer
 
 fn push_u32(bytes: &mut Vec<u8>, value: u32) {
     bytes.extend_from_slice(&value.to_le_bytes());
+}
+
+fn norm_code(kind: NormKind) -> u32 {
+    match kind {
+        NormKind::LayerNorm => 0,
+        NormKind::RmsNorm => 1,
+    }
+}
+
+fn norm_from_code(code: u32) -> Result<NormKind, TrainError> {
+    match code {
+        0 => Ok(NormKind::LayerNorm),
+        1 => Ok(NormKind::RmsNorm),
+        other => Err(TrainError::InvalidArchitecture {
+            field: "norm",
+            value: other,
+        }),
+    }
+}
+
+fn position_code(kind: PositionKind) -> u32 {
+    match kind {
+        PositionKind::Learned => 0,
+        PositionKind::Rope => 1,
+    }
+}
+
+fn position_from_code(code: u32) -> Result<PositionKind, TrainError> {
+    match code {
+        0 => Ok(PositionKind::Learned),
+        1 => Ok(PositionKind::Rope),
+        other => Err(TrainError::InvalidArchitecture {
+            field: "position",
+            value: other,
+        }),
+    }
+}
+
+fn feed_forward_code(kind: FeedForwardKind) -> u32 {
+    match kind {
+        FeedForwardKind::Relu => 0,
+        FeedForwardKind::SwiGlu => 1,
+    }
+}
+
+fn feed_forward_from_code(code: u32) -> Result<FeedForwardKind, TrainError> {
+    match code {
+        0 => Ok(FeedForwardKind::Relu),
+        1 => Ok(FeedForwardKind::SwiGlu),
+        other => Err(TrainError::InvalidArchitecture {
+            field: "feed_forward",
+            value: other,
+        }),
+    }
 }
 
 struct Reader<'a> {

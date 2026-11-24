@@ -559,6 +559,25 @@ impl TensorValue {
         })
     }
 
+    /// Applies rotary position embedding to `[rows, heads * head_dim]`.
+    ///
+    /// `positions[r]` is the absolute position of row `r`. The backward pass
+    /// rotates by the negated position, which is the exact inverse because
+    /// rotation matrices are orthogonal.
+    pub fn rope(
+        &self,
+        head_dim: usize,
+        positions: &[usize],
+        base: f32,
+    ) -> Result<TensorValue, AutogradError> {
+        let signed: Vec<i64> = positions.iter().map(|&position| position as i64).collect();
+        let value = self.value().rope_rotate(head_dim, &signed, base)?;
+        let inverse: Vec<i64> = signed.iter().map(|position| -position).collect();
+        self.unary("rope", value, move |g| {
+            Ok(g.rope_rotate(head_dim, &inverse, base)?)
+        })
+    }
+
     /// Row-wise mean of a rank-2 value, kept as `[rows, 1]` for broadcasting.
     pub fn mean_rows_keepdim(&self) -> Result<TensorValue, AutogradError> {
         let source = self.value();

@@ -9,9 +9,10 @@ mod attention;
 mod block;
 mod error;
 mod gpt;
+mod norm;
 
-pub use attention::{causal_batch_mask, CausalSelfAttention};
-pub use block::{Mlp, TransformerBlock};
+pub use attention::{causal_batch_mask, AttentionCache, CausalSelfAttention};
+pub use block::{BlockCache, Mlp, TransformerBlock};
 pub use error::ModelError;
 pub use gpt::TinyGpt;
 
@@ -19,6 +20,33 @@ use mini_llm_tensor::{Tensor, TensorError};
 use std::error::Error;
 use std::fmt::{Display, Formatter};
 
+/// Normalization used inside the blocks.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum NormKind {
+    #[default]
+    LayerNorm,
+    RmsNorm,
+}
+
+/// How positions are injected into the model.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum PositionKind {
+    /// A learned embedding table of size `[max_seq_len, hidden]`.
+    #[default]
+    Learned,
+    /// Rotary position embedding applied to queries and keys.
+    Rope,
+}
+
+/// Which feed-forward network each block uses.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum FeedForwardKind {
+    #[default]
+    Relu,
+    SwiGlu,
+}
+
+/// Architecture of a [`TinyGpt`].
 #[derive(Debug, Clone)]
 pub struct ModelConfig {
     pub vocab_size: usize,
@@ -26,6 +54,13 @@ pub struct ModelConfig {
     pub num_layers: usize,
     pub num_heads: usize,
     pub max_seq_len: usize,
+    /// Key/value heads for grouped-query attention; must divide `num_heads`.
+    pub num_kv_heads: usize,
+    pub norm: NormKind,
+    pub position: PositionKind,
+    pub feed_forward: FeedForwardKind,
+    /// `1` uses one dense feed-forward per block; `>1` swaps in a top-k MoE.
+    pub num_experts: usize,
 }
 
 impl Default for ModelConfig {
@@ -36,6 +71,11 @@ impl Default for ModelConfig {
             num_layers: 4,
             num_heads: 4,
             max_seq_len: 512,
+            num_kv_heads: 4,
+            norm: NormKind::LayerNorm,
+            position: PositionKind::Learned,
+            feed_forward: FeedForwardKind::Relu,
+            num_experts: 1,
         }
     }
 }
@@ -49,6 +89,28 @@ impl ModelConfig {
             num_layers: 2,
             num_heads: 4,
             max_seq_len: 32,
+            num_kv_heads: 4,
+            norm: NormKind::LayerNorm,
+            position: PositionKind::Learned,
+            feed_forward: FeedForwardKind::Relu,
+            num_experts: 1,
+        }
+    }
+
+    /// The same budget as [`ModelConfig::tiny`] but with the modern stack:
+    /// RMSNorm, RoPE, SwiGLU and grouped-query attention.
+    pub fn modern(vocab_size: usize) -> Self {
+        Self {
+            vocab_size,
+            hidden_size: 64,
+            num_layers: 2,
+            num_heads: 4,
+            max_seq_len: 64,
+            num_kv_heads: 2,
+            norm: NormKind::RmsNorm,
+            position: PositionKind::Rope,
+            feed_forward: FeedForwardKind::SwiGlu,
+            num_experts: 1,
         }
     }
 
@@ -58,6 +120,8 @@ impl ModelConfig {
             || self.num_layers == 0
             || self.num_heads == 0
             || self.max_seq_len == 0
+            || self.num_kv_heads == 0
+            || self.num_experts == 0
         {
             return Err(ConfigError::ZeroDimension);
         }
@@ -65,6 +129,17 @@ impl ModelConfig {
             return Err(ConfigError::HiddenSizeNotDivisible {
                 hidden_size: self.hidden_size,
                 num_heads: self.num_heads,
+            });
+        }
+        if !self.num_heads.is_multiple_of(self.num_kv_heads) {
+            return Err(ConfigError::HeadsNotDivisible {
+                num_heads: self.num_heads,
+                num_kv_heads: self.num_kv_heads,
+            });
+        }
+        if (self.hidden_size / self.num_heads) % 2 != 0 && self.position == PositionKind::Rope {
+            return Err(ConfigError::OddHeadDimensionForRope {
+                head_dim: self.hidden_size / self.num_heads,
             });
         }
         Ok(())
@@ -77,6 +152,13 @@ pub enum ConfigError {
     HiddenSizeNotDivisible {
         hidden_size: usize,
         num_heads: usize,
+    },
+    HeadsNotDivisible {
+        num_heads: usize,
+        num_kv_heads: usize,
+    },
+    OddHeadDimensionForRope {
+        head_dim: usize,
     },
 }
 
@@ -91,6 +173,19 @@ impl Display for ConfigError {
                 f,
                 "hidden_size ({}) must be divisible by num_heads ({})",
                 hidden_size, num_heads
+            ),
+            Self::HeadsNotDivisible {
+                num_heads,
+                num_kv_heads,
+            } => write!(
+                f,
+                "num_heads ({}) must be divisible by num_kv_heads ({})",
+                num_heads, num_kv_heads
+            ),
+            Self::OddHeadDimensionForRope { head_dim } => write!(
+                f,
+                "RoPE needs an even head dimension, got {}",
+                head_dim
             ),
         }
     }

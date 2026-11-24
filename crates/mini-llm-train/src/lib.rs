@@ -19,6 +19,8 @@
 //!     num_layers: 1,
 //!     num_heads: 2,
 //!     max_seq_len: 8,
+//!     num_kv_heads: 2,
+//!     ..ModelConfig::default()
 //! };
 //! let model = TinyGpt::new(config, &mut Rng::new(1)).unwrap();
 //! let mut trainer = Trainer::new(model, dataset, TrainConfig::default());
@@ -30,7 +32,7 @@
 //! Little-endian, no external dependencies:
 //!
 //! ```text
-//! magic "MINILLM1" | version u32 | 5 config u32s
+//! magic "MINILLM1" | version u32 | 10 config u32s
 //! vocab_size u32 | vocab_size * (char as u32)
 //! parameter_count u32
 //! parameter_count * { rank u32 | dims u32*rank | f32 data }
@@ -186,6 +188,8 @@ pub enum TrainError {
         actual: Vec<usize>,
     },
     InvalidVocabulary,
+    /// A checkpoint contains an unknown architecture flag.
+    InvalidArchitecture { field: &'static str, value: u32 },
 }
 
 impl Display for TrainError {
@@ -206,6 +210,11 @@ impl Display for TrainError {
                 actual, expected
             ),
             Self::InvalidVocabulary => write!(f, "checkpoint vocabulary is invalid"),
+            Self::InvalidArchitecture { field, value } => write!(
+                f,
+                "checkpoint has an unknown {} flag: {}",
+                field, value
+            ),
         }
     }
 }

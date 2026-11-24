@@ -1,24 +1,26 @@
 //! Tiny GPT: a character-level decoder-only Transformer.
 //!
-//! The model is deliberately small and readable. It uses learned token and
-//! position embeddings, pre-norm blocks, multi-head causal attention and a
-//! tied-free language-model head.
+//! The architecture is configurable: LayerNorm or RMSNorm, learned positions or
+//! RoPE, a ReLU MLP or SwiGLU, and dense or grouped-query attention. Generation
+//! uses a KV cache so each new token costs one token of compute instead of a
+//! full window.
 
 use mini_llm_autograd::TensorValue;
-use mini_llm_nn::{Embedding, LayerNorm, Linear, Module, Rng};
+use mini_llm_nn::{Embedding, Linear, Module, Rng};
 use mini_llm_tensor::Tensor;
 
 use crate::attention::causal_batch_mask;
-use crate::block::TransformerBlock;
-use crate::{ModelConfig, ModelError};
+use crate::block::{BlockCache, TransformerBlock};
+use crate::norm::NormLayer;
+use crate::{ModelConfig, ModelError, PositionKind};
 
 /// A decoder-only Transformer language model.
 pub struct TinyGpt {
     config: ModelConfig,
     token_embedding: Embedding,
-    position_embedding: Embedding,
+    position_embedding: Option<Embedding>,
     blocks: Vec<TransformerBlock>,
-    final_norm: LayerNorm,
+    final_norm: NormLayer,
     lm_head: Linear,
 }
 
@@ -29,14 +31,19 @@ impl TinyGpt {
         let hidden = config.hidden_size;
 
         let token_embedding = Embedding::new(config.vocab_size, hidden, 0.02, rng)?;
-        let position_embedding = Embedding::new(config.max_seq_len, hidden, 0.01, rng)?;
+        let position_embedding = match config.position {
+            PositionKind::Learned => {
+                Some(Embedding::new(config.max_seq_len, hidden, 0.01, rng)?)
+            }
+            PositionKind::Rope => None,
+        };
 
         let mut blocks = Vec::with_capacity(config.num_layers);
         for _ in 0..config.num_layers {
             blocks.push(TransformerBlock::new(&config, rng)?);
         }
 
-        let final_norm = LayerNorm::new(hidden)?;
+        let final_norm = NormLayer::new(config.norm, hidden)?;
         let lm_head = Linear::without_bias(hidden, config.vocab_size, rng)?;
 
         Ok(Self {
@@ -55,7 +62,9 @@ impl TinyGpt {
 
     pub fn parameters(&self) -> Vec<TensorValue> {
         let mut parameters = self.token_embedding.parameters();
-        parameters.extend(self.position_embedding.parameters());
+        if let Some(position_embedding) = &self.position_embedding {
+            parameters.extend(position_embedding.parameters());
+        }
         for block in &self.blocks {
             parameters.extend(block.parameters());
         }
@@ -111,10 +120,10 @@ impl TinyGpt {
         }
 
         let positions: Vec<usize> = (0..batch).flat_map(|_| 0..seq).collect();
-        let embedded = self
-            .token_embedding
-            .lookup(tokens)?
-            .add(&self.position_embedding.lookup(&positions)?)?;
+        let mut embedded = self.token_embedding.lookup(tokens)?;
+        if let Some(position_embedding) = &self.position_embedding {
+            embedded = embedded.add(&position_embedding.lookup(&positions)?)?;
+        }
 
         let mask = TensorValue::new(Tensor::new(
             causal_batch_mask(batch, seq),
@@ -123,15 +132,56 @@ impl TinyGpt {
 
         let mut hidden = embedded;
         for block in &self.blocks {
-            hidden = block.forward(&hidden, batch, seq, &mask)?;
+            hidden = block.forward(&hidden, batch, seq, &mask, &positions)?;
         }
         let normalized = self.final_norm.forward(&hidden)?;
         Ok(self.lm_head.forward(&normalized)?)
     }
 
-    /// Autoregressive sampling. The context is truncated to `max_seq_len`.
+    /// Fresh KV caches, one per block.
+    pub fn empty_caches(&self) -> Vec<BlockCache> {
+        self.blocks
+            .iter()
+            .map(|_| BlockCache::new(&self.config))
+            .collect()
+    }
+
+    /// Runs one token through the model at `position`, updating the KV caches.
+    pub fn step_token(
+        &self,
+        token: usize,
+        position: usize,
+        caches: &mut [BlockCache],
+    ) -> Result<TensorValue, ModelError> {
+        if token >= self.config.vocab_size {
+            return Err(ModelError::TokenOutOfRange {
+                index: token,
+                vocab_size: self.config.vocab_size,
+            });
+        }
+        if caches.len() != self.blocks.len() {
+            return Err(ModelError::CacheDepthMismatch {
+                expected: self.blocks.len(),
+                actual: caches.len(),
+            });
+        }
+
+        let mut hidden = self.token_embedding.lookup(&[token])?;
+        if let Some(position_embedding) = &self.position_embedding {
+            hidden = hidden.add(&position_embedding.lookup(&[position])?)?;
+        }
+        for (block, cache) in self.blocks.iter().zip(caches.iter_mut()) {
+            hidden = block.forward_step(&hidden, position, cache)?;
+        }
+        let normalized = self.final_norm.forward(&hidden)?;
+        Ok(self.lm_head.forward(&normalized)?)
+    }
+
+    /// Autoregressive sampling with a KV cache.
     ///
-    /// `temperature == 0` is treated as greedy-decoding (`argmax`).
+    /// With learned position embeddings the output stops at `max_seq_len`;
+    /// with RoPE the position index keeps growing (quality degrades past the
+    /// trained context, but the mechanics stay valid).
     pub fn generate(
         &self,
         prompt: &[usize],
@@ -142,39 +192,79 @@ impl TinyGpt {
         if prompt.is_empty() {
             return Err(ModelError::EmptyPrompt);
         }
-        if let Some(&index) = prompt
-            .iter()
-            .find(|&&index| index >= self.config.vocab_size)
-        {
+        if let Some(&index) = prompt.iter().find(|&&index| index >= self.config.vocab_size) {
             return Err(ModelError::TokenOutOfRange {
                 index,
                 vocab_size: self.config.vocab_size,
             });
         }
 
+        let start = prompt.len().saturating_sub(self.config.max_seq_len);
+        let window = &prompt[start..];
+        let mut caches = self.empty_caches();
+
+        let mut logits = None;
+        for (offset, &token) in window.iter().enumerate() {
+            logits = Some(self.step_token(token, offset, &mut caches)?);
+        }
+        let mut logits = logits.ok_or(ModelError::EmptyPrompt)?;
+
+        let mut tokens = prompt.to_vec();
+        let mut position = window.len();
+        for _ in 0..max_new_tokens {
+            let next = sample_next(&logits, self.config.vocab_size, temperature, rng)?;
+            tokens.push(next);
+
+            if self.position_embedding.is_some() && tokens.len() >= self.config.max_seq_len {
+                break;
+            }
+            logits = self.step_token(next, position, &mut caches)?;
+            position += 1;
+        }
+        Ok(tokens)
+    }
+
+    /// Reference generation without a KV cache: recomputes the whole window at
+    /// every step. Kept for tests and for comparison with [`TinyGpt::generate`].
+    pub fn generate_uncached(
+        &self,
+        prompt: &[usize],
+        max_new_tokens: usize,
+        temperature: f32,
+        rng: &mut Rng,
+    ) -> Result<Vec<usize>, ModelError> {
+        if prompt.is_empty() {
+            return Err(ModelError::EmptyPrompt);
+        }
         let mut tokens = prompt.to_vec();
         for _ in 0..max_new_tokens {
             let start = tokens.len().saturating_sub(self.config.max_seq_len);
             let window = &tokens[start..];
             let logits = self.forward(window, 1)?;
-            let rows = window.len();
-            let vocab = self.config.vocab_size;
-            let logits_tensor = logits.value();
-            let last = &logits_tensor.data()[(rows - 1) * vocab..rows * vocab];
-
-            let next = if temperature <= 0.0 {
-                argmax(last)
-            } else {
-                let scaled: Vec<f32> = last.iter().map(|value| value / temperature).collect();
-                let probabilities = Tensor::from_2d(1, vocab, scaled)?
-                    .softmax_rows()?
-                    .into_data();
-                sample(&probabilities, rng)
-            };
+            let next = sample_next(&logits, self.config.vocab_size, temperature, rng)?;
             tokens.push(next);
         }
         Ok(tokens)
     }
+}
+
+fn sample_next(
+    logits: &TensorValue,
+    vocab: usize,
+    temperature: f32,
+    rng: &mut Rng,
+) -> Result<usize, ModelError> {
+    let values = logits.value();
+    let rows = values.shape()[0];
+    let last = &values.data()[(rows - 1) * vocab..rows * vocab];
+    if temperature <= 0.0 {
+        return Ok(argmax(last));
+    }
+    let scaled: Vec<f32> = last.iter().map(|value| value / temperature).collect();
+    let probabilities = Tensor::from_2d(1, vocab, scaled)?
+        .softmax_rows()?
+        .into_data();
+    Ok(sample(&probabilities, rng))
 }
 
 fn argmax(values: &[f32]) -> usize {

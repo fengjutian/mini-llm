@@ -34,6 +34,16 @@ pub enum ModelError {
         batch: usize,
     },
     EmptyPrompt,
+    /// A KV cache was built for a different number of key/value heads.
+    CacheHeadMismatch {
+        expected: usize,
+        actual: usize,
+    },
+    /// The number of KV caches does not match the number of blocks.
+    CacheDepthMismatch {
+        expected: usize,
+        actual: usize,
+    },
 }
 
 impl Display for ModelError {
@@ -67,6 +77,16 @@ impl Display for ModelError {
                 tokens, batch
             ),
             Self::EmptyPrompt => write!(f, "generation requires a non-empty prompt"),
+            Self::CacheHeadMismatch { expected, actual } => write!(
+                f,
+                "attention cache has {} key/value heads, expected {}",
+                actual, expected
+            ),
+            Self::CacheDepthMismatch { expected, actual } => write!(
+                f,
+                "got {} block caches, the model has {} blocks",
+                actual, expected
+            ),
         }
     }
 }

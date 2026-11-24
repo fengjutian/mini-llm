@@ -13,6 +13,8 @@ pub enum TensorError {
     EmptySoftmaxDimension,
     EmptyTensor,
     RowIndexOutOfBounds { index: usize, rows: usize },
+    InvalidRopeDimension { head_dim: usize },
+    RopePositionMismatch { rows: usize, positions: usize },
 }
 
 impl Display for TensorError {
@@ -40,6 +42,16 @@ impl Display for TensorError {
                 f,
                 "row index {} is out of bounds for a tensor with {} rows",
                 index, rows
+            ),
+            Self::InvalidRopeDimension { head_dim } => write!(
+                f,
+                "RoPE head dimension must be even and non-zero, got {}",
+                head_dim
+            ),
+            Self::RopePositionMismatch { rows, positions } => write!(
+                f,
+                "RoPE got {} positions for {} rows",
+                positions, rows
             ),
         }
     }
@@ -318,6 +330,67 @@ impl Tensor {
         Self::new(output, vec![cols, rows])
     }
 
+    /// Applies rotary position embedding (RoPE) to `[rows, heads * head_dim]`.
+    ///
+    /// Inside every head, the pair `(2i, 2i+1)` is rotated by
+    /// `position * base^(-2i/head_dim)`. Negative positions apply the inverse
+    /// rotation, which is exactly what the backward pass needs since the
+    /// rotation matrix is orthogonal.
+    pub fn rope_rotate(
+        &self,
+        head_dim: usize,
+        positions: &[i64],
+        base: f32,
+    ) -> Result<Self, TensorError> {
+        if head_dim == 0 || !head_dim.is_multiple_of(2) {
+            return Err(TensorError::InvalidRopeDimension { head_dim });
+        }
+        if self.rank() != 2 {
+            return Err(TensorError::ExpectedRank {
+                expected: 2,
+                actual: self.rank(),
+            });
+        }
+        let (rows, cols) = (self.shape[0], self.shape[1]);
+        if !cols.is_multiple_of(head_dim) {
+            return Err(TensorError::ShapeMismatch {
+                left: self.shape.clone(),
+                right: vec![rows, head_dim],
+            });
+        }
+        if positions.len() != rows {
+            return Err(TensorError::RopePositionMismatch {
+                rows,
+                positions: positions.len(),
+            });
+        }
+
+        let heads = cols / head_dim;
+        let half = head_dim / 2;
+        let frequencies: Vec<f32> = (0..half)
+            .map(|index| 1.0 / base.powf(2.0 * index as f32 / head_dim as f32))
+            .collect();
+
+        let mut output = self.data.clone();
+        for row in 0..rows {
+            let position = positions[row] as f32;
+            let row_offset = row * cols;
+            for head in 0..heads {
+                let head_offset = row_offset + head * head_dim;
+                for index in 0..half {
+                    let angle = position * frequencies[index];
+                    let (sin, cos) = angle.sin_cos();
+                    let first = head_offset + 2 * index;
+                    let a = self.data[first];
+                    let b = self.data[first + 1];
+                    output[first] = a * cos - b * sin;
+                    output[first + 1] = a * sin + b * cos;
+                }
+            }
+        }
+        Self::new(output, self.shape.clone())
+    }
+
     /// Selects rows by index, producing `[indices.len(), cols]`.
     ///
     /// Repeated indices are allowed; the matching gradient accumulates.
@@ -537,5 +610,47 @@ mod tests {
         assert_eq!(grad.sum_to(&[1, 3]).unwrap().data(), &[2., 2., 2.]);
         assert_eq!(grad.sum_to(&[1]).unwrap().data(), &[6.]);
         assert_eq!(grad.sum_to(&[2, 3]).unwrap().data(), grad.data());
+    }
+
+    #[test]
+    fn rope_at_position_zero_is_the_identity() {
+        let x = Tensor::from_2d(2, 4, vec![0.5, -1.0, 0.25, 0.75, 1.5, 0.0, -0.5, 2.0])
+            .unwrap();
+        let rotated = x.rope_rotate(4, &[0, 0], 10_000.0).unwrap();
+        assert_eq!(rotated.data(), x.data());
+    }
+
+    #[test]
+    fn rope_preserves_the_norm_of_each_head() {
+        let x = Tensor::from_2d(1, 4, vec![0.5, -1.0, 0.25, 0.75]).unwrap();
+        let rotated = x.rope_rotate(4, &[5], 10_000.0).unwrap();
+        let norm = |values: &[f32]| values.iter().map(|v| v * v).sum::<f32>().sqrt();
+        assert!((norm(rotated.data()) - norm(x.data())).abs() < 1e-6);
+    }
+
+    #[test]
+    fn rope_scores_depend_only_on_relative_position() {
+        let x = Tensor::from_2d(1, 4, vec![0.5, 1.0, -0.25, 0.75]).unwrap();
+        let dot = |a: &Tensor, b: &Tensor| -> f32 {
+            a.data().iter().zip(b.data()).map(|(l, r)| l * r).sum()
+        };
+        let q3 = x.rope_rotate(4, &[3], 10_000.0).unwrap();
+        let k7 = x.rope_rotate(4, &[7], 10_000.0).unwrap();
+        let q0 = x.rope_rotate(4, &[0], 10_000.0).unwrap();
+        let k4 = x.rope_rotate(4, &[4], 10_000.0).unwrap();
+        assert!((dot(&q3, &k7) - dot(&q0, &k4)).abs() < 1e-5);
+    }
+
+    #[test]
+    fn rope_rejects_bad_dimensions() {
+        let x = Tensor::from_2d(1, 4, vec![0.; 4]).unwrap();
+        assert!(matches!(
+            x.rope_rotate(3, &[0], 10_000.0),
+            Err(TensorError::InvalidRopeDimension { .. })
+        ));
+        assert!(matches!(
+            x.rope_rotate(4, &[0, 1], 10_000.0),
+            Err(TensorError::RopePositionMismatch { .. })
+        ));
     }
 }
