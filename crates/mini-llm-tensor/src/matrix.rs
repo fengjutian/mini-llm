@@ -166,10 +166,14 @@ impl Tensor {
         // the sequential kernel.
         let work = m.saturating_mul(n).saturating_mul(k_left);
         let threads = if work >= PARALLEL_MATMUL_WORK {
-            std::thread::available_parallelism()
+            let cores = std::thread::available_parallelism()
                 .map(|value| value.get())
-                .unwrap_or(1)
-                .min(m)
+                .unwrap_or(1);
+            // Give each thread a meaningful chunk instead of always spawning
+            // one per core: medium matrices lose more to spawn overhead than
+            // they gain from the extra parallelism.
+            let useful = work / WORK_PER_THREAD;
+            cores.min(m).min(useful.max(1))
         } else {
             1
         };
@@ -193,6 +197,9 @@ impl Tensor {
 
 /// Multiply-adds below this count stay on the calling thread.
 const PARALLEL_MATMUL_WORK: usize = 4_000_000;
+
+/// Minimum multiply-adds handed to one thread once parallelism kicks in.
+const WORK_PER_THREAD: usize = 2_000_000;
 
 /// Computes `left[first_row.., :] x right` into `output` (`[rows, n]`).
 fn multiply_rows(
