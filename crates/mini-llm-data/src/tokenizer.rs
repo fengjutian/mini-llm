@@ -2,7 +2,7 @@
 
 use std::collections::{BTreeSet, HashMap};
 
-use crate::DataError;
+use crate::{BpeTokenizer, DataError};
 
 /// Maps characters to contiguous ids and back.
 #[derive(Debug, Clone, PartialEq)]
@@ -110,5 +110,63 @@ impl CharTokenizer {
             *last = 0.0;
         }
         Ok((tokens, weights))
+    }
+}
+
+/// A vocabulary that is either character-level or byte-level BPE.
+#[derive(Debug, Clone, PartialEq)]
+pub enum Tokenizer {
+    Char(CharTokenizer),
+    Bpe(BpeTokenizer),
+}
+
+impl Tokenizer {
+    /// Encodes `text` with the active vocabulary.
+    pub fn encode(&self, text: &str) -> Result<Vec<usize>, DataError> {
+        match self {
+            Self::Char(tokenizer) => tokenizer.encode(text),
+            Self::Bpe(tokenizer) => Ok(tokenizer.encode(text)),
+        }
+    }
+
+    /// Decodes token ids back into text.
+    pub fn decode(&self, tokens: &[usize]) -> Result<String, DataError> {
+        match self {
+            Self::Char(tokenizer) => tokenizer.decode(tokens),
+            Self::Bpe(tokenizer) => tokenizer.decode(tokens),
+        }
+    }
+
+    pub fn vocab_size(&self) -> usize {
+        match self {
+            Self::Char(tokenizer) => tokenizer.vocab_size(),
+            Self::Bpe(tokenizer) => tokenizer.vocab_size(),
+        }
+    }
+
+    pub fn as_bpe(&self) -> Option<&BpeTokenizer> {
+        match self {
+            Self::Bpe(tokenizer) => Some(tokenizer),
+            Self::Char(_) => None,
+        }
+    }
+
+    pub fn as_char(&self) -> Option<&CharTokenizer> {
+        match self {
+            Self::Char(tokenizer) => Some(tokenizer),
+            Self::Bpe(_) => None,
+        }
+    }
+}
+
+impl From<CharTokenizer> for Tokenizer {
+    fn from(value: CharTokenizer) -> Self {
+        Self::Char(value)
+    }
+}
+
+impl From<BpeTokenizer> for Tokenizer {
+    fn from(value: BpeTokenizer) -> Self {
+        Self::Bpe(value)
     }
 }

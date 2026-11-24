@@ -6,7 +6,7 @@
 
 use std::time::Instant;
 
-use mini_llm_data::{CharTokenizer, TextDataset};
+use mini_llm_data::{BpeTokenizer, CharTokenizer, TextDataset, Tokenizer};
 use mini_llm_model::{ModelConfig, TinyGpt};
 use mini_llm_nn::Rng;
 use mini_llm_train::{
@@ -24,6 +24,8 @@ const VALIDATION_FRACTION: f32 = 0.1;
 
 pub fn run(arguments: &[String]) {
     let resume = arguments.iter().any(|argument| argument == "--resume");
+    let use_bpe = arguments.iter().any(|argument| argument == "--bpe");
+    let vocab_size = parse_vocab_size(arguments);
     let accumulation = parse_accumulation(arguments);
     let steps = arguments
         .first()
@@ -51,7 +53,11 @@ pub fn run(arguments: &[String]) {
     let (tokenizer, model, restored_state) = match resumed {
         Some((model, tokenizer, state)) => (tokenizer, model, Some(state)),
         None => {
-            let tokenizer = CharTokenizer::from_text(&text);
+            let tokenizer: Tokenizer = if use_bpe {
+                Tokenizer::from(BpeTokenizer::train(&text, vocab_size))
+            } else {
+                Tokenizer::from(CharTokenizer::from_text(&text))
+            };
             let model = build_model(tokenizer.vocab_size());
             (tokenizer, model, None)
         }
@@ -164,6 +170,19 @@ fn parse_accumulation(arguments: &[String]) -> usize {
     value.unwrap_or(1).max(1)
 }
 
+/// Reads `--vocab N` for BPE training; defaults to 512 tokens.
+fn parse_vocab_size(arguments: &[String]) -> usize {
+    let mut value = None;
+    for (index, argument) in arguments.iter().enumerate() {
+        if argument == "--vocab" {
+            value = arguments.get(index + 1).and_then(|next| next.parse().ok());
+        } else if let Some(rest) = argument.strip_prefix("--vocab=") {
+            value = rest.parse().ok();
+        }
+    }
+    value.unwrap_or(512).max(257)
+}
+
 fn build_model(vocab_size: usize) -> TinyGpt {
     let mut config = ModelConfig::modern(vocab_size);
     config.hidden_size = 32;
@@ -174,14 +193,19 @@ fn build_model(vocab_size: usize) -> TinyGpt {
 
 fn print_model_summary(
     model: &TinyGpt,
-    tokenizer: &CharTokenizer,
+    tokenizer: &Tokenizer,
     text: &str,
     corpus_label: &str,
     tokens: usize,
     steps: usize,
 ) {
     let config = model.config();
-    println!("Tiny GPT, character level (modern stack)");
+    let tokenizer_kind = if tokenizer.as_bpe().is_some() {
+        "byte-level BPE"
+    } else {
+        "character"
+    };
+    println!("Tiny GPT, {tokenizer_kind} level (modern stack)");
     println!(
         "  corpus: {corpus_label} ({} chars), vocab {}, {} training windows ({} held out)",
         text.chars().count(),
@@ -208,7 +232,7 @@ fn print_model_summary(
     println!();
 }
 
-fn print_sample(model: &TinyGpt, tokenizer: &CharTokenizer, text: &str) {
+fn print_sample(model: &TinyGpt, tokenizer: &Tokenizer, text: &str) {
     // Use the corpus prefix so the prompt is always in the vocabulary.
     let prompt_text: String = text.chars().take(24).collect();
     let prompt = match tokenizer.encode(&prompt_text) {
@@ -224,7 +248,7 @@ fn print_sample(model: &TinyGpt, tokenizer: &CharTokenizer, text: &str) {
     println!("{}", tokenizer.decode(&generated).expect("decode"));
 }
 
-fn persist(model: &TinyGpt, tokenizer: &CharTokenizer, state: &mini_llm_train::TrainingState) {
+fn persist(model: &TinyGpt, tokenizer: &Tokenizer, state: &mini_llm_train::TrainingState) {
     std::fs::create_dir_all("checkpoints").ok();
     save_training_checkpoint(CHECKPOINT_PATH, model, tokenizer, state).expect("save checkpoint");
     println!();

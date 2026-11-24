@@ -1,6 +1,8 @@
 //! Tests for tokenization and batching.
 
-use mini_llm_data::{CharTokenizer, DataError, Dataset, SftDataset, TextDataset};
+use mini_llm_data::{
+    Batch, BpeTokenizer, CharTokenizer, DataError, Dataset, SftDataset, TextDataset, Tokenizer,
+};
 use mini_llm_random::Rng;
 
 #[test]
@@ -139,4 +141,49 @@ fn sft_dataset_rejects_a_fully_masked_corpus() {
         SftDataset::new(vec![0, 1, 2, 3], vec![0.0; 4], 2),
         Err(DataError::EmptyMaskWindow)
     ));
+}
+
+#[test]
+fn bpe_roundtrips_any_utf8_text() {
+    let tokenizer = BpeTokenizer::train("the quick brown fox jumps over the lazy dog", 300);
+    for text in ["the quick brown fox", "lazy dogs jump", "量子计算 and emoji 🚀"] {
+        let tokens = tokenizer.encode(text);
+        assert!(tokens.iter().all(|&token| token < tokenizer.vocab_size()));
+        assert_eq!(tokenizer.decode(&tokens).unwrap(), text);
+    }
+}
+
+#[test]
+fn bpe_merges_compress_the_training_text() {
+    let text = "the quick brown fox jumps over the lazy dog. the quick brown fox.";
+    let tokenizer = BpeTokenizer::train(text, 300);
+    assert!(tokenizer.vocab_size() > 256);
+    assert!(tokenizer.encode(text).len() < text.len());
+}
+
+#[test]
+fn bpe_training_is_deterministic_and_validates_merges() {
+    let text = "abababab cdcdcdcd abab abab";
+    let first = BpeTokenizer::train(text, 260);
+    let second = BpeTokenizer::train(text, 260);
+    assert_eq!(first, second);
+
+    assert!(matches!(
+        BpeTokenizer::from_merges(vec![(999, 0)]),
+        Err(DataError::InvalidMerge { .. })
+    ));
+    let rebuilt = BpeTokenizer::from_merges(first.merges().to_vec()).unwrap();
+    assert_eq!(rebuilt, first);
+}
+
+#[test]
+fn tokenizer_enum_dispatches_to_both_vocabularies() {
+    let chars = Tokenizer::from(CharTokenizer::from_text("abc"));
+    assert_eq!(chars.encode("cab").unwrap().len(), 3);
+    assert_eq!(chars.vocab_size(), 3);
+    assert!(chars.as_char().is_some());
+
+    let bpe = Tokenizer::from(BpeTokenizer::train("abcabc", 260));
+    assert!(bpe.as_bpe().is_some());
+    assert_eq!(bpe.decode(&bpe.encode("abcabc").unwrap()).unwrap(), "abcabc");
 }

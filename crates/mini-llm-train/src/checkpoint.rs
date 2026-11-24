@@ -4,7 +4,7 @@
 use std::fs;
 use std::path::Path;
 
-use mini_llm_data::CharTokenizer;
+use mini_llm_data::{BpeTokenizer, CharTokenizer, Tokenizer};
 use mini_llm_model::{FeedForwardKind, ModelConfig, NormKind, PositionKind, TinyGpt};
 use mini_llm_nn::Rng;
 use mini_llm_tensor::Tensor;
@@ -13,16 +13,18 @@ use crate::{TrainError, TrainingState};
 
 const MAGIC: &[u8; 8] = b"MINILLM1";
 /// Version 1 stored only the five base dimensions. Version 2 adds the modern
-/// architecture switches; version 3 appends the training state. Older
-/// checkpoints still load.
-const VERSION: u32 = 3;
-const VERSION_MODEL_ONLY: u32 = 2;
+/// architecture switches, version 3 the training state, and version 4 tags the
+/// tokenizer (character-level or BPE). Older checkpoints still load.
+const VERSION: u32 = 4;
+
+const TOKENIZER_CHAR: u32 = 0;
+const TOKENIZER_BPE: u32 = 1;
 
 /// Writes `model` and its vocabulary to `path` (no training state).
 pub fn save_checkpoint(
     path: impl AsRef<Path>,
     model: &TinyGpt,
-    tokenizer: &CharTokenizer,
+    tokenizer: &Tokenizer,
 ) -> Result<(), TrainError> {
     write_checkpoint(path, model, tokenizer, None)
 }
@@ -31,7 +33,7 @@ pub fn save_checkpoint(
 pub fn save_training_checkpoint(
     path: impl AsRef<Path>,
     model: &TinyGpt,
-    tokenizer: &CharTokenizer,
+    tokenizer: &Tokenizer,
     state: &TrainingState,
 ) -> Result<(), TrainError> {
     write_checkpoint(path, model, tokenizer, Some(state))
@@ -40,22 +42,16 @@ pub fn save_training_checkpoint(
 fn write_checkpoint(
     path: impl AsRef<Path>,
     model: &TinyGpt,
-    tokenizer: &CharTokenizer,
+    tokenizer: &Tokenizer,
     state: Option<&TrainingState>,
 ) -> Result<(), TrainError> {
     if tokenizer.vocab_size() != model.config().vocab_size {
         return Err(TrainError::InvalidVocabulary);
     }
 
-    let version = if state.is_some() {
-        VERSION
-    } else {
-        VERSION_MODEL_ONLY
-    };
-
     let mut bytes = Vec::new();
     bytes.extend_from_slice(MAGIC);
-    push_u32(&mut bytes, version);
+    push_u32(&mut bytes, VERSION);
 
     let config = model.config();
     for value in [
@@ -73,9 +69,23 @@ fn write_checkpoint(
         push_u32(&mut bytes, value as u32);
     }
 
-    push_u32(&mut bytes, tokenizer.vocab_size() as u32);
-    for &character in tokenizer.characters() {
-        push_u32(&mut bytes, character as u32);
+    match tokenizer {
+        Tokenizer::Char(tokenizer) => {
+            push_u32(&mut bytes, TOKENIZER_CHAR);
+            push_u32(&mut bytes, tokenizer.vocab_size() as u32);
+            for &character in tokenizer.characters() {
+                push_u32(&mut bytes, character as u32);
+            }
+        }
+        Tokenizer::Bpe(tokenizer) => {
+            push_u32(&mut bytes, TOKENIZER_BPE);
+            let merges = tokenizer.merges();
+            push_u32(&mut bytes, merges.len() as u32);
+            for &(left, right) in merges {
+                push_u32(&mut bytes, left);
+                push_u32(&mut bytes, right);
+            }
+        }
     }
 
     let parameters = model.parameters();
@@ -112,7 +122,7 @@ fn write_checkpoint(
 
 /// Reads a checkpoint written by [`save_checkpoint`] or
 /// [`save_training_checkpoint`].
-pub fn load_checkpoint(path: impl AsRef<Path>) -> Result<(TinyGpt, CharTokenizer), TrainError> {
+pub fn load_checkpoint(path: impl AsRef<Path>) -> Result<(TinyGpt, Tokenizer), TrainError> {
     let (model, tokenizer, _) = load_components(path)?;
     Ok((model, tokenizer))
 }
@@ -120,7 +130,7 @@ pub fn load_checkpoint(path: impl AsRef<Path>) -> Result<(TinyGpt, CharTokenizer
 /// Reads a checkpoint and the training state saved alongside it.
 pub fn load_training_checkpoint(
     path: impl AsRef<Path>,
-) -> Result<(TinyGpt, CharTokenizer, TrainingState), TrainError> {
+) -> Result<(TinyGpt, Tokenizer, TrainingState), TrainError> {
     let (model, tokenizer, state) = load_components(path)?;
     match state {
         Some(state) => Ok((model, tokenizer, state)),
@@ -130,7 +140,7 @@ pub fn load_training_checkpoint(
 
 fn load_components(
     path: impl AsRef<Path>,
-) -> Result<(TinyGpt, CharTokenizer, Option<TrainingState>), TrainError> {
+) -> Result<(TinyGpt, Tokenizer, Option<TrainingState>), TrainError> {
     let bytes = fs::read(path)?;
     let mut reader = Reader::new(&bytes);
 
@@ -182,16 +192,41 @@ fn load_components(
         }
     };
 
-    let character_count = reader.u32()? as usize;
-    if character_count != vocab_size {
-        return Err(TrainError::InvalidVocabulary);
-    }
-    let mut characters = Vec::with_capacity(character_count);
-    for _ in 0..character_count {
-        let raw = reader.u32()?;
-        characters.push(char::from_u32(raw).ok_or(TrainError::InvalidVocabulary)?);
-    }
-    let tokenizer = CharTokenizer::from_characters(characters)?;
+    let kind = if version >= 4 { reader.u32()? } else { TOKENIZER_CHAR };
+    let tokenizer = match kind {
+        TOKENIZER_CHAR => {
+            let character_count = reader.u32()? as usize;
+            if character_count != vocab_size {
+                return Err(TrainError::InvalidVocabulary);
+            }
+            let mut characters = Vec::with_capacity(character_count);
+            for _ in 0..character_count {
+                let raw = reader.u32()?;
+                characters.push(char::from_u32(raw).ok_or(TrainError::InvalidVocabulary)?);
+            }
+            Tokenizer::from(CharTokenizer::from_characters(characters)?)
+        }
+        TOKENIZER_BPE => {
+            let merge_count = reader.u32()? as usize;
+            let mut merges = Vec::with_capacity(merge_count);
+            for _ in 0..merge_count {
+                let left = reader.u32()?;
+                let right = reader.u32()?;
+                merges.push((left, right));
+            }
+            let tokenizer = BpeTokenizer::from_merges(merges)?;
+            if tokenizer.vocab_size() != vocab_size {
+                return Err(TrainError::InvalidVocabulary);
+            }
+            Tokenizer::from(tokenizer)
+        }
+        other => {
+            return Err(TrainError::InvalidArchitecture {
+                field: "tokenizer",
+                value: other,
+            });
+        }
+    };
 
     let model = TinyGpt::new(config, &mut Rng::new(0))?;
 

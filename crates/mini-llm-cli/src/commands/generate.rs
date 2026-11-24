@@ -33,10 +33,14 @@ pub fn run(arguments: &[String]) {
     };
 
     // Drop characters the checkpoint never saw instead of failing outright.
-    let filtered: String = prompt
-        .chars()
-        .filter(|character| tokenizer.characters().contains(character))
-        .collect();
+    // BPE covers every byte, so it needs no filtering.
+    let filtered: String = match tokenizer.as_char() {
+        Some(char_tokenizer) => prompt
+            .chars()
+            .filter(|character| char_tokenizer.characters().contains(character))
+            .collect(),
+        None => prompt.to_string(),
+    };
     let encoded = if filtered.is_empty() {
         vec![0]
     } else {
