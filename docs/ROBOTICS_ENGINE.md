@@ -256,6 +256,10 @@ point = {    "x": 0.3,    "y": 0.2,    "z": 0.5}
 
 ## **3.2 Homogeneous Transformation：齐次变换**
 
+![机器人坐标系与齐次变换链](assets/diagrams/robotics-frame-transform.svg)
+
+_图：基座、关节与末端坐标系沿运动链组合；矩阵乘法顺序决定变换结果。_
+
 机器人需要在不同坐标系之间转换位置和姿态。
 
 常用齐次变换矩阵：
@@ -361,6 +365,10 @@ Rotation = ...
 ```
 
 ## **4.2 二自由度机械臂**
+
+![二自由度机械臂正逆运动学](assets/diagrams/robotics-two-link-kinematics.svg)
+
+_图：给定关节角可计算末端坐标；给定末端坐标时，通常存在肘上与肘下两组逆解。_
 
 先研究最简单的平面两关节机械臂。
 
@@ -747,6 +755,10 @@ Jacobian 可以用于：
 
 # **八、Motion Planning：如何规划无碰撞运动路径？**
 
+![机械臂在实验台障碍物之间执行运动规划](assets/images/robot-motion-planning-lab.png)
+
+_图：六轴机械臂在带有深度相机和实体障碍物的实验台上接近目标，运动规划器需要同时满足可达性与无碰撞约束。本文照片式插图由 AI 生成。_
+
 现在假设：
 
 - 机械臂已经知道杯子的位置。
@@ -831,6 +843,10 @@ Configuration Space（配置空间），简称 C-space。
 
 ## **8.4 RRT：快速探索随机树**
 
+![配置空间中的 RRT 路径规划](assets/diagrams/robotics-rrt-configuration-space.svg)
+
+_图：RRT 在关节配置空间中随机扩展，无碰撞边组成搜索树，最终回溯得到可行路径。_
+
 RRT 的基本思想是：
 
 1. 从起点建立一棵树。
@@ -908,6 +924,10 @@ Trajectory Generation 的任务就是：
 **将几何路径转换成满足运动约束的时间参数化轨迹。**
 
 ## **9.1 位置、速度和加速度**
+
+![梯形速度轨迹的位置速度加速度曲线](assets/diagrams/robotics-trajectory-profiles.svg)
+
+_图：梯形速度规划把路径转换为带时间的轨迹，并显式满足速度和加速度边界。_
 
 一条运动轨迹可以表示为：
 
@@ -1086,6 +1106,10 @@ Trajectory Optimization 则进一步解决：
 
 # **十一、Manipulation：机器人如何抓取和操作物体？**
 
+![双指机器人夹爪抓取陶瓷杯](assets/images/robot-gripper-mug.png)
+
+_图：双指夹爪抓取陶瓷杯时，需要同时考虑抓取姿态、接触位置、夹持力和杯柄方向。本文照片式插图由 AI 生成。_
+
 前面讨论了机器人如何移动。
 
 但机器人不只是移动自身，还需要操作外部物体。
@@ -1161,6 +1185,10 @@ grasp_candidates = [    {        "position": [0.3, 0.2, 0.5],        "orientatio
 
 ## **11.4 抓取力学**
 
+![双指抓取中的接触力与摩擦锥](assets/diagrams/robotics-grasp-friction-cone.svg)
+
+_图：双指抓取时，法向夹持力决定可用摩擦力；接触力必须落在摩擦锥内并抵消重力。_
+
 对于夹爪抓取物体，需要考虑接触力和摩擦力。
 
 在简化的对称双指夹持模型中，假设每侧法向夹持力为 \\(N\\)，摩擦系数为 \\(\mu\\)，物体重量为 \\(mg\\)。
@@ -1190,6 +1218,10 @@ grasp_candidates = [    {        "position": [0.3, 0.2, 0.5],        "orientatio
 真实抓取通常需要结合力传感器、触觉传感器和抓取稳定性分析。
 
 # **十二、Force Control：如何控制接触力？**
+
+![机器人通过力传感器执行柔顺抛光](assets/images/robot-force-control-polishing.png)
+
+_图：机械臂通过腕部力/力矩传感器和柔性抛光垫保持稳定接触，体现阻抗控制与接触力反馈的实际应用。本文照片式插图由 AI 生成。_
 
 机器人抓取杯子时，有两个重要目标：
 
