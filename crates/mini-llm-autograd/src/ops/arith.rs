@@ -36,12 +36,12 @@ impl TensorValue {
 
     pub fn matmul(&self, other: &TensorValue) -> Result<TensorValue, AutogradError> {
         let (a, b) = (self.value(), other.value());
-        let value = crate::backend::current()
-            .matmul(&a, &b)
-            .map_err(|error| AutogradError::Backend(error.to_string()))?;
+        let value = crate::backend::matmul(&a, &b)?;
         self.binary(other, "matmul", value, move |g| {
-            // dA = G @ B^T, dB = A^T @ G
-            Ok((g.matmul(&b.transpose_2d()?)?, a.transpose_2d()?.matmul(g)?))
+            // dA = G @ B^T, dB = A^T @ G (both through the active backend)
+            let grad_a = crate::backend::matmul(g, &b.transpose_2d()?)?;
+            let grad_b = crate::backend::matmul(&a.transpose_2d()?, g)?;
+            Ok((grad_a, grad_b))
         })
     }
 

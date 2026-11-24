@@ -1,6 +1,7 @@
 //! mini-llm command-line entry point.
 //!
-//! `main` only dispatches; every demo lives in [`commands`].
+//! `main` only parses the optional `--backend` flag and dispatches; every demo
+//! lives in [`commands`].
 
 mod commands;
 
@@ -9,8 +10,77 @@ use commands::{
     train, xor,
 };
 
+/// Which kernel backend the process should use.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum BackendChoice {
+    Cpu,
+    Candle,
+}
+
 fn main() {
     let arguments: Vec<String> = std::env::args().skip(1).collect();
+    let (backend, arguments) = extract_backend(arguments);
+
+    match backend {
+        BackendChoice::Cpu => dispatch(&arguments),
+        BackendChoice::Candle => run_with_candle(&arguments),
+    }
+}
+
+#[cfg(feature = "candle")]
+fn run_with_candle(arguments: &[String]) {
+    use std::sync::Arc;
+
+    let backend = Arc::new(mini_llm_backend::CandleBackend::cpu());
+    mini_llm_autograd::backend::with_backend(backend, || dispatch(arguments));
+}
+
+#[cfg(not(feature = "candle"))]
+fn run_with_candle(_arguments: &[String]) {
+    eprintln!("error: `--backend candle` requires a build with the candle feature:");
+    eprintln!("  cargo run --features candle -p mini-llm-cli -- <command> --backend candle");
+    std::process::exit(2);
+}
+
+/// Strips `--backend <cpu|candle>` / `--backend=<cpu|candle>` from the arguments.
+fn extract_backend(arguments: Vec<String>) -> (BackendChoice, Vec<String>) {
+    let mut choice = BackendChoice::Cpu;
+    let mut rest = Vec::with_capacity(arguments.len());
+    let mut arguments = arguments.into_iter();
+
+    while let Some(argument) = arguments.next() {
+        if argument == "--backend" {
+            match arguments.next().as_deref() {
+                Some("cpu") => choice = BackendChoice::Cpu,
+                Some("candle") => choice = BackendChoice::Candle,
+                Some(other) => unknown_backend(other),
+                None => missing_backend(),
+            }
+        } else if let Some(value) = argument.strip_prefix("--backend=") {
+            match value {
+                "cpu" => choice = BackendChoice::Cpu,
+                "candle" => choice = BackendChoice::Candle,
+                other => unknown_backend(other),
+            }
+        } else {
+            rest.push(argument);
+        }
+    }
+
+    (choice, rest)
+}
+
+fn unknown_backend(value: &str) -> ! {
+    eprintln!("error: unknown backend `{value}` (expected `cpu` or `candle`)");
+    std::process::exit(2);
+}
+
+fn missing_backend() -> ! {
+    eprintln!("error: `--backend` expects `cpu` or `candle`");
+    std::process::exit(2);
+}
+
+fn dispatch(arguments: &[String]) {
     let command = arguments.first().map(String::as_str).unwrap_or("demo");
     let rest = arguments.get(1..).unwrap_or(&[]);
 
@@ -40,7 +110,7 @@ fn main() {
 }
 
 fn usage() {
-    println!("Usage: cargo run -p mini-llm-cli -- <command> [args]");
+    println!("Usage: cargo run -p mini-llm-cli -- <command> [args] [--backend cpu|candle]");
     println!();
     println!("Commands:");
     println!("  demo                 scaled dot-product attention walkthrough");
@@ -60,6 +130,10 @@ fn usage() {
     println!("  grpo                  group relative policy optimization on a bandit");
     println!("  trace                 emit training events + capture attention to traces/");
     println!("  help                 show this message");
+    println!();
+    println!("Options:");
+    println!("  --backend cpu|candle route matmul/softmax through a backend (candle needs");
+    println!("                       `--features candle` at build time)");
     println!();
     println!("checkpoint: {}", commands::CHECKPOINT_PATH);
 }

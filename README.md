@@ -303,10 +303,21 @@ let logits = with_backend(Arc::new(CandleBackend::cpu()), || {
 ```
 
 The selection is thread-local and restored when the closure returns (even on
-panic), and the default remains the CPU reference. Only forward kernels
-(`matmul`, `softmax_rows`) go through the backend; backward still uses the CPU
-tensor ops, so this currently accelerates inference-style passes. The CLI does
-not expose a backend flag yet; call `with_backend` from application code.
+panic), and the default remains the CPU reference. Both the forward pass and the
+`matmul` backward closures call through the backend, so wrapping a whole
+`forward + backward` step accelerates both directions; softmax is forward-only.
+
+From the CLI, build once with the feature and pass the flag:
+
+```bash
+cargo run --features candle -p mini-llm-cli -- train 200 --backend candle
+cargo run --features candle -p mini-llm-cli -- generate "the " 64 --backend candle
+```
+
+Without the feature, `--backend candle` exits with a message telling you to
+rebuild; `--backend cpu` (the default) always works. Candle on the CPU device is
+a correctness/smoke path (it hops through a host copy per kernel); the speedup
+comes from `CandleBackend::new(Device::Cuda)` where a GPU is available.
 
 ## Performance notes
 

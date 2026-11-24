@@ -12,3 +12,8 @@ mini-llm-model.workspace = true
 mini-llm-data.workspace = true
 mini-llm-train.workspace = true
 mini-llm-trace.workspace = true
+mini-llm-backend.workspace = true
+
+[features]
+# Build with --features candle to select the Candle backend at runtime.
+candle = ["mini-llm-backend/candle"]

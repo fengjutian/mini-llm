@@ -703,6 +703,7 @@ name = "mini-llm-cli"
 version = "0.1.0"
 dependencies = [
  "mini-llm-autograd",
+ "mini-llm-backend",
  "mini-llm-data",
  "mini-llm-model",
  "mini-llm-nn",

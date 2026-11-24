@@ -21,6 +21,9 @@ use std::cell::RefCell;
 use std::sync::{Arc, OnceLock};
 
 use mini_llm_backend::{Backend, CpuBackend};
+use mini_llm_tensor::Tensor;
+
+use crate::error::AutogradError;
 
 type SharedBackend = Arc<dyn Backend + Send + Sync>;
 
@@ -60,4 +63,14 @@ pub fn with_backend<R>(backend: SharedBackend, body: impl FnOnce() -> R) -> R {
 /// True when a backend other than the default CPU one is active.
 pub fn is_accelerated() -> bool {
     ACTIVE.with(|slot| slot.borrow().is_some())
+}
+
+/// Multiplies through the active backend, mapping its error type.
+///
+/// Both the forward pass and the backward closures call this, so a scope that
+/// covers `forward + backward` accelerates both directions.
+pub fn matmul(left: &Tensor, right: &Tensor) -> Result<Tensor, AutogradError> {
+    current()
+        .matmul(left, right)
+        .map_err(|error| AutogradError::Backend(error.to_string()))
 }

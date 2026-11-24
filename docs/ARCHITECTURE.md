@@ -154,6 +154,7 @@ mini-llm-cli
 - React Research Studio 消费 `traces/*.jsonl`，不需要改动训练代码。
 - `backend -> tensor abstraction`：让更多 kernel（softmax、LayerNorm）走同一 seam。
 - autograd 通过 `backend::with_backend(Arc<dyn Backend>, ...)` 在作用域内把
-  `matmul` / `softmax_rows` 交给指定 backend；选择是线程本地且可嵌套，默认仍是
-  CPU 参考实现。反向传播暂时仍走 CPU 张量算子。
+  `matmul`（前向与反向闭包）和 `softmax_rows`（前向）交给指定 backend；选择是
+  线程本地且可嵌套，默认仍是 CPU 参考实现。CLI 通过 `--backend candle` 选择
+  Candle（需以 `--features candle` 构建）。
 - `model` 不应反向依赖 `cli` 或 UI。

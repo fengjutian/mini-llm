@@ -78,3 +78,19 @@ fn backend_errors_surface_as_autograd_errors() {
     });
     assert!(error.to_string().contains("boom"));
 }
+
+#[test]
+fn backward_matmul_uses_the_active_backend() {
+    let counter = Arc::new(CountingBackend::default());
+    let x = TensorValue::constant(vec![1.0, 2.0, 3.0, 4.0], vec![2, 2]).unwrap();
+    let w = TensorValue::parameter(vec![0.5, 0.0, 0.0, 0.5], vec![2, 2]).unwrap();
+
+    with_backend(counter.clone(), || {
+        let loss = x.matmul(&w).unwrap().mean().unwrap();
+        loss.backward().unwrap();
+    });
+
+    // One forward matmul plus dA and dB in backward.
+    assert_eq!(counter.matmuls.load(Ordering::Relaxed), 3);
+    assert_eq!(w.grad().unwrap().shape(), &[2, 2]);
+}
