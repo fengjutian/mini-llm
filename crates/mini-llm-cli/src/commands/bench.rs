@@ -48,6 +48,7 @@ fn allocated_since(start: usize) -> usize {
 
 pub fn run() {
     println!("mini-llm benchmarks (release build recommended)");
+    println!("  timing: best of {ROUNDS} rounds, {ITERATIONS} iterations each");
     println!();
 
     for size in [64usize, 128, 256] {
@@ -69,25 +70,42 @@ pub fn run() {
     benchmark_tensor_clone();
 }
 
+/// Runs `op` for several rounds and returns the best seconds-per-iteration plus
+/// the bytes allocated per iteration (allocation volume is load-independent).
+fn measure(iterations: usize, mut op: impl FnMut()) -> (f64, f64) {
+    let mut best_seconds = f64::INFINITY;
+    let mut bytes_per_iteration = 0.0;
+    for _ in 0..ROUNDS {
+        let started = Instant::now();
+        let allocation_start = ALLOCATED_BYTES.load(Ordering::Relaxed);
+        for _ in 0..iterations {
+            op();
+        }
+        let elapsed = started.elapsed().as_secs_f64() / iterations as f64;
+        bytes_per_iteration =
+            allocated_since(allocation_start) as f64 / iterations as f64;
+        best_seconds = best_seconds.min(elapsed);
+    }
+    (best_seconds, bytes_per_iteration)
+}
+
 fn benchmark_matmul(size: usize) {
     let left = patterned(size, size, 1.0);
     let right = patterned(size, size, 0.5);
     // Warm up.
     let _ = left.matmul(&right).expect("valid matmul");
 
-    let started = Instant::now();
-    for _ in 0..ITERATIONS {
+    let (seconds, _) = measure(ITERATIONS, || {
         let _ = left.matmul(&right).expect("valid matmul");
-    }
-    let elapsed = started.elapsed().as_secs_f64() / ITERATIONS as f64;
+    });
     let flops = 2.0 * (size * size * size) as f64;
     println!(
         "  matmul {:>3}x{:<3}x{:<3}: {:>8.2} ms  {:>7.1} MFLOP/s",
         size,
         size,
         size,
-        elapsed * 1_000.0,
-        flops / elapsed / 1e6
+        seconds * 1_000.0,
+        flops / seconds / 1e6
     );
 }
 

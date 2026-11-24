@@ -202,6 +202,10 @@ const PARALLEL_MATMUL_WORK: usize = 4_000_000;
 const WORK_PER_THREAD: usize = 2_000_000;
 
 /// Computes `left[first_row.., :] x right` into `output` (`[rows, n]`).
+///
+/// Four output rows are accumulated at a time so each row of `right` is loaded
+/// once and used four times. Row-wise accumulation order is unchanged, so the
+/// result is bit-identical to the simple per-row loop.
 fn multiply_rows(
     left: &[f32],
     right: &[f32],
@@ -210,9 +214,35 @@ fn multiply_rows(
     k: usize,
     n: usize,
 ) {
-    for (local_row, out_row) in output.chunks_mut(n).enumerate() {
-        let row = first_row + local_row;
-        let left_row = &left[row * k..(row + 1) * k];
+    let rows = output.len() / n;
+    let mut row = 0;
+
+    while row + 4 <= rows {
+        let (row0, rest) = output[row * n..].split_at_mut(n);
+        let (row1, rest) = rest.split_at_mut(n);
+        let (row2, rest) = rest.split_at_mut(n);
+        let (row3, _) = rest.split_at_mut(n);
+        let base = (first_row + row) * k;
+
+        for inner in 0..k {
+            let a0 = left[base + inner];
+            let a1 = left[base + k + inner];
+            let a2 = left[base + 2 * k + inner];
+            let a3 = left[base + 3 * k + inner];
+            let right_row = &right[inner * n..(inner + 1) * n];
+            for (col, &b) in right_row.iter().enumerate() {
+                row0[col] += a0 * b;
+                row1[col] += a1 * b;
+                row2[col] += a2 * b;
+                row3[col] += a3 * b;
+            }
+        }
+        row += 4;
+    }
+
+    for (offset, out_row) in output[row * n..].chunks_mut(n).enumerate() {
+        let source_row = first_row + row + offset;
+        let left_row = &left[source_row * k..(source_row + 1) * k];
         for (inner, &a) in left_row.iter().enumerate() {
             let right_row = &right[inner * n..(inner + 1) * n];
             for (out, &b) in out_row.iter_mut().zip(right_row) {

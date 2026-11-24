@@ -297,16 +297,16 @@ optimized against (release, laptop CPU; run-to-run variance on a busy machine is
 around ±20%, so treat them as ratios):
 
 ```text
-matmul  64x64 x64 :     0.04 ms  14797.9 MFLOP/s
-matmul 128x128x128:     0.16 ms  26740.9 MFLOP/s
-matmul 256x256x256:     0.85 ms  39605.3 MFLOP/s
-forward (hidden  32, block 16, batch 4):     1.51 ms   1.6 MB alloc
-forward (hidden 128, block 32, batch 4):    14.83 ms  10.0 MB alloc
-forward (hidden 256, block 32, batch 4):    32.17 ms  18.1 MB alloc
-forward (hidden 512, block 32, batch 4):    76.72 ms  35.0 MB alloc
-train step (hidden  32, block 16, batch 2):  2.47 ms   2.0 MB alloc
-train step (hidden 128, block 32, batch 2): 23.71 ms  16.6 MB alloc
-train step (hidden 256, block 32, batch 2): 56.44 ms  41.9 MB alloc
+matmul  64x64 x64 :     0.02 ms  23384.8 MFLOP/s
+matmul 128x128x128:     0.18 ms  22974.9 MFLOP/s
+matmul 256x256x256:     0.70 ms  47628.0 MFLOP/s
+forward (hidden  32, block 16, batch 4):     1.80 ms   1.6 MB alloc
+forward (hidden 128, block 32, batch 4):    14.39 ms  10.0 MB alloc
+forward (hidden 256, block 32, batch 4):    31.76 ms  18.1 MB alloc
+forward (hidden 512, block 32, batch 4):    74.32 ms  35.0 MB alloc
+train step (hidden  32, block 16, batch 2):  1.79 ms   2.0 MB alloc
+train step (hidden 128, block 32, batch 2): 22.52 ms  16.6 MB alloc
+train step (hidden 256, block 32, batch 2): 62.03 ms  41.9 MB alloc
 generate 32 tokens (KV cache):                4.78 ms
 clone 1024x1024 (4 MB shared buffer):        0.082 us
 ```
@@ -319,8 +319,9 @@ Design choices behind those numbers:
   element keeps its original accumulation order, so results are bit-identical to
   the sequential kernel (covered by a test) and training stays reproducible.
   Below the threshold everything stays on the calling thread. Reducing the thread
-  count alone took `matmul 256³` from 1.46 ms to ~0.85 ms and the 512-wide
-  forward from 93 ms to ~77 ms on this 16-core machine.
+  count alone took `matmul 256³` from 1.46 ms to ~0.85 ms; accumulating four
+  output rows per pass over `right` (so each of its rows is loaded once and used
+  four times) brought it to ~0.70 ms and the 512-wide forward to ~74 ms.
 - **Tensor buffers are `Arc<Vec<f32>>`.** Cloning a tensor is a refcount bump
   (~0.08 µs for 4 MB) instead of a copy. The autograd engine clones node values
   on every op, so this turns an O(size) cost into O(1).
