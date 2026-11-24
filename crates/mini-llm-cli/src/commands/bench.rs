@@ -3,6 +3,8 @@
 //! Run in release mode for meaningful numbers:
 //! `cargo run --release -p mini-llm-cli -- bench`
 
+use std::alloc::{GlobalAlloc, Layout, System};
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Instant;
 
 use mini_llm_data::{CharTokenizer, TextDataset};
@@ -15,6 +17,35 @@ use super::TINY_CORPUS;
 
 const ITERATIONS: usize = 10;
 
+/// Counts bytes handed out by the allocator, so the benchmark can report the
+/// allocation cost the optimizer still pays per step.
+struct CountingAllocator;
+
+static ALLOCATED_BYTES: AtomicUsize = AtomicUsize::new(0);
+
+unsafe impl GlobalAlloc for CountingAllocator {
+    unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
+        ALLOCATED_BYTES.fetch_add(layout.size(), Ordering::Relaxed);
+        unsafe { System.alloc(layout) }
+    }
+
+    unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
+        unsafe { System.dealloc(ptr, layout) }
+    }
+
+    unsafe fn realloc(&self, ptr: *mut u8, layout: Layout, new_size: usize) -> *mut u8 {
+        ALLOCATED_BYTES.fetch_add(new_size, Ordering::Relaxed);
+        unsafe { System.realloc(ptr, layout, new_size) }
+    }
+}
+
+#[global_allocator]
+static GLOBAL: CountingAllocator = CountingAllocator;
+
+fn allocated_since(start: usize) -> usize {
+    ALLOCATED_BYTES.load(Ordering::Relaxed) - start
+}
+
 pub fn run() {
     println!("mini-llm benchmarks (release build recommended)");
     println!();
@@ -23,8 +54,12 @@ pub fn run() {
         benchmark_matmul(size);
     }
 
-    benchmark_forward();
-    benchmark_train_step();
+    for (hidden, block, batch) in [(32usize, 16usize, 4usize), (128, 32, 4)] {
+        benchmark_forward(hidden, block, batch);
+    }
+    for (hidden, block, batch) in [(32usize, 16usize, 2usize), (128, 32, 2)] {
+        benchmark_train_step(hidden, block, batch);
+    }
     benchmark_generation();
     benchmark_tensor_clone();
 }
@@ -58,41 +93,44 @@ fn patterned(rows: usize, cols: usize, scale: f32) -> Tensor {
     Tensor::from_2d(rows, cols, data).expect("valid tensor")
 }
 
-fn tiny_model(block: usize) -> TinyGpt {
+fn tiny_model(block: usize, hidden: usize) -> TinyGpt {
     let tokenizer = CharTokenizer::from_text(TINY_CORPUS);
     let mut config = ModelConfig::modern(tokenizer.vocab_size());
-    config.hidden_size = 32;
+    config.hidden_size = hidden;
     config.max_seq_len = block;
     TinyGpt::new(config, &mut Rng::new(1)).expect("model")
 }
 
-fn benchmark_forward() {
-    let model = tiny_model(16);
-    let tokens: Vec<usize> = (0..16 * 4).map(|index| index % 31).collect();
-    let _ = model.forward(&tokens, 4).expect("forward");
+fn benchmark_forward(hidden: usize, block: usize, batch: usize) {
+    let model = tiny_model(block, hidden);
+    let tokens: Vec<usize> = (0..block * batch).map(|index| index % 31).collect();
+    let _ = model.forward(&tokens, batch).expect("forward");
 
     let started = Instant::now();
+    let allocation_start = ALLOCATED_BYTES.load(Ordering::Relaxed);
     for _ in 0..ITERATIONS {
-        let _ = model.forward(&tokens, 4).expect("forward");
+        let _ = model.forward(&tokens, batch).expect("forward");
     }
     let elapsed = started.elapsed().as_secs_f64() / ITERATIONS as f64;
+    let allocated = allocated_since(allocation_start) as f64 / ITERATIONS as f64;
     println!(
-        "  forward (2 layers, hidden 32, block 16, batch 4): {:>8.2} ms",
-        elapsed * 1_000.0
+        "  forward (hidden {hidden:>3}, block {block:>2}, batch {batch}): {:>8.2} ms  {:>7.1} MB alloc",
+        elapsed * 1_000.0,
+        allocated / 1e6
     );
 }
 
-fn benchmark_train_step() {
+fn benchmark_train_step(hidden: usize, block: usize, batch: usize) {
     let tokenizer = CharTokenizer::from_text(TINY_CORPUS);
     let tokens = tokenizer.encode(TINY_CORPUS).expect("corpus encodes");
-    let dataset = TextDataset::new(tokens, 16).expect("dataset");
-    let model = tiny_model(16);
+    let dataset = TextDataset::new(tokens, block).expect("dataset");
+    let model = tiny_model(block, hidden);
     let mut trainer = Trainer::new(
         model,
         dataset,
         TrainConfig {
             steps: 0,
-            batch_size: 2,
+            batch_size: batch,
             learning_rate: 3e-3,
             weight_decay: 0.0,
             seed: 3,
@@ -103,18 +141,21 @@ fn benchmark_train_step() {
         trainer.step().expect("warmup step");
     }
     let started = Instant::now();
+    let allocation_start = ALLOCATED_BYTES.load(Ordering::Relaxed);
     for _ in 0..ITERATIONS {
         trainer.step().expect("step");
     }
     let elapsed = started.elapsed().as_secs_f64() / ITERATIONS as f64;
+    let allocated = allocated_since(allocation_start) as f64 / ITERATIONS as f64;
     println!(
-        "  train step (batch 2, block 16):                  {:>8.2} ms",
-        elapsed * 1_000.0
+        "  train step (hidden {hidden:>3}, block {block:>2}, batch {batch}): {:>8.2} ms  {:>7.1} MB alloc",
+        elapsed * 1_000.0,
+        allocated / 1e6
     );
 }
 
 fn benchmark_generation() {
-    let model = tiny_model(16);
+    let model = tiny_model(16, 32);
     let prompt = [1usize, 2, 3];
 
     let started = Instant::now();

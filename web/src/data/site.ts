@@ -15,7 +15,7 @@ export const NAV = [
   { href: '/docs', label: '知识地图' },
 ] as const;
 
-export type LessonVisual = 'tensor' | 'softmax' | 'attention';
+export type LessonVisual = 'tensor' | 'softmax' | 'attention' | 'autograd' | 'rope' | 'sampling';
 
 export type Lesson = {
   href: string;
@@ -57,6 +57,36 @@ export const LESSONS: Lesson[] = [
       'Q 与 K 点积得到“该看谁”，除以 √d 之后做 Softmax，再用权重去混合 V。整条链路只有三步。',
     visual: 'attention',
     time: '10 分钟',
+  },
+  {
+    href: '/learn/autograd',
+    index: '04',
+    tag: '训练',
+    title: '梯度是怎样流回参数的',
+    summary:
+      '反向传播不是另一套公式，而是把每个算子的局部导数沿计算图倒着乘一遍。一次 backward，所有参数同时拿到梯度。',
+    visual: 'autograd',
+    time: '7 分钟',
+  },
+  {
+    href: '/learn/rope',
+    index: '05',
+    tag: '位置编码',
+    title: '位置信息怎样进入注意力',
+    summary:
+      'RoPE 不往 embedding 里加位置向量，而是按位置旋转 Q 和 K。旋转之后，点积只和两者的相对距离有关。',
+    visual: 'rope',
+    time: '8 分钟',
+  },
+  {
+    href: '/learn/sampling',
+    index: '06',
+    tag: '生成',
+    title: '同一个模型，为什么每次说得不一样',
+    summary:
+      '模型给的是分布，不是答案。温度缩放分布，采样再从里面掷骰子；temperature = 0 时才退化成贪心。',
+    visual: 'sampling',
+    time: '6 分钟',
   },
 ];
 

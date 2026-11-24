@@ -114,3 +114,29 @@ fn sft_windows_without_supervision_are_rejected() {
     ));
     assert!(SftDataset::new(vec![0, 1], vec![1.0], 1).is_err());
 }
+
+#[test]
+fn sft_sampling_only_draws_supervised_windows() {
+    // Only the tail carries supervision, so most windows would be empty.
+    let dataset = SftDataset::new(
+        vec![0, 1, 2, 3, 4, 5, 6, 7],
+        vec![0., 0., 0., 0., 1., 1., 1., 0.],
+        2,
+    )
+    .unwrap();
+    assert!(dataset.supervised_windows() < dataset.num_windows());
+
+    let mut rng = Rng::new(11);
+    for _ in 0..20 {
+        let batch = dataset.sample_batch(2, &mut rng).unwrap();
+        assert!(batch.weights.iter().any(|weight| *weight > 0.0));
+    }
+}
+
+#[test]
+fn sft_dataset_rejects_a_fully_masked_corpus() {
+    assert!(matches!(
+        SftDataset::new(vec![0, 1, 2, 3], vec![0.0; 4], 2),
+        Err(DataError::EmptyMaskWindow)
+    ));
+}

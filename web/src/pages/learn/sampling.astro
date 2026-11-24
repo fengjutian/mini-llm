@@ -1,0 +1,484 @@
+---
+import LessonLayout from '../../layouts/LessonLayout.astro';
+import { Code } from 'astro:components';
+
+const tokens = ['的', '一', '是', '在', '不', '天'];
+const logits = [2.8, 2.1, 1.4, 0.6, -0.2, -1.1];
+const temperature = 1;
+const maxLogit = Math.max(...logits.map((value) => value / temperature));
+const exps = logits.map((value) => Math.exp(value / temperature - maxLogit));
+const total = exps.reduce((sum, value) => sum + value, 0);
+const rows = tokens.map((token, index) => ({
+  token,
+  probability: exps[index] / total,
+}));
+const topIndex = rows.reduce((best, row, index) => (row.probability > rows[best].probability ? index : best), 0);
+
+const snippet = `fn sample_next(logits: &TensorValue, vocab: usize, temperature: f32, rng: &mut Rng) -> Result<usize, ModelError> {
+    let values = logits.value();
+    let rows = values.shape()[0];
+    let last = &values.data()[(rows - 1) * vocab..rows * vocab];
+    if temperature <= 0.0 {
+        return Ok(argmax(last));           // 贪心：直接取最大
+    }
+    let scaled: Vec<f32> = last.iter().map(|value| value / temperature).collect();
+    let probabilities = Tensor::from_2d(1, vocab, scaled)?.softmax_rows()?.into_data();
+    Ok(sample(&probabilities, rng))        // 按概率抽一个
+}`;
+---
+
+<LessonLayout
+  index="06"
+  tag="生成"
+  title="同一个模型，为什么每次说得不一样"
+  summary="模型输出的是整个词表上的分布，不是某一个答案。温度先把分布调尖或调平，采样再从里面抽一个 token；temperature = 0 时才退化成贪心。"
+  time="6 分钟"
+  points={[
+    'logits → 温度缩放 → Softmax → 按概率抽样，是四步而不是一步。',
+    'T < 1 更确定，T > 1 更随机；T = 0 在实现里直接 argmax。',
+    '采样只决定“选谁”，不会让一个坏模型变好。',
+    '当前实现只有温度采样，没有 top-k、top-p 或重复惩罚。',
+  ]}
+  links={[
+    { label: 'Decoder Engine 深度解析', href: '/docs/decoder-engine' },
+    { label: '系统架构 · 生成路径', href: '/docs/architecture' },
+  ]}
+  next={{ href: '/learn/tensor-shape', title: '回到第一个实验' }}
+>
+  <p>
+    上一页把 logits 变成了概率分布。但“分布”还不是“输出”：模型给出的是「的 38%、一 24%、是 14%……」，真正写进文本的只能是一个 token。
+    这中间的选择过程就是采样。同一句 prompt 每次生成不同，原因不在模型权重变了，而在这一步掷了不同的骰子。
+  </p>
+
+  <div class="formula">
+    p<sub>i</sub> = softmax(z<sub>i</sub> / T)<br />
+    r ~ Uniform(0, 1)<br />
+    <em>选择最小的 k，使得 p<sub>1</sub> + … + p<sub>k</sub> ≥ r</em>
+  </div>
+
+  <div class="widget" data-sampling-widget>
+    <div class="widget__head">
+      <h2 class="widget__title">分布 → 一次抽样</h2>
+      <span class="widget__hint">调温度，然后抽几次看频率收敛</span>
+    </div>
+    <div class="widget__body">
+      <div class="sample-temp">
+        <label for="sample-temperature">温度 T</label>
+        <input
+          id="sample-temperature"
+          type="range"
+          min="0"
+          max="2"
+          step="0.05"
+          value={temperature}
+          data-temperature
+        />
+        <output data-temperature-value>{temperature.toFixed(2)}</output>
+        <button class="chip" type="button" data-reset-temp>重置温度</button>
+      </div>
+
+      <table class="sample-table">
+        <thead>
+          <tr>
+            <th>token</th>
+            <th>概率分布</th>
+            <th>概率</th>
+            <th>次数</th>
+            <th>实际频率</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, index) => (
+            <tr data-sample-row>
+              <td class="sample-token">{row.token}</td>
+              <td class="sample-track-cell">
+                <div class="sample-track">
+                  <span
+                    class="sample-bar"
+                    data-bar
+                    style={`width:${(row.probability * 100).toFixed(2)}%`}
+                  ></span>
+                </div>
+              </td>
+              <td class="mono" data-p>{(row.probability * 100).toFixed(1)}%</td>
+              <td class="mono" data-count>0</td>
+              <td class="mono sample-freq" data-freq>—</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div class="control-row sample-actions">
+        <button class="chip" type="button" data-draw="1">抽 1 次</button>
+        <button class="chip" type="button" data-draw="25">抽 25 次</button>
+        <button class="chip" type="button" data-draw="100">抽 100 次</button>
+        <button class="chip" type="button" data-clear>清空记录</button>
+      </div>
+
+      <div class="sample-log" data-log aria-live="polite">
+        <span class="sample-log__empty">还没有采样</span>
+      </div>
+
+      <dl class="readout sample-readout">
+        <div><dt>采样总数</dt><dd data-out-total>0</dd></div>
+        <div><dt>出现过的 token</dt><dd data-out-kinds>0 / 6</dd></div>
+        <div><dt>理论最高</dt><dd data-out-top>{(rows[topIndex].probability * 100).toFixed(1)}%</dd></div>
+        <div><dt>实际最高</dt><dd data-out-empirical>—</dd></div>
+      </dl>
+
+      <p class="widget__foot" data-sample-summary>
+        T = 1 时按模型原始分布采样。多抽几次，实际频率会逐渐靠近概率——但每一次结果仍然是随机的。
+      </p>
+    </div>
+  </div>
+
+  <h2>为什么不能直接取最大</h2>
+  <p>
+    取最大（贪心）在翻译、分类这类“有唯一正确答案”的任务上很常见，但开放生成会变得重复、僵硬：只要上下文相同，下一步永远一样，模型容易陷进循环。
+    采样保留了其他候选的机会，让输出有多样性；代价是偶尔会选到明显不合适的 token。
+  </p>
+  <p>
+    这也是“temperature 越高越有创造力”这句话的真实含义：它不是给模型加了灵感，只是让低概率 token 更容易被抽到。模型本身的知识没有变化。
+  </p>
+
+  <h2>温度在这一步做了什么</h2>
+  <p>
+    温度只改 logits 的尺度，不改变它们的排序。低温把差距放大，Softmax 更尖锐，采样几乎总落在头部；高温把差距压平，长尾 token 的机会变大。
+    当 <code>T = 0</code> 时，代码根本不进入 Softmax，而是直接 <code>argmax</code>：这是实现层面的特殊分支，因为除以 0 没有定义。
+  </p>
+
+  <h2>逆变换采样</h2>
+  <p>
+    有了概率向量，抽样可以很便宜：生成一个 <code>[0, 1)</code> 的均匀随机数，然后从第一个 token 开始累加概率，累加值第一次超过随机数时就选它。
+    概率大的 token 占据更宽的区间，自然更容易被命中。mini-llm 的实现换了个等价写法：用随机数不断减去每个概率，减到小于等于 0 就返回当前下标。
+  </p>
+  <p>
+    这个方法只要求概率非负且和为 1，不要求它们排好序。所以即使 logits 顺序被打乱，采样仍然正确——前提是概率和 token 的对应关系没有错位。
+  </p>
+
+  <h2>在 mini-llm 里</h2>
+  <div class="code-card">
+    <div class="code-card__head mono">crates/mini-llm-model/src/gpt.rs</div>
+    <Code code={snippet} lang="rust" theme="github-dark-dimmed" />
+  </div>
+  <p>
+    <code>generate</code> 每生成一个 token，就把它喂回模型并更新 KV cache；采样始终只取最后一个位置的 logits。随机数来自 <code>Rng</code>，
+    同一个种子会得到同一段文本，这也是测试能稳定比较 cached 与 uncached 生成结果的原因。
+  </p>
+
+  <h2>当前没有的东西</h2>
+  <p>
+    mini-llm 的生成只实现了温度采样。top-k、top-p、重复惩罚、beam search 都还没有写；MoE 里的 <code>top_k</code> 是专家路由，和采样无关，
+    不要混淆。这些策略都可以在“logits → 概率”之间插入，但它们不改变本文这条主链路。
+  </p>
+
+  <div class="note">
+    <strong>一句话总结</strong>
+    Softmax 决定“每个 token 有多少机会”，采样决定“这一次轮到谁”。前者是模型给的，后者是随机性与策略给的。
+  </div>
+</LessonLayout>
+
+<style>
+  .sample-temp {
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr) 46px auto;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .sample-temp label {
+    font-size: 13.5px;
+    color: var(--ink-soft);
+  }
+
+  .sample-temp output {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    text-align: right;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .sample-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .sample-table th {
+    padding: 0 8px 8px;
+    text-align: left;
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .sample-table td {
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--line);
+    font-size: 12px;
+    color: var(--ink-soft);
+    vertical-align: middle;
+  }
+
+  .sample-table tr:last-child td {
+    border-bottom: 0;
+  }
+
+  .sample-token {
+    width: 44px;
+    font-size: 14px !important;
+    color: var(--ink) !important;
+  }
+
+  .sample-track-cell {
+    width: auto;
+    min-width: 140px;
+  }
+
+  .sample-track {
+    height: 16px;
+    border-radius: 4px;
+    background: var(--paper-3);
+    border: 1px solid var(--line);
+    overflow: hidden;
+  }
+
+  .sample-bar {
+    display: block;
+    height: 100%;
+    background: color-mix(in srgb, var(--accent) 76%, var(--paper-2));
+    transition: width 0.2s var(--ease);
+  }
+
+  .sample-table tr.is-top .sample-bar {
+    background: var(--accent);
+  }
+
+  .sample-table tr.is-top .sample-token,
+  .sample-table tr.is-top [data-p] {
+    color: var(--ink);
+  }
+
+  .sample-table [data-p],
+  .sample-table [data-count],
+  .sample-freq {
+    width: 58px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .sample-freq {
+    color: var(--ink) !important;
+  }
+
+  .sample-actions {
+    margin: 18px 0 14px;
+  }
+
+  .sample-log {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    min-height: 30px;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--paper-3);
+  }
+
+  .sample-log span:not(.sample-log__empty) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 5px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: var(--paper);
+    font-size: 12px;
+    color: var(--ink);
+  }
+
+  .sample-log span.is-latest {
+    border-color: var(--accent);
+    color: var(--accent-ink);
+  }
+
+  .sample-log__empty {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--ink-faint);
+  }
+
+  .sample-readout {
+    margin: 16px 0 0;
+  }
+
+  .widget__foot {
+    margin: 16px 0 0;
+    padding-top: 14px;
+    border-top: 1px dashed var(--line);
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: var(--ink-faint);
+  }
+
+  @media (max-width: 640px) {
+    .sample-temp {
+      grid-template-columns: 44px minmax(0, 1fr) 40px;
+    }
+
+    .sample-temp .chip {
+      grid-column: 2 / -1;
+      justify-self: start;
+    }
+
+    .sample-table th:nth-child(4),
+    .sample-table td:nth-child(4) {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  const widget = document.querySelector<HTMLElement>('[data-sampling-widget]');
+  if (widget) {
+    const tokens = ['的', '一', '是', '在', '不', '天'];
+    const logits = [2.8, 2.1, 1.4, 0.6, -0.2, -1.1];
+    let temperature = 1;
+    let counts = tokens.map(() => 0);
+    let total = 0;
+    const recent: number[] = [];
+
+    const tempInput = widget.querySelector<HTMLInputElement>('[data-temperature]')!;
+    const tempValue = widget.querySelector<HTMLOutputElement>('[data-temperature-value]')!;
+    const rows = [...widget.querySelectorAll<HTMLTableRowElement>('[data-sample-row]')];
+    const bars = [...widget.querySelectorAll<HTMLElement>('[data-bar]')];
+    const pCells = [...widget.querySelectorAll<HTMLElement>('[data-p]')];
+    const countCells = [...widget.querySelectorAll<HTMLElement>('[data-count]')];
+    const freqCells = [...widget.querySelectorAll<HTMLElement>('[data-freq]')];
+    const log = widget.querySelector<HTMLElement>('[data-log]')!;
+    const summary = widget.querySelector<HTMLElement>('[data-sample-summary]')!;
+    const outTotal = widget.querySelector<HTMLElement>('[data-out-total]')!;
+    const outKinds = widget.querySelector<HTMLElement>('[data-out-kinds]')!;
+    const outTop = widget.querySelector<HTMLElement>('[data-out-top]')!;
+    const outEmpirical = widget.querySelector<HTMLElement>('[data-out-empirical]')!;
+
+    const argmax = (values: number[]) =>
+      values.reduce((best, value, index) => (value > values[best] ? index : best), 0);
+
+    const probabilities = () => {
+      if (temperature <= 0) {
+        const best = argmax(logits);
+        return tokens.map((_, index) => (index === best ? 1 : 0));
+      }
+      const scaled = logits.map((value) => value / temperature);
+      const maxScaled = Math.max(...scaled);
+      const exps = scaled.map((value) => Math.exp(value - maxScaled));
+      const sum = exps.reduce((acc, value) => acc + value, 0);
+      return exps.map((value) => value / sum);
+    };
+
+    const drawOne = (probs: number[]) => {
+      let threshold = Math.random();
+      for (let index = 0; index < probs.length; index += 1) {
+        threshold -= probs[index];
+        if (threshold <= 0) return index;
+      }
+      return probs.length - 1;
+    };
+
+    const renderLog = () => {
+      if (recent.length === 0) {
+        log.innerHTML = '<span class="sample-log__empty">还没有采样</span>';
+        return;
+      }
+      log.innerHTML = recent
+        .slice(-32)
+        .map((index, position, list) => {
+          const latest = position === list.length - 1 ? ' is-latest' : '';
+          return `<span class="${latest.trim()}">${tokens[index]}</span>`;
+        })
+        .join('');
+    };
+
+    const render = () => {
+      const probs = probabilities();
+      const maxIndex = argmax(probs);
+      tempValue.textContent = temperature <= 0 ? '贪心' : temperature.toFixed(2);
+
+      probs.forEach((p, index) => {
+        bars[index].style.width = `${(p * 100).toFixed(2)}%`;
+        pCells[index].textContent = `${(p * 100).toFixed(1)}%`;
+        rows[index].classList.toggle('is-top', index === maxIndex);
+        countCells[index].textContent = String(counts[index]);
+        freqCells[index].textContent = total > 0 ? `${((counts[index] / total) * 100).toFixed(1)}%` : '—';
+      });
+
+      outTotal.textContent = String(total);
+      outKinds.textContent = `${counts.filter((count) => count > 0).length} / ${tokens.length}`;
+      outTop.textContent = `${(probs[maxIndex] * 100).toFixed(1)}%`;
+
+      const empiricalIndex = counts.reduce((best, count, index) => (count > counts[best] ? index : best), 0);
+      outEmpirical.textContent = total > 0 ? `「${tokens[empiricalIndex]}」${((counts[empiricalIndex] / total) * 100).toFixed(1)}%` : '—';
+
+      renderLog();
+
+      if (temperature <= 0) {
+        summary.textContent = 'T = 0：实现直接取 argmax，分布退化成一个 one-hot。抽多少次都只会得到同一个 token。';
+      } else if (total === 0) {
+        summary.textContent =
+          temperature < 1
+            ? `T = ${temperature.toFixed(2)} < 1：分布被压尖，采样更容易落在「${tokens[maxIndex]}」上，但仍保留其他可能。`
+            : temperature > 1
+              ? `T = ${temperature.toFixed(2)} > 1：分布被压平，长尾 token 的机会明显变大，输出更不稳定。`
+              : 'T = 1 时按模型原始分布采样。多抽几次，实际频率会逐渐靠近概率——但每一次结果仍然是随机的。';
+      } else {
+        const topShare = (counts[empiricalIndex] / total) * 100;
+        summary.textContent = `已经抽了 ${total} 次，出现最多的是「${tokens[empiricalIndex]}」，实际频率 ${topShare.toFixed(1)}%，理论概率 ${(probs[empiricalIndex] * 100).toFixed(1)}%。样本越多，两者通常越接近。`;
+      }
+    };
+
+    const draw = (times: number) => {
+      const probs = probabilities();
+      for (let step = 0; step < times; step += 1) {
+        const index = drawOne(probs);
+        counts[index] += 1;
+        total += 1;
+        recent.push(index);
+      }
+      if (recent.length > 200) recent.splice(0, recent.length - 200);
+      render();
+    };
+
+    tempInput.addEventListener('input', () => {
+      temperature = Number(tempInput.value);
+      render();
+    });
+
+    widget.querySelector('[data-reset-temp]')?.addEventListener('click', () => {
+      temperature = 1;
+      tempInput.value = '1';
+      render();
+    });
+
+    widget.querySelectorAll<HTMLButtonElement>('[data-draw]').forEach((button) => {
+      button.addEventListener('click', () => draw(Number(button.dataset.draw)));
+    });
+
+    widget.querySelector('[data-clear]')?.addEventListener('click', () => {
+      counts = tokens.map(() => 0);
+      total = 0;
+      recent.length = 0;
+      render();
+    });
+
+    render();
+  }
+</script>

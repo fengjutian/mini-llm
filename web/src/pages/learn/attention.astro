@@ -29,7 +29,7 @@ let output = weights.matmul(v)?;         // [query_len, value_dim]`;
     { label: '系统架构 · Attention 数据约定', href: '/docs/architecture' },
     { label: 'Tensor Engine 深度解析', href: '/docs/tensor-engine' },
   ]}
-  next={{ href: '/learn/tensor-shape', title: '回到第一个实验' }}
+  next={{ href: '/learn/autograd', title: '梯度是怎样流回参数的' }}
 >
   <p>
     Transformer 里的“注意力”经常被讲成“模型在关注什么”。这个说法不算错，但很容易让人以为里面有什么额外的机制。

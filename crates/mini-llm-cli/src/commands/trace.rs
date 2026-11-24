@@ -27,7 +27,7 @@ pub fn run(_arguments: &[String]) {
     );
     let path = format!("{TRACE_DIR}/{run_id}.jsonl");
     let file = std::fs::File::create(&path).expect("create trace file");
-    let mut sink = JsonlSink::with_run_id(file, run_id);
+    let mut sink = JsonlSink::with_run_id(std::io::BufWriter::new(file), run_id);
 
     let tokenizer = CharTokenizer::from_text(TINY_CORPUS);
     let tokens = tokenizer.encode(TINY_CORPUS).expect("corpus encodes");
@@ -112,5 +112,6 @@ pub fn run(_arguments: &[String]) {
             record.layer, record.head, focus
         );
     }
+    sink.flush();
     println!("  wrote {} events to {path}", sink.events_written());
 }

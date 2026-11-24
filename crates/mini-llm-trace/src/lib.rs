@@ -153,11 +153,18 @@ impl MemorySink {
 }
 
 /// Writes newline-delimited JSON to any [`Write`] sink.
+///
+/// Writes are batched: the underlying writer is flushed every
+/// [`JsonlSink::flush_every`] events (and on [`JsonlSink::flush`] or drop), which
+/// keeps a training loop from issuing one syscall per event while still making
+/// the file tail-able.
 pub struct JsonlSink<W: Write> {
     writer: W,
     run_id: String,
     started: Instant,
     written: usize,
+    flush_every: usize,
+    pending: usize,
 }
 
 impl<W: Write> JsonlSink<W> {
@@ -172,7 +179,15 @@ impl<W: Write> JsonlSink<W> {
             run_id: run_id.into(),
             started: Instant::now(),
             written: 0,
+            flush_every: 8,
+            pending: 0,
         }
+    }
+
+    /// Sets how many events are buffered before flushing (`1` = every event).
+    pub fn with_flush_every(mut self, flush_every: usize) -> Self {
+        self.flush_every = flush_every.max(1);
+        self
     }
 
     pub fn run_id(&self) -> &str {
@@ -181,6 +196,12 @@ impl<W: Write> JsonlSink<W> {
 
     pub fn events_written(&self) -> usize {
         self.written
+    }
+
+    /// Flushes buffered events immediately, e.g. before printing a file path.
+    pub fn flush(&mut self) {
+        let _ = self.writer.flush();
+        self.pending = 0;
     }
 
     /// Milliseconds since the sink was created, attached to every line.
@@ -197,15 +218,26 @@ impl<W: Write> EventSink for JsonlSink<W> {
         line.pop();
         line.push_str(&timestamp);
         let _ = writeln!(self.writer, "{line}");
-        let _ = self.writer.flush();
         self.written += 1;
+        self.pending += 1;
+        if self.pending >= self.flush_every {
+            self.flush();
+        }
     }
 }
 
-/// Convenience sink that writes to a file.
-pub fn jsonl_file_sink(path: impl AsRef<std::path::Path>) -> io::Result<JsonlSink<std::fs::File>> {
+impl<W: Write> Drop for JsonlSink<W> {
+    fn drop(&mut self) {
+        let _ = self.writer.flush();
+    }
+}
+
+/// Convenience sink that writes to a buffered file.
+pub fn jsonl_file_sink(
+    path: impl AsRef<std::path::Path>,
+) -> io::Result<JsonlSink<io::BufWriter<std::fs::File>>> {
     let file = std::fs::File::create(path)?;
-    Ok(JsonlSink::new(file))
+    Ok(JsonlSink::new(io::BufWriter::new(file)))
 }
 
 fn default_run_id() -> String {
@@ -270,6 +302,50 @@ mod tests {
         assert!(lines[0].contains("run_started"));
         assert!(lines[0].contains("\"t_ms\":"));
         assert!(lines[0].ends_with('}'));
+    }
+
+    #[derive(Clone, Default)]
+    struct FlushCounter(Arc<Mutex<usize>>);
+
+    impl Write for FlushCounter {
+        fn write(&mut self, buffer: &[u8]) -> io::Result<usize> {
+            Ok(buffer.len())
+        }
+
+        fn flush(&mut self) -> io::Result<()> {
+            *self.0.lock().unwrap() += 1;
+            Ok(())
+        }
+    }
+
+    impl FlushCounter {
+        fn count(&self) -> usize {
+            *self.0.lock().unwrap()
+        }
+    }
+
+    #[test]
+    fn jsonl_sink_batches_flushes() {
+        let writer = FlushCounter::default();
+        let mut sink = JsonlSink::with_run_id(writer.clone(), "r").with_flush_every(4);
+        for step in 0..3 {
+            sink.record(Event::Step {
+                step,
+                loss: 1.0,
+                elapsed_ms: 1.0,
+            });
+        }
+        assert_eq!(writer.count(), 0, "should still be buffering");
+
+        sink.record(Event::Step {
+            step: 3,
+            loss: 1.0,
+            elapsed_ms: 1.0,
+        });
+        assert_eq!(writer.count(), 1, "fourth event flushes");
+
+        sink.flush();
+        assert_eq!(writer.count(), 2);
     }
 
     #[test]

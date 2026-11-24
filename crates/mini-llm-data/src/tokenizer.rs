@@ -1,6 +1,6 @@
 //! A character-level tokenizer.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeSet, HashMap};
 
 use crate::DataError;
 
@@ -8,6 +8,8 @@ use crate::DataError;
 #[derive(Debug, Clone, PartialEq)]
 pub struct CharTokenizer {
     characters: Vec<char>,
+    /// Character -> id, so encoding is O(1) per character instead of a scan.
+    index: HashMap<char, usize>,
 }
 
 impl CharTokenizer {
@@ -16,7 +18,7 @@ impl CharTokenizer {
     /// Characters are sorted by code point so the mapping is deterministic.
     pub fn from_text(text: &str) -> Self {
         let characters: Vec<char> = text.chars().collect::<BTreeSet<_>>().into_iter().collect();
-        Self { characters }
+        Self::build(characters)
     }
 
     /// Builds a vocabulary from an explicit character list (e.g. a checkpoint).
@@ -28,7 +30,16 @@ impl CharTokenizer {
         if unique.len() != characters.len() {
             return Err(DataError::EmptyCorpus);
         }
-        Ok(Self { characters })
+        Ok(Self::build(characters))
+    }
+
+    fn build(characters: Vec<char>) -> Self {
+        let index = characters
+            .iter()
+            .enumerate()
+            .map(|(id, &character)| (character, id))
+            .collect();
+        Self { characters, index }
     }
 
     pub fn vocab_size(&self) -> usize {
@@ -43,9 +54,9 @@ impl CharTokenizer {
     pub fn encode(&self, text: &str) -> Result<Vec<usize>, DataError> {
         text.chars()
             .map(|character| {
-                self.characters
-                    .iter()
-                    .position(|&candidate| candidate == character)
+                self.index
+                    .get(&character)
+                    .copied()
                     .ok_or(DataError::UnknownCharacter { character })
             })
             .collect()

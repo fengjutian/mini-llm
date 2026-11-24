@@ -1,0 +1,469 @@
+---
+import LessonLayout from '../../layouts/LessonLayout.astro';
+import { Code } from 'astro:components';
+
+const HEAD_DIM = 8;
+const BASE = 10_000;
+const Q = [1.0, 0.2, 0.6, 0.4, 0.8, 0.1, 0.3, 0.7];
+const K = [0.5, 0.9, 0.2, 0.7, 0.1, 0.6, 0.8, 0.4];
+const frequencies = Array.from({ length: HEAD_DIM / 2 }, (_, i) => 1 / Math.pow(BASE, (2 * i) / HEAD_DIM));
+
+const rotate = (vector: number[], position: number) => {
+  const output = [...vector];
+  frequencies.forEach((frequency, i) => {
+    const angle = position * frequency;
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+    const a = vector[2 * i];
+    const b = vector[2 * i + 1];
+    output[2 * i] = a * cos - b * sin;
+    output[2 * i + 1] = a * sin + b * cos;
+  });
+  return output;
+};
+
+const dot = (a: number[], b: number[]) => a.reduce((sum, value, i) => sum + value * b[i], 0);
+const scoreAt = (delta: number) => dot(rotate(Q, delta), rotate(K, 0));
+
+const initialP = 8;
+const initialK = 2;
+const initialScore = dot(rotate(Q, initialP), rotate(K, initialK));
+
+const distances = Array.from({ length: 33 }, (_, i) => i - 16);
+const scores = distances.map(scoreAt);
+const rawMin = Math.min(...scores);
+const rawMax = Math.max(...scores);
+const yMin = rawMin - (rawMax - rawMin) * 0.12;
+const yMax = rawMax + (rawMax - rawMin) * 0.12;
+const toX = (delta: number) => 48 + ((delta + 16) / 32) * 560;
+const toY = (score: number) => 24 + ((yMax - score) / (yMax - yMin)) * 140;
+const polyline = distances.map((delta) => `${toX(delta).toFixed(1)},${toY(scoreAt(delta)).toFixed(1)}`).join(' ');
+const zeroY = toY(0);
+
+const rotatedQ = rotate(Q, initialP);
+const rotatedK = rotate(K, initialK);
+const pairRows = frequencies.map((frequency, i) => {
+  const qContribution = rotatedQ[2 * i] * rotatedK[2 * i] + rotatedQ[2 * i + 1] * rotatedK[2 * i + 1];
+  return {
+    pair: i,
+    frequency,
+    qAngle: initialP * frequency,
+    kAngle: initialK * frequency,
+    contribution: qContribution,
+  };
+});
+
+const snippet = `let frequencies: Vec<f32> = (0..half)
+    .map(|index| 1.0 / base.powf(2.0 * index as f32 / head_dim as f32))
+    .collect();
+
+for (index, &frequency) in frequencies.iter().enumerate() {
+    let angle = position * frequency;
+    let (sin, cos) = angle.sin_cos();
+    let first = head_offset + 2 * index;
+    let a = self.data[first];
+    let b = self.data[first + 1];
+    output[first] = a * cos - b * sin;
+    output[first + 1] = a * sin + b * cos;
+}`;
+---
+
+<LessonLayout
+  index="05"
+  tag="位置编码"
+  title="位置信息怎样进入注意力"
+  summary="RoPE 不往 embedding 里加位置向量，而是按位置旋转 Q 和 K。旋转之后，点积只和两者的相对距离有关——绝对位置被编码成了角度。"
+  time="8 分钟"
+  points={[
+    '没有位置信号时，注意力只看内容，无法区分 token 的先后。',
+    'RoPE 对每个 head 的相邻两维 (2i, 2i+1) 做二维旋转。',
+    '角度 = position × base^(−2i/d)，base 取 10000。',
+    'Q、K 用同一套旋转，点积因此只依赖 p − q；旋转不改变向量长度。',
+  ]}
+  links={[
+    { label: 'Transformer Engine 深度解析', href: '/docs/transformer-engine' },
+    { label: '系统架构 · PositionKind', href: '/docs/architecture' },
+  ]}
+  next={{ href: '/learn/sampling', title: '同一个模型，为什么每次说得不一样' }}
+>
+  <p>
+    注意力本身对顺序是“迟钝”的。把输入 token 重新排列，<code>Q·K<sup>T</sup></code> 只是跟着重排行和列，输出仍然是同样的加权平均。
+    换句话说，没有位置信号时，<code>猫 追 狗</code> 和 <code>狗 追 猫</code> 在内容层面长得一样——causal mask 只限制了“能看多远的过去”，并没有告诉模型“谁在前”。
+  </p>
+
+  <p>
+    最直接的办法是给每个位置一个可学习的 embedding，再和 token embedding 相加；mini-llm 的 <code>PositionKind::Learned</code> 就是这么做的。
+    代价是位置表在 <code>max_seq_len</code> 处被截断，超长位置没有定义。RoPE 换了个思路：<strong>不加向量，转角度</strong>。
+  </p>
+
+  <div class="formula">
+    θ<sub>i</sub> = p · base<sup>−2i/d</sup> &nbsp;<span class="text-dim">// 第 i 对维度，位置 p 的旋转角</span><br />
+    [q′<sub>2i</sub>, q′<sub>2i+1</sub>] = R(θ<sub>i</sub>) · [q<sub>2i</sub>, q<sub>2i+1</sub>]<br />
+    q<sub>p</sub> · k<sub>q</sub> = q<sup>T</sup> R<sub>q−p</sub> k &nbsp;<span class="text-dim">// 只剩相对位置</span>
+  </div>
+
+  <div class="widget" data-rope-widget>
+    <div class="widget__head">
+      <h2 class="widget__title">rotate(q, p) · rotate(k, q)</h2>
+      <span class="widget__hint">拖动两个位置，看点积如何只随距离变化</span>
+    </div>
+    <div class="widget__body">
+      <div class="rope-controls">
+        <label class="rope-slider">
+          <span>query 位置 p</span>
+          <input type="range" min="0" max="15" step="1" value={initialP} data-position="p" />
+          <output data-pos-out="p">{initialP}</output>
+        </label>
+        <label class="rope-slider">
+          <span>key 位置 q</span>
+          <input type="range" min="0" max="15" step="1" value={initialK} data-position="k" />
+          <output data-pos-out="k">{initialK}</output>
+        </label>
+      </div>
+
+      <div class="rope-chart-wrap">
+        <svg class="rope-chart" viewBox="0 0 640 210" role="img" aria-label="点积随相对距离变化的曲线" data-y-min={yMin} data-y-max={yMax}>
+          <line class="chart-axis" x1="48" y1={zeroY} x2="608" y2={zeroY} />
+          <line class="chart-axis" x1="48" y1="24" x2="48" y2="164" />
+          {[-16, -8, 0, 8, 16].map((tick) => (
+            <g>
+              <line class="chart-tick" x1={toX(tick)} y1="164" x2={toX(tick)} y2="169" />
+              <text class="chart-label" x={toX(tick)} y="184">{tick}</text>
+            </g>
+          ))}
+          <text class="chart-label chart-label--left" x="48" y="16">score</text>
+          <text class="chart-label chart-label--right" x="608" y="202">p − q</text>
+          <polyline class="chart-line" points={polyline} />
+          <line class="chart-marker-line" data-marker-line x1={toX(initialP - initialK)} y1="24" x2={toX(initialP - initialK)} y2="164" />
+          <circle class="chart-marker" data-marker cx={toX(initialP - initialK)} cy={toY(initialScore)} r="5" />
+        </svg>
+      </div>
+
+      <div class="control-row rope-actions">
+        <button class="chip" type="button" data-shift>两个位置同时 +1</button>
+        <button class="chip" type="button" data-reset>回到初始位置</button>
+        <span class="rope-shift-note mono" data-shift-note></span>
+      </div>
+
+      <dl class="readout rope-readout">
+        <div><dt>点积</dt><dd data-out-score>{initialScore.toFixed(3)}</dd></div>
+        <div><dt>相对距离 p − q</dt><dd data-out-delta>{initialP - initialK}</dd></div>
+        <div><dt>|q| 保持</dt><dd>{Math.sqrt(Q.reduce((sum, value) => sum + value * value, 0)).toFixed(3)}</dd></div>
+        <div><dt>|k| 保持</dt><dd>{Math.sqrt(K.reduce((sum, value) => sum + value * value, 0)).toFixed(3)}</dd></div>
+      </dl>
+
+      <table class="rope-table">
+        <thead>
+          <tr><th>维度对</th><th>ω<sub>i</sub></th><th>query 角度</th><th>key 角度</th><th>点积贡献</th></tr>
+        </thead>
+        <tbody data-rope-rows>
+          {pairRows.map((row) => (
+            <tr>
+              <td class="mono">({2 * row.pair}, {2 * row.pair + 1})</td>
+              <td class="mono">{row.frequency.toFixed(5)}</td>
+              <td class="mono" data-q-angle>{row.qAngle.toFixed(3)}</td>
+              <td class="mono" data-k-angle>{row.kAngle.toFixed(3)}</td>
+              <td class="mono" data-contribution>{row.contribution.toFixed(3)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <p class="widget__foot" data-rope-summary>
+        当前两对位置的点积是 {initialScore.toFixed(3)}。把 p 和 q 一起加同一个数，点积不变。
+      </p>
+    </div>
+  </div>
+
+  <h2>为什么旋转能得到相对位置</h2>
+  <p>
+    旋转矩阵有个性质：<code>R(a)ᵀ R(b) = R(b − a)</code>。把它代进点积：
+    <code>(R<sub>p</sub>q)ᵀ(R<sub>q</sub>k) = qᵀR<sub>p</sub>ᵀR<sub>q</sub>k = qᵀR<sub>q−p</sub>k</code>。
+    等号右边只剩 <code>q − p</code>，绝对位置被消掉了。但这不是“没有位置”——角度差本身就是位置差，只是它以一种对注意力友好的方式出现。
+  </p>
+  <p>
+    注意这里对每一对维度用的是不同的频率。<code>i</code> 越大，频率越低、波长越长；低维负责区分相邻 token，高维负责记住更远的关系。
+    <code>base = 10000</code> 让波长从 <code>2π</code> 一路铺到几万，覆盖常见的上下文长度。
+  </p>
+
+  <h2>旋转不改变长度</h2>
+  <p>
+    二维旋转是正交变换，<code>|R(θ)x| = |x|</code>。所以 RoPE 不会像加法那样把 embedding 的尺度越推越大，也不会改变 Q、K 的范数分布。
+    对反向传播来说更省事：旋转矩阵的逆就是转置，也就是把角度取负，因此 <code>rope_rotate</code> 接受负位置就能直接完成反向旋转。
+  </p>
+
+  <h2>在 mini-llm 里</h2>
+  <div class="code-card">
+    <div class="code-card__head mono">crates/mini-llm-tensor/src/matrix.rs</div>
+    <Code code={snippet} lang="rust" theme="github-dark-dimmed" />
+  </div>
+  <p>
+    <code>rope_rotate</code> 接收形状为 <code>[rows, heads × head_dim]</code> 的张量，对每个 head 独立旋转；<code>positions</code> 的长度必须等于行数，
+    并且 <code>head_dim</code> 必须是偶数。注意力层在算分数之前分别对 Q 和 K 调用它，V 不参与旋转。
+  </p>
+  <p>
+    仓库里有一个很关键的测试 <code>rope_scores_depend_only_on_relative_position</code>：位置 <code>(3, 7)</code> 和 <code>(0, 4)</code> 的点积必须相等。
+    另一个测试确认旋转前后每个 head 的范数不变。这类性质比“跑通一次”更值得写进测试。
+  </p>
+
+  <h2>它没有解决什么</h2>
+  <p>
+    RoPE 让位置索引在机制上可以一直增长，但模型只在训练见过的距离上见过这些角度组合。超出训练上下文后，注意力分数会进入没学过的相位，
+    效果下降是正常的，不是“实现有 bug”。另外，<code>ModelConfig::tiny</code> 仍使用可学习位置表，只有 <code>modern</code> 配置切到 RoPE；
+    两条路径共用同一套注意力代码，靠 <code>PositionKind</code> 分支。
+  </p>
+
+  <div class="note">
+    <strong>常见误解</strong>
+    RoPE 不是把位置向量加到 token embedding 上，也不引入任何可训练参数。它修改的是 Q、K 的几何形状；V 和输出投影完全不受影响。
+  </div>
+</LessonLayout>
+
+<style>
+  .rope-controls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 24px;
+  }
+
+  .rope-slider {
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr) 32px;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--ink-soft);
+  }
+
+  .rope-slider output {
+    text-align: right;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .rope-chart-wrap {
+    margin: 18px 0 4px;
+    padding: 8px 0 0;
+    border-top: 1px solid var(--line);
+    overflow-x: auto;
+  }
+
+  .rope-chart {
+    width: 100%;
+    min-width: 520px;
+    height: auto;
+  }
+
+  .chart-axis,
+  .chart-tick {
+    stroke: var(--line);
+    stroke-width: 1;
+  }
+
+  .chart-line {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 2;
+  }
+
+  .chart-marker-line {
+    stroke: var(--accent);
+    stroke-width: 1;
+    stroke-dasharray: 3 4;
+    opacity: 0.55;
+  }
+
+  .chart-marker {
+    fill: var(--accent);
+    stroke: var(--paper-2);
+    stroke-width: 2;
+  }
+
+  .chart-label {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    fill: var(--ink-faint);
+    text-anchor: middle;
+  }
+
+  .chart-label--left {
+    text-anchor: start;
+  }
+
+  .chart-label--right {
+    text-anchor: end;
+  }
+
+  .rope-actions {
+    margin: 12px 0 16px;
+  }
+
+  .rope-shift-note {
+    font-size: 10.5px;
+    color: var(--accent-ink);
+  }
+
+  .rope-readout {
+    margin: 0 0 18px;
+  }
+
+  .rope-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11.5px;
+  }
+
+  .rope-table th {
+    padding: 8px 10px;
+    text-align: left;
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .rope-table td {
+    padding: 7px 10px;
+    border-bottom: 1px solid var(--line);
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .rope-table tr:last-child td {
+    border-bottom: 0;
+  }
+
+  .widget__foot {
+    margin: 16px 0 0;
+    padding-top: 14px;
+    border-top: 1px dashed var(--line);
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: var(--ink-faint);
+  }
+
+  @media (max-width: 640px) {
+    .rope-controls {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>
+
+<script>
+  const widget = document.querySelector<HTMLElement>('[data-rope-widget]');
+  if (widget) {
+    const HEAD_DIM = 8;
+    const BASE = 10_000;
+    const Q = [1.0, 0.2, 0.6, 0.4, 0.8, 0.1, 0.3, 0.7];
+    const K = [0.5, 0.9, 0.2, 0.7, 0.1, 0.6, 0.8, 0.4];
+    const frequencies = Array.from({ length: HEAD_DIM / 2 }, (_, i) => 1 / Math.pow(BASE, (2 * i) / HEAD_DIM));
+
+    const initialP = 8;
+    const initialK = 2;
+    let p = initialP;
+    let k = initialK;
+
+    const rotate = (vector: number[], position: number) => {
+      const output = [...vector];
+      frequencies.forEach((frequency, i) => {
+        const angle = position * frequency;
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+        const a = vector[2 * i];
+        const b = vector[2 * i + 1];
+        output[2 * i] = a * cos - b * sin;
+        output[2 * i + 1] = a * sin + b * cos;
+      });
+      return output;
+    };
+
+    const dot = (a: number[], b: number[]) => a.reduce((sum, value, i) => sum + value * b[i], 0);
+
+    const pInput = widget.querySelector<HTMLInputElement>('[data-position="p"]')!;
+    const kInput = widget.querySelector<HTMLInputElement>('[data-position="k"]')!;
+    const pOut = widget.querySelector<HTMLOutputElement>('[data-pos-out="p"]')!;
+    const kOut = widget.querySelector<HTMLOutputElement>('[data-pos-out="k"]')!;
+    const scoreOut = widget.querySelector<HTMLElement>('[data-out-score]')!;
+    const deltaOut = widget.querySelector<HTMLElement>('[data-out-delta]')!;
+    const summary = widget.querySelector<HTMLElement>('[data-rope-summary]')!;
+    const shiftNote = widget.querySelector<HTMLElement>('[data-shift-note]')!;
+    const marker = widget.querySelector<SVGCircleElement>('[data-marker]')!;
+    const markerLine = widget.querySelector<SVGLineElement>('[data-marker-line]')!;
+    const rows = [...widget.querySelectorAll<HTMLTableRowElement>('[data-rope-rows] tr')];
+
+    const toX = (delta: number) => 48 + ((delta + 16) / 32) * 560;
+    const chart = widget.querySelector<SVGSVGElement>('.rope-chart')!;
+    const yMin = Number(chart.dataset.yMin);
+    const yMax = Number(chart.dataset.yMax);
+    const toY = (score: number) => 24 + ((yMax - score) / (yMax - yMin)) * 140;
+
+    const render = () => {
+      const rotatedQ = rotate(Q, p);
+      const rotatedK = rotate(K, k);
+      const score = dot(rotatedQ, rotatedK);
+      const delta = p - k;
+
+      pOut.textContent = String(p);
+      kOut.textContent = String(k);
+      scoreOut.textContent = score.toFixed(3);
+      deltaOut.textContent = String(delta);
+      marker.setAttribute('cx', toX(delta).toFixed(1));
+      marker.setAttribute('cy', toY(score).toFixed(1));
+      markerLine.setAttribute('x1', toX(delta).toFixed(1));
+      markerLine.setAttribute('x2', toX(delta).toFixed(1));
+
+      rows.forEach((row, i) => {
+        const contribution = rotatedQ[2 * i] * rotatedK[2 * i] + rotatedQ[2 * i + 1] * rotatedK[2 * i + 1];
+        row.querySelector('[data-q-angle]')!.textContent = (p * frequencies[i]).toFixed(3);
+        row.querySelector('[data-k-angle]')!.textContent = (k * frequencies[i]).toFixed(3);
+        row.querySelector('[data-contribution]')!.textContent = contribution.toFixed(3);
+      });
+
+      const shiftedScore = dot(rotate(Q, p + 1), rotate(K, k + 1));
+      summary.textContent =
+        Math.abs(shiftedScore - score) < 1e-6
+          ? `当前点积 ${score.toFixed(3)}。两个位置同时 +1 后仍是 ${shiftedScore.toFixed(3)}——只有距离 p − q = ${delta} 进了结果。`
+          : `当前点积 ${score.toFixed(3)}，相对距离 p − q = ${delta}。`;
+    };
+
+    pInput.addEventListener('input', () => {
+      p = Number(pInput.value);
+      shiftNote.textContent = '';
+      render();
+    });
+
+    kInput.addEventListener('input', () => {
+      k = Number(kInput.value);
+      shiftNote.textContent = '';
+      render();
+    });
+
+    widget.querySelector('[data-shift]')?.addEventListener('click', () => {
+      if (p >= 15 || k >= 15) {
+        shiftNote.textContent = '已经到滑杆上限';
+        return;
+      }
+      p += 1;
+      k += 1;
+      pInput.value = String(p);
+      kInput.value = String(k);
+      shiftNote.textContent = '点积不变 ✓';
+      render();
+    });
+
+    widget.querySelector('[data-reset]')?.addEventListener('click', () => {
+      p = initialP;
+      k = initialK;
+      pInput.value = String(p);
+      kInput.value = String(k);
+      shiftNote.textContent = '';
+      render();
+    });
+
+    render();
+  }
+</script>

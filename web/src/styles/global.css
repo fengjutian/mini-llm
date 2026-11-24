@@ -819,6 +819,110 @@ html[data-theme="dark"] .theme-icon--sun {
   background: color-mix(in srgb, var(--accent) calc(var(--w) * 100%), var(--paper-3));
 }
 
+.mini-graph {
+  width: 168px;
+  height: auto;
+  overflow: visible;
+}
+
+.mini-graph .edge {
+  fill: none;
+  stroke: var(--line-strong);
+  stroke-width: 1.4;
+}
+
+.mini-graph .edge.is-active {
+  stroke: var(--accent);
+}
+
+.mini-graph rect,
+.mini-graph circle {
+  fill: var(--paper-2);
+  stroke: var(--line-strong);
+  stroke-width: 1.4;
+}
+
+.mini-graph circle.is-active {
+  fill: var(--accent);
+  stroke: var(--accent);
+}
+
+.mini-dials {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.mini-dials span {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  background: var(--paper-2);
+}
+
+.mini-dials span::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 1.5px;
+  height: 12px;
+  border-radius: 1px;
+  background: var(--line-strong);
+  transform-origin: top center;
+  transform: translateX(-50%) rotate(var(--a));
+}
+
+.mini-dials span::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--ink-faint);
+  transform: translate(-50%, -50%);
+}
+
+.mini-dials span.is-active {
+  border-color: var(--accent);
+}
+
+.mini-dials span.is-active::before {
+  background: var(--accent);
+}
+
+.mini-dials span.is-active::after {
+  background: var(--accent);
+}
+
+.mini-strip {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  width: 216px;
+  height: 52px;
+}
+
+.mini-strip span {
+  flex: var(--w);
+  height: 36px;
+  border-radius: 3px;
+  background: var(--line-strong);
+}
+
+.mini-strip span:nth-child(even) {
+  background: var(--line);
+}
+
+.mini-strip span.is-active {
+  height: 52px;
+  background: var(--accent);
+}
+
 /* --------------------------------------------------------------------------
    Roadmap
    -------------------------------------------------------------------------- */

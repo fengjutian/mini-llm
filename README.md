@@ -294,13 +294,15 @@ optimized against (release, laptop CPU; run-to-run variance on a busy machine is
 around ±20%, so treat them as ratios):
 
 ```text
-matmul  64x64 x64 :     0.05 ms  10536.3 MFLOP/s
-matmul 128x128x128:     0.24 ms  17259.8 MFLOP/s
-matmul 256x256x256:     1.72 ms  19488.0 MFLOP/s
-forward (2 layers, hidden 32, block 16, batch 4):     2.63 ms
-train step (batch 2, block 16):                      2.32 ms
-generate 32 tokens (KV cache):                        3.34 ms
-clone 1024x1024 (4 MB shared buffer):                0.044 us
+matmul  64x64 x64 :     0.04 ms  13958.7 MFLOP/s
+matmul 128x128x128:     0.23 ms  18176.8 MFLOP/s
+matmul 256x256x256:     1.98 ms  16984.4 MFLOP/s
+forward (hidden  32, block 16, batch 4):     2.17 ms
+forward (hidden 128, block 32, batch 4):    20.65 ms
+train step (hidden  32, block 16, batch 2):  2.25 ms
+train step (hidden 128, block 32, batch 2): 26.91 ms
+generate 32 tokens (KV cache):                3.49 ms
+clone 1024x1024 (4 MB shared buffer):        0.060 us
 ```
 
 Design choices behind those numbers:

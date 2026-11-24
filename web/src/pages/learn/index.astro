@@ -6,21 +6,24 @@ import { LESSONS } from '../../data/site';
 
 <BaseLayout
   title="概念图解"
-  description="三个可交互的 LLM 概念实验：张量的形状与步长、Softmax 概率、注意力权重。每个实验都对应 mini-llm 中已经跑通的 Rust 代码。"
+  description="六个可交互的 LLM 概念实验：张量的形状与步长、Softmax 概率、注意力权重、反向传播、RoPE 位置编码与采样。每个实验都对应 mini-llm 中已经跑通的 Rust 代码。"
 >
   <section class="learn-hero">
     <div class="shell">
       <p class="eyebrow">概念图解</p>
-      <h1>三个实验，建立 LLM 的直觉骨架</h1>
+      <h1>六个实验，建立 LLM 的直觉骨架</h1>
       <p class="learn-hero__lead">
-        大模型的公式不算多，难的是把符号和真实的数据流动对应起来。这三个页面用最小的例子、可拖动的参数，把
-        <strong>形状 → 概率 → 注意力</strong> 这条链条走一遍。公式旁边就是仓库里对应的实现。
+        大模型的公式不算多，难的是把符号和真实的数据流动对应起来。这六个页面用最小的例子、可拖动的参数，把
+        <strong>形状 → 概率 → 注意力 → 位置 → 采样 → 梯度</strong> 这条链条走一遍。公式旁边就是仓库里对应的实现。
       </p>
       <div class="learn-hero__hint">
         <span class="mono">建议顺序</span>
         <span>01 张量</span><span class="sep" aria-hidden="true">→</span>
         <span>02 Softmax</span><span class="sep" aria-hidden="true">→</span>
-        <span>03 注意力</span>
+        <span>03 注意力</span><span class="sep" aria-hidden="true">→</span>
+        <span>04 梯度</span><span class="sep" aria-hidden="true">→</span>
+        <span>05 位置</span><span class="sep" aria-hidden="true">→</span>
+        <span>06 采样</span>
       </div>
     </div>
   </section>

@@ -1,0 +1,510 @@
+---
+import LessonLayout from '../../layouts/LessonLayout.astro';
+import { Code } from 'astro:components';
+
+const snippet = `let x = TensorValue::parameter(vec![2.0], vec![1, 1])?;
+let w = TensorValue::parameter(vec![3.0], vec![1, 1])?;
+let b = TensorValue::constant(vec![1.0], vec![1, 1])?;
+
+let z = w.matmul(&x)?.add(&b)?;   // forward：记录 z ← w, x, b
+let a = z.relu()?;
+let loss = a.sub(&target)?.powf(2.0)?.mean()?;
+
+loss.backward()?;                 // 反向：一次拿到所有梯度
+assert!(w.grad().is_some());`;
+---
+
+<LessonLayout
+  index="04"
+  tag="训练"
+  title="梯度是怎样流回参数的"
+  summary="反向传播不是另一套公式。前向时每个算子记下自己的局部导数，反向时从标量 loss 出发，沿计算图把梯度乘回去，并让所有路径的贡献相加。"
+  time="7 分钟"
+  points={[
+    '前向传播记录计算图；backward 从 loss 出发，种子梯度是 1。',
+    '每条边乘以局部导数，节点梯度是所有下游路径贡献之和。',
+    '必须按逆拓扑序处理，共享子表达式才不会漏加。',
+    '梯度是累加的，训练循环每一步都要 zero_grad。',
+  ]}
+  links={[
+    { label: 'Autograd Engine 深度解析', href: '/docs/autograd-engine' },
+    { label: '系统架构 · 训练路径', href: '/docs/architecture' },
+  ]}
+  next={{ href: '/learn/rope', title: '位置信息怎样进入注意力' }}
+>
+  <p>
+    训练一个网络，真正贵的不是算出 loss，而是知道<strong>每个参数该往哪个方向动</strong>。如果模型有 100 万个参数，用数值方法逐个扰动求导要前向
+    100 万次；反向传播只走一遍计算图，就能同时得到全部梯度。
+  </p>
+
+  <p>
+    先看一个最小的标量计算：
+    <code>z = w·x + b</code>，<code>a = relu(z)</code>，<code>L = (a − y)²</code>。把它画成图，节点是中间结果，边是算子。
+    前向计算从左往右；反向传播从右往左，每条边乘上该算子的局部导数。
+  </p>
+
+  <div class="formula">
+    z = w·x + b &nbsp;<span class="text-dim">// ∂z/∂w = x, ∂z/∂x = w, ∂z/∂b = 1</span><br />
+    a = relu(z) &nbsp;<span class="text-dim">// ∂a/∂z = 1[z &gt; 0]</span><br />
+    L = (a − y)² &nbsp;<span class="text-dim">// ∂L/∂a = 2(a − y)</span><br />
+    <em>∂L/∂w = 2(a − y) · 1[z &gt; 0] · x</em>
+  </div>
+
+  <div class="widget" data-autograd-widget>
+    <div class="widget__head">
+      <h2 class="widget__title">forward → backward</h2>
+      <span class="widget__hint">拖动参数，再逐步播放反向传播</span>
+    </div>
+    <div class="widget__body">
+      <div class="dag-wrap">
+        <svg class="dag" viewBox="0 0 680 300" role="img" aria-label="标量计算图：w、x、b 经过加法和 relu 得到 loss">
+          <path class="dag-edge" data-edge="w-z" d="M116 48 C 170 48 180 108 224 108" />
+          <path class="dag-edge" data-edge="x-z" d="M116 132 C 170 132 180 108 224 108" />
+          <path class="dag-edge" data-edge="b-z" d="M116 216 C 170 216 180 108 224 108" />
+          <path class="dag-edge" data-edge="z-a" d="M320 108 H404" />
+          <path class="dag-edge" data-edge="a-l" d="M500 108 H556" />
+
+          <text class="dag-edge-label" x="174" y="64">× x</text>
+          <text class="dag-edge-label" x="174" y="164">× w</text>
+          <text class="dag-edge-label" x="178" y="240">× 1</text>
+          <text class="dag-edge-label" x="362" y="98">relu′</text>
+          <text class="dag-edge-label" x="528" y="98">2(a−y)</text>
+
+          <g class="dag-node">
+            <rect x="20" y="24" width="96" height="48" rx="7" />
+            <text class="dag-name" x="68" y="43">w</text>
+            <text class="dag-value" x="68" y="62" data-value="w">3.00</text>
+          </g>
+          <g class="dag-node">
+            <rect x="20" y="108" width="96" height="48" rx="7" />
+            <text class="dag-name" x="68" y="127">x</text>
+            <text class="dag-value" x="68" y="146" data-value="x">2.00</text>
+          </g>
+          <g class="dag-node">
+            <rect x="20" y="192" width="96" height="48" rx="7" />
+            <text class="dag-name" x="68" y="211">b</text>
+            <text class="dag-value" x="68" y="230" data-value="b">1.00</text>
+          </g>
+          <g class="dag-node">
+            <rect x="224" y="84" width="96" height="48" rx="7" />
+            <text class="dag-name" x="272" y="103">z = w·x + b</text>
+            <text class="dag-value" x="272" y="122" data-value="z">7.00</text>
+          </g>
+          <g class="dag-node">
+            <rect x="404" y="84" width="96" height="48" rx="7" />
+            <text class="dag-name" x="452" y="103">a = relu(z)</text>
+            <text class="dag-value" x="452" y="122" data-value="a">7.00</text>
+          </g>
+          <g class="dag-node">
+            <rect x="556" y="84" width="104" height="48" rx="7" />
+            <text class="dag-name" x="608" y="103">L = (a−y)²</text>
+            <text class="dag-value" x="608" y="122" data-value="l">4.00</text>
+          </g>
+
+          <text class="dag-grad" x="68" y="90" data-grad="w">∂L/∂w —</text>
+          <text class="dag-grad" x="68" y="174" data-grad="x">∂L/∂x —</text>
+          <text class="dag-grad" x="68" y="258" data-grad="b">∂L/∂b —</text>
+          <text class="dag-grad" x="272" y="156" data-grad="z">∂L/∂z —</text>
+          <text class="dag-grad" x="452" y="156" data-grad="a">∂L/∂a —</text>
+          <text class="dag-grad is-seed" x="608" y="156" data-grad="l">∂L/∂L 1.00</text>
+        </svg>
+      </div>
+
+      <div class="dag-controls">
+        <label class="dag-slider">
+          <span>w</span>
+          <input type="range" min="-3" max="4" step="0.05" value="3" data-param="w" />
+          <output data-out="w">3.00</output>
+        </label>
+        <label class="dag-slider">
+          <span>x</span>
+          <input type="range" min="-3" max="4" step="0.05" value="2" data-param="x" />
+          <output data-out="x">2.00</output>
+        </label>
+        <label class="dag-slider">
+          <span>b</span>
+          <input type="range" min="-4" max="4" step="0.05" value="1" data-param="b" />
+          <output data-out="b">1.00</output>
+        </label>
+        <label class="dag-slider">
+          <span>y</span>
+          <input type="range" min="-2" max="8" step="0.1" value="5" data-param="y" />
+          <output data-out="y">5.00</output>
+        </label>
+      </div>
+
+      <div class="control-row dag-actions">
+        <button class="chip" type="button" data-step>下一步</button>
+        <button class="chip" type="button" data-reset>重置参数</button>
+        <span class="dag-progress mono" data-progress>0 / 3</span>
+      </div>
+
+      <dl class="readout dag-readout">
+        <div><dt>loss</dt><dd data-out-loss>4.00</dd></div>
+        <div><dt>∂L/∂w</dt><dd data-out-gw>—</dd></div>
+        <div><dt>∂L/∂x</dt><dd data-out-gx>—</dd></div>
+        <div><dt>∂L/∂b</dt><dd data-out-gb>—</dd></div>
+      </dl>
+
+      <p class="widget__foot" data-dag-summary>
+        前向已经算完。点「下一步」从 loss 开始倒着走，观察每条边乘上的局部导数。
+      </p>
+    </div>
+  </div>
+
+  <h2>为什么必须倒着走</h2>
+  <p>
+    一个节点的梯度，等于它<strong>所有下游路径</strong>贡献之和。只有先知道下游节点的梯度，才能乘上局部导数继续往上传播。所以实现里先做一次深度优先后序遍历，
+    得到“父节点在前、子节点在后”的拓扑序，再反过来遍历：处理到某个节点时，它从所有下游收到的梯度已经累加完毕。
+  </p>
+  <p>
+    这也是为什么同一个节点被引用两次时不能直接赋值，而必须 <code>+=</code>。例如残差连接 <code>y = x + f(x)</code>，<code>x</code> 的梯度会同时来自
+    恒等路径和 <code>f</code> 这条路径；漏掉任何一条，梯度就错了。mini-llm 的 <code>accumulate_grad</code> 正是在做这件事。
+  </p>
+
+  <h2>反向传播贵不贵</h2>
+  <p>
+    一次前向加一次反向，计算量大约是前向的 2～3 倍，和参数数量无关；相比之下，数值求导每个参数都要重新前向一次。这就是为什么深度学习框架都实现反向模式自动微分，
+    而不是拿有限差分去训练。
+  </p>
+  <p>
+    但省下来的是计算，不是内存。反向需要前向保存的中间值（例如 relu 的输入、matmul 的两个操作数），所以训练比推理更吃显存。mini-llm 的每个图节点都持有
+    <code>value</code>、<code>parents</code> 和 <code>backward</code> 闭包，只要还有一个 <code>TensorValue</code> 句柄活着，这些值就不会释放。
+  </p>
+
+  <h2>在 mini-llm 里</h2>
+  <div class="code-card">
+    <div class="code-card__head mono">crates/mini-llm-autograd</div>
+    <Code code={snippet} lang="rust" theme="github-dark-dimmed" />
+  </div>
+
+  <p>
+    <code>backward()</code> 要求调用者是一个标量 loss；它先把自身的梯度设成 1，然后按逆拓扑序执行每个节点注册的 <code>backward</code> 闭包，把结果累加到
+    <code>parents</code> 上。没有反向闭包的叶子节点（<code>param</code>）只负责接收梯度。
+  </p>
+
+  <h2>边界写清楚，比藏起来好</h2>
+  <p>
+    当前实现只支持 <code>f32</code>、单线程、CPU，不支持高阶梯度，也没有 <code>no_grad</code> 上下文。参数可以 <code>set_value</code> 原地替换，但没有原地张量运算。
+    这些限制都写在 crate 文档里；下一个实验会看到，位置编码的旋转矩阵是正交的，所以它的反向传播只需要把位置取负。
+  </p>
+
+  <div class="note">
+    <strong>动手验证</strong>
+    把 <code>b</code> 拖到让 <code>z</code> 小于 0，relu 进入关断区，<code>∂L/∂z</code> 立刻变成 0，三个参数的梯度也一起归零。这就是“dead ReLU”的微观版本：
+    不是参数不想学，而是梯度根本流不过去。
+  </div>
+</LessonLayout>
+
+<style>
+  .dag-wrap {
+    padding: 4px 0 12px;
+    overflow-x: auto;
+  }
+
+  .dag {
+    width: 100%;
+    min-width: 560px;
+    height: auto;
+  }
+
+  .dag-edge {
+    fill: none;
+    stroke: var(--line-strong);
+    stroke-width: 1.6;
+    transition: stroke 0.2s var(--ease);
+  }
+
+  .dag-edge.is-hot {
+    stroke: var(--accent);
+    stroke-width: 2.2;
+  }
+
+  .dag-node rect {
+    fill: var(--paper);
+    stroke: var(--line);
+    transition: stroke 0.2s var(--ease);
+  }
+
+  .dag-node.is-hot rect {
+    stroke: var(--accent);
+  }
+
+  .dag-name,
+  .dag-value,
+  .dag-grad,
+  .dag-edge-label {
+    text-anchor: middle;
+    font-family: var(--font-mono);
+  }
+
+  .dag-name {
+    font-size: 9.5px;
+    fill: var(--ink-faint);
+  }
+
+  .dag-value {
+    font-size: 13px;
+    fill: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .dag-grad {
+    font-size: 10px;
+    fill: var(--ink-faint);
+    transition: fill 0.2s var(--ease);
+  }
+
+  .dag-grad.is-visible {
+    fill: var(--accent-ink);
+  }
+
+  .dag-grad.is-seed {
+    fill: var(--ink-soft);
+  }
+
+  .dag-edge-label {
+    font-size: 9.5px;
+    fill: var(--ink-faint);
+    paint-order: stroke;
+    stroke: var(--paper-2);
+    stroke-width: 3px;
+  }
+
+  .dag-controls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 24px;
+    margin-top: 4px;
+    padding-top: 18px;
+    border-top: 1px solid var(--line);
+  }
+
+  .dag-slider {
+    display: grid;
+    grid-template-columns: 16px minmax(0, 1fr) 44px;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+
+  .dag-slider output {
+    text-align: right;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .dag-actions {
+    margin: 20px 0 14px;
+  }
+
+  .dag-progress {
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    color: var(--ink-faint);
+  }
+
+  .dag-readout {
+    margin: 0;
+  }
+
+  .widget__foot {
+    margin: 16px 0 0;
+    padding-top: 14px;
+    border-top: 1px dashed var(--line);
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: var(--ink-faint);
+  }
+
+  @media (max-width: 640px) {
+    .dag-controls {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>
+
+<script>
+  const widget = document.querySelector<HTMLElement>('[data-autograd-widget]');
+  if (widget) {
+    const initial = { w: 3, x: 2, b: 1, y: 5 };
+    const params = { ...initial };
+    let revealed = 0;
+
+    const inputs = [...widget.querySelectorAll<HTMLInputElement>('[data-param]')];
+    const outputs = [...widget.querySelectorAll<HTMLOutputElement>('[data-out]')];
+    const valueEls = [...widget.querySelectorAll<SVGTextElement>('[data-value]')];
+    const gradEls = [...widget.querySelectorAll<SVGTextElement>('[data-grad]')];
+    const edges = [...widget.querySelectorAll<SVGPathElement>('[data-edge]')];
+    const nodes = [...widget.querySelectorAll<SVGGElement>('.dag-node')];
+    const stepButton = widget.querySelector<HTMLButtonElement>('[data-step]')!;
+    const resetButton = widget.querySelector<HTMLButtonElement>('[data-reset]')!;
+    const progress = widget.querySelector<HTMLElement>('[data-progress]')!;
+    const summary = widget.querySelector<HTMLElement>('[data-dag-summary]')!;
+    const outLoss = widget.querySelector<HTMLElement>('[data-out-loss]')!;
+    const outGw = widget.querySelector<HTMLElement>('[data-out-gw]')!;
+    const outGx = widget.querySelector<HTMLElement>('[data-out-gx]')!;
+    const outGb = widget.querySelector<HTMLElement>('[data-out-gb]')!;
+
+    const forward = (p: typeof params) => {
+      const z = p.w * p.x + p.b;
+      const a = Math.max(z, 0);
+      const loss = (a - p.y) ** 2;
+      return { z, a, loss };
+    };
+
+    const gradients = (p: typeof params) => {
+      const { z, a } = forward(p);
+      const dlDa = 2 * (a - p.y);
+      const daDz = z > 0 ? 1 : 0;
+      const dlDz = dlDa * daDz;
+      return { dlDa, daDz, dlDz, dw: dlDz * p.x, dx: dlDz * p.w, db: dlDz };
+    };
+
+    const setGrad = (key: string, text: string | null) => {
+      const el = gradEls.find((node) => node.dataset.grad === key);
+      if (!el) return;
+      if (text === null) {
+        el.textContent = el.dataset.grad === 'l' ? '∂L/∂L 1.00' : `∂L/∂${key} —`;
+        el.classList.remove('is-visible');
+        el.classList.add('is-seed');
+      } else {
+        el.textContent = `∂L/∂${key} ${text}`;
+        el.classList.add('is-visible');
+        el.classList.remove('is-seed');
+      }
+    };
+
+    const resetReveal = () => {
+      revealed = 0;
+      edges.forEach((edge) => edge.classList.remove('is-hot'));
+      nodes.forEach((node) => node.classList.remove('is-hot'));
+      setGrad('w', null);
+      setGrad('x', null);
+      setGrad('b', null);
+      setGrad('z', null);
+      setGrad('a', null);
+      setGrad('l', null);
+      outGw.textContent = '—';
+      outGx.textContent = '—';
+      outGb.textContent = '—';
+      progress.textContent = '0 / 3';
+      stepButton.textContent = '下一步';
+      summary.textContent =
+        '前向已经算完。点「下一步」从 loss 开始倒着走，观察每条边乘上的局部导数。';
+    };
+
+    const render = () => {
+      const { z, a, loss } = forward(params);
+      const grads = gradients(params);
+
+      valueEls.forEach((el) => {
+        const key = el.dataset.value as 'w' | 'x' | 'b' | 'z' | 'a' | 'l';
+        const value = key === 'z' ? z : key === 'a' ? a : key === 'l' ? loss : params[key];
+        el.textContent = value.toFixed(2);
+      });
+
+      inputs.forEach((input) => {
+        const key = input.dataset.param as keyof typeof params;
+        outputs.find((out) => out.dataset.out === key)!.textContent = params[key].toFixed(2);
+      });
+
+      outLoss.textContent = loss.toFixed(2);
+
+      if (revealed < 3) {
+        outGw.textContent = '—';
+        outGx.textContent = '—';
+        outGb.textContent = '—';
+      } else {
+        outGw.textContent = grads.dw.toFixed(2);
+        outGx.textContent = grads.dx.toFixed(2);
+        outGb.textContent = grads.db.toFixed(2);
+      }
+
+      if (revealed >= 1) {
+        setGrad('a', grads.dlDa.toFixed(2));
+        outGw.textContent = revealed >= 3 ? grads.dw.toFixed(2) : '—';
+      } else {
+        setGrad('a', null);
+      }
+
+      if (revealed >= 2) {
+        setGrad('z', grads.dlDz.toFixed(2));
+      } else {
+        setGrad('z', null);
+      }
+
+      if (revealed >= 3) {
+        setGrad('w', grads.dw.toFixed(2));
+        setGrad('x', grads.dx.toFixed(2));
+        setGrad('b', grads.db.toFixed(2));
+        outGw.textContent = grads.dw.toFixed(2);
+        outGx.textContent = grads.dx.toFixed(2);
+        outGb.textContent = grads.db.toFixed(2);
+        summary.textContent =
+          z > 0
+            ? `relu 处于导通区：∂L/∂z = ${grads.dlDz.toFixed(2)}，再分别乘上 x = ${params.x.toFixed(2)}、w = ${params.w.toFixed(2)}、1，得到三个参数的梯度。`
+            : `z = ${z.toFixed(2)} ≤ 0，relu 把梯度截断：∂L/∂z = 0，所以 w、x、b 的梯度也全是 0。`;
+      } else {
+        setGrad('w', null);
+        setGrad('x', null);
+        setGrad('b', null);
+      }
+    };
+
+    const step = () => {
+      if (revealed >= 3) {
+        resetReveal();
+        render();
+        return;
+      }
+      revealed += 1;
+      progress.textContent = `${revealed} / 3`;
+      stepButton.textContent = revealed >= 3 ? '重新播放' : '下一步';
+
+      if (revealed === 1) {
+        widget.querySelector('[data-edge="a-l"]')?.classList.add('is-hot');
+        nodes[5]?.classList.add('is-hot');
+      } else if (revealed === 2) {
+        widget.querySelector('[data-edge="z-a"]')?.classList.add('is-hot');
+        nodes[4]?.classList.add('is-hot');
+      } else {
+        ['w-z', 'x-z', 'b-z'].forEach((name) => {
+          widget.querySelector(`[data-edge="${name}"]`)?.classList.add('is-hot');
+        });
+        nodes[0]?.classList.add('is-hot');
+        nodes[1]?.classList.add('is-hot');
+        nodes[2]?.classList.add('is-hot');
+        nodes[3]?.classList.add('is-hot');
+      }
+
+      render();
+    };
+
+    inputs.forEach((input) => {
+      input.addEventListener('input', () => {
+        const key = input.dataset.param as keyof typeof params;
+        params[key] = Number(input.value);
+        resetReveal();
+        render();
+      });
+    });
+
+    stepButton.addEventListener('click', step);
+
+    resetButton.addEventListener('click', () => {
+      Object.assign(params, initial);
+      inputs.forEach((input) => {
+        const key = input.dataset.param as keyof typeof initial;
+        input.value = String(initial[key]);
+      });
+      resetReveal();
+      render();
+    });
+
+    resetReveal();
+    render();
+  }
+</script>

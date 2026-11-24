@@ -124,6 +124,9 @@ pub struct SftDataset {
     tokens: Vec<usize>,
     weights: Vec<f32>,
     block_size: usize,
+    /// Window starts that contain at least one supervised target, precomputed
+    /// so sampling never has to retry.
+    supervised_starts: Vec<usize>,
 }
 
 impl SftDataset {
@@ -147,15 +150,27 @@ impl SftDataset {
                 tokens: tokens.len(),
             });
         }
+
+        let supervised_starts = supervised_window_starts(&weights, block_size);
+        if supervised_starts.is_empty() {
+            return Err(DataError::EmptyMaskWindow);
+        }
+
         Ok(Self {
             tokens,
             weights,
             block_size,
+            supervised_starts,
         })
     }
 
     pub fn num_windows(&self) -> usize {
         self.tokens.len() - self.block_size
+    }
+
+    /// Window starts that actually carry a learning signal.
+    pub fn supervised_windows(&self) -> usize {
+        self.supervised_starts.len()
     }
 
     /// Builds a batch from explicit window starts (useful for tests).
@@ -204,17 +219,23 @@ impl Dataset for SftDataset {
         if batch_size == 0 {
             return Err(DataError::EmptyBatch);
         }
-        let windows = self.num_windows();
-        // Retry so the batch actually contains supervised tokens.
-        for _ in 0..64 {
-            let starts: Vec<usize> = (0..batch_size)
-                .map(|_| (rng.next_f32() * windows as f32) as usize)
-                .collect();
-            match self.batch_at(&starts) {
-                Err(DataError::EmptyMaskWindow) => continue,
-                other => return other,
-            }
-        }
-        Err(DataError::EmptyMaskWindow)
+        let candidates = self.supervised_starts.len();
+        let starts: Vec<usize> = (0..batch_size)
+            .map(|_| self.supervised_starts[(rng.next_f32() * candidates as f32) as usize])
+            .collect();
+        self.batch_at(&starts)
     }
+}
+
+/// Prefix-sum scan for windows whose targets contain a positive weight.
+fn supervised_window_starts(weights: &[f32], block_size: usize) -> Vec<usize> {
+    let mut prefix = vec![0usize; weights.len() + 1];
+    for (index, &weight) in weights.iter().enumerate() {
+        prefix[index + 1] = prefix[index] + usize::from(weight > 0.0);
+    }
+
+    let windows = weights.len() - block_size;
+    (0..windows)
+        .filter(|&start| prefix[start + 1 + block_size] - prefix[start + 1] > 0)
+        .collect()
 }

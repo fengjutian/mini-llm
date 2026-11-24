@@ -31,6 +31,33 @@ const { lesson } = Astro.props;
         )}
       </div>
     )}
+    {lesson.visual === 'autograd' && (
+      <svg class="mini-graph" viewBox="0 0 152 92" aria-hidden="true">
+        <path class="edge" d="M36 14 H58 C66 14 66 46 76 46" />
+        <path class="edge" d="M36 46 H76" />
+        <path class="edge" d="M36 78 H58 C66 78 66 46 76 46" />
+        <path class="edge is-active" d="M96 46 H118" />
+        <rect x="6" y="4" width="30" height="20" rx="3" />
+        <rect x="6" y="36" width="30" height="20" rx="3" />
+        <rect x="6" y="68" width="30" height="20" rx="3" />
+        <circle cx="86" cy="46" r="10" />
+        <circle class="is-active" cx="128" cy="46" r="10" />
+      </svg>
+    )}
+    {lesson.visual === 'rope' && (
+      <div class="mini-dials" aria-hidden="true">
+        {[18, 64, 118, 156].map((angle, i) => (
+          <span class={i === 1 ? 'is-active' : ''} style={`--a:${angle}deg`} />
+        ))}
+      </div>
+    )}
+    {lesson.visual === 'sampling' && (
+      <div class="mini-strip" aria-hidden="true">
+        {[34, 26, 17, 12, 7, 4].map((w, i) => (
+          <span class={i === 1 ? 'is-active' : ''} style={`--w:${w}`} />
+        ))}
+      </div>
+    )}
   </div>
   <div class="lesson-card__body">
     <span class="lesson-card__tag">
