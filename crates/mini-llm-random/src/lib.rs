@@ -1,8 +1,14 @@
-//! Deterministic random number generation for parameter initialization.
+//! # mini-llm-random
 //!
-//! The generator is `xorshift64*`: tiny, dependency-free and good enough for
-//! seeding small experiments reproducibly. It is **not** suitable for anything
+//! Deterministic pseudo-randomness for seeding experiments.
+//!
+//! The generator is `xorshift64*`: tiny, dependency-free and good enough to
+//! reproduce small training runs. It is **not** suitable for anything
 //! cryptographic.
+//!
+//! This crate exists so that data sampling and model initialization share one
+//! RNG implementation without the data layer depending on the neural-network
+//! layer.
 
 use mini_llm_tensor::{Tensor, TensorError};
 
@@ -52,13 +58,7 @@ impl Rng {
 
     /// Normal tensor with the given shape and standard deviation.
     pub fn normal_tensor(&mut self, shape: Vec<usize>, std: f32) -> Result<Tensor, TensorError> {
-        let len = shape
-            .iter()
-            .try_fold(1usize, |acc, &dim| acc.checked_mul(dim))
-            .ok_or_else(|| TensorError::ShapeDataMismatch {
-                shape: shape.clone(),
-                data_len: 0,
-            })?;
+        let len = element_count(&shape)?;
         let data = (0..len).map(|_| self.normal() * std).collect();
         Tensor::new(data, shape)
     }
@@ -70,13 +70,7 @@ impl Rng {
         low: f32,
         high: f32,
     ) -> Result<Tensor, TensorError> {
-        let len = shape
-            .iter()
-            .try_fold(1usize, |acc, &dim| acc.checked_mul(dim))
-            .ok_or_else(|| TensorError::ShapeDataMismatch {
-                shape: shape.clone(),
-                data_len: 0,
-            })?;
+        let len = element_count(&shape)?;
         let data = (0..len).map(|_| self.uniform(low, high)).collect();
         Tensor::new(data, shape)
     }
@@ -89,6 +83,16 @@ impl Rng {
 pub fn xavier_uniform(fan_in: usize, fan_out: usize, rng: &mut Rng) -> Result<Tensor, TensorError> {
     let limit = (6.0 / (fan_in + fan_out) as f32).sqrt();
     rng.uniform_tensor(vec![fan_in, fan_out], -limit, limit)
+}
+
+fn element_count(shape: &[usize]) -> Result<usize, TensorError> {
+    shape
+        .iter()
+        .try_fold(1usize, |acc, &dim| acc.checked_mul(dim))
+        .ok_or_else(|| TensorError::ShapeDataMismatch {
+            shape: shape.to_vec(),
+            data_len: 0,
+        })
 }
 
 #[cfg(test)]

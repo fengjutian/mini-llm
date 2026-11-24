@@ -1,8 +1,6 @@
 //! End-to-end tests for the Tiny GPT model.
 
-use mini_llm_model::{
-    FeedForwardKind, ModelConfig, ModelError, NormKind, PositionKind, TinyGpt,
-};
+use mini_llm_model::{FeedForwardKind, ModelConfig, ModelError, NormKind, PositionKind, TinyGpt};
 use mini_llm_nn::Rng;
 
 fn tiny_config() -> ModelConfig {

@@ -1,6 +1,6 @@
 //! Next-token windows sampled from a token stream.
 
-use mini_llm_nn::Rng;
+use mini_llm_random::Rng;
 
 use crate::DataError;
 

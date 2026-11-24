@@ -78,16 +78,35 @@
 为了让纯标量 kernel 在 debug 构建下可用，workspace 的 `[profile.dev]` 与
 `[profile.test]` 设为 `opt-level = 2`。
 
-## Milestone 4 — Modern LLM（下一步）
+## Milestone 4 — Modern LLM（已完成）
 
-- [ ] RoPE
-- [ ] RMSNorm
-- [ ] SwiGLU
-- [ ] GQA
-- [ ] KV Cache
-- [ ] MoE
+- [x] RoPE
+- [x] RMSNorm
+- [x] SwiGLU
+- [x] GQA
+- [x] KV Cache
+- [x] MoE
 
-## Milestone 5 — Training Recipes
+实现要点：
+
+- `mini-llm-tensor`：`rope_rotate(head_dim, positions, base)` 按 head 内
+  `(2i, 2i+1)` 配对旋转，负位置即逆旋转；`mini-llm-autograd` 的 `rope`
+  正是用它做反向传播，梯度已通过有限差分校验。
+- `mini-llm-nn`：`RmsNorm`（无均值中心、无 bias）、`SwiGlu`
+  （`W2(SiLU(W1x) ⊙ W3x)`）、`Moe`（router + 多个 SwiGLU 专家，top-k 门控；
+  当前为稠密执行，便于观察路由概率与专家占用）。
+- `mini-llm-model`：`ModelConfig` 新增 `num_kv_heads`、`norm`、`position`、
+  `feed_forward`、`num_experts`；`ModelConfig::modern()` 组合
+  RMSNorm + RoPE + SwiGLU + GQA。
+- KV Cache：`AttentionCache` / `BlockCache` 保存每层每头的历史 K/V，
+  `generate()` 每步只前向一个 token；`generate_uncached()` 保留为对照，
+  测试断言两者贪心解码完全一致。
+- checkpoint 升级为 v2（10 个配置字段），v1 文件仍可读取并回退到经典架构。
+
+已知限制：MoE 为稠密执行（所有专家都计算）；RoPE 超出训练上下文后质量下降；
+缓存只支持 batch=1 的生成。
+
+## Milestone 5 — Training Recipes（下一步）
 
 - [ ] Pretraining
 - [ ] SFT / Loss Masking

@@ -1,8 +1,9 @@
 //! SwiGLU feed-forward layer: `W2 (SiLU(W1 x) ⊙ W3 x)`.
 
 use mini_llm_autograd::TensorValue;
+use mini_llm_random::Rng;
 
-use crate::{Linear, Module, NnError, Rng};
+use crate::{Linear, Module, NnError};
 
 /// The gated variant of the Transformer MLP.
 ///
@@ -17,11 +18,7 @@ pub struct SwiGlu {
 }
 
 impl SwiGlu {
-    pub fn new(
-        hidden: usize,
-        inner: usize,
-        rng: &mut Rng,
-    ) -> Result<Self, NnError> {
+    pub fn new(hidden: usize, inner: usize, rng: &mut Rng) -> Result<Self, NnError> {
         if hidden == 0 || inner == 0 {
             return Err(NnError::InvalidDimension {
                 name: if hidden == 0 { "hidden" } else { "inner" },
@@ -51,7 +48,7 @@ impl Module for SwiGlu {
         let gate = self.gate.forward(input)?;
         let activated = gate.mul(&gate.sigmoid()?)?;
         let up = self.up.forward(input)?;
-        Ok(self.down.forward(&activated.mul(&up)?)?)
+        self.down.forward(&activated.mul(&up)?)
     }
 
     fn parameters(&self) -> Vec<TensorValue> {

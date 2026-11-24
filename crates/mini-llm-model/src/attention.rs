@@ -1,8 +1,12 @@
-//! Causal grouped-query attention with optional rotary positions.
+//! Attention: causal grouped-query attention, KV cache and the original
+//! single-head educational primitive.
+
+use std::error::Error;
+use std::fmt::{Display, Formatter};
 
 use mini_llm_autograd::TensorValue;
 use mini_llm_nn::{Linear, Module, Rng};
-use mini_llm_tensor::Tensor;
+use mini_llm_tensor::{Tensor, TensorError};
 
 use crate::{ModelConfig, ModelError, PositionKind};
 
@@ -21,7 +25,10 @@ impl AttentionCache {
         let empty = Tensor::zeros(vec![0, head_dim]).expect("valid empty cache");
         Self {
             keys: vec![empty; num_kv_heads],
-            values: vec![Tensor::zeros(vec![0, head_dim]).expect("valid empty cache"); num_kv_heads],
+            values: vec![
+                Tensor::zeros(vec![0, head_dim]).expect("valid empty cache");
+                num_kv_heads
+            ],
         }
     }
 
@@ -129,7 +136,10 @@ impl CausalSelfAttention {
             let weights = masked.softmax_rows()?;
             let attended = weights.matmul(&v)?;
 
-            let out_weight = self.output.weight().slice_rows(head * self.head_dim, self.head_dim)?;
+            let out_weight = self
+                .output
+                .weight()
+                .slice_rows(head * self.head_dim, self.head_dim)?;
             let projected = attended.matmul(&out_weight)?;
             merged = Some(match merged {
                 Some(accumulated) => accumulated.add(&projected)?,
@@ -198,7 +208,10 @@ impl CausalSelfAttention {
             let weights = scores.softmax_rows()?;
             let attended = weights.matmul(&values)?;
 
-            let out_weight = self.output.weight().slice_rows(head * self.head_dim, self.head_dim)?;
+            let out_weight = self
+                .output
+                .weight()
+                .slice_rows(head * self.head_dim, self.head_dim)?;
             let projected = attended.matmul(&out_weight)?;
             merged = Some(match merged {
                 Some(accumulated) => accumulated.add(&projected)?,
@@ -244,4 +257,94 @@ pub fn causal_batch_mask(batch: usize, seq: usize) -> Vec<f32> {
         }
     }
     data
+}
+
+#[derive(Debug)]
+pub enum AttentionError {
+    Tensor(TensorError),
+    InvalidHeadDimension,
+}
+
+impl Display for AttentionError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Tensor(err) => Display::fmt(err, f),
+            Self::InvalidHeadDimension => write!(f, "head dimension must be greater than zero"),
+        }
+    }
+}
+
+impl Error for AttentionError {}
+
+impl From<TensorError> for AttentionError {
+    fn from(value: TensorError) -> Self {
+        Self::Tensor(value)
+    }
+}
+
+/// Computes single-head scaled dot-product attention.
+///
+/// Shapes:
+/// Q = [query_len, head_dim]
+/// K = [key_len, head_dim]
+/// V = [key_len, value_dim]
+///
+/// This educational primitive does not apply a causal mask. It predates the
+/// autograd engine and is kept for the CLI demo and the concept lessons.
+pub fn scaled_dot_product_attention(
+    q: &Tensor,
+    k: &Tensor,
+    v: &Tensor,
+) -> Result<(Tensor, Tensor), AttentionError> {
+    if q.rank() != 2 || k.rank() != 2 || v.rank() != 2 {
+        return Err(AttentionError::Tensor(TensorError::ExpectedRank {
+            expected: 2,
+            actual: q.rank().max(k.rank()).max(v.rank()),
+        }));
+    }
+    let head_dim = q.shape()[1];
+    if head_dim == 0 {
+        return Err(AttentionError::InvalidHeadDimension);
+    }
+
+    let k_t = k.transpose_2d()?;
+    let scores = q.matmul(&k_t)?;
+    let scale = (head_dim as f32).sqrt();
+    let scaled = Tensor::new(
+        scores.data().iter().map(|x| x / scale).collect(),
+        scores.shape().to_vec(),
+    )?;
+    let weights = scaled.softmax_rows()?;
+    let output = weights.matmul(v)?;
+    Ok((output, weights))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn attention_shapes_are_correct() {
+        let q = Tensor::from_2d(2, 2, vec![1., 0., 0., 1.]).unwrap();
+        let k = Tensor::from_2d(2, 2, vec![1., 0., 0., 1.]).unwrap();
+        let v = Tensor::from_2d(2, 2, vec![10., 0., 0., 10.]).unwrap();
+
+        let (out, weights) = scaled_dot_product_attention(&q, &k, &v).unwrap();
+        assert_eq!(out.shape(), &[2, 2]);
+        assert_eq!(weights.shape(), &[2, 2]);
+        assert!((weights.data()[0] + weights.data()[1] - 1.0).abs() < 1e-5);
+    }
+
+    #[test]
+    fn mask_blocks_other_samples_and_future_tokens() {
+        let mask = causal_batch_mask(2, 2);
+        // row 0 (sample 0, position 0) may only see column 0
+        assert_eq!(mask[0], 0.0);
+        assert!(mask[1] < -1e8);
+        assert!(mask[2] < -1e8);
+        // row 3 (sample 1, position 1) may see columns 2 and 3
+        assert_eq!(mask[3 * 4 + 2], 0.0);
+        assert_eq!(mask[3 * 4 + 3], 0.0);
+        assert!(mask[3 * 4] < -1e8);
+    }
 }

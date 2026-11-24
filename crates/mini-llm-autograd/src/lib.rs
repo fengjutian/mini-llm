@@ -49,6 +49,8 @@
 //! - Graph nodes live as long as any [`TensorValue`] handle referencing them.
 
 mod error;
+mod graph;
+mod ops;
 mod value;
 
 pub use error::AutogradError;

@@ -8,7 +8,7 @@
 //!
 //! ```no_run
 //! use mini_llm_data::{CharTokenizer, TextDataset};
-//! use mini_llm_nn::Rng;
+//! use mini_llm_random::Rng;
 //!
 //! let tokenizer = CharTokenizer::from_text("hello world");
 //! let tokens = tokenizer.encode("hello").unwrap();

@@ -33,17 +33,21 @@ CLI / Future Research Studio
 
 | Crate | 责任 | 不应负责 |
 |---|---|---|
-| mini-llm-tensor | CPU Tensor 与基础算子 | 训练任务管理 |
+| mini-llm-tensor | CPU Tensor、逐元素算子、矩阵 kernel、广播 | 训练任务管理 |
+| mini-llm-random | 确定性 RNG（xorshift64\*）与初始化采样 | 模型结构、数据加载 |
 | mini-llm-autograd | 计算图、反向传播、梯度累积 | 优化器状态、模型结构 |
-| mini-llm-nn | Linear / Embedding / LayerNorm / 优化器 | 具体任务与数据加载 |
+| mini-llm-nn | Linear / Embedding / Norm / SwiGlu / MoE / 优化器 | 具体任务与数据加载 |
 | mini-llm-data | 字符 tokenizer、窗口批采样 | 模型结构与训练 |
 | mini-llm-train | 训练循环、checkpoint 序列化 | 模型定义、UI |
-| mini-llm-model | 模型配置、Attention 等模型原语 | 文件持久化、UI |
-| mini-llm-training（planned） | 训练循环与优化器 | GPU 驱动细节 |
-| mini-llm-data（planned） | Dataset、Batch、Tokenizer 适配 | 模型结构 |
+| mini-llm-model | 模型配置、Attention / Block / TinyGpt | 文件持久化、UI |
 | mini-llm-backend（planned） | CPU/Candle 后端抽象 | 实验业务规则 |
 | mini-llm-inspector（planned） | Trace、Hook、张量快照 | 修改模型权重 |
-| mini-llm-cli | 命令行应用 | 核心算法实现 |
+| mini-llm-cli | 命令行应用（每个命令一个模块） | 核心算法实现 |
+
+模块划分原则：每个 crate 的 `lib.rs` 只做模块声明与 re-export；一个文件只承担
+一个职责。例如 tensor 拆成 `error` / `broadcast` / `tensor` / `matrix`，
+autograd 拆成 `graph` / `value` / `ops::{arith, activation, shape}`，
+nn 拆成「每层一个文件 + `module` + `error`」。
 
 ## 4. Tensor 设计
 
@@ -99,9 +103,29 @@ MVP 采用单头 scaled dot-product attention：
 
 ## 8. 依赖方向
 
-`cli -> model -> tensor`，`cli -> autograd -> tensor`，`nn -> autograd -> tensor`，
-`model -> nn -> autograd -> tensor`，`data -> nn`（仅复用 `Rng`），
-`train -> model + data + nn + autograd`，`cli -> train`
+```text
+mini-llm-cli
+ ├── mini-llm-train ──► mini-llm-model ──► mini-llm-nn ──► mini-llm-autograd
+ │                          │                  │                 │
+ │                          └──────────────────┴──────► mini-llm-random
+ │                                                          │
+ └── mini-llm-data ──► mini-llm-random                      ▼
+                                                     mini-llm-tensor
+```
+
+具体边：
+
+- `tensor -> ∅`
+- `random -> tensor`（初始化采样需要构造 Tensor）
+- `autograd -> tensor`
+- `nn -> autograd + random + tensor`
+- `data -> random`（只复用 `Rng`，不再依赖 nn）
+- `model -> nn + autograd + random + tensor`
+- `train -> model + data + nn + autograd + tensor`
+- `cli -> model + data + nn + train + autograd + tensor`
+
+本次重构去掉了 `data -> nn` 这条反向依赖：`Rng` 下沉到 `mini-llm-random`，
+数据层不再把整个 autograd 栈带进依赖树。
 
 后续建议：
 

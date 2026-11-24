@@ -151,10 +151,10 @@ fn cross_entropy_rejects_invalid_targets() {
 
 #[test]
 fn rope_matches_finite_differences() {
-    let values = vec![0.5, -1.0, 0.25, 0.75, 1.5, 0.0, -0.5, 2.0, -0.2, 0.3, 0.9, -0.4];
-    check_gradient(&values, &[3, 4], |x| {
-        x.rope(4, &[0, 1, 2], 10_000.0)?.sum()
-    });
+    let values = vec![
+        0.5, -1.0, 0.25, 0.75, 1.5, 0.0, -0.5, 2.0, -0.2, 0.3, 0.9, -0.4,
+    ];
+    check_gradient(&values, &[3, 4], |x| x.rope(4, &[0, 1, 2], 10_000.0)?.sum());
 }
 
 #[test]

@@ -11,13 +11,14 @@
 //!
 //! All experts are evaluated (dense execution) and the gate multiplies their
 //! outputs, so the router still receives gradients through the selected
-//! weights. Sparse dispatch — running only the selected experts — is a
+//! weights. Sparse dispatch - running only the selected experts - is a
 //! performance optimization left for the accelerated backend.
 
 use mini_llm_autograd::TensorValue;
+use mini_llm_random::Rng;
 use mini_llm_tensor::Tensor;
 
-use crate::{expect_matrix, Linear, Module, NnError, Rng, SwiGlu};
+use crate::{expect_matrix, Linear, Module, NnError, SwiGlu};
 
 /// A top-k gated mixture of [`SwiGlu`] experts.
 pub struct Moe {
@@ -68,10 +69,7 @@ impl Moe {
     }
 
     /// Router probabilities for `input`, useful for inspection.
-    pub fn routing_probabilities(
-        &self,
-        input: &TensorValue,
-    ) -> Result<TensorValue, NnError> {
+    pub fn routing_probabilities(&self, input: &TensorValue) -> Result<TensorValue, NnError> {
         expect_matrix(input, self.hidden)?;
         Ok(self.router.forward(input)?.softmax_rows()?)
     }
@@ -95,8 +93,7 @@ impl Module for Moe {
         let rows = expect_matrix(input, self.hidden)?;
         let probabilities = self.routing_probabilities(input)?;
         let mask = top_k_mask(&probabilities.data(), rows, self.num_experts, self.top_k);
-        let mask_tensor =
-            TensorValue::new(Tensor::from_2d(rows, self.num_experts, mask)?);
+        let mask_tensor = TensorValue::new(Tensor::from_2d(rows, self.num_experts, mask)?);
         let gate = probabilities.mul(&mask_tensor)?;
 
         let mut output: Option<TensorValue> = None;
@@ -137,12 +134,7 @@ impl Module for Moe {
     }
 }
 
-fn top_k_mask(
-    probabilities: &[f32],
-    rows: usize,
-    experts: usize,
-    top_k: usize,
-) -> Vec<f32> {
+fn top_k_mask(probabilities: &[f32], rows: usize, experts: usize, top_k: usize) -> Vec<f32> {
     let mut mask = vec![0.0f32; rows * experts];
     for row in 0..rows {
         let slice = &probabilities[row * experts..(row + 1) * experts];

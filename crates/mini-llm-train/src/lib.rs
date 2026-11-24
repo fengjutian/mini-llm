@@ -189,7 +189,10 @@ pub enum TrainError {
     },
     InvalidVocabulary,
     /// A checkpoint contains an unknown architecture flag.
-    InvalidArchitecture { field: &'static str, value: u32 },
+    InvalidArchitecture {
+        field: &'static str,
+        value: u32,
+    },
 }
 
 impl Display for TrainError {
@@ -210,11 +213,9 @@ impl Display for TrainError {
                 actual, expected
             ),
             Self::InvalidVocabulary => write!(f, "checkpoint vocabulary is invalid"),
-            Self::InvalidArchitecture { field, value } => write!(
-                f,
-                "checkpoint has an unknown {} flag: {}",
-                field, value
-            ),
+            Self::InvalidArchitecture { field, value } => {
+                write!(f, "checkpoint has an unknown {} flag: {}", field, value)
+            }
         }
     }
 }

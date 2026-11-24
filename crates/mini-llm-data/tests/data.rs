@@ -1,7 +1,7 @@
 //! Tests for tokenization and batching.
 
 use mini_llm_data::{CharTokenizer, DataError, TextDataset};
-use mini_llm_nn::Rng;
+use mini_llm_random::Rng;
 
 #[test]
 fn tokenizer_roundtrips_text() {

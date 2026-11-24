@@ -3,8 +3,8 @@
 use mini_llm_autograd::TensorValue;
 use mini_llm_tensor::Tensor;
 
-use crate::rng::{xavier_uniform, Rng};
 use crate::{expect_matrix, Module, NnError};
+use mini_llm_random::{xavier_uniform, Rng};
 
 /// `y = x W + b` with `W` of shape `[in_features, out_features]`.
 pub struct Linear {

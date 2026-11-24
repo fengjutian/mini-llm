@@ -32,9 +32,7 @@ impl TinyGpt {
 
         let token_embedding = Embedding::new(config.vocab_size, hidden, 0.02, rng)?;
         let position_embedding = match config.position {
-            PositionKind::Learned => {
-                Some(Embedding::new(config.max_seq_len, hidden, 0.01, rng)?)
-            }
+            PositionKind::Learned => Some(Embedding::new(config.max_seq_len, hidden, 0.01, rng)?),
             PositionKind::Rope => None,
         };
 
@@ -192,7 +190,10 @@ impl TinyGpt {
         if prompt.is_empty() {
             return Err(ModelError::EmptyPrompt);
         }
-        if let Some(&index) = prompt.iter().find(|&&index| index >= self.config.vocab_size) {
+        if let Some(&index) = prompt
+            .iter()
+            .find(|&&index| index >= self.config.vocab_size)
+        {
             return Err(ModelError::TokenOutOfRange {
                 index,
                 vocab_size: self.config.vocab_size,
@@ -210,7 +211,6 @@ impl TinyGpt {
         let mut logits = logits.ok_or(ModelError::EmptyPrompt)?;
 
         let mut tokens = prompt.to_vec();
-        let mut position = window.len();
         for _ in 0..max_new_tokens {
             let next = sample_next(&logits, self.config.vocab_size, temperature, rng)?;
             tokens.push(next);
@@ -218,8 +218,7 @@ impl TinyGpt {
             if self.position_embedding.is_some() && tokens.len() >= self.config.max_seq_len {
                 break;
             }
-            logits = self.step_token(next, position, &mut caches)?;
-            position += 1;
+            logits = self.step_token(next, tokens.len() - 1, &mut caches)?;
         }
         Ok(tokens)
     }

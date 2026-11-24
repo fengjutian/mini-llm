@@ -2,7 +2,7 @@
 
 use mini_llm_autograd::TensorValue;
 use mini_llm_nn::{
-    AdamW, Embedding, LayerNorm, Linear, Module, Moe, Optimizer, Relu, Rng, RmsNorm, Sequential,
+    AdamW, Embedding, LayerNorm, Linear, Module, Moe, Optimizer, Relu, RmsNorm, Rng, Sequential,
     Sgd, SwiGlu, Tanh,
 };
 use mini_llm_tensor::Tensor;
@@ -196,7 +196,8 @@ fn identical_seeds_give_identical_parameters() {
 }
 
 #[test]
-fn xor_is_learnable_end_to_end() {    let mut rng = Rng::new(42);
+fn xor_is_learnable_end_to_end() {
+    let mut rng = Rng::new(42);
     let model = Sequential::new(vec![
         Box::new(Linear::new(2, 8, &mut rng).unwrap()),
         Box::new(Tanh),
@@ -254,7 +255,13 @@ fn rms_norm_normalizes_root_mean_square() {
 fn rms_norm_gradient_reaches_gamma() {
     let layer = RmsNorm::new(3).unwrap();
     let x = input(vec![1.0, 2.0, 4.0, 0.5, -1.0, 2.0], vec![2, 3]);
-    let loss = layer.forward(&x).unwrap().powf(2.0).unwrap().mean().unwrap();
+    let loss = layer
+        .forward(&x)
+        .unwrap()
+        .powf(2.0)
+        .unwrap()
+        .mean()
+        .unwrap();
     loss.backward().unwrap();
     let grad = layer.gamma().grad().unwrap();
     assert_eq!(grad.shape(), &[3]);

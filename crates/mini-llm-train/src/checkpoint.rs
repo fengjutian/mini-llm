@@ -4,9 +4,7 @@ use std::fs;
 use std::path::Path;
 
 use mini_llm_data::CharTokenizer;
-use mini_llm_model::{
-    FeedForwardKind, ModelConfig, NormKind, PositionKind, TinyGpt,
-};
+use mini_llm_model::{FeedForwardKind, ModelConfig, NormKind, PositionKind, TinyGpt};
 use mini_llm_nn::Rng;
 use mini_llm_tensor::Tensor;
 
@@ -40,9 +38,9 @@ pub fn save_checkpoint(
         config.num_heads,
         config.max_seq_len,
         config.num_kv_heads,
-        norm_code(config.norm) as usize,
-        position_code(config.position) as usize,
-        feed_forward_code(config.feed_forward) as usize,
+        config.norm.code() as usize,
+        config.position.code() as usize,
+        config.feed_forward.code() as usize,
         config.num_experts,
     ] {
         push_u32(&mut bytes, value as u32);
@@ -104,9 +102,10 @@ pub fn load_checkpoint(path: impl AsRef<Path>) -> Result<(TinyGpt, CharTokenizer
         }
     } else {
         let num_kv_heads = reader.u32()? as usize;
-        let norm = norm_from_code(reader.u32()?)?;
-        let position = position_from_code(reader.u32()?)?;
-        let feed_forward = feed_forward_from_code(reader.u32()?)?;
+        let norm = decode_architecture("norm", NormKind::from_code, reader.u32()?)?;
+        let position = decode_architecture("position", PositionKind::from_code, reader.u32()?)?;
+        let feed_forward =
+            decode_architecture("feed_forward", FeedForwardKind::from_code, reader.u32()?)?;
         let num_experts = reader.u32()? as usize;
         ModelConfig {
             vocab_size,
@@ -172,58 +171,13 @@ fn push_u32(bytes: &mut Vec<u8>, value: u32) {
     bytes.extend_from_slice(&value.to_le_bytes());
 }
 
-fn norm_code(kind: NormKind) -> u32 {
-    match kind {
-        NormKind::LayerNorm => 0,
-        NormKind::RmsNorm => 1,
-    }
-}
-
-fn norm_from_code(code: u32) -> Result<NormKind, TrainError> {
-    match code {
-        0 => Ok(NormKind::LayerNorm),
-        1 => Ok(NormKind::RmsNorm),
-        other => Err(TrainError::InvalidArchitecture {
-            field: "norm",
-            value: other,
-        }),
-    }
-}
-
-fn position_code(kind: PositionKind) -> u32 {
-    match kind {
-        PositionKind::Learned => 0,
-        PositionKind::Rope => 1,
-    }
-}
-
-fn position_from_code(code: u32) -> Result<PositionKind, TrainError> {
-    match code {
-        0 => Ok(PositionKind::Learned),
-        1 => Ok(PositionKind::Rope),
-        other => Err(TrainError::InvalidArchitecture {
-            field: "position",
-            value: other,
-        }),
-    }
-}
-
-fn feed_forward_code(kind: FeedForwardKind) -> u32 {
-    match kind {
-        FeedForwardKind::Relu => 0,
-        FeedForwardKind::SwiGlu => 1,
-    }
-}
-
-fn feed_forward_from_code(code: u32) -> Result<FeedForwardKind, TrainError> {
-    match code {
-        0 => Ok(FeedForwardKind::Relu),
-        1 => Ok(FeedForwardKind::SwiGlu),
-        other => Err(TrainError::InvalidArchitecture {
-            field: "feed_forward",
-            value: other,
-        }),
-    }
+/// Decodes an architecture flag, reporting which field was invalid.
+fn decode_architecture<T>(
+    field: &'static str,
+    decode: fn(u32) -> Option<T>,
+    code: u32,
+) -> Result<T, TrainError> {
+    decode(code).ok_or(TrainError::InvalidArchitecture { field, value: code })
 }
 
 struct Reader<'a> {

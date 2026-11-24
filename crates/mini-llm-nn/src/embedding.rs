@@ -2,8 +2,8 @@
 
 use mini_llm_autograd::TensorValue;
 
-use crate::rng::Rng;
 use crate::NnError;
+use mini_llm_random::Rng;
 
 /// A lookup table of shape `[vocab_size, embedding_dim]`.
 pub struct Embedding {

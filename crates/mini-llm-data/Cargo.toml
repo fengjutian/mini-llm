@@ -5,4 +5,4 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
-mini-llm-nn.workspace = true
+mini-llm-random.workspace = true
