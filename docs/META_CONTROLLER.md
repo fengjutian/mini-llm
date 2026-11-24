@@ -23,6 +23,10 @@ _图：自适应推理控制。从左到右展示本章核心概念之间的数�
 
 它不是简单的任务调度器，而是一个负责监控、评估和调节整个 AI 认知与执行过程的控制层。
 
+![阿波罗 9 号任务期间的休斯敦任务控制中心](assets/images/mission-control-room.jpg)
+
+_图：阿波罗 9 号任务中的休斯敦任务控制中心：每个控制台负责一个子系统，飞行主任在其上做路由、分配注意力，并决定何时中止或继续。Meta-Controller 处理的正是同一类问题——谁在什么时候获得多少计算资源与决策权。图片：NASA，[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Mission_Operations_Control_Room_during_Apollo_9.jpg)，美国公有领域。_
+
 # **一、Meta-Controller：为什么需要元控制器？**
 
 ## **1.1 普通 Agent 的问题**

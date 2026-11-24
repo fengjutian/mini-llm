@@ -40,6 +40,10 @@ Planning Engine 的核心不是生成一段看起来合理的执行步骤，而�
 
 # **一、什么是 Planning Engine？**
 
+![耐火材料工厂中正在搬运砖垛的 AGV](assets/images/planning-agv-warehouse.jpg)
+
+_图：耐火材料工厂里的 AGV：它按规划好的路径搬运成吨的砖垛，遇到障碍要重新规划，多个任务之间还要排优先级。这是 Planning Engine 最朴素的原型——目标、状态、动作和约束都真实存在。图片：ek robotics GmbH，[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Ek_robotics-agv-custom_move-rhi_magnesita-refractory_industry-rgb_%288%29.jpg)，[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)。_
+
 ## **1.1 从回答问题到完成目标**
 
 传统语言模型主要执行：

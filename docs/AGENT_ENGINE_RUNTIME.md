@@ -682,6 +682,10 @@ Runtime 解决的是：
 
 这是一个非常重要的工程边界。
 
+![数据中心中的服务器机架](assets/images/runtime-datacenter-racks.jpg)
+
+_图：数据中心里的服务器机架。Agent Runtime 需要提供的能力——并发、隔离、超时、检查点、故障恢复——与操作系统和机房运维面对的工程问题高度同构。图片：Carl Lender，[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Datacenter_Server_Racks_%2822370909788%29.jpg)，[CC BY 2.0](https://creativecommons.org/licenses/by/2.0/)。_
+
 ## **7.1 什么是 Runtime？**
 
 Runtime 是 Agent 的运行环境和生命周期管理系统。

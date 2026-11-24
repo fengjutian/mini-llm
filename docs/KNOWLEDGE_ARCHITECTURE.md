@@ -51,6 +51,10 @@ Autoregressive Generation 根据前面的 Token 预测下一个 Token。
 
 **Memory Architecture 负责记住信息，Knowledge Architecture 负责组织信息之间的意义和关系。**
 
+![图书馆书库中延伸向远处的书架](assets/images/knowledge-library-stacks.jpg)
+
+_图：图书馆是最古老的知识架构：分类法决定一本书放在哪一排，索书号编码它与相邻书籍的关系，读者沿书架行走，完成一次“多跳检索”。知识图谱要做的，是把这种隐式的组织方式显式化为实体、关系和本体。图片：FrENdwquymn，[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:SZ_Futian_%E6%B7%B1%E5%9C%B3%E5%9C%96%E6%9B%B8%E9%A4%A8_Shenzhen_Library_interior_Dec-2017_IX1_stacks_bookshelves_01.jpg)，[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)。_
+
 # **一、Knowledge Representation：知识表示**
 
 ## **1.1 什么是知识表示？**

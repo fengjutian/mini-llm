@@ -4,6 +4,10 @@
 
 _图：数学基础到神经网络。从左到右展示本章核心概念之间的数据流与依赖关系。_
 
+![大学课堂上推导矩阵特征值的黑板](assets/images/math-lecture.jpg)
+
+_图：线性代数并不是纸面上的符号游戏——黑板上正在推导矩阵特征值、行列式与正交化，这些正是 Embedding、矩阵乘法和 Attention 背后的语言。图片：Tungsten，[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Mathematics_lecture_at_the_Helsinki_University_of_Technology.jpg)，公有领域。_
+
 第一部分：从数学基础理解大语言模型的计算机制
 
 要理解大语言模型（LLM），不能只从 Transformer 开始。

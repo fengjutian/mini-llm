@@ -131,6 +131,10 @@ Agent 的执行过程：
 
 # **二、Agent Architecture：智能体整体架构**
 
+![正在被编程调试的人形机器人](assets/images/embodied-humanoid-programming.jpg)
+
+_图：一台正在被编程的人形机器人。Agent 的真实形态往往不是一段 prompt，而是感知、规划、执行与评估共同组成的闭环系统。图片：ZhanatKappassov，[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Humanoid_robot_is_being_programmed.jpg)，[CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)。_
+
 我们先构建一个完整的 Agent 架构。
 
 [How an AI Agent Works: Planner, Evaluator, Executor | Santiago Valdarrama posted on the topic | LinkedIn](https://images.openai.com/static-rsc-4/enQ8M-JnQ254q7wSvcZR62qzzpwkOTwE9bdopPTytUzgCawmtHtCENiwReXeXQT33kV_vNWQse5k4z5dIrspUTiQqA5fk2TER57J0oi0kuFt-tU63tbZBmSa1j0kwIOzdSmosZFQ8RqI53wJxQqNRqTkb0QoiST_iTLKr_7aHCs?purpose=inline)

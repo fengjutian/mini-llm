@@ -71,6 +71,10 @@
 
 **视觉识别回答“看到了什么”，空间智能回答“世界在空间中是什么结构，以及我能够对它做什么”。**
 
+![车顶装有激光雷达的 Waymo 自动驾驶汽车](assets/images/spatial-waymo-front.jpg)
+
+_图：一辆 Waymo 自动驾驶出租车。车顶的激光雷达，连同车身四周的摄像头与毫米波雷达，共同构成对三维世界的测量。空间智能要做的，是把这些点云和图像变成“杯子在盒子左边、机器人够得到”这样的结构化理解。图片：Grendelkhan，[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Waymo_self-driving_car_front_view.gk.jpg)，[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)。_
+
 ## **二、为什么 AI 需要 Spatial Intelligence？**
 
 ### **2.1 二维视觉不等于三维理解**

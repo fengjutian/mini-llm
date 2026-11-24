@@ -44,6 +44,10 @@ Cognitive Architecture 是一种组织智能系统内部认知过程的架构。
 
 在人类认知研究中，认知架构涉及工作记忆、长期记忆、注意控制、执行功能、元认知等机制。
 
+![受试者佩戴 EEG 电极帽](assets/images/cognitive-eeg-cap.jpg)
+
+_图：认知架构的概念大量借自认知科学。图中受试者戴着高密度 EEG 电极帽，研究者通过头皮电信号观察注意、工作记忆等过程的时间进程。工程上的 Cognitive Architecture 并不模拟神经元放电，而是借用这套功能划分来组织 LLM 的认知过程。图片：Chris Hope，[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:EEG_Recording_Cap.jpg)，[CC BY 2.0](https://creativecommons.org/licenses/by/2.0/)。_
+
 在 AI 工程中，我们可以把这些理论转化为可实现的软件模块。
 
 [Methodological aspects for cognitive architectures construction: a study and proposal | Artificial Intelligence Review | Springer Nature Link](https://images.openai.com/static-rsc-4/msMhUIazDJckfhGxqPg4yI8Yc4MbNPCaI7wpSPNP0RgS5Yd7T0M-YGj36rU2jA54hH-kMVYtlULLY2U3BPZj-Z3ArInPZrV1xSCi9I-kmjO1P1iI7CWKaXBs2ADJ-oXUdtHE_ecd6bJdMq-EytL4LBPWK1-a-YviIyhG5k1da3E?purpose=inline)

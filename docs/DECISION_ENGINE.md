@@ -40,6 +40,10 @@ _图：不确定性下的决策。从左到右展示本章核心概念之间的�
 
 这就是 Decision Theory（决策理论）研究的核心问题。
 
+![木质棋具组成的国际象棋开局摆法](assets/images/decision-chess.jpg)
+
+_图：棋类是决策理论最古老的试验场：每个局面都有多个可行走法，评估函数只能给出估计，而选择必须现在就做出。区别在于棋类是完全可观测的，真实世界的决策还要额外处理不确定性。图片：Wilfredor，[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Chess_game_Staunton_No._6.jpg)，[CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)。_
+
 # **一、Decision Theory：什么是决策理论？**
 
 ## **1.1 决策与预测有什么区别？**

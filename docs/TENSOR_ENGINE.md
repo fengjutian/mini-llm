@@ -826,6 +826,10 @@ for i in 0..m {
 
 # **八、矩阵乘法为什么是 GPU 的核心？**
 
+![带三风扇散热器的独立 GPU 加速卡](assets/images/tensor-gpu-card.jpg)
+
+_图：一块现代 GPU 加速卡。Tensor Engine 里的大规模矩阵乘法最终就运行在这样的硬件上：成千上万个并行计算单元换取吞吐量，代价是更简单的控制逻辑。图片：Jacek Halicki，[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:2023_MSI_GeForce_RTX_2080_Gaming_X_Trio_%283%29.jpg)，[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)。_
+
 ## **8.1 CPU 与 GPU 的区别**
 
 CPU 更擅长：

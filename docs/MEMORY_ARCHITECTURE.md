@@ -40,6 +40,10 @@ _图：分层记忆系统。从左到右展示本章核心概念之间的数据�
 
 向量数据库只是记忆系统可能使用的一种存储和检索技术。真正的记忆架构还涉及信息编码、分类、存储、巩固、遗忘、检索和更新。
 
+![两条不同年代的 DDR 内存条](assets/images/memory-dram-modules.jpg)
+
+_图：记忆首先需要物理载体。图中是两条不同容量与年代的 DDR 内存条，由多颗 DRAM 芯片、金手指和内存控制器接口组成。AI 的 Memory Architecture 借用的是同一套隐喻——编码、存储、检索、巩固、遗忘——只是管理的对象从电荷变成了信息。图片：Veeblefetzer，[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:168_pin_and_184_pin_DIMM.jpg)，[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)。_
+
 # **一、什么是 Memory Architecture？**
 
 Memory Architecture 是智能系统管理信息生命周期的一套机制。
