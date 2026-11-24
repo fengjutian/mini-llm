@@ -218,24 +218,34 @@ impl CausalSelfAttention {
 
         let scale = 1.0 / (self.head_dim as f32).sqrt();
         let group = self.num_heads / self.num_kv_heads;
-        let mut merged: Option<TensorValue> = None;
 
+        // Append one row per *key/value* head, then reuse it for every query
+        // head in the group. (Appending inside the query-head loop would store
+        // the same token `group` times and double the cache work.)
+        let mut cached_keys = Vec::with_capacity(self.num_kv_heads);
+        let mut cached_values = Vec::with_capacity(self.num_kv_heads);
+        for kv_head in 0..self.num_kv_heads {
+            let k = key.slice_cols(kv_head * self.head_dim, self.head_dim)?;
+            let v = value.slice_cols(kv_head * self.head_dim, self.head_dim)?;
+            let k_value = k.value();
+            cache.keys[kv_head].append_row(k_value.data())?;
+            let v_value = v.value();
+            cache.values[kv_head].append_row(v_value.data())?;
+            cached_keys.push(TensorValue::new(cache.keys[kv_head].clone()));
+            cached_values.push(TensorValue::new(cache.values[kv_head].clone()));
+        }
+
+        let mut merged: Option<TensorValue> = None;
         for head in 0..self.num_heads {
             let kv_head = head / group;
             let q = query.slice_cols(head * self.head_dim, self.head_dim)?;
-            let k = key.slice_cols(kv_head * self.head_dim, self.head_dim)?;
-            let v = value.slice_cols(kv_head * self.head_dim, self.head_dim)?;
-
-            cache.keys[kv_head] = append_row(&cache.keys[kv_head], &k.value())?;
-            cache.values[kv_head] = append_row(&cache.values[kv_head], &v.value())?;
-
-            let keys = TensorValue::new(cache.keys[kv_head].clone());
-            let values = TensorValue::new(cache.values[kv_head].clone());
+            let keys = &cached_keys[kv_head];
+            let values = &cached_values[kv_head];
 
             // All cached positions are in the past, so no mask is needed.
             let scores = q.matmul(&keys.transpose()?)?.scale(scale)?;
             let weights = scores.softmax_rows()?;
-            let attended = weights.matmul(&values)?;
+            let attended = weights.matmul(values)?;
 
             let out_weight = self
                 .output
@@ -263,14 +273,6 @@ impl CausalSelfAttention {
         parameters.extend(self.output.parameters());
         parameters
     }
-}
-
-/// Appends a `[1, cols]` row to a `[rows, cols]` tensor.
-fn append_row(tensor: &Tensor, row: &Tensor) -> Result<Tensor, mini_llm_tensor::TensorError> {
-    let (rows, cols) = (tensor.shape()[0], tensor.shape()[1]);
-    let mut data = tensor.data().to_vec();
-    data.extend_from_slice(row.data());
-    Tensor::new(data, vec![rows + 1, cols])
 }
 
 /// Builds the `[batch * seq, batch * seq]` mask: `0` for allowed positions and

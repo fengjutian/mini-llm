@@ -5,7 +5,8 @@
 mod commands;
 
 use commands::{
-    autograd, basics, bench, classify, dpo, generate, grpo, lora, moe, regression, sft, trace, train, xor,
+    autograd, basics, bench, classify, dpo, generate, grpo, lora, moe, regression, sft, trace,
+    train, xor,
 };
 
 fn main() {

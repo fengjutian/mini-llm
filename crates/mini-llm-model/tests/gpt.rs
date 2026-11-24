@@ -293,3 +293,29 @@ fn traced_forward_records_one_matrix_per_layer_and_head() {
         .iter()
         .all(|record| record.layer == 1));
 }
+
+#[test]
+fn kv_cache_stores_one_row_per_token_with_grouped_queries() {
+    let model = modern_model();
+    // 4 query heads share 2 key/value heads; the cache must still grow by one
+    // row per token, not by one row per query head.
+    let mut caches = model.empty_caches();
+    for (position, &token) in [1usize, 2, 3, 4].iter().enumerate() {
+        model.step_token(token, position, &mut caches).unwrap();
+    }
+    for cache in &caches {
+        assert_eq!(cache.attention.len(), 4);
+    }
+}
+
+#[test]
+fn cached_mask_stays_correct_across_shapes() {
+    let model = model();
+    let first = model.forward(&[1, 2, 3, 4], 1).unwrap().data();
+    let second = model.forward(&[1, 2, 3, 4], 1).unwrap().data();
+    assert_eq!(first, second);
+
+    // A different (batch, seq) must rebuild the mask and still run.
+    let batched = model.forward(&[1, 2, 3, 4, 5, 6], 2).unwrap();
+    assert_eq!(batched.shape(), &[6, 8]);
+}

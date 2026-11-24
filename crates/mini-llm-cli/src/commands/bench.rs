@@ -26,6 +26,7 @@ pub fn run() {
     benchmark_forward();
     benchmark_train_step();
     benchmark_generation();
+    benchmark_tensor_clone();
 }
 
 fn benchmark_matmul(size: usize) {
@@ -119,8 +120,31 @@ fn benchmark_generation() {
     let started = Instant::now();
     for _ in 0..ITERATIONS {
         let mut rng = Rng::new(5);
-        let _ = model.generate(&prompt, 32, 0.8, &mut rng).expect("generate");
+        let _ = model
+            .generate(&prompt, 32, 0.8, &mut rng)
+            .expect("generate");
     }
     let elapsed = started.elapsed().as_secs_f64() / ITERATIONS as f64;
-    println!("  generate 32 tokens (KV cache):                    {:>8.2} ms", elapsed * 1_000.0);
+    println!(
+        "  generate 32 tokens (KV cache):                    {:>8.2} ms",
+        elapsed * 1_000.0
+    );
+}
+
+/// Tensor values share their buffer, so a clone is a refcount bump rather than
+/// a 4 MB copy. The autograd engine relies on this on every node access.
+fn benchmark_tensor_clone() {
+    let tensor = Tensor::full(vec![1024, 1024], 1.0).expect("valid tensor");
+    let iterations = 1_000;
+    let started = Instant::now();
+    let mut checksum = 0usize;
+    for _ in 0..iterations {
+        let cloned = tensor.clone();
+        checksum += cloned.data().len();
+    }
+    let per_clone = started.elapsed().as_secs_f64() / iterations as f64;
+    println!(
+        "  clone 1024x1024 (4 MB shared buffer):             {:>8.3} us (checksum {checksum})",
+        per_clone * 1e6
+    );
 }

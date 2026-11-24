@@ -1,8 +1,8 @@
 //! One module per command, so each demo owns its imports and dependencies.
 
 pub mod autograd;
-pub mod bench;
 pub mod basics;
+pub mod bench;
 pub mod classify;
 pub mod dpo;
 pub mod generate;

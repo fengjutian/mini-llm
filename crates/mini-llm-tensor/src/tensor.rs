@@ -404,4 +404,14 @@ mod tests {
             Err(TensorError::RopePositionMismatch { .. })
         ));
     }
+
+    #[test]
+    fn append_row_grows_in_place() {
+        let mut tensor = Tensor::zeros(vec![0, 2]).unwrap();
+        tensor.append_row(&[1.0, 2.0]).unwrap();
+        tensor.append_row(&[3.0, 4.0]).unwrap();
+        assert_eq!(tensor.shape(), &[2, 2]);
+        assert_eq!(tensor.data(), &[1.0, 2.0, 3.0, 4.0]);
+        assert!(tensor.append_row(&[1.0]).is_err());
+    }
 }

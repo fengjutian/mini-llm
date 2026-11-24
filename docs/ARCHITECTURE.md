@@ -51,7 +51,9 @@ nn 拆成「每层一个文件 + `module` + `error`」。
 
 ## 4. Tensor 设计
 
-MVP Tensor 使用连续 row-major `Vec<f32>` 存储。
+MVP Tensor 使用连续 row-major `Arc<Vec<f32>>` 存储。共享缓冲让 `Tensor::clone`
+是 O(1)（引用计数），因为 autograd 每次访问节点值都会 clone；若用独占 `Vec`，
+这一步会退化成与张量大小成正比的内存拷贝。
 
 不变量：
 

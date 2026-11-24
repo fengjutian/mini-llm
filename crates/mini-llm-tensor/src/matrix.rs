@@ -1,9 +1,35 @@
 //! Matrix kernels: transpose, gather, matmul and rotary positions.
 
+use std::sync::Arc;
+
 use crate::error::TensorError;
 use crate::tensor::Tensor;
 
 impl Tensor {
+    /// Appends one row to a rank-2 tensor in place.
+    ///
+    /// The buffer is shared behind an `Arc`, so this is O(1) amortized when the
+    /// tensor is uniquely owned and only falls back to a full copy while another
+    /// handle still shares it. KV caches rely on the cheap case.
+    pub fn append_row(&mut self, row: &[f32]) -> Result<(), TensorError> {
+        if self.rank() != 2 {
+            return Err(TensorError::ExpectedRank {
+                expected: 2,
+                actual: self.rank(),
+            });
+        }
+        let cols = self.shape[1];
+        if row.len() != cols {
+            return Err(TensorError::ShapeMismatch {
+                left: vec![1, cols],
+                right: vec![1, row.len()],
+            });
+        }
+        Arc::make_mut(&mut self.data).extend_from_slice(row);
+        self.shape[0] += 1;
+        Ok(())
+    }
+
     pub fn transpose_2d(&self) -> Result<Self, TensorError> {
         if self.rank() != 2 {
             return Err(TensorError::ExpectedRank {

@@ -30,10 +30,10 @@ This repository is a working learning stack, not a production framework:
 - Astro site in `web/`: three interactive concept lessons plus the repository docs
 - Product requirements and architecture documents
 
-The tensor implementation is deliberately simple: `f32` plus `Vec<f32>`, scalar
-loops, single-threaded. It is an educational baseline, not a high-performance
-library. Sparse MoE dispatch, GPU acceleration and higher-order gradients remain
-future work.
+The tensor implementation is deliberately simple: `f32` plus an `Arc`-backed
+`Vec<f32>`, scalar loops, single-threaded. It is an educational baseline, not a
+high-performance library. Sparse MoE dispatch, GPU acceleration and higher-order
+gradients remain future work.
 
 ## Quick start
 
@@ -55,6 +55,7 @@ cargo run -p mini-llm-cli -- lora        # adapt a frozen classifier with low-ra
 cargo run -p mini-llm-cli -- dpo         # preference optimization on a toy policy
 cargo run -p mini-llm-cli -- grpo        # group relative policy optimization bandit
 cargo run -p mini-llm-cli -- trace       # training events + attention capture (JSONL)
+cargo run --release -p mini-llm-cli -- bench  # kernel + training micro-benchmarks
 ```
 
 `train` writes `checkpoints/tiny-gpt.bin`; `generate` loads it and samples with
@@ -285,6 +286,44 @@ cargo test -p mini-llm-backend --features candle   # CPU vs Candle (tolerance 1e
 The parity suite currently compares the in-repo CPU kernel with Candle's CPU
 device; `Device::Cuda` can be passed to `CandleBackend::new` where a GPU is
 available.
+
+## Performance notes
+
+`cargo run --release -p mini-llm-cli -- bench` prints the numbers this project is
+optimized against (release, laptop CPU; run-to-run variance on a busy machine is
+around ±20%, so treat them as ratios):
+
+```text
+matmul  64x64 x64 :     0.05 ms  10536.3 MFLOP/s
+matmul 128x128x128:     0.24 ms  17259.8 MFLOP/s
+matmul 256x256x256:     1.72 ms  19488.0 MFLOP/s
+forward (2 layers, hidden 32, block 16, batch 4):     2.63 ms
+train step (batch 2, block 16):                      2.32 ms
+generate 32 tokens (KV cache):                        3.34 ms
+clone 1024x1024 (4 MB shared buffer):                0.044 us
+```
+
+Design choices behind those numbers:
+
+- **Tensor buffers are `Arc<Vec<f32>>`.** Cloning a tensor is a refcount bump
+  (~0.04 µs for 4 MB) instead of a copy. The autograd engine clones node values
+  on every op, so this turns an O(size) cost into O(1).
+- **KV cache appends in place.** `Tensor::append_row` grows the shared buffer with
+  `Arc::make_mut`, so a decode step costs O(1) amortized instead of copying the
+  whole cache. The GQA path also appends one row per key/value head and shares it
+  across its query heads; previously it appended once per query head, doubling
+  the cache and the attention work.
+- **The causal mask is cached per `(batch, seq)`.** Training reuses the same
+  shape every step, so the `[N, N]` mask is built once instead of per forward.
+- **matmul keeps i-k-j ordering.** A transposed dot-product variant was measured
+  ~4× slower (3.7 vs 15.8 GFLOP/s) at these sizes because the inner loop stops
+  vectorizing, so it is deliberately not used. The comment in
+  `crates/mini-llm-tensor/src/matrix.rs` records the experiment.
+- **`Trainer` caches parameter handles.** Collecting parameters walks the graph;
+  doing it once at construction removes a per-step allocation.
+- The tiny demo model is dominated by per-op overhead and graph bookkeeping, not
+  floating-point work, so micro-optimizing kernels further has diminishing
+  returns until the model grows.
 
 ## Web site (Astro)
 

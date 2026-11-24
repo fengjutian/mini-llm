@@ -5,6 +5,8 @@
 //! uses a KV cache so each new token costs one token of compute instead of a
 //! full window.
 
+use std::cell::RefCell;
+
 use mini_llm_autograd::TensorValue;
 use mini_llm_nn::{Embedding, Linear, Module, Rng};
 use mini_llm_tensor::Tensor;
@@ -31,6 +33,8 @@ pub struct TinyGpt {
     blocks: Vec<TransformerBlock>,
     final_norm: NormLayer,
     lm_head: Linear,
+    /// Causal mask for the last `(batch, seq)` pair; rebuilt only on change.
+    mask_cache: RefCell<Option<((usize, usize), Tensor)>>,
 }
 
 impl TinyGpt {
@@ -60,7 +64,24 @@ impl TinyGpt {
             blocks,
             final_norm,
             lm_head,
+            mask_cache: RefCell::new(None),
         })
+    }
+
+    /// Returns the causal mask for `(batch, seq)`, reusing the cached tensor.
+    fn causal_mask(&self, batch: usize, seq: usize) -> Result<TensorValue, ModelError> {
+        let rows = batch * seq;
+        {
+            let cache = self.mask_cache.borrow();
+            if let Some((key, tensor)) = cache.as_ref() {
+                if *key == (batch, seq) {
+                    return Ok(TensorValue::new(tensor.clone()));
+                }
+            }
+        }
+        let tensor = Tensor::new(causal_batch_mask(batch, seq), vec![rows, rows])?;
+        *self.mask_cache.borrow_mut() = Some(((batch, seq), tensor.clone()));
+        Ok(TensorValue::new(tensor))
     }
 
     pub fn config(&self) -> &ModelConfig {
@@ -155,10 +176,7 @@ impl TinyGpt {
             embedded = embedded.add(&position_embedding.lookup(&positions)?)?;
         }
 
-        let mask = TensorValue::new(Tensor::new(
-            causal_batch_mask(batch, seq),
-            vec![batch * seq, batch * seq],
-        )?);
+        let mask = self.causal_mask(batch, seq)?;
 
         let mut hidden = embedded;
         for (layer, block) in self.blocks.iter().enumerate() {
