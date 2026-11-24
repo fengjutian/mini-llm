@@ -1,5 +1,9 @@
 # **mini-llm Representation Engine 深度解析：从 Embedding Space、Semantic Geometry 到 Feature、Concept 与 World Representation**
 
+![从向量到概念表征](assets/diagrams/representation-engine.svg)
+
+_图：从向量到概念表征。从左到右展示本章核心概念之间的数据流与依赖关系。_
+
 **副标题：大模型内部如何表示语言、概念、关系与世界？从向量空间走向内部世界表征**
 
 在前面的 mini-llm 系列中，我们已经逐步构建了一个大语言模型的基本体系：

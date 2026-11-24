@@ -1,5 +1,9 @@
 # **《mini-llm World Model Engine 深度解析：从 State Representation、State Transition 到 Dynamics Model、Planning 与 Causal Reasoning》**
 
+![动力学与因果规划](assets/diagrams/world-model-engine-causal-reasoning.svg)
+
+_图：动力学与因果规划。从左到右展示本章核心概念之间的数据流与依赖关系。_
+
 在前面的 mini-llm 系列中，我们已经逐步构建了 Tensor Engine、Autograd Engine、Neural Network Engine、Transformer Engine、Training Engine、Representation Engine、Memory Architecture 和 Knowledge Architecture。
 
 这些模块解决了不同层次的问题：

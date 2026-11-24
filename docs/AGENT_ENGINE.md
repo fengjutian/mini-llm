@@ -1,5 +1,9 @@
 # **mini-llm Agent Engine 深度解析：从 Goal Representation、Task Planning 到 Tool Calling、Memory 与 Autonomous Execution**
 
+![目标驱动的 Agent Loop](assets/diagrams/agent-engine.svg)
+
+_图：目标驱动的 Agent Loop。从左到右展示本章核心概念之间的数据流与依赖关系。_
+
 **副标题：从语言模型到智能体——让 AI 不仅能够回答问题，还能够理解目标、拆解任务、调用工具、观察结果并持续完成工作。**
 
 在前面的 World Model Engine 中，我们研究了一个重要问题：

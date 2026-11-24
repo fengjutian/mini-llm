@@ -1,5 +1,9 @@
 # **《mini-llm Agent Engine 深度解析：从 Agent Loop、Tool Calling 到 Runtime、Multi-agent 与 Autonomous Agent》**
 
+![Agent Runtime 执行闭环](assets/diagrams/agent-engine-runtime.svg)
+
+_图：Agent Runtime 执行闭环。从左到右展示本章核心概念之间的数据流与依赖关系。_
+
 前面的系列，我们已经逐步构建了 mini-llm 的多个智能模块：
 
 - **Representation Engine**：如何表示信息和概念。

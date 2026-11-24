@@ -1,5 +1,9 @@
 # **《mini-llm Decision Engine 深度解析：从 Utility Function、Expected Utility 到 Bayesian Decision Theory、Risk-sensitive Planning 与 Multi-agent Decision》**
 
+![不确定性下的决策](assets/diagrams/decision-engine.svg)
+
+_图：不确定性下的决策。从左到右展示本章核心概念之间的数据流与依赖关系。_
+
 在前面的 mini-llm 系列中，我们已经逐步构建了一个智能系统的多个核心模块：
 
 - Representation Engine：如何形成内部表征。

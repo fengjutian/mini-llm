@@ -1,5 +1,9 @@
 # **mini-llm Knowledge Architecture 深度解析：从 Knowledge Representation、Ontology 到 Knowledge Graph、Knowledge Reasoning 与 Neuro-symbolic AI**
 
+![知识组织与推理](assets/diagrams/knowledge-architecture.svg)
+
+_图：知识组织与推理。从左到右展示本章核心概念之间的数据流与依赖关系。_
+
 在前面的 mini-llm 系列中，我们已经讨论了 Memory Architecture。
 
 我们知道，一个智能系统可以通过 Episodic Memory 保存经历，通过 Semantic Memory 保存知识，通过 Procedural Memory 保存技能，并利用 Vector Database 检索相关记忆。

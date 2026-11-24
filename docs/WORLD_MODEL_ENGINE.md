@@ -1,5 +1,9 @@
 # **mini-llm World Model Engine 深度解析：从 State Representation、State Transition 到 Prediction、Planning 与 Action**
 
+![世界模型的预测与行动](assets/diagrams/world-model-engine.svg)
+
+_图：世界模型的预测与行动。从左到右展示本章核心概念之间的数据流与依赖关系。_
+
 **副标题：让大语言模型不仅理解语言，还能表示世界状态、预测未来变化，并在可能的未来中进行推演。**
 
 在前面的 Representation Engine 中，我们讨论了一个重要问题：

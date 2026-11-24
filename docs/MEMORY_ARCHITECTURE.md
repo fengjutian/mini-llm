@@ -1,5 +1,9 @@
 # **mini-llm Memory Architecture 深度解析：从 Short-term Memory、Episodic Memory 到 Memory Consolidation、Forgetting Mechanism 与 Long-term Memory**
 
+![分层记忆系统](assets/diagrams/memory-architecture.svg)
+
+_图：分层记忆系统。从左到右展示本章核心概念之间的数据流与依赖关系。_
+
 在前面的 mini-llm 系列中，我们已经讨论了 Cognitive Architecture。
 
 其中有一个重要问题：

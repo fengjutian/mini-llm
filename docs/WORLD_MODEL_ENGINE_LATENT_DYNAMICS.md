@@ -1,5 +1,9 @@
 # **《mini-llm World Model Engine 深度解析：从 World Representation、Latent Dynamics 到 Predictive Model、Model-based Planning 与 Learned Environment》**
 
+![潜在空间世界模型](assets/diagrams/world-model-engine-latent-dynamics.svg)
+
+_图：潜在空间世界模型。从左到右展示本章核心概念之间的数据流与依赖关系。_
+
 在前面的文章中，我们讨论了 Simulation Engine（模拟引擎）。
 
 Simulation Engine 解决的是一个问题：

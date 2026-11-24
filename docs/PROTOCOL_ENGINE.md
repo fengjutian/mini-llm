@@ -1,5 +1,9 @@
 # **《mini-llm Protocol Engine 深度解析：从 Tool Calling、Function Schema 到 MCP、A2A、Message Bus 与 Agent Communication》**
 
+![Agent 通信协议栈](assets/diagrams/protocol-engine.svg)
+
+_图：Agent 通信协议栈。从左到右展示本章核心概念之间的数据流与依赖关系。_
+
 ## **一、为什么 AI 系统需要 Protocol Engine？**
 
 前面我们已经构建了 mini-llm 的多个核心模块：

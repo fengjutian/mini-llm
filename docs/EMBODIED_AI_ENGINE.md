@@ -1,5 +1,9 @@
 # **《mini-llm Embodied AI Engine 深度解析：从 Perception、Sensor Fusion 到 Motor Control、Action Execution 与 Physical Interaction》**
 
+![具身智能感知行动闭环](assets/diagrams/embodied-ai-engine.svg)
+
+_图：具身智能感知行动闭环。从左到右展示本章核心概念之间的数据流与依赖关系。_
+
 前面的文章中，我们讨论了 World Model Engine。
 
 World Model 让 AI 能够在内部表示世界、预测环境变化，并推演不同动作可能产生的结果。

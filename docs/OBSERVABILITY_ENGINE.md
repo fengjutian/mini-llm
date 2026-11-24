@@ -1,5 +1,9 @@
 # **《mini-llm Observability Engine 深度解析：从 Logging、Metrics、Tracing 到 Agent Evaluation、Cost Tracking 与 Execution Replay》**
 
+![Agent 可观测性闭环](assets/diagrams/observability-engine.svg)
+
+_图：Agent 可观测性闭环。从左到右展示本章核心概念之间的数据流与依赖关系。_
+
 ## **一、Observability Engine：为什么 AI 系统需要可观测性？**
 
 在传统软件系统中，我们通常通过日志、指标和链路追踪来判断系统是否正常运行。

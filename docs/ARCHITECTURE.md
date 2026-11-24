@@ -1,5 +1,9 @@
 # mini-llm 系统架构
 
+![mini-llm 分层架构](assets/diagrams/architecture.svg)
+
+_图：mini-llm 分层架构。从左到右展示本章核心概念之间的数据流与依赖关系。_
+
 ## 1. 架构原则
 
 - Rust-first，核心功能不依赖 Python。

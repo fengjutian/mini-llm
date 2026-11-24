@@ -1,5 +1,9 @@
 # **mini-llm Neural Network Engine 深度解析：从 Linear、MLP 到 Loss、Optimizer**
 
+![神经网络训练组件](assets/diagrams/neural-network-engine.svg)
+
+_图：神经网络训练组件。从左到右展示本章核心概念之间的数据流与依赖关系。_
+
 ## **一、为什么有了 Tensor Engine 和 Autograd Engine，还需要 Neural Network Engine？**
 
 在 mini-llm 中，我们已经构建了两个重要基础模块：

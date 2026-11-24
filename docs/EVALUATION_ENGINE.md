@@ -1,5 +1,9 @@
 # **mini-llm Evaluation Engine 深度解析：从 Validation Loss、Perplexity 到 Benchmark、模型泛化能力**
 
+![模型评估链路](assets/diagrams/evaluation-engine.svg)
+
+_图：模型评估链路。从左到右展示本章核心概念之间的数据流与依赖关系。_
+
 **副标题：模型训练完成之后，如何判断它真正学会了什么？**
 
 在上一篇文章中，我们完成了 mini-llm Training Engine 的设计，已经理解了：

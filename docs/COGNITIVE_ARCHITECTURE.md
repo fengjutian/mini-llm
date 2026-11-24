@@ -1,5 +1,9 @@
 # **mini-llm Cognitive Architecture 深度解析：从 Working Memory、Belief System 到 Metacognition、Executive Function 与 Cognitive Loop**
 
+![认知循环](assets/diagrams/cognitive-architecture.svg)
+
+_图：认知循环。从左到右展示本章核心概念之间的数据流与依赖关系。_
+
 在前面的 mini-llm 系列中，我们已经逐步构建了：
 
 - **Transformer Engine**：模型如何处理 Token 和上下文。

@@ -1,5 +1,9 @@
 # **《mini-llm Simulation Engine 深度解析：从 Environment Modeling、State Transition 到 Multi-Agent Simulation、Monte Carlo 与 World Model》**
 
+![仿真与策略评估](assets/diagrams/simulation-engine.svg)
+
+_图：仿真与策略评估。从左到右展示本章核心概念之间的数据流与依赖关系。_
+
 在前面的文章中，我们讨论了 Agent Engine 和 Multi-Agent Engine。
 
 Agent 能够理解目标、制定计划、调用工具并执行任务。

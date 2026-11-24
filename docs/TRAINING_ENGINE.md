@@ -1,5 +1,9 @@
 # **mini-llm Training Engine 深度解析：从 Dataset、Batch、Cross Entropy 到 Backpropagation、AdamW**
 
+![端到端训练闭环](assets/diagrams/training-engine.svg)
+
+_图：端到端训练闭环。从左到右展示本章核心概念之间的数据流与依赖关系。_
+
 **副标题：理解大语言模型如何从文本中学习——构建一个真正能够训练 Transformer 的训练引擎**
 
 在前面的文章中，我们已经逐步构建了 mini-llm 的核心组件：

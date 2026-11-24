@@ -1,5 +1,9 @@
 # mini-llm 开发路线图
 
+![mini-llm 里程碑](assets/diagrams/roadmap.svg)
+
+_图：mini-llm 里程碑。从左到右展示本章核心概念之间的数据流与依赖关系。_
+
 ## Milestone 0 — 可运行骨架（已完成）
 
 - [x] Cargo workspace

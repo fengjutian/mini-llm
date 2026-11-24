@@ -1,5 +1,9 @@
 # **mini-llm Tensor Engine 深度解析**
 
+![Tensor 的逻辑视图与物理计算](assets/diagrams/tensor-engine.svg)
+
+_图：Tensor 的逻辑视图与物理计算。从左到右展示本章核心概念之间的数据流与依赖关系。_
+
 ## **从内存布局、Shape、Stride 到矩阵乘法**
 
 mini-llm 技术文档 · 第二部分 · Tensor Engine

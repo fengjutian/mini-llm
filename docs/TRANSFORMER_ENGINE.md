@@ -1,5 +1,9 @@
 # **mini-llm Transformer Engine 深度解析：从 Embedding、Positional Encoding 到 Self-Attention、Multi-Head Attention**
 
+![Transformer 表征流水线](assets/diagrams/transformer-engine.svg)
+
+_图：Transformer 表征流水线。从左到右展示本章核心概念之间的数据流与依赖关系。_
+
 **—— 从 Token 向量化、位置信息注入到注意力计算，理解大语言模型最核心的计算引擎**
 
 ## **一、引言：Transformer Engine 到底在做什么？**

@@ -1,5 +1,9 @@
 # **mini-llm Transformer Block 深度解析：从 Feed Forward、Residual Connection 到 LayerNorm、RMSNorm**
 
+![Transformer Block 数据流](assets/diagrams/transformer-block.svg)
+
+_图：Transformer Block 数据流。从左到右展示本章核心概念之间的数据流与依赖关系。_
+
 **—— 理解 Transformer 如何通过非线性变换、残差连接和归一化，构建深层神经网络**
 
 ## **一、引言：Attention 之后，Transformer 还需要做什么？**

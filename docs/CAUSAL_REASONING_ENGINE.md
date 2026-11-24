@@ -1,5 +1,9 @@
 # **《mini-llm Causal Reasoning Engine 深度解析：从 Causal Graph、Structural Causal Model 到 Intervention、Counterfactual 与 Causal Discovery》**
 
+![因果推理阶梯](assets/diagrams/causal-reasoning-engine.svg)
+
+_图：因果推理阶梯。从左到右展示本章核心概念之间的数据流与依赖关系。_
+
 在前面的 mini-llm 系列中，我们已经研究了：
 
 - Representation Engine：如何形成内部表征。

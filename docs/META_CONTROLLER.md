@@ -1,5 +1,9 @@
 # **《mini-llm Meta-Controller 深度解析：从 Metacognition、Dynamic Model Routing 到 Compute Allocation、Inference-time Scaling 与 Adaptive Reasoning》**
 
+![自适应推理控制](assets/diagrams/meta-controller.svg)
+
+_图：自适应推理控制。从左到右展示本章核心概念之间的数据流与依赖关系。_
+
 在前面的 mini-llm 系列中，我们已经逐步构建了 Tensor Engine、Autograd Engine、Neural Network Engine、Transformer Engine、Training Engine、Memory Engine、World Model Engine、Decision Engine、Agent Engine 和 Agent Learning Engine。
 
 这些模块解决了不同层面的问题：

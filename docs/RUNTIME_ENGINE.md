@@ -1,5 +1,9 @@
 # **《mini-llm Runtime Engine 深度解析：从 Execution Graph、Task Scheduler 到 Async Runtime、Parallel Execution 与 Fault Tolerance》**
 
+![可靠执行运行时](assets/diagrams/runtime-engine.svg)
+
+_图：可靠执行运行时。从左到右展示本章核心概念之间的数据流与依赖关系。_
+
 前面的 mini-llm 系列已经逐步构建了模型计算、认知、记忆、决策、规划、Agent、学习和元控制等核心模块。
 
 我们现在需要解决一个非常实际的问题：

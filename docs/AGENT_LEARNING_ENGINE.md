@@ -1,5 +1,9 @@
 # **《mini-llm Agent Learning Engine 深度解析：从 Experience Replay、Credit Assignment 到 Policy Optimization、Continual Learning 与 Self-improvement》**
 
+![Agent 从经验中学习](assets/diagrams/agent-learning-engine.svg)
+
+_图：Agent 从经验中学习。从左到右展示本章核心概念之间的数据流与依赖关系。_
+
 前面的 mini-llm 系列，我们已经构建了 Agent Engine。
 
 Agent 能够：

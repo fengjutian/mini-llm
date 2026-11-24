@@ -1,5 +1,9 @@
 # **《mini-llm Multi-Agent Engine 深度解析：从 Agent Orchestration、Task Delegation 到 Shared Memory、Consensus 与 Swarm Intelligence》**
 
+![多智能体协作拓扑](assets/diagrams/multi-agent-engine.svg)
+
+_图：多智能体协作拓扑。从左到右展示本章核心概念之间的数据流与依赖关系。_
+
 在前面的文章中，我们已经讨论了 Agent Engine。
 
 一个 Agent 可以理解用户目标、制定计划、调用工具、观察执行结果，并根据反馈调整行动。

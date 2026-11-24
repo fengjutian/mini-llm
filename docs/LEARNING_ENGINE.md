@@ -1,5 +1,9 @@
 # **mini-llm Learning Engine 深度解析：从 Feedback、Experience Replay 到 Online Learning、Reinforcement Learning 与 Self-Improvement**
 
+![持续学习闭环](assets/diagrams/learning-engine.svg)
+
+_图：持续学习闭环。从左到右展示本章核心概念之间的数据流与依赖关系。_
+
 **副标题：智能体如何从经验中学习？从一次任务的成功与失败，到持续更新知识、优化策略，最终形成不断改进的智能系统。**
 
 在前面的 Agent Engine 中，我们已经构建了一个能够理解目标、拆解任务、调用工具、执行行动并检查结果的智能体。

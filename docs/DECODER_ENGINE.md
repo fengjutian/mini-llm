@@ -1,5 +1,9 @@
 # **mini-llm Decoder Engine 深度解析：从 Transformer Stack、LM Head 到 Next Token Prediction**
 
+![自回归解码循环](assets/diagrams/decoder-engine.svg)
+
+_图：自回归解码循环。从左到右展示本章核心概念之间的数据流与依赖关系。_
+
 **—— 理解 GPT 如何将隐藏状态转换成词表概率，以及一个语言模型如何逐个 Token 生成文本**
 
 ## **一、引言：Transformer 已经理解上下文，接下来做什么？**

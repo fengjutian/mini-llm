@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="430" viewBox="0 0 1400 430" role="img" aria-labelledby="title desc">
+  <title id="title">Agent 可观测性闭环</title>
+  <desc id="desc">Events，Logs / Metrics，Traces，Evaluation，Replay 的流程图</desc>
+  <style>
+    :root { color-scheme: light dark; }
+    .bg { fill: #f7f4ed; }
+    .grid { stroke: #ded8cc; stroke-width: 1; opacity: .42; }
+    .eyebrow { fill: #bc4b28; font: 700 17px ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: 2px; }
+    .heading { fill: #172126; font: 700 31px Inter, "Noto Sans SC", "Microsoft YaHei", sans-serif; }
+    .box { fill: #fffdf8; stroke: #b8b1a5; stroke-width: 2; }
+    .box-0, .box-4 { fill: #fff0e8; stroke: #d6653f; }
+    .node { fill: #263238; font: 650 19px Inter, "Noto Sans SC", "Microsoft YaHei", sans-serif; }
+    .arrow, .arrow-head { fill: none; stroke: #68777d; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+    @media (prefers-color-scheme: dark) {
+      .bg { fill: #101416; }
+      .grid { stroke: #334047; opacity: .42; }
+      .heading { fill: #edf2f3; }
+      .box { fill: #182024; stroke: #516068; }
+      .box-0, .box-4 { fill: #32211c; stroke: #e17750; }
+      .node { fill: #e7edef; }
+      .arrow, .arrow-head { stroke: #91a1a8; }
+      .eyebrow { fill: #ef855d; }
+    }
+  </style>
+  <rect class="bg" width="1400" height="430" rx="24"/>
+  <path class="grid" d="M 70 130 H 1330 M 70 342 H 1330"/>
+  <text class="eyebrow" x="70" y="70">MINI-LLM · CONCEPT MAP</text>
+  <text class="heading" x="70" y="116">Agent 可观测性闭环</text>
+  <g>
+    <rect class="box box-0" x="91" y="198" width="210" height="94" rx="18"/>
+    <text class="node" x="196" y="254" text-anchor="middle">Events</text>
+    <path class="arrow" d="M 311 245 H 331"/>
+    <path class="arrow-head" d="M 321 237 L 333 245 L 321 253"/>
+  </g>
+  <g>
+    <rect class="box box-1" x="343" y="198" width="210" height="94" rx="18"/>
+    <text class="node" x="448" y="254" text-anchor="middle">Logs / Metrics</text>
+    <path class="arrow" d="M 563 245 H 583"/>
+    <path class="arrow-head" d="M 573 237 L 585 245 L 573 253"/>
+  </g>
+  <g>
+    <rect class="box box-2" x="595" y="198" width="210" height="94" rx="18"/>
+    <text class="node" x="700" y="254" text-anchor="middle">Traces</text>
+    <path class="arrow" d="M 815 245 H 835"/>
+    <path class="arrow-head" d="M 825 237 L 837 245 L 825 253"/>
+  </g>
+  <g>
+    <rect class="box box-3" x="847" y="198" width="210" height="94" rx="18"/>
+    <text class="node" x="952" y="254" text-anchor="middle">Evaluation</text>
+    <path class="arrow" d="M 1067 245 H 1087"/>
+    <path class="arrow-head" d="M 1077 237 L 1089 245 L 1077 253"/>
+  </g>
+  <g>
+    <rect class="box box-4" x="1099" y="198" width="210" height="94" rx="18"/>
+    <text class="node" x="1204" y="254" text-anchor="middle">Replay</text>
+  </g>
+</svg>

@@ -1,5 +1,9 @@
 # **mini-llm Autograd Engine 深度解析**
 
+![反向模式自动微分](assets/diagrams/autograd-engine.svg)
+
+_图：反向模式自动微分。从左到右展示本章核心概念之间的数据流与依赖关系。_
+
 ## **从计算图、链式法则到反向传播：让神经网络学会自动计算梯度**
 
 mini-llm 技术文档 · 第三部分 · Autograd Engine

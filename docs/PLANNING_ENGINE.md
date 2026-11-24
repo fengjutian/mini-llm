@@ -1,5 +1,9 @@
 # **《mini-llm Planning Engine 深度解析：从 Goal Decomposition、Search Algorithms 到 Hierarchical Planning、MCTS 与 Model Predictive Control》**
 
+![从目标到可执行计划](assets/diagrams/planning-engine.svg)
+
+_图：从目标到可执行计划。从左到右展示本章核心概念之间的数据流与依赖关系。_
+
 在前面的系列中，我们已经逐步构建了 mini-llm 的多个核心模块：
 
 - **Representation Engine**：模型如何表示信息与概念。

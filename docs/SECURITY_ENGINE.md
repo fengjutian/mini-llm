@@ -1,5 +1,9 @@
 # **《mini-llm Security Engine 深度解析：从 Identity、Permission、Sandbox 到 Prompt Injection、Policy Enforcement 与 Trust Boundary》**
 
+![纵深安全控制链](assets/diagrams/security-engine.svg)
+
+_图：纵深安全控制链。从左到右展示本章核心概念之间的数据流与依赖关系。_
+
 ## **一、Security Engine：为什么 Agent 系统需要独立安全架构？**
 
 传统软件系统的安全问题，通常集中在身份认证、权限控制、数据保护和网络安全等领域。

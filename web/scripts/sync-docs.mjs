@@ -19,7 +19,7 @@
  *
  * Run through `pnpm run sync` (also invoked by `dev` and `build`).
  */
-import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -28,6 +28,8 @@ const webRoot = path.resolve(here, '..');
 const repoRoot = path.resolve(webRoot, '..');
 const docsDir = path.join(repoRoot, 'docs');
 const outDir = path.join(webRoot, 'src', 'content', 'docs');
+const docsAssetsDir = path.join(docsDir, 'assets');
+const publicDocsAssetsDir = path.join(webRoot, 'public', 'docs-assets');
 
 /**
  * The docs are organised into tracks. `section` groups them in the sidebar and
@@ -483,6 +485,13 @@ const yamlString = (value) => JSON.stringify(value);
 
 await mkdir(outDir, { recursive: true });
 
+// Keep Markdown image paths portable in the repository while exposing the
+// same assets from a stable absolute URL in the generated Astro site.
+await rm(publicDocsAssetsDir, { recursive: true, force: true });
+await cp(docsAssetsDir, publicDocsAssetsDir, { recursive: true, force: true }).catch((error) => {
+  if (error?.code !== 'ENOENT') throw error;
+});
+
 const files = (await readdir(docsDir, { withFileTypes: true }))
   .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
   .map((entry) => entry.name)
@@ -523,7 +532,8 @@ for (const doc of documents) {
   const raw = await readFile(sourcePath, 'utf8');
 
   const normalized = normalizeMath(raw);
-  const { markdown, heading } = stripLeadingHeading(normalized.markdown);
+  const siteMarkdown = normalized.markdown.replaceAll('](assets/', '](/docs-assets/');
+  const { markdown, heading } = stripLeadingHeading(siteMarkdown);
 
   const title = doc.title ?? heading ?? doc.slug;
   const minutes = estimateMinutes(raw);
