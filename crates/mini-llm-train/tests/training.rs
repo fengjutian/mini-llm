@@ -2,7 +2,7 @@
 
 use std::path::PathBuf;
 
-use mini_llm_data::{Batch, CharTokenizer, Dataset, TextDataset};
+use mini_llm_data::{Batch, CharTokenizer, Dataset, TextDataset, Tokenizer};
 use mini_llm_model::{ModelConfig, TinyGpt};
 use mini_llm_nn::Rng;
 use mini_llm_trace::{Event, MemorySink};
@@ -41,6 +41,10 @@ fn train_config() -> TrainConfig {
         weight_decay: 0.0,
         seed: 3,
     }
+}
+
+fn tokenizer_enum() -> Tokenizer {
+    Tokenizer::from(tokenizer())
 }
 
 fn trainer(seed: u64) -> Trainer<TextDataset> {
@@ -86,11 +90,14 @@ fn checkpoint_roundtrip_preserves_parameters() {
     trainer.train(3, |_| {}).unwrap();
     let path = temp_path("roundtrip");
 
-    save_checkpoint(&path, trainer.model(), &tokenizer()).unwrap();
+    save_checkpoint(&path, trainer.model(), &tokenizer_enum()).unwrap();
     let (loaded, loaded_tokenizer) = load_checkpoint(&path).unwrap();
     std::fs::remove_file(&path).ok();
 
-    assert_eq!(loaded_tokenizer.characters(), tokenizer().characters());
+    assert_eq!(
+        loaded_tokenizer.as_char().unwrap().characters(),
+        tokenizer().characters()
+    );
     assert_eq!(loaded.config().hidden_size, 16);
     let original = trainer.model().parameters();
     let restored = loaded.parameters();
@@ -114,7 +121,7 @@ fn checkpoint_rejects_truncated_files() {
     let mut trainer = trainer(13);
     trainer.train(1, |_| {}).unwrap();
     let path = temp_path("truncated");
-    save_checkpoint(&path, trainer.model(), &tokenizer()).unwrap();
+    save_checkpoint(&path, trainer.model(), &tokenizer_enum()).unwrap();
     let bytes = std::fs::read(&path).unwrap();
     std::fs::write(&path, &bytes[..bytes.len() / 2]).unwrap();
     let result = load_checkpoint(&path);
@@ -154,7 +161,7 @@ fn checkpoint_preserves_the_modern_architecture() {
     let model = TinyGpt::new(config, &mut rng).unwrap();
     let path = temp_path("modern");
 
-    save_checkpoint(&path, &model, &tokenizer()).unwrap();
+    save_checkpoint(&path, &model, &tokenizer_enum()).unwrap();
     let (loaded, _) = load_checkpoint(&path).unwrap();
     std::fs::remove_file(&path).ok();
 
@@ -219,7 +226,7 @@ fn resumed_training_matches_the_uninterrupted_run() {
     let mut first = trainer(1);
     first.train(3, |_| {}).unwrap();
     let path = temp_path("resume");
-    save_training_checkpoint(&path, first.model(), &tokenizer(), &first.state()).unwrap();
+    save_training_checkpoint(&path, first.model(), &tokenizer_enum(), &first.state()).unwrap();
     let next_loss = first.step().unwrap();
 
     let (model, tokenizer, state) = load_training_checkpoint(&path).unwrap();

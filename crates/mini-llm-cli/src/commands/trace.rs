@@ -2,7 +2,7 @@
 
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use mini_llm_data::{CharTokenizer, Dataset, TextDataset};
+use mini_llm_data::{CharTokenizer, Dataset, TextDataset, Tokenizer};
 use mini_llm_model::{ModelConfig, TinyGpt};
 use mini_llm_nn::Rng;
 use mini_llm_trace::{Event, EventSink, JsonlSink};

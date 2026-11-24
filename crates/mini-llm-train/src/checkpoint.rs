@@ -101,6 +101,9 @@ fn write_checkpoint(
         }
     }
 
+    // Version 4 marks whether a training state follows, so a model-only save
+    // and a resumable save share one format.
+    push_u32(&mut bytes, u32::from(state.is_some()));
     if let Some(state) = state {
         push_u32(&mut bytes, state.step as u32);
         push_u64(&mut bytes, state.rng_state);
@@ -260,7 +263,14 @@ fn load_components(
         parameter.set_value(Tensor::new(data, shape)?)?;
     }
 
-    let state = if version >= 3 {
+    let has_state = if version >= 4 {
+        reader.u32()? != 0
+    } else {
+        // Version 3 always wrote the training state.
+        version >= 3
+    };
+
+    let state = if has_state {
         let step = reader.u32()? as usize;
         let rng_state = reader.u64()?;
         let optimizer_step = reader.u32()?;
