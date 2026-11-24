@@ -435,6 +435,10 @@ from collections import dequedef topological_sort(graph):    indegree = {       
 
 # **五、State-space Search：状态空间搜索**
 
+![状态空间搜索中的分支、剪枝与最优计划路径。](assets/diagrams/planning-search-tree.svg)
+
+_图：状态空间搜索中的分支、剪枝与最优计划路径。_
+
 目标拆解和任务规划能够描述任务，但复杂环境中，系统还需要在大量可能的行动路径中搜索可行方案。
 
 这就是 State-space Search。

@@ -419,6 +419,10 @@ class ModelExecutor(BaseExecutor):    async def execute(self, task):        retu
 
 # **四、Async Runtime：为什么需要异步执行？**
 
+![异步调度让模型、工具和 Agent 任务重叠执行。](assets/diagrams/runtime-async-timeline.svg)
+
+_图：异步调度让模型、工具和 Agent 任务重叠执行。_
+
 AI 系统大量时间都在等待。
 
 例如：

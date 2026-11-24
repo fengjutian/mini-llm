@@ -293,6 +293,10 @@ Perception 是输入信息获取，Spatial Understanding 是对空间结构的�
 
 # **四、Sensor Fusion：如何融合多个传感器？**
 
+![多模态传感器经时间同步和融合形成统一世界状态。](assets/diagrams/embodied-sensor-fusion.svg)
+
+_图：多模态传感器经时间同步和融合形成统一世界状态。_
+
 单一传感器通常无法完整描述真实世界。
 
 例如：

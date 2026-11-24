@@ -79,6 +79,10 @@ Training Loss
 
 ## **二、Training Loss 与 Validation Loss**
 
+![训练集与验证集曲线分离时出现过拟合。](assets/diagrams/evaluation-overfitting.svg)
+
+_图：训练集与验证集曲线分离时出现过拟合。_
+
 这是模型评估中最基础的两个指标。
 
 ### **2.1 Training Loss**

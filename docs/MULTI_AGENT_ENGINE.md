@@ -1,5 +1,9 @@
 # **《mini-llm Multi-Agent Engine 深度解析：从 Agent Orchestration、Task Delegation 到 Shared Memory、Consensus 与 Swarm Intelligence》**
 
+![协调器、专家 Agent 与共享记忆组成的协作拓扑。](assets/diagrams/multi-agent-topology.svg)
+
+_图：协调器、专家 Agent 与共享记忆组成的协作拓扑。_
+
 ![多智能体协作拓扑](assets/diagrams/multi-agent-engine.svg)
 
 _图：多智能体协作拓扑。从左到右展示本章核心概念之间的数据流与依赖关系。_

@@ -114,6 +114,10 @@ Memory Architecture 是智能系统管理信息生命周期的一套机制。
 
 # **二、Short-term Memory 与 Long-term Memory**
 
+![工作记忆、情景记忆、语义记忆与长期记忆之间的写入和召回。](assets/diagrams/memory-hierarchy.svg)
+
+_图：工作记忆、情景记忆、语义记忆与长期记忆之间的写入和召回。_
+
 首先要理解两种基本的记忆类型。
 
 ## **2.1 Short-term Memory：短期记忆**

@@ -47,6 +47,10 @@ Attention 主要负责 Token 之间的信息交互，而 FFN 负责对每个 Tok
 
 # **二、Transformer Block 的整体架构**
 
+![Pre-Norm Transformer Block 中的两条残差路径。](assets/diagrams/transformer-block-residual.svg)
+
+_图：Pre-Norm Transformer Block 中的两条残差路径。_
+
 先看一个标准 Transformer Block。
 
 [Transformer Architecture & Key Design Decisions | Amardeep Kumar](https://images.openai.com/static-rsc-4/R-MngmTXVZGT6gZxtjcRThT9pDJVJfGBiaM67tF1NnTmyy1yxg5J0AZJm8MWlby3uFxdXuQA0sU6TW7jwS74FJDQ4CIgLUmRdii_iciH30PYgT0l6B7piTdH7oExkqBj28qJ9jtx_rTmhU2graJaAZXzVVsekh7h6H_TEcpgq7s?purpose=inline)

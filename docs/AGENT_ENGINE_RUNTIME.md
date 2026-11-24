@@ -252,6 +252,10 @@ Environment 是 Agent 获取观察结果和产生实际影响的地方。
 
 # **三、Agent Loop：智能体运行循环**
 
+![Agent 在观察、思考、规划、行动和评估之间持续循环。](assets/diagrams/agent-loop.svg)
+
+_图：Agent 在观察、思考、规划、行动和评估之间持续循环。_
+
 Agent 最核心的机制是 Agent Loop。
 
 它让 Agent 不再只处理一次输入，而是可以根据行动反馈继续工作。

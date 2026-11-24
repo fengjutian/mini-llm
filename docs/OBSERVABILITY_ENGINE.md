@@ -492,6 +492,10 @@ event_id=evt_001
 
 ## **四、Distributed Tracing：如何追踪跨 Engine 的完整调用链？**
 
+![一次 Agent 请求跨越模型、工具和存储的 Trace 与 Span。](assets/diagrams/observability-trace.svg)
+
+_图：一次 Agent 请求跨越模型、工具和存储的 Trace 与 Span。_
+
 Logging 可以告诉我们某个事件发生了。
 
 Metrics 可以告诉我们系统整体是否变慢。

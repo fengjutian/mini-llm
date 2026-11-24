@@ -54,10 +54,15 @@ pub fn run() {
         benchmark_matmul(size);
     }
 
-    for (hidden, block, batch) in [(32usize, 16usize, 4usize), (128, 32, 4)] {
+    for (hidden, block, batch) in [
+        (32usize, 16usize, 4usize),
+        (128, 32, 4),
+        (256, 32, 4),
+        (512, 32, 4),
+    ] {
         benchmark_forward(hidden, block, batch);
     }
-    for (hidden, block, batch) in [(32usize, 16usize, 2usize), (128, 32, 2)] {
+    for (hidden, block, batch) in [(32usize, 16usize, 2usize), (128, 32, 2), (256, 32, 2)] {
         benchmark_train_step(hidden, block, batch);
     }
     benchmark_generation();

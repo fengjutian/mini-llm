@@ -184,6 +184,10 @@ y 增加了约 0.006。
 
 # **三、什么是计算图（Computational Graph）？**
 
+![前向计算图与反向梯度传播方向。](assets/diagrams/autograd-computation-graph.svg)
+
+_图：前向计算图与反向梯度传播方向。_
+
 这是 Autograd Engine 的核心概念。
 
 ## **3.1 普通程序与计算图**

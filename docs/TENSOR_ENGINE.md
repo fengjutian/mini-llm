@@ -269,6 +269,10 @@ Tensor 的元素总数等于所有维度长度的乘积：
 
 # **四、Memory Layout：Tensor 的内存布局**
 
+![Tensor 的二维索引如何通过 Stride 映射到连续内存。](assets/diagrams/tensor-memory-layout.svg)
+
+_图：Tensor 的二维索引如何通过 Stride 映射到连续内存。_
+
 这是理解 Tensor Engine 最重要的部分之一。
 
 ## **4.1 数组在内存中如何存储？**

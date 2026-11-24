@@ -27,6 +27,10 @@ _图：端到端训练闭环。从左到右展示本章核心概念之间的数�
 
 ## **LLM 训练的核心循环**
 
+![批次训练循环与随 Step 下降的示意 Loss 曲线。](assets/diagrams/training-loss-loop.svg)
+
+_图：批次训练循环与随 Step 下降的示意 Loss 曲线。_
+
 **Dataset**
 
 准备训练文本

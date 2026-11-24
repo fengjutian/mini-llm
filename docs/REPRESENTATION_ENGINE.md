@@ -1,5 +1,9 @@
 # **mini-llm Representation Engine 深度解析：从 Embedding Space、Semantic Geometry 到 Feature、Concept 与 World Representation**
 
+![语义相近概念在向量空间中形成局部簇与关系方向。](assets/diagrams/representation-semantic-space.svg)
+
+_图：语义相近概念在向量空间中形成局部簇与关系方向。_
+
 ![从向量到概念表征](assets/diagrams/representation-engine.svg)
 
 _图：从向量到概念表征。从左到右展示本章核心概念之间的数据流与依赖关系。_

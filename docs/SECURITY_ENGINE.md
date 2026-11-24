@@ -1,5 +1,9 @@
 # **《mini-llm Security Engine 深度解析：从 Identity、Permission、Sandbox 到 Prompt Injection、Policy Enforcement 与 Trust Boundary》**
 
+![身份、策略与 Sandbox 组成逐层收紧的信任边界。](assets/diagrams/security-trust-boundaries.svg)
+
+_图：身份、策略与 Sandbox 组成逐层收紧的信任边界。_
+
 ![纵深安全控制链](assets/diagrams/security-engine.svg)
 
 _图：纵深安全控制链。从左到右展示本章核心概念之间的数据流与依赖关系。_

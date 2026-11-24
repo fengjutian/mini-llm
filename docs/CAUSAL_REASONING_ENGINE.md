@@ -176,6 +176,10 @@ X ←───── Y
 
 # **二、Causal Graph：如何用图表示因果关系？**
 
+![观察、干预与反事实对应的三层因果推理。](assets/diagrams/causal-intervention.svg)
+
+_图：观察、干预与反事实对应的三层因果推理。_
+
 ## **2.1 什么是 Causal Graph？**
 
 Causal Graph（因果图）是一种使用有向图表示变量之间因果假设的工具。

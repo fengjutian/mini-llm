@@ -436,6 +436,10 @@ arXiv+2
 
 # **五、Self-Attention：Token 如何理解其他 Token？**
 
+![注意力矩阵将每个 Query 与所有 Key 的相关性表示为权重。](assets/diagrams/transformer-attention-heatmap.svg)
+
+_图：注意力矩阵将每个 Query 与所有 Key 的相关性表示为权重。_
+
 这是 Transformer 最核心的部分。
 
 ## **5.1 为什么需要 Self-Attention？**
