@@ -389,6 +389,10 @@ ReLU 的导数：
 
 ## **五、MLP：多个 Linear 与 Activation 组成的神经网络**
 
+![两层 MLP 通过隐藏层和非线性激活组合特征。](assets/diagrams/neural-network-mlp.svg)
+
+_图：两层 MLP 通过隐藏层和非线性激活组合特征。_
+
 MLP，全称 Multi-Layer Perceptron，即多层感知机。
 
 它是最经典的前馈神经网络结构。

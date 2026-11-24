@@ -96,6 +96,10 @@ Cognitive Architecture 是一种组织智能系统内部认知过程的架构。
 
 # **二、Working Memory：工作记忆**
 
+![工作记忆作为认知工作区连接感知、信念、规划和元认知。](assets/diagrams/cognitive-workspace.svg)
+
+_图：工作记忆作为认知工作区连接感知、信念、规划和元认知。_
+
 ## **2.1 什么是工作记忆？**
 
 工作记忆是认知系统暂时保存和操作当前任务信息的能力。

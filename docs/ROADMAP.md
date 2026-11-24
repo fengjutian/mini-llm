@@ -57,6 +57,10 @@ _图：mini-llm 里程碑。从左到右展示本章核心概念之间的数据�
 
 ## Milestone 3 — Tiny GPT（已完成）
 
+![路线图以可运行、可测试的里程碑逐步构建完整 mini-llm。](assets/diagrams/roadmap-milestones.svg)
+
+_图：路线图以可运行、可测试的里程碑逐步构建完整 mini-llm。_
+
 - [x] 字符级 Tokenizer
 - [x] 数据批处理
 - [x] Causal Attention

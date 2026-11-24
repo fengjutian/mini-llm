@@ -167,6 +167,10 @@ Transformer 中，Attention 需要计算 Query 和 Key 的相似程度：
 
 ## **1.4 矩阵乘法（Matrix Multiplication）**
 
+![矩阵乘法将输入特征投影到新的表示空间。](assets/diagrams/math-matrix-transform.svg)
+
+_图：矩阵乘法将输入特征投影到新的表示空间。_
+
 矩阵乘法是神经网络中最重要的计算之一。
 
 假设：

@@ -359,6 +359,10 @@ z_t = encoder(observation)
 
 # **四、State Transition：世界如何发生变化？**
 
+![动作干预改变状态转移，并沿因果链影响未来结果。](assets/diagrams/world-model-causal-rollout.svg)
+
+_图：动作干预改变状态转移，并沿因果链影响未来结果。_
+
 这是 World Model 的核心。
 
 世界不是静态的。

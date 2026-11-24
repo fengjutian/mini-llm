@@ -251,6 +251,27 @@ impl Tensor {
         self.map(|x| 1.0 / (1.0 + (-x).exp()))
     }
 
+    /// Mean of every row, kept as `[rows, 1]` so it broadcasts over columns.
+    pub fn mean_rows_keepdim(&self) -> Result<Self, TensorError> {
+        if self.rank() != 2 {
+            return Err(TensorError::ExpectedRank {
+                expected: 2,
+                actual: self.rank(),
+            });
+        }
+        let (rows, cols) = (self.shape[0], self.shape[1]);
+        if cols == 0 {
+            return Err(TensorError::EmptyTensor);
+        }
+        let means = (0..rows)
+            .map(|row| {
+                let start = row * cols;
+                self.data[start..start + cols].iter().sum::<f32>() / cols as f32
+            })
+            .collect();
+        Self::new(means, vec![rows, 1])
+    }
+
     /// Row-wise stable softmax for a rank-2 tensor.
     pub fn softmax_rows(&self) -> Result<Self, TensorError> {
         if self.rank() != 2 {
@@ -266,12 +287,18 @@ impl Tensor {
         }
 
         let mut output = vec![0.0; self.data.len()];
+        // One scratch row reused across rows instead of one Vec per row.
+        let mut exps = vec![0.0f32; cols];
         for row in 0..rows {
             let start = row * cols;
             let slice = &self.data[start..start + cols];
             let max_value = slice.iter().copied().fold(f32::NEG_INFINITY, f32::max);
-            let exps: Vec<f32> = slice.iter().map(|x| (x - max_value).exp()).collect();
-            let sum: f32 = exps.iter().sum();
+            let mut sum = 0.0f32;
+            for col in 0..cols {
+                let value = (slice[col] - max_value).exp();
+                exps[col] = value;
+                sum += value;
+            }
             for col in 0..cols {
                 output[start + col] = exps[col] / sum;
             }

@@ -260,6 +260,10 @@ review_status
 
 # **三、Experience Replay：经验回放**
 
+![执行轨迹进入经验池，经采样和信用分配更新策略。](assets/diagrams/agent-replay-buffer.svg)
+
+_图：执行轨迹进入经验池，经采样和信用分配更新策略。_
+
 经验产生之后，如何利用它们？
 
 一个经典方法是 Experience Replay。

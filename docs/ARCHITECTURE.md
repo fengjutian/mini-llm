@@ -109,6 +109,10 @@ MVP 采用单头 scaled dot-product attention：
 
 ## 8. 依赖方向
 
+![Workspace 保持从应用层到模型层、再到张量与后端的单向依赖。](assets/diagrams/architecture-dependency-layers.svg)
+
+_图：Workspace 保持从应用层到模型层、再到张量与后端的单向依赖。_
+
 ```text
 mini-llm-cli
  ├── mini-llm-train ──► mini-llm-model ──► mini-llm-nn ──► mini-llm-autograd

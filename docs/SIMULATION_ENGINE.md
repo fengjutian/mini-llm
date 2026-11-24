@@ -1,5 +1,9 @@
 # **《mini-llm Simulation Engine 深度解析：从 Environment Modeling、State Transition 到 Multi-Agent Simulation、Monte Carlo 与 World Model》**
 
+![Monte Carlo 通过多次随机 rollout 估计行动结果分布。](assets/diagrams/simulation-monte-carlo.svg)
+
+_图：Monte Carlo 通过多次随机 rollout 估计行动结果分布。_
+
 ![仿真与策略评估](assets/diagrams/simulation-engine.svg)
 
 _图：仿真与策略评估。从左到右展示本章核心概念之间的数据流与依赖关系。_

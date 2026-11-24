@@ -34,6 +34,10 @@ mini-llm 是一个面向开发者、学习者和研究者的开源项目。项�
 
 ## 3. 产品范围
 
+![产品能力从教学 Tensor 逐级演进到训练、加速和研究工作台。](assets/diagrams/prd-capability-ladder.svg)
+
+_图：产品能力从教学 Tensor 逐级演进到训练、加速和研究工作台。_
+
 ### 3.1 MVP（v0.1）
 
 必须交付：

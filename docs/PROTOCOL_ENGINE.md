@@ -97,6 +97,10 @@ A2A 则关注不同 Agent 之间如何发现能力、委派任务和交换任务
 
 ## **2.2 AI 系统中的通信层次**
 
+![从消息传输到 MCP、A2A 与 Tool Schema 的协议分层。](assets/diagrams/protocol-layer-stack.svg)
+
+_图：从消息传输到 MCP、A2A 与 Tool Schema 的协议分层。_
+
 可以把 AI 系统的通信划分成五个层次：
 
 | 层次                 | 主要解决的问题       | 典型技术         |

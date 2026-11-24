@@ -292,6 +292,10 @@ buffer = ReplayBuffer(capacity=10000)buffer.add(experience)batch = buffer.sample
 
 # **三、Reinforcement Learning：通过奖励学习行为策略**
 
+![状态、行动、奖励和下一状态构成强化学习交互闭环。](assets/diagrams/learning-mdp-loop.svg)
+
+_图：状态、行动、奖励和下一状态构成强化学习交互闭环。_
+
 前面介绍的 Experience Replay 解决了经验如何保存和重复利用的问题。
 
 但它没有完全回答：

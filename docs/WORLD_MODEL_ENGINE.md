@@ -362,6 +362,10 @@ class WorldTransition:    def __init__(self, state_dim, action_dim, hidden_dim):
 
 ## **四、World Dynamics：学习世界的变化规律**
 
+![世界模型从当前状态展开多条候选未来并选择行动。](assets/diagrams/world-model-rollout.svg)
+
+_图：世界模型从当前状态展开多条候选未来并选择行动。_
+
 状态转移描述单步变化。
 
 World Dynamics（世界动力学）则关注更长期、更一般的变化规律。

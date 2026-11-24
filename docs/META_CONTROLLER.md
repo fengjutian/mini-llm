@@ -257,6 +257,10 @@ def metacognitive_control(state):    if state.failure_count >= 3:        return 
 
 # **三、Dynamic Model Routing：动态模型路由**
 
+![元控制器依据难度、成本和时延动态路由模型与计算预算。](assets/diagrams/meta-controller-routing.svg)
+
+_图：元控制器依据难度、成本和时延动态路由模型与计算预算。_
+
 这是 Meta-Controller 最重要的工程能力之一。
 
 ## **3.1 为什么需要动态模型路由？**

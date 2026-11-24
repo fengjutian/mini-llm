@@ -307,6 +307,10 @@ utility = UtilityFunction({    "quality": 0.4,    "maintainability": 0.2,    "se
 
 # **三、Expected Utility：期望效用**
 
+![决策引擎综合收益、发生概率与风险惩罚比较候选行动。](assets/diagrams/decision-expected-utility.svg)
+
+_图：决策引擎综合收益、发生概率与风险惩罚比较候选行动。_
+
 现实世界存在不确定性。
 
 一个行动可能产生多个不同结果。

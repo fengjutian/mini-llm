@@ -363,6 +363,10 @@ class Concept:    def __init__(        self,        name,        parent=None,   
 
 # **三、Knowledge Graph：知识图谱**
 
+![实体、关系与类型约束组成可推理的知识图谱。](assets/diagrams/knowledge-graph.svg)
+
+_图：实体、关系与类型约束组成可推理的知识图谱。_
+
 现在进入 Knowledge Architecture 最核心的部分。
 
 ## **3.1 什么是知识图谱？**

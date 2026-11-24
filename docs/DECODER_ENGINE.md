@@ -332,6 +332,10 @@ Final Norm 并不是把隐藏状态转换成概率。
 
 # **五、LM Head：隐藏向量如何变成 Token 分数？**
 
+![隐藏状态经 LM Head、Softmax 与采样生成下一个 Token。](assets/diagrams/decoder-token-funnel.svg)
+
+_图：隐藏状态经 LM Head、Softmax 与采样生成下一个 Token。_
+
 这是 Decoder Engine 中最关键的模块之一。
 
 ## **5.1 什么是 LM Head？**
