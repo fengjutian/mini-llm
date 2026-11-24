@@ -1,10 +1,12 @@
 //! # mini-llm-data
 //!
-//! Character-level tokenization and next-token batch sampling.
+//! Tokenization and next-token batch sampling.
 //!
-//! The tokenizer is intentionally trivial: every distinct character in the
-//! corpus becomes one token, sorted by code point so the vocabulary is
-//! deterministic and independent of iteration order.
+//! [`CharTokenizer`] maps every distinct character to one token (sorted by code
+//! point, so the vocabulary is deterministic). [`BpeTokenizer`] is a byte-level
+//! byte-pair encoder: it starts from the 256 bytes and learns merges from the
+//! corpus, so any UTF-8 text is representable. [`Tokenizer`] dispatches over
+//! both and is what checkpoints store.
 //!
 //! ```no_run
 //! use mini_llm_data::{CharTokenizer, Dataset, TextDataset};
@@ -16,6 +18,14 @@
 //! let mut rng = Rng::new(1);
 //! let batch = dataset.sample_batch(2, &mut rng).unwrap();
 //! assert_eq!(batch.inputs.len(), 2 * 4);
+//! ```
+//!
+//! ```no_run
+//! use mini_llm_data::BpeTokenizer;
+//!
+//! let tokenizer = BpeTokenizer::train("the quick brown fox", 300);
+//! let tokens = tokenizer.encode("quick fox");
+//! assert_eq!(tokenizer.decode(&tokens).unwrap(), "quick fox");
 //! ```
 
 mod bpe;
@@ -51,8 +61,6 @@ pub enum DataError {
     EmptyResponse,
     /// A BPE merge refers to a token id that does not exist yet.
     InvalidMerge { index: usize },
-    /// Decoded token bytes are not valid UTF-8.
-    InvalidUtf8,
 }
 
 impl Display for DataError {
@@ -90,7 +98,6 @@ impl Display for DataError {
                 "BPE merge {} refers to a token id that does not exist yet",
                 index
             ),
-            Self::InvalidUtf8 => write!(f, "decoded tokens are not valid UTF-8"),
         }
     }
 }

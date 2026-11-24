@@ -181,6 +181,7 @@ SFT 语料仅用于展示掩码机制。
 - [x] Resumable checkpoints (step, RNG, Adam moments)
 - [x] Gradient accumulation (`--accum N`)
 - [x] File corpus loading (`--corpus PATH`)
+- [x] Byte-level BPE tokenizer (`--bpe --vocab N`) and checkpoint v4 tokenizer tag
 
 实现拆分：
 

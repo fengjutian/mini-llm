@@ -22,7 +22,7 @@ This repository is a working learning stack, not a production framework:
 - `mini-llm-nn`: `Linear`, `Embedding`, `LayerNorm`, `RmsNorm`, `SwiGlu`, `Moe`, activations, `Sequential`, SGD and AdamW
 - `mini-llm-random`: seeded xorshift64\* RNG and Xavier/normal initialization
 - `mini-llm-model`: causal multi-head / grouped-query attention with optional RoPE, a configurable pre-norm block, KV-cache generation, and `TinyGpt`
-- `mini-llm-data`: character tokenizer and next-token window sampling
+- `mini-llm-data`: character and byte-level BPE tokenizers, plus next-token window sampling
 - `mini-llm-train`: training loop and a self-describing binary checkpoint format
 - `mini-llm-trace`: structured training events (JSONL) and tensor capture
 - `mini-llm-backend`: `Backend` seam with a CPU reference and an optional Candle implementation
@@ -50,6 +50,7 @@ cargo run -p mini-llm-cli -- classify    # softmax + cross-entropy on two blobs
 cargo run -p mini-llm-cli -- moe         # mixture-of-experts routing
 cargo run -p mini-llm-cli -- train       # modern Tiny GPT (RMSNorm/RoPE/SwiGLU/GQA)
 cargo run -p mini-llm-cli -- train 200 --corpus examples/corpus.txt   # train on a text file
+cargo run -p mini-llm-cli -- train 200 --bpe --vocab 300 --corpus examples/corpus.txt
 cargo run -p mini-llm-cli -- train 200 --resume   # continue from the saved step
 cargo run -p mini-llm-cli -- eval        # validation loss of the saved checkpoint
 cargo run -p mini-llm-cli -- generate "The little language model learns " 14 0.3
@@ -81,10 +82,14 @@ The training loop includes what a real run needs:
   optimizer update, trading time for a larger effective batch
   (`batch_size × N`); a test checks that accumulating two identical batches
   matches a plain single-batch step.
-- **Any UTF-8 text corpus** — `--corpus PATH` builds the character vocabulary
-  from that file instead of the built-in paragraph; the checkpoint records the
-  vocabulary, so `generate` works from it and `eval --corpus PATH` reproduces the
-  held-out number. `examples/corpus.txt` is a small pangram corpus to try.
+- **Any UTF-8 text corpus** — `--corpus PATH` builds the vocabulary from that
+  file instead of the built-in paragraph; the checkpoint records the vocabulary,
+  so `generate` works from it and `eval --corpus PATH` reproduces the held-out
+  number. `examples/corpus.txt` is a small pangram corpus to try.
+- **Character or byte-level BPE tokenizer** — `--bpe --vocab N` learns `N` byte
+  merges from the corpus (default 512) instead of one token per character. BPE
+  covers every byte, so unknown characters never fail; the checkpoint tags which
+  tokenizer it used (format version 4) and `generate`/`eval` decode accordingly.
 
 ## Autograd engine
 
@@ -202,18 +207,21 @@ The training stack:
 
 | Crate | Role |
 | --- | --- |
-| `mini-llm-data` | `CharTokenizer` (sorted, deterministic vocabulary) and `TextDataset` (random windows, targets shifted by one) |
+| `mini-llm-data` | `CharTokenizer` (sorted, deterministic vocabulary), `BpeTokenizer` (byte-level merges) and `TextDataset` (random windows, targets shifted by one) |
 | `mini-llm-train` | `Trainer` (sample → forward → cross-entropy → backward → AdamW), LR schedule, gradient clipping, validation loss, checkpoint save/load with resumable state |
 
-Checkpoints are a dependency-free little-endian format (version 3 appends the
-training state used for exact resumption; versions 1 and 2 still load):
+Checkpoints are a dependency-free little-endian format (version 4 tags the
+tokenizer, version 3 appends the training state; older versions still load):
 
 ```text
 magic "MINILLM1" | version u32 | 10 config u32s
-vocab_size u32 | vocab_size × (char as u32)
+tokenizer_kind u32 (0 = char, 1 = BPE)
+  char: vocab_size u32 | vocab_size × (char as u32)
+  bpe:  merge_count u32 | merge_count × (left u32, right u32)
 parameter_count u32 | parameter_count × { rank u32 | dims | f32 data }
-(version 3) step u32 | rng_state u64 | optimizer_step u32
-            first_moments, second_moments: count u32 | count × { len u32 | f32 data }
+has_state u32 (1 = the training state follows)
+  step u32 | rng_state u64 | optimizer_step u32
+  first_moments, second_moments: count u32 | count × { len u32 | f32 data }
 ```
 
 A 420-character corpus, 31-character vocabulary, 2 layers, 4 heads (2 KV heads),
@@ -487,7 +495,7 @@ mini-llm/
 │   ├── mini-llm-random/   # deterministic RNG and initialization sampling
 │   ├── mini-llm-autograd/ # graph, value and ops (arith / activation / shape)
 │   ├── mini-llm-nn/       # one file per layer + module trait + optimizers
-│   ├── mini-llm-data/     # char tokenizer and batch sampling
+│   ├── mini-llm-data/     # char/BPE tokenizers and batch sampling
 │   ├── mini-llm-model/    # config, attention, blocks, Tiny GPT
 │   ├── mini-llm-train/    # training loop and checkpoints
 │   ├── mini-llm-trace/    # event protocol, JSONL sink, tensor records

@@ -86,7 +86,12 @@ pub fn run(_arguments: &[String]) {
         values: logits.data(),
     });
 
-    save_checkpoint(CHECKPOINT_PATH, trainer.model(), &Tokenizer::from(tokenizer)).expect("save checkpoint");
+    save_checkpoint(
+        CHECKPOINT_PATH,
+        trainer.model(),
+        &Tokenizer::from(tokenizer),
+    )
+    .expect("save checkpoint");
     sink.record(Event::Checkpoint {
         path: CHECKPOINT_PATH.into(),
     });

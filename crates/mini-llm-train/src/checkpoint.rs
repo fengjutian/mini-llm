@@ -195,7 +195,11 @@ fn load_components(
         }
     };
 
-    let kind = if version >= 4 { reader.u32()? } else { TOKENIZER_CHAR };
+    let kind = if version >= 4 {
+        reader.u32()?
+    } else {
+        TOKENIZER_CHAR
+    };
     let tokenizer = match kind {
         TOKENIZER_CHAR => {
             let character_count = reader.u32()? as usize;

@@ -91,7 +91,11 @@ impl BpeTokenizer {
         tokens.into_iter().map(|token| token as usize).collect()
     }
 
-    /// Decodes token ids back into UTF-8 text.
+    /// Decodes token ids back into text.
+    ///
+    /// Byte-level tokens can split a multi-byte UTF-8 character, so incomplete
+    /// sequences are replaced with U+FFFD instead of failing; encoding the same
+    /// text back and forth is always exact.
     pub fn decode(&self, tokens: &[usize]) -> Result<String, DataError> {
         let mut bytes = Vec::new();
         for &token in tokens {
@@ -104,7 +108,7 @@ impl BpeTokenizer {
             }
             self.expand(id, &mut bytes);
         }
-        String::from_utf8(bytes).map_err(|_| DataError::InvalidUtf8)
+        Ok(String::from_utf8_lossy(&bytes).into_owned())
     }
 
     fn expand(&self, id: u32, out: &mut Vec<u8>) {

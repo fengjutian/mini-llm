@@ -1,7 +1,7 @@
 //! Tests for tokenization and batching.
 
 use mini_llm_data::{
-    Batch, BpeTokenizer, CharTokenizer, DataError, Dataset, SftDataset, TextDataset, Tokenizer,
+    BpeTokenizer, CharTokenizer, DataError, Dataset, SftDataset, TextDataset, Tokenizer,
 };
 use mini_llm_random::Rng;
 
@@ -146,7 +146,11 @@ fn sft_dataset_rejects_a_fully_masked_corpus() {
 #[test]
 fn bpe_roundtrips_any_utf8_text() {
     let tokenizer = BpeTokenizer::train("the quick brown fox jumps over the lazy dog", 300);
-    for text in ["the quick brown fox", "lazy dogs jump", "量子计算 and emoji 🚀"] {
+    for text in [
+        "the quick brown fox",
+        "lazy dogs jump",
+        "量子计算 and emoji 🚀",
+    ] {
         let tokens = tokenizer.encode(text);
         assert!(tokens.iter().all(|&token| token < tokenizer.vocab_size()));
         assert_eq!(tokenizer.decode(&tokens).unwrap(), text);
@@ -185,5 +189,8 @@ fn tokenizer_enum_dispatches_to_both_vocabularies() {
 
     let bpe = Tokenizer::from(BpeTokenizer::train("abcabc", 260));
     assert!(bpe.as_bpe().is_some());
-    assert_eq!(bpe.decode(&bpe.encode("abcabc").unwrap()).unwrap(), "abcabc");
+    assert_eq!(
+        bpe.decode(&bpe.encode("abcabc").unwrap()).unwrap(),
+        "abcabc"
+    );
 }
