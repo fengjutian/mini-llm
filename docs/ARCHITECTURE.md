@@ -15,6 +15,10 @@ _图：mini-llm 分层架构。从左到右展示本章核心概念之间的数�
 
 ## 2. 逻辑架构
 
+![一张手绘的建筑立面蓝图](assets/images/architecture-blueprint.jpg)
+
+_图：蓝图用一组正交视图把一栋建筑拆成结构、开口、屋面等几层，任何一层单独看都不足以施工。架构文档承担同样的职责——让读者在不读完全部代码的前提下，看清分层、依赖方向和边界。图片：Alice Trythall Washburn，[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Blueprint_of_elevation_by_Alice_Trythall_Washburn.jpg)，公有领域。_
+
 ```text
 CLI / Future Research Studio
             |

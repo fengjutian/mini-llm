@@ -4,6 +4,10 @@
 
 _图：Agent 从经验中学习。从左到右展示本章核心概念之间的数据流与依赖关系。_
 
+![实验室中的机械臂正在操作小型部件](assets/images/robot-arm-lab-component.jpg)
+
+_图：实验室里的机械臂：一次成功或失败的抓取都会留下轨迹、参数和结果。Agent Learning 的关键不是“多跑几次”，而是把这类执行轨迹正确归因——哪一步真正导致了成功或失败。图片：Nenad Stojković，[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Robot_arm_works_on_a_small_component_in_a_lab_setting.jpg)，[CC BY 2.0](https://creativecommons.org/licenses/by/2.0/)。_
+
 前面的 mini-llm 系列，我们已经构建了 Agent Engine。
 
 Agent 能够：

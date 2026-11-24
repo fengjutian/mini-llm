@@ -293,22 +293,22 @@ from `max_keepdim` / `exp` / `sum_keepdim` rather than pulling in that crate.
 ## Performance notes
 
 `cargo run --release -p mini-llm-cli -- bench` prints the numbers this project is
-optimized against (release, laptop CPU; run-to-run variance on a busy machine is
-around ±20%, so treat them as ratios):
+optimized against. Timings are the best of three rounds of ten iterations, which
+removes most of the background-load noise on a laptop:
 
 ```text
-matmul  64x64 x64 :     0.02 ms  23384.8 MFLOP/s
-matmul 128x128x128:     0.18 ms  22974.9 MFLOP/s
-matmul 256x256x256:     0.70 ms  47628.0 MFLOP/s
-forward (hidden  32, block 16, batch 4):     1.80 ms   1.6 MB alloc
-forward (hidden 128, block 32, batch 4):    14.39 ms  10.0 MB alloc
-forward (hidden 256, block 32, batch 4):    31.76 ms  18.1 MB alloc
-forward (hidden 512, block 32, batch 4):    74.32 ms  35.0 MB alloc
-train step (hidden  32, block 16, batch 2):  1.79 ms   2.0 MB alloc
-train step (hidden 128, block 32, batch 2): 22.52 ms  16.6 MB alloc
-train step (hidden 256, block 32, batch 2): 62.03 ms  41.9 MB alloc
-generate 32 tokens (KV cache):                4.78 ms
-clone 1024x1024 (4 MB shared buffer):        0.082 us
+matmul  64x64 x64 :     0.02 ms  29404.8 MFLOP/s
+matmul 128x128x128:     0.16 ms  25884.4 MFLOP/s
+matmul 256x256x256:     0.72 ms  46289.0 MFLOP/s
+forward (hidden  32, block 16, batch 4):     1.60 ms   1.6 MB alloc
+forward (hidden 128, block 32, batch 4):    13.29 ms  10.0 MB alloc
+forward (hidden 256, block 32, batch 4):    26.84 ms  18.1 MB alloc
+forward (hidden 512, block 32, batch 4):    65.58 ms  35.0 MB alloc
+train step (hidden  32, block 16, batch 2):  2.23 ms   2.0 MB alloc
+train step (hidden 128, block 32, batch 2): 24.11 ms  16.6 MB alloc
+train step (hidden 256, block 32, batch 2): 65.02 ms  41.9 MB alloc
+generate 32 tokens (KV cache):                5.10 ms
+clone 1024x1024 (4 MB shared buffer):        0.064 us
 ```
 
 Design choices behind those numbers:

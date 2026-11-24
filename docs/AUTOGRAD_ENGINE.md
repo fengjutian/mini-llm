@@ -4,6 +4,10 @@
 
 _图：反向模式自动微分。从左到右展示本章核心概念之间的数据流与依赖关系。_
 
+![黑板上推导微积分公式](assets/images/math-lecture.jpg)
+
+_图：微积分的推导在黑板上只是一行行符号；Autograd 要做的，是把这些符号变成一张可执行、可求值的计算图，然后沿着图反着走一遍。图片：Tungsten，[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Mathematics_lecture_at_the_Helsinki_University_of_Technology.jpg)，公有领域。_
+
 ## **从计算图、链式法则到反向传播：让神经网络学会自动计算梯度**
 
 mini-llm 技术文档 · 第三部分 · Autograd Engine

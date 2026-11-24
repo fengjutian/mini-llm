@@ -4,6 +4,10 @@
 
 _图：潜在空间世界模型。从左到右展示本章核心概念之间的数据流与依赖关系。_
 
+![在真实道路上行驶的 Waymo 自动驾驶汽车](assets/images/spatial-waymo-front.jpg)
+
+_图：一辆在真实道路上行驶的 Waymo。世界模型要在潜在空间里预测周围车辆、行人和信号灯的下一步变化；预测得越准，规划就越不需要频繁急刹。图片：Grendelkhan，[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Waymo_self-driving_car_front_view.gk.jpg)，[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)。_
+
 在前面的文章中，我们讨论了 Simulation Engine（模拟引擎）。
 
 Simulation Engine 解决的是一个问题：

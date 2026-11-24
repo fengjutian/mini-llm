@@ -39,6 +39,10 @@
 
 # **一、Embodied Intelligence：什么是具身智能？**
 
+![机械臂在实验台上抓取检测板](assets/images/robot-arm-assay-plate.jpg)
+
+_图：机械臂从实验台上取放检测板。具身智能的难点往往不在“看见”，而在接触：抓取力、位姿误差、物体滑动都只能在行动中暴露。图片：美国国家过敏和传染病研究所，[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Robot_arm_handles_an_assay_plate.jpg)，美国公有领域。_
+
 ## **1. 从离身智能到具身智能**
 
 我们可以先区分两种不同的智能系统。

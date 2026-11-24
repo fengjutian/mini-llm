@@ -4,6 +4,10 @@
 
 _图：Agent 可观测性闭环。从左到右展示本章核心概念之间的数据流与依赖关系。_
 
+![网络运行中心里成排的监控屏幕](assets/images/observability-operations-center.jpg)
+
+_图：一个真实的网络运行中心：墙面屏幕上同时展示拓扑、告警和流量，值班人员靠这些信号判断系统是否健康。Observability Engine 想为 Agent 建立的就是这样一块“墙”——不是更多日志，而是能回答“现在发生了什么”的证据。图片：USAID Pakistan，[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:U.S._Ambassador_and_Power_Information_Technology_Company_CEO_Commemorate_Opening_of_Network_Operations_Center_in_Lahore_(15239121669).jpg)，美国公有领域。_
+
 ## **一、Observability Engine：为什么 AI 系统需要可观测性？**
 
 在传统软件系统中，我们通常通过日志、指标和链路追踪来判断系统是否正常运行。

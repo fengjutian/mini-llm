@@ -4,6 +4,10 @@
 
 _图：动力学与因果规划。从左到右展示本章核心概念之间的数据流与依赖关系。_
 
+![多米诺骨牌组成的因果链](assets/images/causal-dominoes.jpg)
+
+_图：世界模型的因果版本要回答的是“如果推倒这张牌，后面会怎样”。观察只能看到实际发生的那一条链，反事实推理则要想象没有发生的那一条。图片：Dietmar Rabich，[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Domino_--_2021_--_6759.jpg)，[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)。_
+
 在前面的 mini-llm 系列中，我们已经逐步构建了 Tensor Engine、Autograd Engine、Neural Network Engine、Transformer Engine、Training Engine、Representation Engine、Memory Architecture 和 Knowledge Architecture。
 
 这些模块解决了不同层次的问题：

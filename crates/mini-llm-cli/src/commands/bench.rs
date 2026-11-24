@@ -16,6 +16,7 @@ use mini_llm_train::{TrainConfig, Trainer};
 use super::TINY_CORPUS;
 
 const ITERATIONS: usize = 10;
+const ROUNDS: usize = 3;
 
 /// Counts bytes handed out by the allocator, so the benchmark can report the
 /// allocation cost the optimizer still pays per step.
@@ -82,8 +83,7 @@ fn measure(iterations: usize, mut op: impl FnMut()) -> (f64, f64) {
             op();
         }
         let elapsed = started.elapsed().as_secs_f64() / iterations as f64;
-        bytes_per_iteration =
-            allocated_since(allocation_start) as f64 / iterations as f64;
+        bytes_per_iteration = allocated_since(allocation_start) as f64 / iterations as f64;
         best_seconds = best_seconds.min(elapsed);
     }
     (best_seconds, bytes_per_iteration)
@@ -129,16 +129,12 @@ fn benchmark_forward(hidden: usize, block: usize, batch: usize) {
     let tokens: Vec<usize> = (0..block * batch).map(|index| index % 31).collect();
     let _ = model.forward(&tokens, batch).expect("forward");
 
-    let started = Instant::now();
-    let allocation_start = ALLOCATED_BYTES.load(Ordering::Relaxed);
-    for _ in 0..ITERATIONS {
+    let (seconds, allocated) = measure(ITERATIONS, || {
         let _ = model.forward(&tokens, batch).expect("forward");
-    }
-    let elapsed = started.elapsed().as_secs_f64() / ITERATIONS as f64;
-    let allocated = allocated_since(allocation_start) as f64 / ITERATIONS as f64;
+    });
     println!(
         "  forward (hidden {hidden:>3}, block {block:>2}, batch {batch}): {:>8.2} ms  {:>7.1} MB alloc",
-        elapsed * 1_000.0,
+        seconds * 1_000.0,
         allocated / 1e6
     );
 }
@@ -163,16 +159,12 @@ fn benchmark_train_step(hidden: usize, block: usize, batch: usize) {
     for _ in 0..2 {
         trainer.step().expect("warmup step");
     }
-    let started = Instant::now();
-    let allocation_start = ALLOCATED_BYTES.load(Ordering::Relaxed);
-    for _ in 0..ITERATIONS {
+    let (seconds, allocated) = measure(ITERATIONS, || {
         trainer.step().expect("step");
-    }
-    let elapsed = started.elapsed().as_secs_f64() / ITERATIONS as f64;
-    let allocated = allocated_since(allocation_start) as f64 / ITERATIONS as f64;
+    });
     println!(
         "  train step (hidden {hidden:>3}, block {block:>2}, batch {batch}): {:>8.2} ms  {:>7.1} MB alloc",
-        elapsed * 1_000.0,
+        seconds * 1_000.0,
         allocated / 1e6
     );
 }
@@ -181,17 +173,15 @@ fn benchmark_generation() {
     let model = tiny_model(16, 32);
     let prompt = [1usize, 2, 3];
 
-    let started = Instant::now();
-    for _ in 0..ITERATIONS {
+    let (seconds, _) = measure(ITERATIONS, || {
         let mut rng = Rng::new(5);
         let _ = model
             .generate(&prompt, 32, 0.8, &mut rng)
             .expect("generate");
-    }
-    let elapsed = started.elapsed().as_secs_f64() / ITERATIONS as f64;
+    });
     println!(
         "  generate 32 tokens (KV cache):                    {:>8.2} ms",
-        elapsed * 1_000.0
+        seconds * 1_000.0
     );
 }
 

@@ -4,6 +4,10 @@
 
 _图：产品能力演进。从左到右展示本章核心概念之间的数据流与依赖关系。_
 
+![会议中围桌讨论白板上的范围划分](assets/images/prd-whiteboard.jpg)
+
+_图：一次需求讨论现场：白板上画着范围与切片，桌边的人各自带着不同的约束。PRD 的价值不在于把需求写得漂亮，而在于让产品、工程和使用者在同一张图上对齐“做什么、不做什么”。图片：DERDAKI ILIAS，[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:WikiCamp_Morocco_2026_Day_3_-_Group_Discussing_Map_on_Whiteboard_During_Meeting_-_0021.jpg)，[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)。_
+
 - 文档版本：0.1
 - 状态：初稿 / MVP 范围已确定
 - 项目名称：mini-llm

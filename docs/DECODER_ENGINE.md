@@ -6,6 +6,10 @@ _图：自回归解码循环。从左到右展示本章核心概念之间的数�
 
 **—— 理解 GPT 如何将隐藏状态转换成词表概率，以及一个语言模型如何逐个 Token 生成文本**
 
+![NVIDIA DGX Spark 的斜侧视角](assets/images/gpu-server-oblique.jpg)
+
+_图：同一台 AI 计算设备的斜视图。Decoder 一次只生成一个 Token，但每一步都要把整个 KV Cache 读一遍——自回归生成的成本主要花在“重复读取历史”上，这也是 KV Cache、批处理与投机解码被反复优化的原因。图片：Daniel Lu，[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Nvidia_DGX_Spark_oblique_view_dllu.jpg)，[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)。_
+
 ## **一、引言：Transformer 已经理解上下文，接下来做什么？**
 
 在前面的 mini-llm 系列中，我们已经完成了 Transformer 核心结构的学习。

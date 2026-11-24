@@ -8,6 +8,10 @@ _图：语义相近概念在向量空间中形成局部簇与关系方向。_
 
 _图：从向量到概念表征。从左到右展示本章核心概念之间的数据流与依赖关系。_
 
+![双手捧着一只旧地球仪](assets/images/representation-globe.jpg)
+
+_图：地球仪是现实世界的一种表示：它保留了位置、距离和相邻关系，丢掉了地形、气候与一切和“找路”无关的细节。Embedding 空间做的是同一件事——为任务保留有用的差异，压缩掉无关的差异。图片：Shixart1985，[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Young_woman_holds_vintage_globe_in_cozy_room_while_contemplating_travel_dreams_and_adventures_for_the_future.jpg)，[CC BY 2.0](https://creativecommons.org/licenses/by/2.0/)。_
+
 **副标题：大模型内部如何表示语言、概念、关系与世界？从向量空间走向内部世界表征**
 
 在前面的 mini-llm 系列中，我们已经逐步构建了一个大语言模型的基本体系：

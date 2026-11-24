@@ -4,6 +4,10 @@
 
 _图：模型评估链路。从左到右展示本章核心概念之间的数据流与依赖关系。_
 
+![超音速风洞中的 X-59 缩比模型](assets/images/evaluation-wind-tunnel.jpg)
+
+_图：NASA 与 JAXA 在超音速风洞中测试 X-59 的缩比模型：真实的飞行条件被压缩进一个可测量、可重复的实验环境。模型评估也是同一件事——用一个受控、可复现的测试集，代替“感觉它变好了”。图片：JAXA，[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Researchers_from_NASA_and_JAXA_tested_a_scale_model_of_the_X-59_experimental_aircraft_in_a_supersonic_wind_tunnel_located_in_Chofu,_Japan.jpg)，公有领域。_
+
 **副标题：模型训练完成之后，如何判断它真正学会了什么？**
 
 在上一篇文章中，我们完成了 mini-llm Training Engine 的设计，已经理解了：

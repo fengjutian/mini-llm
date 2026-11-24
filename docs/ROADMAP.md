@@ -4,6 +4,10 @@
 
 _图：mini-llm 里程碑。从左到右展示本章核心概念之间的数据流与依赖关系。_
 
+![路边的石制里程碑与指示牌](assets/images/roadmap-milestone.jpg)
+
+_图：里程碑原本就是路边的石头：刻着到下一站的距离，提醒行人已经走了多远、还有多远。Roadmap 里的 Milestone 借用的正是这个意象——每个阶段都要有可验证的产物，而不只是日期。图片：Dave.Dunford，[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Milestone_in_Llanystumdwy.jpg)，[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)。_
+
 ## Milestone 0 — 可运行骨架（已完成）
 
 - [x] Cargo workspace

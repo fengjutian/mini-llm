@@ -6,6 +6,10 @@ _图：Transformer 表征流水线。从左到右展示本章核心概念之间�
 
 **—— 从 Token 向量化、位置信息注入到注意力计算，理解大语言模型最核心的计算引擎**
 
+![一台面向本地推理的 NVIDIA DGX Spark](assets/images/gpu-server-front.jpg)
+
+_图：一台面向本地推理的 AI 计算盒子（NVIDIA DGX Spark）。Transformer 的参数量和上下文长度直接决定了需要多少显存与带宽——模型结构的选择从来不只是数学问题。图片：Daniel Lu，[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Nvidia_DGX_front_view_dllu.jpg)，[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)。_
+
 ## **一、引言：Transformer Engine 到底在做什么？**
 
 在前面的 mini-llm 系列中，我们已经逐步拆解了几个重要的底层模块：

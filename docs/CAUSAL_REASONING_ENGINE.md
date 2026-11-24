@@ -4,6 +4,10 @@
 
 _图：因果推理阶梯。从左到右展示本章核心概念之间的数据流与依赖关系。_
 
+![桌面上散落的多米诺骨牌](assets/images/causal-dominoes.jpg)
+
+_图：多米诺是最直观的因果链：推倒第一张，后面的牌会依次倒下。但仅仅观察它们倒下的顺序，还不足以知道“推哪一张会导致什么”——这正是相关性、干预与反事实要区分的东西。图片：Dietmar Rabich，[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Domino_--_2021_--_6759.jpg)，[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)。_
+
 在前面的 mini-llm 系列中，我们已经研究了：
 
 - Representation Engine：如何形成内部表征。

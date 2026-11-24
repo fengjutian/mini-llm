@@ -2,6 +2,10 @@
 
 ## **一、Multimodal Intelligence：为什么 AI 需要多模态智能？**
 
+![车顶装有多种传感器的自动驾驶汽车](assets/images/spatial-waymo-front.jpg)
+
+_图：自动驾驶汽车是天然的多模态系统：摄像头给纹理和语义，激光雷达给精确距离，毫米波雷达给速度，IMU 给自身运动。多模态融合的第一步，是把这些不同频率、不同坐标系的信息对齐到同一个表示里。图片：Grendelkhan，[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Waymo_self-driving_car_front_view.gk.jpg)，[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)。_
+
 前面我们分别研究了：
 
 - Transformer Engine：如何处理 Token 和上下文关系。

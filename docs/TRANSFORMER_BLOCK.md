@@ -6,6 +6,10 @@ _图：Transformer Block 数据流。从左到右展示本章核心概念之间�
 
 **—— 理解 Transformer 如何通过非线性变换、残差连接和归一化，构建深层神经网络**
 
+![主板上的芯片、插槽与走线](assets/images/network-motherboard.jpg)
+
+_图：一块主板：CPU、内存插槽、供电与总线各司其职，靠走线协同。一个 Transformer Block 内部也是同样的分工——Attention 负责取信息，FFN 负责变换，残差与归一化保证信号能稳定地穿过整块“电路”。图片：Lenharth Systems，[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Computer_Motherboard_Closeup.jpg)，[CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)。_
+
 ## **一、引言：Attention 之后，Transformer 还需要做什么？**
 
 在上一篇文章中，我们已经深入理解了 Transformer Engine 的几个核心模块：

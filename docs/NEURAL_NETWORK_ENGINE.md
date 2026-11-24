@@ -4,6 +4,10 @@
 
 _图：神经网络训练组件。从左到右展示本章核心概念之间的数据流与依赖关系。_
 
+![一片布满相同芯片的 12 英寸硅晶圆](assets/images/silicon-wafer.jpg)
+
+_图：一片 12 英寸硅晶圆：上面是成百上千个结构相同的芯片。神经网络的“深”也来自同一种思路——把简单、同构的单元（Linear + 激活）重复堆叠，靠数量与连接方式获得表达能力。图片：Peellden，[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:12-inch_silicon_wafer.jpg)，[CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/)。_
+
 ## **一、为什么有了 Tensor Engine 和 Autograd Engine，还需要 Neural Network Engine？**
 
 在 mini-llm 中，我们已经构建了两个重要基础模块：
