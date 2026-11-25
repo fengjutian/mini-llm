@@ -601,13 +601,11 @@ impl DeviceTensor {
     pub fn div(&self, other: &Self) -> Result<Self, BackendError> {
         match (&self.storage, &other.storage) {
             (Storage::Host(left), Storage::Host(right)) => {
-                let data = left
-                    .data()
-                    .iter()
-                    .zip(right.data())
-                    .map(|(a, b)| a / b)
-                    .collect();
-                Ok(Self::from_host(Tensor::new(data, left.shape().to_vec())?))
+                let reciprocal = Tensor::new(
+                    right.data().iter().map(|value| 1.0 / value).collect(),
+                    right.shape().to_vec(),
+                )?;
+                Ok(Self::from_host(left.mul(&reciprocal)?))
             }
             #[cfg(feature = "candle")]
             (
@@ -661,6 +659,139 @@ impl DeviceTensor {
                         .map_err(|error| BackendError::Backend(error.to_string()))?;
                 let _ = tensor;
                 Ok(Self::from_candle(zeros))
+            }
+        }
+    }
+}
+
+impl DeviceTensor {
+    /// Row-wise softmax over the last dimension.
+    pub fn softmax_rows(&self) -> Result<Self, BackendError> {
+        match &self.storage {
+            Storage::Host(tensor) => Ok(Self::from_host(tensor.softmax_rows()?)),
+            #[cfg(feature = "candle")]
+            Storage::Candle { tensor, .. } => {
+                let max = tensor
+                    .max_keepdim(1)
+                    .map_err(|error| BackendError::Backend(error.to_string()))?;
+                let shifted = tensor
+                    .broadcast_sub(&max)
+                    .map_err(|error| BackendError::Backend(error.to_string()))?;
+                let exponents = shifted
+                    .exp()
+                    .map_err(|error| BackendError::Backend(error.to_string()))?;
+                let denominator = exponents
+                    .sum_keepdim(1)
+                    .map_err(|error| BackendError::Backend(error.to_string()))?;
+                let result = exponents
+                    .broadcast_div(&denominator)
+                    .map_err(|error| BackendError::Backend(error.to_string()))?;
+                Ok(Self::from_candle(result))
+            }
+        }
+    }
+
+    /// Mean over the last dimension, keeping it as `[rows, 1]`.
+    pub fn mean_rows_keepdim(&self) -> Result<Self, BackendError> {
+        match &self.storage {
+            Storage::Host(tensor) => Ok(Self::from_host(tensor.mean_rows_keepdim()?)),
+            #[cfg(feature = "candle")]
+            Storage::Candle { tensor, .. } => {
+                let result = tensor
+                    .mean_keepdim(1)
+                    .map_err(|error| BackendError::Backend(error.to_string()))?;
+                Ok(Self::from_candle(result))
+            }
+        }
+    }
+
+    /// Sum over the last dimension, keeping it as `[rows, 1]`.
+    pub fn sum_rows_keepdim(&self) -> Result<Self, BackendError> {
+        match &self.storage {
+            Storage::Host(tensor) => {
+                let (rows, cols) = (tensor.shape()[0], tensor.shape()[1]);
+                let mut data = vec![0.0f32; rows];
+                for row in 0..rows {
+                    let start = row * cols;
+                    for value in &tensor.data()[start..start + cols] {
+                        data[row] += value;
+                    }
+                }
+                Ok(Self::from_host(Tensor::new(data, vec![rows, 1])?))
+            }
+            #[cfg(feature = "candle")]
+            Storage::Candle { tensor, .. } => {
+                let result = tensor
+                    .sum_keepdim(1)
+                    .map_err(|error| BackendError::Backend(error.to_string()))?;
+                Ok(Self::from_candle(result))
+            }
+        }
+    }
+
+    /// Element-wise power on the device.
+    pub fn powf(&self, exponent: f32) -> Result<Self, BackendError> {
+        match &self.storage {
+            Storage::Host(tensor) => Ok(Self::from_host(tensor.powf(exponent)?)),
+            #[cfg(feature = "candle")]
+            Storage::Candle { tensor, .. } => {
+                let result = tensor
+                    .powf(f64::from(exponent))
+                    .map_err(|error| BackendError::Backend(error.to_string()))?;
+                Ok(Self::from_candle(result))
+            }
+        }
+    }
+
+    /// Gathers rows by index: `[vocab, hidden] -> [indices, hidden]`.
+    pub fn gather_rows(&self, indices: &[usize]) -> Result<Self, BackendError> {
+        match &self.storage {
+            Storage::Host(tensor) => Ok(Self::from_host(tensor.gather_rows(indices)?)),
+            #[cfg(feature = "candle")]
+            Storage::Candle { tensor, device } => {
+                let index = candle_core::Tensor::from_vec(
+                    indices.iter().map(|&index| index as u32).collect::<Vec<u32>>(),
+                    indices.len(),
+                    device,
+                )
+                .map_err(|error| BackendError::Backend(error.to_string()))?;
+                let gathered = tensor
+                    .index_select(&index, 0)
+                    .map_err(|error| BackendError::Backend(error.to_string()))?;
+                Ok(Self::from_candle(gathered))
+            }
+        }
+    }
+
+    /// Scatter-adds `self` into a zero `[rows, cols]` tensor (embedding backward).
+    pub fn scatter_add_rows(
+        &self,
+        indices: &[usize],
+        rows: usize,
+    ) -> Result<Self, BackendError> {
+        match &self.storage {
+            Storage::Host(tensor) => Ok(Self::from_host(Tensor::scatter_add_rows(
+                tensor, indices, rows,
+            )?)),
+            #[cfg(feature = "candle")]
+            Storage::Candle { tensor, device } => {
+                let index = candle_core::Tensor::from_vec(
+                    indices.iter().map(|&index| index as u32).collect::<Vec<u32>>(),
+                    indices.len(),
+                    device,
+                )
+                .map_err(|error| BackendError::Backend(error.to_string()))?;
+                let cols = self.shape()[1];
+                let zeros = candle_core::Tensor::zeros(
+                    (rows, cols),
+                    candle_core::DType::F32,
+                    device,
+                )
+                .map_err(|error| BackendError::Backend(error.to_string()))?;
+                let scattered = zeros
+                    .index_add(&index, tensor, 0)
+                    .map_err(|error| BackendError::Backend(error.to_string()))?;
+                Ok(Self::from_candle(scattered))
             }
         }
     }

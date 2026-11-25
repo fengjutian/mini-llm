@@ -33,8 +33,6 @@ _图：世界模型的预测与行动。从左到右展示本章核心概念之�
 
 这就是 World Model Engine 希望研究的问题。
 
-[Learning to Model the World: A Survey of World Models in Artificial Intelligence\[v1\] | Preprints.org](https://images.openai.com/static-rsc-4/hZ7VDEp9VBY4YGVT743dgYhWy_3MVKYztbADQpoag2xXTy3fUX_d3kQGmNWBs_MPXHemPkYiyBOfbV-qyy-YHgXVTFDSDMVRnkDumlJL8lMPMtKjVj-qSRgWsdk5n6AI0X1LnP923hCeKFs-ypad2mgCYDyHdcfYvH33xXpH6oU?purpose=inline)
-
 11
 
 ## **一、什么是 World Model？**

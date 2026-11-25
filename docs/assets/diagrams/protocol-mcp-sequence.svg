@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="650" viewBox="0 0 1400 650" role="img" aria-labelledby="title desc">
+  <title id="title">MCP 工具调用的消息时序</title><desc id="desc">mini-llm 技术机制图</desc>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="currentColor"/></marker></defs>
+  <style>:root{color-scheme:light dark}.bg{fill:#f7f4ed}.title{fill:#172126;font:700 30px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.kicker{fill:#e45d32;font:700 16px ui-monospace,Consolas,monospace;letter-spacing:2px}.box{fill:#fffdf8;stroke:#c4bdb1;stroke-width:2}.box.hot{fill:#fff0e8;stroke:#e45d32}.box.cool{fill:#eaf3f7;stroke:#3178a5}.box.good{fill:#eaf4ec;stroke:#4f8b62}.label{fill:#172126;font:650 18px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.small{fill:#69777d;font:500 15px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.tiny{fill:#69777d;font:500 13px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.edge{color:#69777d;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.accent-edge{color:#e45d32;fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.axis{fill:none;stroke:#69777d;stroke-width:2}.grid{stroke:#c4bdb1;stroke-width:1;opacity:.45}.dot{stroke:#fffdf8;stroke-width:3}.area{opacity:.14}@media(prefers-color-scheme:dark){.bg{fill:#101416}.title,.label{fill:#edf2f3}.kicker{fill:#ef855d}.box{fill:#182024;stroke:#526168}.box.hot{fill:#32211c;stroke:#e17750}.box.cool{fill:#172934;stroke:#4d91bc}.box.good{fill:#192b20;stroke:#65a779}.small{fill:#a8b4b9}.tiny{fill:#a8b4b9}.grid{stroke:#3c484e}.dot{stroke:#101416}}</style>
+  <rect class="bg" width="1400" height="650" rx="24"/>
+  <text class="kicker" x="64" y="58">MINI-LLM · MECHANISM</text>
+  <text class="title" x="64" y="105">MCP 工具调用的消息时序</text>
+<rect class="box hot" x="120" y="140" width="210" height="64" rx="16"/>
+<text class="label" x="225.0" y="178.3" text-anchor="middle" font-size="18">Host / Agent</text>
+<line class="axis" x1="225" y1="204" x2="225" y2="600" stroke-dasharray="9 7"/>
+<rect class="box cool" x="450" y="140" width="210" height="64" rx="16"/>
+<text class="label" x="555.0" y="178.3" text-anchor="middle" font-size="18">MCP Client</text>
+<line class="axis" x1="555" y1="204" x2="555" y2="600" stroke-dasharray="9 7"/>
+<rect class="box cool" x="780" y="140" width="210" height="64" rx="16"/>
+<text class="label" x="885.0" y="178.3" text-anchor="middle" font-size="18">MCP Server</text>
+<line class="axis" x1="885" y1="204" x2="885" y2="600" stroke-dasharray="9 7"/>
+<rect class="box cool" x="1090" y="140" width="210" height="64" rx="16"/>
+<text class="label" x="1195.0" y="178.3" text-anchor="middle" font-size="18">Tool</text>
+<line class="axis" x1="1195" y1="204" x2="1195" y2="600" stroke-dasharray="9 7"/>
+<path class="edge" d="M225 260 L555 260" marker-end="url(#arrow)"/>
+<text class="tiny" x="390.0" y="248" text-anchor="middle">initialize</text>
+<path class="edge" d="M555 330 L885 330" marker-end="url(#arrow)"/>
+<text class="tiny" x="720.0" y="318" text-anchor="middle">tools/list</text>
+<path class="accent-edge" d="M555 410 L885 410" marker-end="url(#arrow)"/>
+<text class="tiny" x="720.0" y="398" text-anchor="middle">tools/call</text>
+<path class="edge" d="M885 480 L1195 480" marker-end="url(#arrow)"/>
+<text class="tiny" x="1040.0" y="468" text-anchor="middle">execute</text>
+<path class="edge" d="M885 540 L555 540" marker-end="url(#arrow)"/>
+<text class="tiny" x="720.0" y="528" text-anchor="middle">result</text>
+<text class="tiny" x="120" y="640" text-anchor="start">JSON-RPC over stdio / HTTP：能力协商在前，调用与结果在后。</text>
+</svg>

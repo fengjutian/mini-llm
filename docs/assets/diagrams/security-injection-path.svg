@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="650" viewBox="0 0 1400 650" role="img" aria-labelledby="title desc">
+  <title id="title">间接提示注入的攻击路径</title><desc id="desc">mini-llm 技术机制图</desc>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="currentColor"/></marker></defs>
+  <style>:root{color-scheme:light dark}.bg{fill:#f7f4ed}.title{fill:#172126;font:700 30px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.kicker{fill:#e45d32;font:700 16px ui-monospace,Consolas,monospace;letter-spacing:2px}.box{fill:#fffdf8;stroke:#c4bdb1;stroke-width:2}.box.hot{fill:#fff0e8;stroke:#e45d32}.box.cool{fill:#eaf3f7;stroke:#3178a5}.box.good{fill:#eaf4ec;stroke:#4f8b62}.label{fill:#172126;font:650 18px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.small{fill:#69777d;font:500 15px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.tiny{fill:#69777d;font:500 13px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.edge{color:#69777d;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.accent-edge{color:#e45d32;fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.axis{fill:none;stroke:#69777d;stroke-width:2}.grid{stroke:#c4bdb1;stroke-width:1;opacity:.45}.dot{stroke:#fffdf8;stroke-width:3}.area{opacity:.14}@media(prefers-color-scheme:dark){.bg{fill:#101416}.title,.label{fill:#edf2f3}.kicker{fill:#ef855d}.box{fill:#182024;stroke:#526168}.box.hot{fill:#32211c;stroke:#e17750}.box.cool{fill:#172934;stroke:#4d91bc}.box.good{fill:#192b20;stroke:#65a779}.small{fill:#a8b4b9}.tiny{fill:#a8b4b9}.grid{stroke:#3c484e}.dot{stroke:#101416}}</style>
+  <rect class="bg" width="1400" height="650" rx="24"/>
+  <text class="kicker" x="64" y="58">MINI-LLM · MECHANISM</text>
+  <text class="title" x="64" y="105">间接提示注入的攻击路径</text>
+<rect class="box hot" x="60" y="250" width="220" height="96" rx="16"/>
+<text class="label" x="170.0" y="294.0" text-anchor="middle" font-size="18">不可信内容</text>
+<text class="small" x="170.0" y="320.0" text-anchor="middle">网页 / 文档 / 邮件</text>
+<path class="accent-edge" d="M280 298 L320 298" marker-end="url(#arrow)"/>
+<rect class="box" x="320" y="250" width="220" height="96" rx="16"/>
+<text class="label" x="430.0" y="294.0" text-anchor="middle" font-size="18">上下文</text>
+<text class="small" x="430.0" y="320.0" text-anchor="middle">被拼进 Prompt</text>
+<path class="accent-edge" d="M540 298 L580 298" marker-end="url(#arrow)"/>
+<rect class="box" x="580" y="250" width="220" height="96" rx="16"/>
+<text class="label" x="690.0" y="294.0" text-anchor="middle" font-size="18">模型</text>
+<text class="small" x="690.0" y="320.0" text-anchor="middle">把内容当指令</text>
+<path class="accent-edge" d="M800 298 L840 298" marker-end="url(#arrow)"/>
+<rect class="box" x="840" y="250" width="220" height="96" rx="16"/>
+<text class="label" x="950.0" y="294.0" text-anchor="middle" font-size="18">工具调用</text>
+<text class="small" x="950.0" y="320.0" text-anchor="middle">读文件 / 发请求</text>
+<path class="accent-edge" d="M1060 298 L1100 298" marker-end="url(#arrow)"/>
+<rect class="box hot" x="1100" y="250" width="220" height="96" rx="16"/>
+<text class="label" x="1210.0" y="294.0" text-anchor="middle" font-size="18">外部系统</text>
+<text class="small" x="1210.0" y="320.0" text-anchor="middle">数据外泄或越权</text>
+<rect class="box good" x="288" y="180" width="210" height="44" rx="12"/>
+<text class="tiny" x="392" y="208" text-anchor="middle">输入清洗</text>
+<rect class="box good" x="808" y="180" width="210" height="44" rx="12"/>
+<text class="tiny" x="912" y="208" text-anchor="middle">权限最小化</text>
+<rect class="box good" x="1048" y="180" width="210" height="44" rx="12"/>
+<text class="tiny" x="1152" y="208" text-anchor="middle">沙箱 / 出网白名单</text>
+<text class="small" x="60" y="400" text-anchor="start">注入的本质：模型无法可靠区分“数据”和“指令”。</text>
+<text class="tiny" x="60" y="450" text-anchor="start">防线只能加在数据进入、权限授予和出口三处，而不是指望模型“别听话”。</text>
+</svg>

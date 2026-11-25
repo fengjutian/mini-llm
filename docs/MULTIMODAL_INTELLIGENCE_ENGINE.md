@@ -31,8 +31,6 @@ _图：自动驾驶汽车是天然的多模态系统：摄像头给纹理和语�
 
 例如，用户上传一段视频：
 
-[Video Object Detection: Definition, Algorithms, and Best Practices \[2023\]](https://images.openai.com/static-rsc-4/gcH0GLTJyUNLxHMyUUh5Ot_Z85lRC-JrAIS0aKpmH0WzTOFdB1B06VQ_e175nBqa36vPbK8Ea-u8jr5acoT05V-deH7VFbXsvZ-1-Qhjz8ZAvv-B_2yiPOtmjdXvRsaVrR6EcOXT-EYiaCEMEVatBkFeEFlJFEG2BJGnLs6LVY4?purpose=inline)
-
 用户提出：
 
 > 视频中这个人为什么突然停下来？

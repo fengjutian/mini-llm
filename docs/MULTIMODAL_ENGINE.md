@@ -85,43 +85,7 @@ Modality 可以理解为信息的表现形式或感知模态。
 
 一个典型的多模态系统可以采用不同模态的编码器，将它们转换为统一的表示，再交给 Transformer 进行融合和推理。
 
-## **Multimodal Model Architecture**
-
-**Image**
-
-图像输入
-
-Image Encoder
-
-**Audio**
-
-音频输入
-
-Audio Encoder
-
-**Video**
-
-视频输入
-
-Video Encoder
-
-**Spatial**
-
-空间输入
-
-Spatial Encoder
-
-**Multimodal Fusion**
-
-跨模态对齐与信息融合
-
-**Multimodal Transformer**
-
-联合理解、推理与生成
-
-**Output**
-
-文本、语音、图像、视频或动作
+典型的架构是四路并行：图像、音频、视频与空间输入各自经过编码器，投影到同一维度后，再由多模态 Transformer 完成对齐与融合，最后解码成文本、语音、图像、视频或动作。具体结构见本章开头的流水线图。
 
 这是一种通用架构示意，不是所有多模态模型都采用完全相同的结构。
 

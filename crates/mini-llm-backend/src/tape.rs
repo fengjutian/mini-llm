@@ -222,6 +222,9 @@ fn reduce_to(grad: &DeviceTensor, shape: &[usize]) -> Result<DeviceTensor, Backe
     if shape.len() == 2 && shape[0] == 1 && grad.shape().len() == 2 && grad.shape()[1] == shape[1] {
         return grad.sum_rows();
     }
+    if shape.len() == 2 && shape[1] == 1 && grad.shape().len() == 2 && grad.shape()[0] == shape[0] {
+        return grad.sum_rows_keepdim();
+    }
     Err(BackendError::Backend(format!(
         "cannot reduce gradient of shape {:?} to {:?}",
         grad.shape(),
@@ -236,10 +239,17 @@ impl DeviceValue {
         if !self.requires_grad() && !other.requires_grad() {
             return Ok(DeviceValue::new(data, false));
         }
+        let left_shape = self.shape().to_vec();
+        let right_shape = other.shape().to_vec();
         Ok(DeviceValue::with_backward(
             data,
             vec![self.clone(), other.clone()],
-            Box::new(move |grad| Ok(vec![grad.clone(), grad.scale(-1.0)?])),
+            Box::new(move |grad| {
+                Ok(vec![
+                    reduce_to(grad, &left_shape)?,
+                    reduce_to(&grad.scale(-1.0)?, &right_shape)?,
+                ])
+            }),
         ))
     }
 
@@ -251,10 +261,129 @@ impl DeviceValue {
         }
         let left = self.data().clone();
         let right = other.data().clone();
+        let left_shape = self.shape().to_vec();
+        let right_shape = other.shape().to_vec();
         Ok(DeviceValue::with_backward(
             data,
             vec![self.clone(), other.clone()],
-            Box::new(move |grad| Ok(vec![grad.mul(&right)?, grad.mul(&left)?])),
+            Box::new(move |grad| {
+                Ok(vec![
+                    reduce_to(&grad.mul(&right)?, &left_shape)?,
+                    reduce_to(&grad.mul(&left)?, &right_shape)?,
+                ])
+            }),
         ))
+    }
+}
+
+impl DeviceValue {
+    /// Row-wise softmax over the last dimension.
+    pub fn softmax_rows(&self) -> Result<DeviceValue, BackendError> {
+        let data = self.data().softmax_rows()?;
+        if !self.requires_grad() {
+            return Ok(DeviceValue::new(data, false));
+        }
+        let softmax = data.clone();
+        Ok(DeviceValue::with_backward(
+            data,
+            vec![self.clone()],
+            Box::new(move |grad| {
+                let dot = grad.mul(&softmax)?.sum_rows_keepdim()?;
+                let inner = grad.add(&dot.scale(-1.0)?)?;
+                Ok(vec![softmax.mul(&inner)?])
+            }),
+        ))
+    }
+
+    /// Mean over the last dimension, as `[rows, 1]`.
+    pub fn mean_rows_keepdim(&self) -> Result<DeviceValue, BackendError> {
+        let data = self.data().mean_rows_keepdim()?;
+        if !self.requires_grad() {
+            return Ok(DeviceValue::new(data, false));
+        }
+        let (rows, cols) = (self.shape()[0], self.shape()[1]);
+        Ok(DeviceValue::with_backward(
+            data,
+            vec![self.clone()],
+            Box::new(move |grad| {
+                Ok(vec![grad
+                    .scale(1.0 / cols as f32)?
+                    .broadcast_to_2d(rows, cols)?])
+            }),
+        ))
+    }
+
+    /// Sum over the last dimension, as `[rows, 1]`.
+    pub fn sum_rows_keepdim(&self) -> Result<DeviceValue, BackendError> {
+        let data = self.data().sum_rows_keepdim()?;
+        if !self.requires_grad() {
+            return Ok(DeviceValue::new(data, false));
+        }
+        let (rows, cols) = (self.shape()[0], self.shape()[1]);
+        Ok(DeviceValue::with_backward(
+            data,
+            vec![self.clone()],
+            Box::new(move |grad| Ok(vec![grad.broadcast_to_2d(rows, cols)?])),
+        ))
+    }
+
+    /// Adds a scalar to every element.
+    pub fn add_scalar(&self, value: f32) -> Result<DeviceValue, BackendError> {
+        let data = self.data().add_scalar(value)?;
+        if !self.requires_grad() {
+            return Ok(DeviceValue::new(data, false));
+        }
+        Ok(DeviceValue::with_backward(
+            data,
+            vec![self.clone()],
+            Box::new(move |grad| Ok(vec![grad.clone()])),
+        ))
+    }
+
+    /// Element-wise power.
+    pub fn powf(&self, exponent: f32) -> Result<DeviceValue, BackendError> {
+        let data = self.data().powf(exponent)?;
+        if !self.requires_grad() {
+            return Ok(DeviceValue::new(data, false));
+        }
+        let input = self.data().clone();
+        Ok(DeviceValue::with_backward(
+            data,
+            vec![self.clone()],
+            Box::new(move |grad| {
+                let derivative = input.powf(exponent - 1.0)?.scale(exponent)?;
+                Ok(vec![grad.mul(&derivative)?])
+            }),
+        ))
+    }
+
+    /// Gathers rows of a `[vocab, hidden]` weight; backward scatter-adds.
+    pub fn gather_rows(&self, indices: &[usize]) -> Result<DeviceValue, BackendError> {
+        let data = self.data().gather_rows(indices)?;
+        if !self.requires_grad() {
+            return Ok(DeviceValue::new(data, false));
+        }
+        let indices = indices.to_vec();
+        let rows = self.shape()[0];
+        Ok(DeviceValue::with_backward(
+            data,
+            vec![self.clone()],
+            Box::new(move |grad| Ok(vec![grad.scatter_add_rows(&indices, rows)?])),
+        ))
+    }
+
+    /// LayerNorm over the last dimension, composed from tape primitives.
+    pub fn layer_norm(
+        &self,
+        gamma: &DeviceValue,
+        beta: &DeviceValue,
+        eps: f32,
+    ) -> Result<DeviceValue, BackendError> {
+        let mean = self.mean_rows_keepdim()?;
+        let centered = self.sub(&mean)?;
+        let variance = centered.mul(&centered)?.mean_rows_keepdim()?;
+        let inverse_std = variance.add_scalar(eps)?.powf(-0.5)?;
+        let normalized = centered.mul(&inverse_std)?;
+        normalized.mul(gamma)?.add(beta)
     }
 }
