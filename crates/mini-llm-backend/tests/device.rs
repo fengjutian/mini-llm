@@ -347,3 +347,201 @@ fn device_tape_accumulates_reused_gradients() {
         "accumulated dW",
     );
 }
+
+fn init_mlp_params() -> (Tensor, Tensor, Tensor, Tensor) {
+    (
+        sample(3, 4, 0.5),
+        sample(1, 4, 0.25),
+        sample(4, 2, 0.5),
+        sample(1, 2, 0.25),
+    )
+}
+
+fn regression_dataset() -> (Tensor, Tensor) {
+    let x = Tensor::from_2d(
+        8,
+        3,
+        (0..24)
+            .map(|index| ((index as f32 % 5.0) - 2.0) * 0.3)
+            .collect(),
+    )
+    .unwrap();
+    let w = Tensor::from_2d(3, 2, vec![0.5, -0.25, 0.75, 0.1, -0.4, 0.6]).unwrap();
+    let b = Tensor::from_2d(1, 2, vec![0.2, -0.1]).unwrap();
+    let target = x.matmul(&w).unwrap().add(&b).unwrap();
+    (x, target)
+}
+
+fn host_mlp_step(
+    x: &TensorValue,
+    target: &TensorValue,
+    w1: &TensorValue,
+    b1: &TensorValue,
+    w2: &TensorValue,
+    b2: &TensorValue,
+) -> f32 {
+    let hidden = x
+        .matmul(w1)
+        .unwrap()
+        .add(b1)
+        .unwrap()
+        .relu()
+        .unwrap();
+    let predicted = hidden.matmul(w2).unwrap().add(b2).unwrap();
+    let diff = predicted.sub(target).unwrap();
+    let loss = diff.mul(&diff).unwrap().mean().unwrap();
+    loss.backward().unwrap();
+    loss.data()[0]
+}
+
+fn device_mlp_step(
+    x: &DeviceValue,
+    target: &DeviceValue,
+    w1: &DeviceValue,
+    b1: &DeviceValue,
+    w2: &DeviceValue,
+    b2: &DeviceValue,
+) -> f32 {
+    let hidden = x
+        .matmul(w1)
+        .unwrap()
+        .add(b1)
+        .unwrap()
+        .relu()
+        .unwrap();
+    let predicted = hidden.matmul(w2).unwrap().add(b2).unwrap();
+    let diff = predicted.sub(target).unwrap();
+    let loss = diff.mul(&diff).unwrap().mean().unwrap();
+    loss.backward().unwrap();
+    loss.data().to_host().unwrap().data()[0]
+}
+
+fn sgd_update(param: &DeviceTensor, value: &DeviceValue, lr: f32) -> DeviceTensor {
+    let grad = value.grad().expect("parameter gradient");
+    param
+        .add(&grad.scale(-lr).unwrap())
+        .expect("device parameter update")
+}
+
+fn host_sgd(param: &mut Vec<f32>, value: &TensorValue, lr: f32) {
+    let grad = value.grad().expect("parameter gradient");
+    for (slot, gradient) in param.iter_mut().zip(grad.data()) {
+        *slot -= lr * gradient;
+    }
+}
+
+/// Runs the same 40-step MLP regression on host autograd and the device tape.
+fn check_device_training(device: &Device, tolerance: f32) {
+    let (x, target) = regression_dataset();
+    let (w1_init, b1_init, w2_init, b2_init) = init_mlp_params();
+    let (w1_data, b1_data, w2_data, b2_data) = (
+        w1_init.data().to_vec(),
+        b1_init.data().to_vec(),
+        w2_init.data().to_vec(),
+        b2_init.data().to_vec(),
+    );
+
+    // Host reference.
+    let xv = TensorValue::constant(x.data().to_vec(), x.shape().to_vec()).unwrap();
+    let tv = TensorValue::constant(target.data().to_vec(), target.shape().to_vec()).unwrap();
+    let (mut host_w1, mut host_b1, mut host_w2, mut host_b2) = (
+        w1_data.clone(),
+        b1_data.clone(),
+        w2_data.clone(),
+        b2_data.clone(),
+    );
+    let mut host_losses = Vec::new();
+    for _ in 0..40 {
+        let w1 = TensorValue::parameter(host_w1.clone(), vec![3, 4]).unwrap();
+        let b1 = TensorValue::parameter(host_b1.clone(), vec![1, 4]).unwrap();
+        let w2 = TensorValue::parameter(host_w2.clone(), vec![4, 2]).unwrap();
+        let b2 = TensorValue::parameter(host_b2.clone(), vec![1, 2]).unwrap();
+        let loss = host_mlp_step(&xv, &tv, &w1, &b1, &w2, &b2);
+        host_losses.push(loss);
+        host_sgd(&mut host_w1, &w1, 0.05);
+        host_sgd(&mut host_b1, &b1, 0.05);
+        host_sgd(&mut host_w2, &w2, 0.05);
+        host_sgd(&mut host_b2, &b2, 0.05);
+    }
+
+    // Device loop: parameters stay device-resident across every step.
+    let upload = |tensor: &Tensor| DeviceTensor::from_host(tensor.clone()).to(device).unwrap();
+    let device_x = DeviceValue::new(upload(&x), false);
+    let device_target = DeviceValue::new(upload(&target), false);
+    let mut w1 = upload(&w1_init);
+    let mut b1 = upload(&b1_init);
+    let mut w2 = upload(&w2_init);
+    let mut b2 = upload(&b2_init);
+    let mut device_losses = Vec::new();
+    for _ in 0..40 {
+        let w1_value = DeviceValue::new(w1.clone(), true);
+        let b1_value = DeviceValue::new(b1.clone(), true);
+        let w2_value = DeviceValue::new(w2.clone(), true);
+        let b2_value = DeviceValue::new(b2.clone(), true);
+        let loss = device_mlp_step(
+            &device_x,
+            &device_target,
+            &w1_value,
+            &b1_value,
+            &w2_value,
+            &b2_value,
+        );
+        device_losses.push(loss);
+        w1 = sgd_update(&w1, &w1_value, 0.05);
+        b1 = sgd_update(&b1, &b1_value, 0.05);
+        w2 = sgd_update(&w2, &w2_value, 0.05);
+        b2 = sgd_update(&b2, &b2_value, 0.05);
+        assert_eq!(w1.is_on_device(), !matches!(device, Device::Cpu));
+    }
+
+    for (step, (host_loss, device_loss)) in
+        host_losses.iter().zip(&device_losses).enumerate()
+    {
+        assert!(
+            (host_loss - device_loss).abs() <= tolerance * host_loss.abs().max(1.0),
+            "step {step}: host {host_loss} vs device {device_loss}"
+        );
+    }
+    assert!(
+        *device_losses.last().unwrap() < 0.5 * device_losses[0],
+        "loss should fall: {:?} -> {:?}",
+        device_losses[0],
+        device_losses.last().unwrap()
+    );
+
+    assert_close(
+        w1.to_host().unwrap().data(),
+        &host_w1,
+        tolerance,
+        "trained W1",
+    );
+    assert_close(
+        b1.to_host().unwrap().data(),
+        &host_b1,
+        tolerance,
+        "trained b1",
+    );
+    assert_close(
+        w2.to_host().unwrap().data(),
+        &host_w2,
+        tolerance,
+        "trained W2",
+    );
+    assert_close(
+        b2.to_host().unwrap().data(),
+        &host_b2,
+        tolerance,
+        "trained b2",
+    );
+}
+
+#[test]
+fn device_training_loop_matches_host_autograd_on_cpu() {
+    check_device_training(&Device::Cpu, 1e-4);
+}
+
+#[cfg(feature = "candle")]
+#[test]
+fn device_training_loop_matches_host_autograd_on_candle() {
+    check_device_training(&Device::candle_cpu(), 1e-3);
+}

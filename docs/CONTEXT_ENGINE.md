@@ -42,6 +42,11 @@
 
 它负责将分散的信息组织成适合当前任务、当前 Agent 和当前模型的一份上下文。
 
+
+![图书馆书库：书架是存储，索书号是索引，读者沿过道行走完成检索](assets/images/knowledge-library-stacks.jpg)
+
+_图：图书馆书库：书架是存储，索书号是索引，读者沿过道行走完成检索。Context Engine 做的是同一件事，只是检索对象换成了 Token。图片：FrENdwquymn，[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:SZ_Futian_%E6%B7%B1%E5%9C%B3%E5%9C%96%E6%9B%B8%E9%A4%A8_Shenzhen_Library_interior_Dec-2017_IX1_stacks_bookshelves_01.jpg)，[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)。_
+
 # **一、Context Engine：为什么 AI 系统需要独立的上下文引擎？**
 
 ## **1.1 什么是 Context？**
@@ -193,6 +198,11 @@ Context 通常翻译为上下文。
 
 # **二、Context Assembly：如何构建完整上下文？**
 
+![Context Assembly 流水线：多路来源先打分去重，再按预算裁剪，最后组装成 Prompt——顺序本身会影响注意力](assets/diagrams/context-assembly-pipeline.svg)
+
+_图：Context Assembly 流水线：多路来源先打分去重，再按预算裁剪，最后组装成 Prompt——顺序本身会影响注意力。_
+
+
 Context Assembly 是上下文组装模块。
 
 它的工作是从不同的信息源收集数据，形成当前任务所需的上下文。
@@ -336,6 +346,11 @@ interface ContextItem {
 这些分数是工程系统的评估字段，不是模型天然提供的客观真值。
 
 # **三、Context Window：如何管理模型上下文窗口？**
+
+![128k 窗口的预算分配](assets/diagrams/context-budget-allocation.svg)
+
+_图：128k 窗口的预算分配。总量固定，任何一类变多都意味着另一类被挤掉；Reserve 是给输出和工具返回预留的空间。_
+
 
 Context Window 是大模型一次推理能够处理的最大上下文长度。
 

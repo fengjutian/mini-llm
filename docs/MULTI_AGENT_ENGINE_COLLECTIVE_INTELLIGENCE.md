@@ -1,5 +1,10 @@
 # **《mini-llm Multi-Agent Engine 深度解析：从 Agent Collaboration、Task Delegation 到 Consensus、Negotiation 与 Collective Intelligence》**
 
+
+![共享场地中协同执行任务的多台移动机器人：它们必须就任务分配与路径让行达成一致，否则会互相阻塞](assets/images/multi-agent-robot-fleet.png)
+
+_图：共享场地中协同执行任务的多台移动机器人：它们必须就任务分配与路径让行达成一致，否则会互相阻塞。图片：本仓库 AI 生成图。_
+
 ## **一、Multi-Agent System：为什么需要多个 Agent？**
 
 前面我们研究了 Agent Engine。
@@ -142,6 +147,11 @@ class Agent:    def __init__(        self,        model,        policy,        t
 因此，Multi-Agent 的价值在于合理分工，而不是 Agent 数量。
 
 ## **三、Agent Collaboration：多个 Agent 如何协作？**
+
+![四种协作拓扑](assets/diagrams/multi-agent-topologies.svg)
+
+_图：四种协作拓扑。拓扑决定信息流向：星型适合调度，流水线适合处理，层级适合大规模，黑板适合共享证据。_
+
 
 Agent Collaboration 是多智能体系统最核心的能力之一。
 
@@ -622,6 +632,11 @@ Agent Platform B
 如果 mini-llm 后续希望接入外部 Agent 平台，就应该考虑 A2A，而不应把所有 Agent 通信都设计成私有协议。
 
 ## **六、Consensus：多个 Agent 如何达成共识？**
+
+![共识不是简单多数：僵局时需要让步与方案修改，否则会反复投票](assets/diagrams/consensus-loop.svg)
+
+_图：共识不是简单多数：僵局时需要让步与方案修改，否则会反复投票。_
+
 
 假设三个 Agent 对同一个问题提出不同结论：
 

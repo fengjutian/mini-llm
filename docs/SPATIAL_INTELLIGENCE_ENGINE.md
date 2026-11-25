@@ -127,6 +127,11 @@ _图：一辆 Waymo 自动驾驶出租车。车顶的激光雷达，连同车身
 
 ## **Spatial Intelligence 六层能力**
 
+![空间智能的六层能力](assets/diagrams/spatial-capability-layers.svg)
+
+_图：空间智能的六层能力。越靠下越接近原始传感器数据，越靠上越依赖对空间结构的抽象与预测。_
+
+
 1. **3D Perception**
 
    从图像、深度和点云中识别三维物体。
@@ -149,6 +154,11 @@ _图：一辆 Waymo 自动驾驶出租车。车顶的激光雷达，连同车身
 这些能力最终构成机器人、具身智能和 3D World Model 的空间基础。
 
 ## **三、3D Representation：如何表示三维世界？**
+
+![点云、体素、Mesh、SDF、NeRF/3DGS 与 Scene Graph 的取舍：没有一种表示能同时满足渲染、碰撞与语义推理](assets/diagrams/spatial-3d-representations.svg)
+
+_图：点云、体素、Mesh、SDF、NeRF/3DGS 与 Scene Graph 的取舍：没有一种表示能同时满足渲染、碰撞与语义推理。_
+
 
 空间智能首先需要解决：
 

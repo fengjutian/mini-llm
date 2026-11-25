@@ -19,6 +19,11 @@
 
 我们需要一个独立的 Workflow Engine。
 
+![工厂里的 AGV 按调度系统下发的任务搬运砖垛，走哪条路、什么时候让行、失败后回到哪一步，都由外部编排决定](assets/images/planning-agv-warehouse.jpg)
+
+_图：工厂里的 AGV 按调度系统下发的任务搬运砖垛，走哪条路、什么时候让行、失败后回到哪一步，都由外部编排决定。工作流引擎处理的正是这类“谁在什么时候做什么”的问题。图片：ek robotics GmbH，[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Ek_robotics-agv-custom_move-rhi_magnesita-refractory_industry-rgb_%288%29.jpg)，[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)。_
+
+
 # **一、Workflow Engine：为什么 Agent 需要工作流引擎？**
 
 ## **1.1 从单个 Agent 到复杂任务**
@@ -99,6 +104,11 @@ Git、数据库、文件系统、API、CI/CD
 - Workflow Engine 是一个能够管理整个执行过程的协调者。
 
 # **二、DAG：如何表示复杂任务依赖？**
+
+![一次代码重构工作流的 DAG](assets/diagrams/workflow-task-dag.svg)
+
+_图：一次代码重构工作流的 DAG。静态检查与单元测试可以并行，测试失败则回到重构节点——边表示依赖，不表示时间顺序。_
+
 
 Workflow 最重要的基础之一是 DAG。
 
@@ -536,6 +546,11 @@ Event Bus
 也就是工作流由一个明确的 Orchestrator 管理，但执行过程使用事件驱动。
 
 # **五、State Machine：如何管理长时间运行的任务？**
+
+![长任务的状态机](assets/diagrams/workflow-state-machine.svg)
+
+_图：长任务的状态机。状态必须可持久化，进程重启后从最后一次提交的状态继续，而不是从头再来。_
+
 
 这是 Workflow Engine 最重要的部分之一。
 

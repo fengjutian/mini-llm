@@ -21,6 +21,11 @@
 
 Meta-Controller 可以理解为智能系统的元控制器，它不直接完成所有任务，而是负责控制其他智能组件如何协作。
 
+
+![阿波罗 9 号任务的休斯敦任务控制中心：每个控制台负责一个子系统，飞行主任在其上做路由与资源分配](assets/images/mission-control-room.jpg)
+
+_图：阿波罗 9 号任务的休斯敦任务控制中心：每个控制台负责一个子系统，飞行主任在其上做路由与资源分配。图片：NASA，[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Mission_Operations_Control_Room_during_Apollo_9.jpg)，美国公有领域。_
+
 # **一、Meta-Controller：什么是元控制器？**
 
 ## **1.1 从 Controller 到 Meta-Controller**
@@ -112,6 +117,11 @@ Meta-Controller 的价值就在于：
 **建立一个统一的全局控制层。**
 
 # **二、Meta-Controller 的理论基础：Meta-Control**
+
+![元控制的双层结构](assets/diagrams/meta-control-two-level.svg)
+
+_图：元控制的双层结构。元层不直接干活，它决定“谁、用什么、花多少、什么时候停”。_
+
 
 Meta-Controller 并不是简单地增加一个更强大的 LLM。
 
@@ -208,6 +218,11 @@ Object-Level 负责真正执行。
 这种结构已经能够覆盖大部分复杂 Agent 系统。
 
 # **三、Hierarchical Agent：如何构建分层 Agent 架构？**
+
+![Orchestrator → Planner → Executor 三层结构](assets/diagrams/hierarchical-agent-layers.svg)
+
+_图：Orchestrator → Planner → Executor 三层结构。分层的意义不是“多一层”，而是让每层只处理自己粒度的决策。_
+
 
 分层 Agent 是 Meta-Controller 的重要基础。
 

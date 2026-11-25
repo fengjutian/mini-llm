@@ -228,3 +228,33 @@ fn reduce_to(grad: &DeviceTensor, shape: &[usize]) -> Result<DeviceTensor, Backe
         shape
     )))
 }
+
+impl DeviceValue {
+    /// Element-wise subtraction; both operands must have the same shape.
+    pub fn sub(&self, other: &DeviceValue) -> Result<DeviceValue, BackendError> {
+        let data = self.data().add(&other.data().scale(-1.0)?)?;
+        if !self.requires_grad() && !other.requires_grad() {
+            return Ok(DeviceValue::new(data, false));
+        }
+        Ok(DeviceValue::with_backward(
+            data,
+            vec![self.clone(), other.clone()],
+            Box::new(move |grad| Ok(vec![grad.clone(), grad.scale(-1.0)?])),
+        ))
+    }
+
+    /// Element-wise multiplication; backwards multiplies by the other operand.
+    pub fn mul(&self, other: &DeviceValue) -> Result<DeviceValue, BackendError> {
+        let data = self.data().mul(other.data())?;
+        if !self.requires_grad() && !other.requires_grad() {
+            return Ok(DeviceValue::new(data, false));
+        }
+        let left = self.data().clone();
+        let right = other.data().clone();
+        Ok(DeviceValue::with_backward(
+            data,
+            vec![self.clone(), other.clone()],
+            Box::new(move |grad| Ok(vec![grad.mul(&right)?, grad.mul(&left)?])),
+        ))
+    }
+}

@@ -10,13 +10,13 @@
 <rect class="box cool" x="360" y="150" width="200" height="64" rx="16"/>
 <text class="label" x="460.0" y="188.3" text-anchor="middle" font-size="18">Image Encoder</text>
 <path class="edge" d="M270 182 L360 182" marker-end="url(#arrow)"/>
-<path class="edge" d="M560 182 L650 320" marker-end="url(#arrow)"/>
+<path class="edge" d="M560 182 L650 240" marker-end="url(#arrow)"/>
 <rect class="box" x="80" y="250" width="190" height="64" rx="16"/>
 <text class="label" x="175.0" y="288.3" text-anchor="middle" font-size="18">Audio</text>
 <rect class="box cool" x="360" y="250" width="200" height="64" rx="16"/>
 <text class="label" x="460.0" y="288.3" text-anchor="middle" font-size="18">Audio Encoder</text>
 <path class="edge" d="M270 282 L360 282" marker-end="url(#arrow)"/>
-<path class="edge" d="M560 282 L650 320" marker-end="url(#arrow)"/>
+<path class="edge" d="M560 282 L650 280" marker-end="url(#arrow)"/>
 <rect class="box" x="80" y="350" width="190" height="64" rx="16"/>
 <text class="label" x="175.0" y="388.3" text-anchor="middle" font-size="18">Video</text>
 <rect class="box cool" x="360" y="350" width="200" height="64" rx="16"/>
@@ -28,7 +28,7 @@
 <rect class="box cool" x="360" y="450" width="200" height="64" rx="16"/>
 <text class="label" x="460.0" y="488.3" text-anchor="middle" font-size="18">Spatial Encoder</text>
 <path class="edge" d="M270 482 L360 482" marker-end="url(#arrow)"/>
-<path class="edge" d="M560 482 L650 320" marker-end="url(#arrow)"/>
+<path class="edge" d="M560 482 L650 360" marker-end="url(#arrow)"/>
 <rect class="box good" x="650" y="220" width="200" height="200" rx="16"/>
 <text class="label" x="750.0" y="316.0" text-anchor="middle" font-size="18">Projector / Adapter</text>
 <text class="small" x="750.0" y="342.0" text-anchor="middle">把各模态映射到同一维度</text>

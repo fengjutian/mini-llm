@@ -5,19 +5,28 @@
   <rect class="bg" width="1400" height="650" rx="24"/>
   <text class="kicker" x="64" y="58">MINI-LLM · MECHANISM</text>
   <text class="title" x="64" y="105">128k 上下文的预算分配</text>
-<rect class="box hot" x="90" y="280" width="38.125" height="90" rx="6"/>
-<text class="tiny" x="109.0625" y="330" text-anchor="middle">System 4k</text>
-<rect class="box cool" x="128.125" y="280" width="76.25" height="90" rx="6"/>
-<text class="tiny" x="166.25" y="330" text-anchor="middle">Tools 8k</text>
-<rect class="box" x="204.375" y="280" width="381.25" height="90" rx="6"/>
-<text class="small" x="395.0" y="330" text-anchor="middle">History 40k</text>
-<rect class="box good" x="585.625" y="280" width="476.5625" height="90" rx="6"/>
-<text class="small" x="823.90625" y="330" text-anchor="middle">Retrieved 50k</text>
-<rect class="box" x="1062.1875" y="280" width="247.8125" height="90" rx="6"/>
-<text class="small" x="1186.09375" y="330" text-anchor="middle">Reserve 26k</text>
-<line class="axis" x1="90" y1="400" x2="1310" y2="400"/>
-<text class="tiny" x="90" y="430" text-anchor="start">0</text>
-<text class="tiny" x="1310" y="430" text-anchor="end">128k</text>
-<text class="small" x="90" y="240" text-anchor="start">窗口总量固定，任何一类变多都意味着另一类被挤掉</text>
-<text class="tiny" x="90" y="520" text-anchor="start">Reserve 是给输出和工具返回预留的空间；不留它，长回答会被截断。</text>
+<text class="label" x="90" y="184" text-anchor="start" font-size="16">System</text>
+<text class="tiny" x="90" y="206" text-anchor="start">系统提示与硬约束</text>
+<rect class="box hot" x="300" y="160" width="72.0" height="44" rx="8"/>
+<text class="small" x="382.0" y="190" text-anchor="start">4k</text>
+<text class="label" x="90" y="268" text-anchor="start" font-size="16">Tools</text>
+<text class="tiny" x="90" y="290" text-anchor="start">工具定义与 schema</text>
+<rect class="box cool" x="300" y="244" width="144.0" height="44" rx="8"/>
+<text class="small" x="454.0" y="274" text-anchor="start">8k</text>
+<text class="label" x="90" y="352" text-anchor="start" font-size="16">History</text>
+<text class="tiny" x="90" y="374" text-anchor="start">对话历史与摘要</text>
+<rect class="box" x="300" y="328" width="720.0" height="44" rx="8"/>
+<text class="small" x="1030.0" y="358" text-anchor="start">40k</text>
+<text class="label" x="90" y="436" text-anchor="start" font-size="16">Retrieved</text>
+<text class="tiny" x="90" y="458" text-anchor="start">RAG 与记忆召回</text>
+<rect class="box good" x="300" y="412" width="900.0" height="44" rx="8"/>
+<text class="small" x="1210.0" y="442" text-anchor="start">50k</text>
+<text class="label" x="90" y="520" text-anchor="start" font-size="16">Reserve</text>
+<text class="tiny" x="90" y="542" text-anchor="start">输出与工具返回预留</text>
+<rect class="box box" x="300" y="496" width="468.0" height="44" rx="8"/>
+<text class="small" x="778.0" y="526" text-anchor="start">26k</text>
+<line class="axis" x1="300" y1="575" x2="1200" y2="575"/>
+<text class="tiny" x="300" y="602" text-anchor="start">0</text>
+<text class="tiny" x="1200" y="602" text-anchor="end">128k</text>
+<text class="tiny" x="90" y="640" text-anchor="start">窗口总量固定，任何一类变多都意味着另一类被挤掉；Reserve 是给输出和工具返回预留的空间。</text>
 </svg>

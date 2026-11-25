@@ -47,7 +47,17 @@
 
 这就是 World Model（世界模型）试图解决的问题。
 
+
+![搭载多种传感器的自动驾驶研究车辆](assets/images/world-model-autonomous-vehicle.png)
+
+_图：搭载多种传感器的自动驾驶研究车辆。世界模型要在内部预测周围车辆与行人的下一步变化，规划才有依据。图片：本仓库 AI 生成图。_
+
 # **一、World Model：什么是世界模型？**
+
+![从一条轨迹到一棵树](assets/diagrams/world-model-rollout-tree.svg)
+
+_图：从一条轨迹到一棵树。树的宽度是行动的个数，深度是预测的步数；反事实分支问的是“换一个行动会走向哪里”。_
+
 
 ## **1.1 从识别世界到模拟世界**
 
@@ -159,6 +169,11 @@ World Model 则试图进一步回答：
 一个成熟的 World Model 必须能够处理这些不确定性。
 
 # **二、State Representation：如何表示当前世界状态？**
+
+![POMDP 的信念更新](assets/diagrams/pomdp-belief-loop.svg)
+
+_图：POMDP 的信念更新。真实状态 s_t 不可直接观测，Agent 只能根据观测维护信念 b_t = P(s_t | o_1 … o_t)。_
+
 
 World Model 的第一项基础能力，是构建 State Representation（状态表示）。
 

@@ -21,5 +21,5 @@
 <text class="tiny" x="950" y="280" text-anchor="start">曲线在虚线下方 = 过度自信</text>
 <text class="tiny" x="950" y="320" text-anchor="start">曲线在虚线上方 = 过度保守</text>
 <text class="tiny" x="950" y="400" text-anchor="start">校准之后，0.8 的置信度应该对应约 80% 的正确率。</text>
-<text class="tiny" x="120" y="610" text-anchor="start">只有把置信度映射回真实频率，才敢用阈值决定“回答”还是“弃答”。</text>
+<text class="tiny" x="120" y="640" text-anchor="start">只有把置信度映射回真实频率，才敢用阈值决定“回答”还是“弃答”。</text>
 </svg>

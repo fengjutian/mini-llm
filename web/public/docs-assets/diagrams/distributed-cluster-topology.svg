@@ -23,12 +23,13 @@
 <path class="edge" d="M210 315 L250 315" marker-end="url(#arrow)"/>
 <path class="edge" d="M420 315 L460 315" marker-end="url(#arrow)"/>
 <path class="edge" d="M650 315 L700 193" marker-end="url(#arrow)"/>
-<path class="edge" d="M870 193 L950 315" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
 <path class="edge" d="M650 315 L700 303" marker-end="url(#arrow)"/>
-<path class="edge" d="M870 303 L950 315" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
 <path class="edge" d="M650 315 L700 413" marker-end="url(#arrow)"/>
-<path class="edge" d="M870 413 L950 315" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
-<path class="edge" d="M950 350 L650 345" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
-<text class="tiny" x="880" y="380" text-anchor="start">心跳 / 租约</text>
+<line class="edge" x1="910" y1="193" x2="910" y2="413" stroke-dasharray="9 7"/>
+<line class="edge" x1="870" y1="193" x2="910" y2="193" stroke-dasharray="9 7"/>
+<line class="edge" x1="870" y1="303" x2="910" y2="303" stroke-dasharray="9 7"/>
+<line class="edge" x1="870" y1="413" x2="910" y2="413" stroke-dasharray="9 7"/>
+<path class="edge" d="M910 320 L950 320" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
+<text class="tiny" x="915" y="445" text-anchor="start">心跳 / 租约</text>
 <text class="tiny" x="60" y="560" text-anchor="start">调度器只做决策，Worker 只做执行，状态放在外部存储里——三者可以独立扩缩容。</text>
 </svg>

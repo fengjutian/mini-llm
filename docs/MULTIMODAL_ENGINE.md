@@ -30,7 +30,17 @@
 
 它负责将不同类型的信息转换为模型能够处理的表示，并建立不同模态之间的关联，使模型能够进行跨模态理解、推理和生成。
 
+
+![一辆 Waymo 自动驾驶出租车](assets/images/spatial-waymo-front.jpg)
+
+_图：一辆 Waymo 自动驾驶出租车。摄像头给纹理与语义，激光雷达给精确距离，毫米波雷达给速度——真实系统天然是多模态的。图片：Grendelkhan，[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Waymo_self-driving_car_front_view.gk.jpg)，[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)。_
+
 # **一、Multimodal Engine：为什么 AI 需要统一的多模态处理架构？**
+
+![多模态处理流水线](assets/diagrams/multimodal-pipeline.svg)
+
+_图：多模态处理流水线。先对齐再融合：对齐解决“同一个语义”，融合解决“如何共同决策”。_
+
 
 ## **1.1 什么是多模态？**
 
@@ -222,6 +232,11 @@ Visual Tokens
 对于基于 ViT 的视觉编码器，Patch Embedding 是一个关键步骤。
 
 # **三、Patch Embedding：ViT 如何把图像切分为 Patch？**
+
+![ViT 把图像切成 Patch，展平后线性投影成 Token 序列，再加位置编码送入 Transformer](assets/diagrams/vit-patch-embedding.svg)
+
+_图：ViT 把图像切成 Patch，展平后线性投影成 Token 序列，再加位置编码送入 Transformer。_
+
 
 Vision Transformer，简称 ViT，是将 Transformer 应用于图像处理的重要架构。
 

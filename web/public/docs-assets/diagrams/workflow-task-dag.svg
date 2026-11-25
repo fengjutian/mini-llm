@@ -26,8 +26,8 @@
 <path class="edge" d="M690 351 L760 267" marker-end="url(#arrow)"/>
 <path class="edge" d="M930 251 L1000 251" marker-end="url(#arrow)"/>
 <path class="edge" d="M1090 282 L1090 400" marker-end="url(#arrow)"/>
-<path class="accent-edge" d="M520 382 L760 282" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
-<text class="tiny" x="640" y="400" text-anchor="start">测试失败 → 回到重构</text>
+<path class="accent-edge" d="M605 382 L605 440 L735 440 L735 282" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
+<text class="tiny" x="760" y="455" text-anchor="start">测试失败 → 回到重构</text>
 <text class="tiny" x="700" y="105" text-anchor="middle">并行</text>
 <text class="tiny" x="60" y="560" text-anchor="start">DAG 的边表示依赖，不表示时间顺序；同一层的节点可以并行调度。</text>
 </svg>

@@ -25,7 +25,7 @@
 <text class="label" x="1135.0" y="441.3" text-anchor="middle" font-size="18">弃答 / 转人工</text>
 <path class="edge" d="M890 330 L890 400" marker-end="url(#arrow)"/>
 <path class="edge" d="M1130 330 L1130 400" marker-end="url(#arrow)"/>
-<path class="accent-edge" d="M800 290 L230 330" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
-<text class="tiny" x="420" y="340" text-anchor="start">证据不足 → 重写或补检索</text>
+<path class="accent-edge" d="M890 250 L890 165 L145 165 L145 250" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
+<text class="tiny" x="520" y="150" text-anchor="middle">证据不足 → 重写或补检索</text>
 <text class="tiny" x="60" y="560" text-anchor="start">可信不是一个概率分数，而是“claim → 证据 → 判定 → 校准”的可追溯链路。</text>
 </svg>

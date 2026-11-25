@@ -5,23 +5,23 @@
   <rect class="bg" width="1400" height="650" rx="24"/>
   <text class="kicker" x="64" y="58">MINI-LLM · MECHANISM</text>
   <text class="title" x="64" y="105">空间智能的六层能力</text>
-<rect class="box" x="220.0" y="150" width="500" height="62" rx="16"/>
-<text class="label" x="470.0" y="187.3" text-anchor="middle" font-size="18">Spatial Prediction</text>
-<text class="small" x="1000" y="188" text-anchor="start">预测物体移动、碰撞与空间结构变化</text>
-<rect class="box" x="180.0" y="228" width="580" height="62" rx="16"/>
-<text class="label" x="470.0" y="265.3" text-anchor="middle" font-size="18">Spatial Reasoning</text>
-<text class="small" x="1000" y="266" text-anchor="start">推理距离、可达性、碰撞与空间约束</text>
-<rect class="box" x="140.0" y="306" width="660" height="62" rx="16"/>
-<text class="label" x="470.0" y="343.3" text-anchor="middle" font-size="18">Spatial Relationship</text>
-<text class="small" x="1000" y="344" text-anchor="start">左右、上下、包含、接触、支撑、遮挡</text>
-<rect class="box" x="100.0" y="384" width="740" height="62" rx="16"/>
-<text class="label" x="470.0" y="421.3" text-anchor="middle" font-size="18">Spatial Localization</text>
-<text class="small" x="1000" y="422" text-anchor="start">确定位置、方向、尺寸与坐标系</text>
-<rect class="box cool" x="60.0" y="462" width="820" height="62" rx="16"/>
-<text class="label" x="470.0" y="499.3" text-anchor="middle" font-size="18">3D Representation</text>
-<text class="small" x="1000" y="500" text-anchor="start">点云、网格、体素与场景图</text>
-<rect class="box hot" x="20.0" y="540" width="900" height="62" rx="16"/>
-<text class="label" x="470.0" y="577.3" text-anchor="middle" font-size="18">3D Perception</text>
-<text class="small" x="1000" y="578" text-anchor="start">从图像、深度和点云中识别三维物体</text>
-<text class="tiny" x="90" y="620" text-anchor="start">能力递进：越靠下越接近原始传感器数据</text>
+<rect class="box" x="220.0" y="140" width="500" height="62" rx="16"/>
+<text class="label" x="470.0" y="177.3" text-anchor="middle" font-size="18">Spatial Prediction</text>
+<text class="small" x="1000" y="178" text-anchor="start">预测物体移动、碰撞与空间结构变化</text>
+<rect class="box" x="180.0" y="214" width="580" height="62" rx="16"/>
+<text class="label" x="470.0" y="251.3" text-anchor="middle" font-size="18">Spatial Reasoning</text>
+<text class="small" x="1000" y="252" text-anchor="start">推理距离、可达性、碰撞与空间约束</text>
+<rect class="box" x="140.0" y="288" width="660" height="62" rx="16"/>
+<text class="label" x="470.0" y="325.3" text-anchor="middle" font-size="18">Spatial Relationship</text>
+<text class="small" x="1000" y="326" text-anchor="start">左右、上下、包含、接触、支撑、遮挡</text>
+<rect class="box" x="100.0" y="362" width="740" height="62" rx="16"/>
+<text class="label" x="470.0" y="399.3" text-anchor="middle" font-size="18">Spatial Localization</text>
+<text class="small" x="1000" y="400" text-anchor="start">确定位置、方向、尺寸与坐标系</text>
+<rect class="box cool" x="60.0" y="436" width="820" height="62" rx="16"/>
+<text class="label" x="470.0" y="473.3" text-anchor="middle" font-size="18">3D Representation</text>
+<text class="small" x="1000" y="474" text-anchor="start">点云、网格、体素与场景图</text>
+<rect class="box hot" x="20.0" y="510" width="900" height="62" rx="16"/>
+<text class="label" x="470.0" y="547.3" text-anchor="middle" font-size="18">3D Perception</text>
+<text class="small" x="1000" y="548" text-anchor="start">从图像、深度和点云中识别三维物体</text>
+<text class="tiny" x="90" y="625" text-anchor="start">能力递进：越靠下越接近原始传感器数据</text>
 </svg>

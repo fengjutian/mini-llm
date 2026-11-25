@@ -29,6 +29,7 @@
 <path class="edge" d="M700 390 L860 470" marker-end="url(#arrow)"/>
 <text class="tiny" x="760" y="450" text-anchor="start">未通过</text>
 <path class="edge" d="M1080 470 L1140 470" marker-end="url(#arrow)"/>
-<path class="edge" d="M1230 430 L1230 330 L540 330" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
+<path class="edge" d="M1230 430 L1230 200 L450 200 L450 290" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
+<text class="tiny" x="760" y="190" text-anchor="start">修改后重新投票</text>
 <text class="tiny" x="90" y="580" text-anchor="start">共识不是“投票简单多数”：僵局时需要让步与方案修改，否则会反复投票。</text>
 </svg>

@@ -263,6 +263,11 @@ Frame 5：人放下杯子
 
 ### **3.1 不同模态的 Encoder**
 
+
+![各模态先由独立编码器转成向量，再经投影层对齐到语言模型可消费的表示空间](assets/diagrams/multimodal-encoder-architecture.svg)
+
+_图：各模态先由独立编码器转成向量，再经投影层对齐到语言模型可消费的表示空间。_
+
 ## **Multimodal Encoder Architecture**
 
 **Text Encoder**
@@ -336,6 +341,11 @@ Cross-Modal Interaction / Fusion / Reasoning
 这两个概念必须区分。
 
 ## **四、Cross-Modal Alignment：如何让不同模态理解同一个语义？**
+
+![跨模态对比学习就是一个相似度矩阵——对角线上的正样本拉高，非对角线上的负样本压低](assets/diagrams/cross-modal-alignment.svg)
+
+_图：跨模态对比学习就是一个相似度矩阵——对角线上的正样本拉高，非对角线上的负样本压低。_
+
 
 这是多模态智能的核心问题之一。
 

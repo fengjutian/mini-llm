@@ -31,9 +31,9 @@
 <circle cx="492.0" cy="220.8" r="7" class="box good"/>
 <circle cx="616.0" cy="224.60000000000002" r="7" class="box good"/>
 <circle cx="740.0" cy="228.40000000000003" r="7" class="box good"/>
-<text class="small" x="760" y="240" text-anchor="start">无回放：旧任务被覆盖</text>
-<rect class="box hot" x="752" y="218" width="18" height="18" rx="4"/>
-<text class="small" x="760" y="300" text-anchor="start">带回放 / 正则：旧能力保持</text>
-<rect class="box good" x="752" y="278" width="18" height="18" rx="4"/>
-<text class="tiny" x="120" y="610" text-anchor="start">灾难性遗忘不是“忘记”，而是参数更新把旧任务的最优解覆盖掉了。</text>
+<text class="small" x="790" y="240" text-anchor="start">无回放：旧任务被覆盖</text>
+<rect class="box hot" x="756" y="218" width="18" height="18" rx="4"/>
+<text class="small" x="790" y="300" text-anchor="start">带回放 / 正则：旧能力保持</text>
+<rect class="box good" x="756" y="278" width="18" height="18" rx="4"/>
+<text class="tiny" x="120" y="632" text-anchor="start">灾难性遗忘不是“忘记”，而是参数更新把旧任务的最优解覆盖掉了。</text>
 </svg>

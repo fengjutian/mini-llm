@@ -14,41 +14,49 @@
 <rect class="box" x="930" y="150" width="400" height="400" rx="20"/>
 <text class="label" x="954" y="190" text-anchor="start" font-size="20">Sampling</text>
 <text class="tiny" x="954" y="218" text-anchor="start">按概率分布抽样</text>
-<rect class="box hot" x="200" y="270" width="120" height="44" rx="16"/>
-<text class="label" x="260.0" y="296.2" text-anchor="middle" font-size="12"></text>
-<rect class="box hot" x="200" y="340" width="120" height="44" rx="16"/>
-<text class="label" x="260.0" y="366.2" text-anchor="middle" font-size="12"></text>
-<rect class="box hot" x="200" y="410" width="120" height="44" rx="16"/>
-<text class="label" x="260.0" y="436.2" text-anchor="middle" font-size="12"></text>
-<rect class="box hot" x="200" y="480" width="120" height="44" rx="16"/>
-<text class="label" x="260.0" y="506.2" text-anchor="middle" font-size="12"></text>
-<path class="edge" d="M260 314 L260 340" marker-end="url(#arrow)"/>
-<path class="edge" d="M260 384 L260 410" marker-end="url(#arrow)"/>
-<path class="edge" d="M260 454 L260 480" marker-end="url(#arrow)"/>
-<rect class="box hot" x="640" y="270" width="120" height="44" rx="16"/>
-<text class="label" x="700.0" y="296.9" text-anchor="middle" font-size="14">A</text>
-<rect class="box cool" x="790" y="270" width="120" height="44" rx="16"/>
-<text class="label" x="850.0" y="296.9" text-anchor="middle" font-size="14">B</text>
-<path class="edge" d="M700 314 L700 360" marker-end="url(#arrow)"/>
-<path class="edge" d="M760 314 L820 360" marker-end="url(#arrow)"/>
-<rect class="box hot" x="640" y="360" width="120" height="44" rx="16"/>
-<text class="label" x="700.0" y="386.9" text-anchor="middle" font-size="14">A1</text>
-<rect class="box cool" x="790" y="360" width="120" height="44" rx="16"/>
-<text class="label" x="850.0" y="386.9" text-anchor="middle" font-size="14">B1</text>
-<path class="edge" d="M700 404 L700 450" marker-end="url(#arrow)"/>
-<path class="edge" d="M760 404 L820 450" marker-end="url(#arrow)"/>
-<rect class="box hot" x="640" y="450" width="120" height="44" rx="16"/>
-<text class="label" x="700.0" y="476.9" text-anchor="middle" font-size="14">A2</text>
-<rect class="box cool" x="790" y="450" width="120" height="44" rx="16"/>
-<text class="label" x="850.0" y="476.9" text-anchor="middle" font-size="14">B2</text>
-<rect class="box hot" x="1030" y="270" width="200" height="44" rx="16"/>
-<text class="label" x="1130.0" y="296.2" text-anchor="middle" font-size="12"></text>
-<text class="small" x="1130" y="297" text-anchor="middle">p = 0.6</text>
-<path class="edge" d="M1130 314 L1080 370" marker-end="url(#arrow)"/>
-<path class="edge" d="M1130 314 L1180 370" marker-end="url(#arrow)"/>
-<rect class="box cool" x="1040" y="370" width="180" height="44" rx="16"/>
-<text class="label" x="1130.0" y="396.2" text-anchor="middle" font-size="12"></text>
-<text class="small" x="1130" y="397" text-anchor="middle">p = 0.3</text>
-<text class="tiny" x="1040" y="450" text-anchor="start">p = 0.1</text>
+<rect class="box hot" x="200" y="260" width="120" height="44" rx="16"/>
+<text class="label" x="260.0" y="286.9" text-anchor="middle" font-size="14">t1</text>
+<path class="edge" d="M260 304 L260 330" marker-end="url(#arrow)"/>
+<rect class="box hot" x="200" y="330" width="120" height="44" rx="16"/>
+<text class="label" x="260.0" y="356.9" text-anchor="middle" font-size="14">t2</text>
+<path class="edge" d="M260 374 L260 400" marker-end="url(#arrow)"/>
+<rect class="box hot" x="200" y="400" width="120" height="44" rx="16"/>
+<text class="label" x="260.0" y="426.9" text-anchor="middle" font-size="14">t3</text>
+<path class="edge" d="M260 444 L260 470" marker-end="url(#arrow)"/>
+<rect class="box hot" x="200" y="470" width="120" height="44" rx="16"/>
+<text class="label" x="260.0" y="496.9" text-anchor="middle" font-size="14">t4</text>
+<rect class="box hot" x="600" y="270" width="120" height="44" rx="16"/>
+<text class="label" x="660.0" y="296.9" text-anchor="middle" font-size="14">A</text>
+<rect class="box cool" x="760" y="270" width="120" height="44" rx="16"/>
+<text class="label" x="820.0" y="296.9" text-anchor="middle" font-size="14">B</text>
+<rect class="box hot" x="600" y="370" width="120" height="44" rx="16"/>
+<text class="label" x="660.0" y="396.9" text-anchor="middle" font-size="14">A1</text>
+<rect class="box cool" x="760" y="370" width="120" height="44" rx="16"/>
+<text class="label" x="820.0" y="396.9" text-anchor="middle" font-size="14">B1</text>
+<rect class="box hot" x="600" y="470" width="120" height="44" rx="16"/>
+<text class="label" x="660.0" y="496.9" text-anchor="middle" font-size="14">A2</text>
+<rect class="box cool" x="760" y="470" width="120" height="44" rx="16"/>
+<text class="label" x="820.0" y="496.9" text-anchor="middle" font-size="14">B2</text>
+<path class="edge" d="M660 314 L660 370" marker-end="url(#arrow)"/>
+<path class="edge" d="M820 314 L820 370" marker-end="url(#arrow)"/>
+<path class="edge" d="M660 314 L760 370" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
+<path class="edge" d="M820 314 L720 370" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
+<path class="edge" d="M660 414 L660 470" marker-end="url(#arrow)"/>
+<path class="edge" d="M820 414 L820 470" marker-end="url(#arrow)"/>
+<text class="tiny" x="660" y="540" text-anchor="start">交叉扩展后按总分保留 2 条</text>
+<rect class="box hot" x="1030" y="250" width="200" height="50" rx="16"/>
+<text class="label" x="1130.0" y="279.55" text-anchor="middle" font-size="13">p(token | context)</text>
+<rect class="box hot" x="940" y="420" width="110" height="50" rx="16"/>
+<text class="label" x="995.0" y="449.9" text-anchor="middle" font-size="14">A</text>
+<path class="edge" d="M1130 300 L995 420" marker-end="url(#arrow)"/>
+<text class="tiny" x="1070.5" y="375" text-anchor="start">p=0.6</text>
+<rect class="box cool" x="1080" y="420" width="110" height="50" rx="16"/>
+<text class="label" x="1135.0" y="449.9" text-anchor="middle" font-size="14">B</text>
+<path class="edge" d="M1130 300 L1135 420" marker-end="url(#arrow)"/>
+<text class="tiny" x="1140.5" y="375" text-anchor="start">p=0.3</text>
+<rect class="box cool" x="1200" y="420" width="110" height="50" rx="16"/>
+<text class="label" x="1255.0" y="449.9" text-anchor="middle" font-size="14">C</text>
+<path class="edge" d="M1130 300 L1255 420" marker-end="url(#arrow)"/>
+<text class="tiny" x="1200.5" y="375" text-anchor="start">p=0.1</text>
 <text class="tiny" x="70" y="600" text-anchor="start">Greedy 最快但会重复，Beam 更稳但更贵，Sampling 更有多样性但不可复现。</text>
 </svg>

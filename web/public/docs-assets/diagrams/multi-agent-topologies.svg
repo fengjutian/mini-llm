@@ -13,15 +13,16 @@
 <text class="label" x="92" y="438" text-anchor="start" font-size="18">Hierarchy 层级</text>
 <rect class="box" x="720" y="400" width="610" height="220" rx="18"/>
 <text class="label" x="742" y="438" text-anchor="start" font-size="18">Blackboard 黑板</text>
-<circle cx="375" cy="270" r="26" class="box hot"/>
-<circle cx="250" cy="220" r="18" class="box cool"/>
 <line class="edge" x1="375" y1="270" x2="250" y2="220"/>
-<circle cx="500" cy="220" r="18" class="box cool"/>
 <line class="edge" x1="375" y1="270" x2="500" y2="220"/>
-<circle cx="250" cy="330" r="18" class="box cool"/>
 <line class="edge" x1="375" y1="270" x2="250" y2="330"/>
-<circle cx="500" cy="330" r="18" class="box cool"/>
 <line class="edge" x1="375" y1="270" x2="500" y2="330"/>
+<circle cx="250" cy="220" r="18" class="box cool"/>
+<circle cx="500" cy="220" r="18" class="box cool"/>
+<circle cx="250" cy="330" r="18" class="box cool"/>
+<circle cx="500" cy="330" r="18" class="box cool"/>
+<circle cx="375" cy="270" r="30" class="box hot"/>
+<text class="tiny" x="375" y="330" text-anchor="middle">Coordinator</text>
 <rect class="box cool" x="755" y="250" width="110" height="56" rx="16"/>
 <text class="label" x="810.0" y="282.9" text-anchor="middle" font-size="14">A1</text>
 <path class="edge" d="M865 278 L885 278" marker-end="url(#arrow)"/>

@@ -6,28 +6,28 @@
   <text class="kicker" x="64" y="58">MINI-LLM · MECHANISM</text>
   <text class="title" x="64" y="105">三维表示的六种选择</text>
 <rect class="box cool" x="90" y="170" width="380" height="170" rx="16"/>
-<text class="label" x="280.0" y="261.3" text-anchor="middle" font-size="18">Point Cloud</text>
-<text class="small" x="114" y="258" text-anchor="start">无序点集 P = {p₁ … p_N}</text>
-<text class="tiny" x="114" y="292" text-anchor="start">用途：感知、配准</text>
+<text class="label" x="114" y="222" text-anchor="start" font-size="20">Point Cloud</text>
+<text class="small" x="114" y="266" text-anchor="start">无序点集 P = {p₁ … p_N}</text>
+<text class="tiny" x="114" y="302" text-anchor="start">用途：感知、配准</text>
 <rect class="box cool" x="510" y="170" width="380" height="170" rx="16"/>
-<text class="label" x="700.0" y="261.3" text-anchor="middle" font-size="18">Voxel</text>
-<text class="small" x="534" y="258" text-anchor="start">规则网格，占据/密度</text>
-<text class="tiny" x="534" y="292" text-anchor="start">用途：碰撞检测</text>
+<text class="label" x="534" y="222" text-anchor="start" font-size="20">Voxel</text>
+<text class="small" x="534" y="266" text-anchor="start">规则网格，占据/密度</text>
+<text class="tiny" x="534" y="302" text-anchor="start">用途：碰撞检测</text>
 <rect class="box cool" x="930" y="170" width="380" height="170" rx="16"/>
-<text class="label" x="1120.0" y="261.3" text-anchor="middle" font-size="18">Mesh</text>
-<text class="small" x="954" y="258" text-anchor="start">显式三角面片</text>
-<text class="tiny" x="954" y="292" text-anchor="start">用途：建模、仿真</text>
-<rect class="box" x="90" y="380" width="380" height="170" rx="16"/>
-<text class="label" x="280.0" y="471.3" text-anchor="middle" font-size="18">SDF</text>
-<text class="small" x="114" y="468" text-anchor="start">隐式距离场 f(x) = d</text>
-<text class="tiny" x="114" y="502" text-anchor="start">用途：碰撞距离、优化</text>
-<rect class="box" x="510" y="380" width="380" height="170" rx="16"/>
-<text class="label" x="700.0" y="471.3" text-anchor="middle" font-size="18">NeRF / 3DGS</text>
-<text class="small" x="534" y="468" text-anchor="start">可微渲染，新视角合成</text>
-<text class="tiny" x="534" y="502" text-anchor="start">用途：场景重建</text>
-<rect class="box" x="930" y="380" width="380" height="170" rx="16"/>
-<text class="label" x="1120.0" y="471.3" text-anchor="middle" font-size="18">Scene Graph</text>
-<text class="small" x="954" y="468" text-anchor="start">对象 + 空间关系</text>
-<text class="tiny" x="954" y="502" text-anchor="start">用途：语义推理</text>
+<text class="label" x="954" y="222" text-anchor="start" font-size="20">Mesh</text>
+<text class="small" x="954" y="266" text-anchor="start">显式三角面片</text>
+<text class="tiny" x="954" y="302" text-anchor="start">用途：建模、仿真</text>
+<rect class="box " x="90" y="380" width="380" height="170" rx="16"/>
+<text class="label" x="114" y="432" text-anchor="start" font-size="20">SDF</text>
+<text class="small" x="114" y="476" text-anchor="start">隐式距离场 f(x) = d</text>
+<text class="tiny" x="114" y="512" text-anchor="start">用途：碰撞距离、优化</text>
+<rect class="box " x="510" y="380" width="380" height="170" rx="16"/>
+<text class="label" x="534" y="432" text-anchor="start" font-size="20">NeRF / 3DGS</text>
+<text class="small" x="534" y="476" text-anchor="start">可微渲染，新视角合成</text>
+<text class="tiny" x="534" y="512" text-anchor="start">用途：场景重建</text>
+<rect class="box " x="930" y="380" width="380" height="170" rx="16"/>
+<text class="label" x="954" y="432" text-anchor="start" font-size="20">Scene Graph</text>
+<text class="small" x="954" y="476" text-anchor="start">对象 + 空间关系</text>
+<text class="tiny" x="954" y="512" text-anchor="start">用途：语义推理</text>
 <text class="tiny" x="90" y="590" text-anchor="start">没有一种表示能同时满足渲染、碰撞和语义推理，工程上通常组合使用。</text>
 </svg>

@@ -21,6 +21,11 @@ Generation Engine 不只是简单地从模型输出中选择一个 Token。它�
 
 从工程角度看，Generation Engine 是连接模型推理能力与外部应用的重要桥梁。
 
+
+![一台面向本地推理的 AI 计算盒子](assets/images/gpu-server-front.jpg)
+
+_图：一台面向本地推理的 AI 计算盒子。生成阶段的成本几乎全部落在解码循环上，这也是 KV Cache、批处理与投机解码被反复优化的原因。图片：Daniel Lu，[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Nvidia_DGX_front_view_dllu.jpg)，[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)。_
+
 # **一、Generation Engine：模型如何把内部表示转换成输出？**
 
 ## **1.1 模型的内部计算结果是什么？**
@@ -278,6 +283,11 @@ Prompt KV Cache + Token 1 KV + Token 2
 KV Cache 主要减少历史上下文的重复计算，但并没有消除逐 Token 生成的依赖关系。
 
 # **三、Decoding Strategy：Greedy、Beam Search、Sampling 有什么区别？**
+
+![三种解码策略的搜索形状](assets/diagrams/decoding-strategy-tree.svg)
+
+_图：三种解码策略的搜索形状。Greedy 最快但会重复，Beam 更稳但更贵，Sampling 更有多样性但不可复现。_
+
 
 Decoding Strategy 是决定如何从概率分布中选择 Token 的策略。
 
@@ -632,6 +642,11 @@ def repetition_penalty(    logits,    generated_tokens,    penalty=1.2):    for 
 因此，重复控制应该是可配置策略，而不是无条件删除重复 Token。
 
 # **六、Speculative Decoding：如何通过小模型加速大模型生成？**
+
+![投机解码](assets/diagrams/speculative-decoding.svg)
+
+_图：投机解码。Draft 模型一次猜 K 个 Token，Target 模型用一次前向并行验证；猜对的越多，加速越明显。_
+
 
 这是 Generation Engine 中非常重要的性能优化技术。
 
