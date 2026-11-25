@@ -19,30 +19,86 @@ pub mod xor;
 /// Where `train` writes and `generate` reads the Tiny GPT checkpoint.
 pub(crate) const CHECKPOINT_PATH: &str = "checkpoints/tiny-gpt.bin";
 
-/// Reads `--corpus <path>` / `--corpus=<path>`, falling back to the built-in text.
+/// Reads every `--corpus <path>` / `--corpus=<path>`, falling back to the
+/// built-in text. A directory contributes its `.txt` and `.md` files in sorted
+/// order, so a corpus can be split across many files.
 ///
-/// Returns the text and a human-readable label for logging.
+/// Returns the concatenated text and a human-readable label for logging.
 pub(crate) fn corpus_text(arguments: &[String]) -> (String, String) {
-    let path = arguments
-        .iter()
-        .position(|argument| argument == "--corpus")
-        .and_then(|index| arguments.get(index + 1).cloned())
-        .or_else(|| {
-            arguments
-                .iter()
-                .find_map(|argument| argument.strip_prefix("--corpus=").map(str::to_string))
-        });
-
-    match path {
-        Some(path) => match std::fs::read_to_string(&path) {
-            Ok(text) => (text, path),
-            Err(error) => {
-                eprintln!("cannot read corpus `{path}`: {error}");
-                std::process::exit(2);
+    let mut paths = Vec::new();
+    let mut index = 0;
+    while index < arguments.len() {
+        if arguments[index] == "--corpus" {
+            if let Some(path) = arguments.get(index + 1) {
+                paths.push(path.clone());
             }
-        },
-        None => (TINY_CORPUS.to_string(), "built-in corpus".to_string()),
+            index += 2;
+        } else if let Some(rest) = arguments[index].strip_prefix("--corpus=") {
+            paths.push(rest.to_string());
+            index += 1;
+        } else {
+            index += 1;
+        }
     }
+
+    if paths.is_empty() {
+        return (TINY_CORPUS.to_string(), "built-in corpus".to_string());
+    }
+
+    let mut text = String::new();
+    let mut labels = Vec::new();
+    for path in paths {
+        let path_ref = std::path::Path::new(&path);
+        if path_ref.is_dir() {
+            let mut entries: Vec<std::path::PathBuf> = match std::fs::read_dir(path_ref) {
+                Ok(entries) => entries
+                    .filter_map(|entry| entry.ok().map(|entry| entry.path()))
+                    .filter(|entry| {
+                        matches!(
+                            entry.extension().and_then(|value| value.to_str()),
+                            Some("txt" | "md")
+                        )
+                    })
+                    .collect(),
+                Err(error) => {
+                    eprintln!("cannot read corpus directory `{path}`: {error}");
+                    std::process::exit(2);
+                }
+            };
+            entries.sort();
+            for entry in entries {
+                match std::fs::read_to_string(&entry) {
+                    Ok(contents) => {
+                        text.push_str(&contents);
+                        text.push('\n');
+                        labels.push(entry.display().to_string());
+                    }
+                    Err(error) => {
+                        eprintln!("cannot read `{}`: {error}", entry.display());
+                        std::process::exit(2);
+                    }
+                }
+            }
+        } else {
+            match std::fs::read_to_string(&path) {
+                Ok(contents) => {
+                    text.push_str(&contents);
+                    text.push('\n');
+                    labels.push(path.clone());
+                }
+                Err(error) => {
+                    eprintln!("cannot read corpus `{path}`: {error}");
+                    std::process::exit(2);
+                }
+            }
+        }
+    }
+
+    if text.trim().is_empty() {
+        eprintln!("corpus is empty");
+        std::process::exit(2);
+    }
+    (text, labels.join(", "))
 }
 
 /// Reads `--accum N` / `--accum=N`; defaults to one micro-batch.

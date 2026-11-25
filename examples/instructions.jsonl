@@ -1,0 +1,4 @@
+{"prompt": "User: hello\nBot:", "response": " hi there\n"}
+{"prompt": "User: how are you?\nBot:", "response": " doing well, thanks\n"}
+{"prompt": "User: what is a tensor?\nBot:", "response": " a dense array of numbers\n"}
+{"prompt": "User: bye\nBot:", "response": " see you\n"}

@@ -1,7 +1,8 @@
 //! Tests for tokenization and batching.
 
 use mini_llm_data::{
-    BpeTokenizer, CharTokenizer, DataError, Dataset, SftDataset, TextDataset, Tokenizer,
+    parse_instructions, BpeTokenizer, CharTokenizer, DataError, Dataset, SftDataset, TextDataset,
+    Tokenizer,
 };
 use mini_llm_random::Rng;
 
@@ -287,4 +288,36 @@ fn tokenizer_supervised_mask_works_for_both_vocabularies() {
         bpe.encode_supervised("prompt", ""),
         Err(DataError::EmptyResponse)
     ));
+}
+
+#[test]
+fn instruction_jsonl_parses_escapes_and_unknown_keys() {
+    let text = r#"
+# a comment line
+{"prompt": "say \"hi\"", "response": "hi\nthere", "id": 7}
+{"response": "ok", "prompt": "ping"}
+"#;
+    let pairs = parse_instructions(text).unwrap();
+    assert_eq!(pairs.len(), 2);
+    assert_eq!(pairs[0].prompt, "say \"hi\"");
+    assert_eq!(pairs[0].response, "hi\nthere");
+    assert_eq!(pairs[1].prompt, "ping");
+    assert_eq!(pairs[1].response, "ok");
+}
+
+#[test]
+fn instruction_jsonl_rejects_malformed_lines() {
+    assert!(matches!(
+        parse_instructions("{\"prompt\": 1, \"response\": \"x\"}"),
+        Err(DataError::InvalidInstruction { line: 1, .. })
+    ));
+    assert!(matches!(
+        parse_instructions("{\"prompt\": \"x\"}"),
+        Err(DataError::InvalidInstruction { .. })
+    ));
+    assert!(matches!(
+        parse_instructions("{\"prompt\": \"x\", \"response\": \"\"}"),
+        Err(DataError::InvalidInstruction { .. })
+    ));
+    assert!(matches!(parse_instructions("  \n"), Err(DataError::EmptyCorpus)));
 }

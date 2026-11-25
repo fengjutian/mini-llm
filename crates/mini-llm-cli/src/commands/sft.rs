@@ -1,14 +1,17 @@
 //! Supervised fine-tuning with loss masking: only answer tokens are trained.
+//!
+//! Data can come from the built-in dialogue or from a JSONL file of
+//! `{"prompt": ..., "response": ...}` objects (`--jsonl PATH`).
 
-use mini_llm_data::{BpeTokenizer, CharTokenizer, SftDataset, Tokenizer};
+use mini_llm_data::{
+    parse_instructions, BpeTokenizer, CharTokenizer, SftDataset, Tokenizer,
+};
 use mini_llm_model::{ModelConfig, TinyGpt};
 use mini_llm_nn::Rng;
 use mini_llm_train::{TrainConfig, Trainer};
 
 use super::parse_accumulation;
 
-const DIALOGUE: &str = "User: hello\nBot: hi there\nUser: bye\nBot: see you\n";
-const SAMPLE_PROMPT: &str = "User: hello\nBot:";
 const REPEATS: usize = 6;
 const BLOCK_SIZE: usize = 32;
 const BATCH_SIZE: usize = 2;
@@ -21,14 +24,20 @@ pub fn run(arguments: &[String]) {
 
     let accumulation = parse_accumulation(arguments);
     let use_bpe = arguments.iter().any(|argument| argument == "--bpe");
-    let tokenizer: Tokenizer = if use_bpe {
-        Tokenizer::from(BpeTokenizer::train(DIALOGUE, 300))
-    } else {
-        Tokenizer::from(CharTokenizer::from_text(DIALOGUE))
-    };
-    let (tokens, weights) = build_supervised_data(&tokenizer);
-    let supervised = weights.iter().filter(|weight| **weight > 0.0).count();
+    let (pairs, source) = load_pairs(arguments);
 
+    let corpus: String = pairs
+        .iter()
+        .map(|(prompt, response)| format!("{prompt}{response}"))
+        .collect();
+    let tokenizer: Tokenizer = if use_bpe {
+        Tokenizer::from(BpeTokenizer::train(&corpus, 300))
+    } else {
+        Tokenizer::from(CharTokenizer::from_text(&corpus))
+    };
+
+    let (tokens, weights, repeats) = build_supervised_data(&tokenizer, &pairs);
+    let supervised = weights.iter().filter(|weight| **weight > 0.0).count();
     let token_count = tokens.len();
     let dataset = SftDataset::new(tokens, weights, BLOCK_SIZE).expect("sft dataset");
     let mut config = ModelConfig::modern(tokenizer.vocab_size());
@@ -37,11 +46,12 @@ pub fn run(arguments: &[String]) {
     let model = TinyGpt::new(config, &mut Rng::new(11)).expect("model");
 
     println!(
-        "SFT with loss masking (prompt tokens are ignored, {kind} tokenizer)",
+        "SFT with loss masking ({source}, {kind} tokenizer)",
         kind = if use_bpe { "BPE" } else { "char" }
     );
     println!(
-        "  examples: {REPEATS} x 2 | {} tokens, {} supervised | vocab {}",
+        "  examples: {} pairs x {repeats} | {} tokens, {} supervised | vocab {}",
+        pairs.len(),
         token_count,
         supervised,
         tokenizer.vocab_size()
@@ -80,34 +90,84 @@ pub fn run(arguments: &[String]) {
         .expect("training");
     println!("  final masked loss: {last:.4}");
 
-    let prompt = tokenizer.encode(SAMPLE_PROMPT).expect("prompt encodes");
+    let prompt_text = &pairs[0].0;
+    let prompt = tokenizer.encode(prompt_text).expect("prompt encodes");
     let mut sampler = Rng::new(3);
     let generated = trainer
         .model()
         .generate(&prompt, 8, 0.0, &mut sampler)
         .expect("generate");
     println!();
-    println!("  prompt:   {SAMPLE_PROMPT:?}");
+    println!("  prompt:   {prompt_text:?}");
     println!("  response: {:?}", tokenizer.decode(&generated).unwrap());
 }
 
-/// Builds one token stream from repeated (prompt, response) pairs, masking the
-/// prompt positions out of the loss.
-fn build_supervised_data(tokenizer: &Tokenizer) -> (Vec<usize>, Vec<f32>) {
-    let pairs = [
-        ("User: hello\nBot:", " hi there\n"),
-        ("User: bye\nBot:", " see you\n"),
-    ];
+/// Loads instruction pairs from `--jsonl PATH`, or the built-in dialogue.
+fn load_pairs(arguments: &[String]) -> (Vec<(String, String)>, String) {
+    let path = arguments
+        .iter()
+        .position(|argument| argument == "--jsonl")
+        .and_then(|index| arguments.get(index + 1).cloned())
+        .or_else(|| {
+            arguments
+                .iter()
+                .find_map(|argument| argument.strip_prefix("--jsonl=").map(str::to_string))
+        });
+
+    match path {
+        Some(path) => {
+            let text = match std::fs::read_to_string(&path) {
+                Ok(text) => text,
+                Err(error) => {
+                    eprintln!("cannot read instructions `{path}`: {error}");
+                    std::process::exit(2);
+                }
+            };
+            match parse_instructions(&text) {
+                Ok(pairs) => (
+                    pairs
+                        .into_iter()
+                        .map(|pair| (pair.prompt, pair.response))
+                        .collect(),
+                    path,
+                ),
+                Err(error) => {
+                    eprintln!("cannot parse `{path}`: {error}");
+                    std::process::exit(2);
+                }
+            }
+        }
+        None => (
+            vec![
+                ("User: hello\nBot:".to_string(), " hi there\n".to_string()),
+                ("User: bye\nBot:".to_string(), " see you\n".to_string()),
+            ],
+            "built-in dialogue".to_string(),
+        ),
+    }
+}
+
+/// Builds one masked token stream, repeating the pairs until there is enough
+/// data to fill a few context windows.
+fn build_supervised_data(
+    tokenizer: &Tokenizer,
+    pairs: &[(String, String)],
+) -> (Vec<usize>, Vec<f32>, usize) {
     let mut tokens = Vec::new();
     let mut weights = Vec::new();
-    for _ in 0..REPEATS {
+    let mut repeats = 0usize;
+    while repeats < REPEATS || tokens.len() <= BLOCK_SIZE * 2 {
+        if repeats >= 256 {
+            break;
+        }
         for (prompt, response) in pairs {
             let (mut example_tokens, mut example_weights) = tokenizer
                 .encode_supervised(prompt, response)
-                .expect("dialogue characters are in the vocabulary");
+                .expect("instruction text is in the vocabulary");
             tokens.append(&mut example_tokens);
             weights.append(&mut example_weights);
         }
+        repeats += 1;
     }
-    (tokens, weights)
+    (tokens, weights, repeats)
 }

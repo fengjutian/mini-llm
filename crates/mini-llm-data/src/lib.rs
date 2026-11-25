@@ -30,9 +30,11 @@
 
 mod bpe;
 mod dataset;
+mod instructions;
 mod tokenizer;
 
 pub use bpe::BpeTokenizer;
+pub use instructions::{parse_instructions, InstructionPair};
 pub use dataset::{Batch, Dataset, SftDataset, TextDataset};
 pub use tokenizer::{CharTokenizer, Tokenizer};
 
@@ -61,6 +63,8 @@ pub enum DataError {
     EmptyResponse,
     /// A BPE merge refers to a token id that does not exist yet.
     InvalidMerge { index: usize },
+    /// A JSONL instruction line could not be parsed.
+    InvalidInstruction { line: usize, reason: &'static str },
 }
 
 impl Display for DataError {
@@ -98,6 +102,9 @@ impl Display for DataError {
                 "BPE merge {} refers to a token id that does not exist yet",
                 index
             ),
+            Self::InvalidInstruction { line, reason } => {
+                write!(f, "instruction line {} is invalid: {}", line, reason)
+            }
         }
     }
 }
