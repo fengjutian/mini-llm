@@ -57,10 +57,6 @@ _图：Pre-Norm Transformer Block 中的两条残差路径。_
 
 先看一个标准 Transformer Block。
 
-[Transformer Architecture & Key Design Decisions | Amardeep Kumar](https://images.openai.com/static-rsc-4/R-MngmTXVZGT6gZxtjcRThT9pDJVJfGBiaM67tF1NnTmyy1yxg5J0AZJm8MWlby3uFxdXuQA0sU6TW7jwS74FJDQ4CIgLUmRdii_iciH30PYgT0l6B7piTdH7oExkqBj28qJ9jtx_rTmhU2graJaAZXzVVsekh7h6H_TEcpgq7s?purpose=inline)
-
-[ad6398.github.io](https://ad6398.github.io/posts/genai-interviews-01-transformer-architecture/?utm_source=chatgpt.com)
-
 一个经典的 Post-Norm Transformer Block 可以表示为：
 
 ```
@@ -155,10 +151,6 @@ FFN 则进一步加工这些信息。
 - \\(W_2\\)：第二层权重。
 - \\(\sigma\\)：非线性激活函数。
 - \\(b_1,b_2\\)：偏置。
-
-[LLM 系列（十九）：前馈神经网络 FFN-腾讯云开发者社区-腾讯云](https://images.openai.com/static-rsc-4/HayQ5nMhfZyxu9JBqgRAWiF2A3tMpPSl2ILxw-1yUJlGqN_cAa7wk7v0eFTZqrSpXe3zQcFp4R9Yjm3qdOA4MGps7uCuhhORiCCwlg2uZi8F05JKq24VcKOlQKJq9Ernx8LJZ1OOXKciIvg5TomD4dYLdHciLFJD5BqwJIH0_BE?purpose=inline)
-
-[cloud.tencent.com](https://cloud.tencent.com/developer/article/2627429?utm_source=chatgpt.com)
 
 假设：
 
@@ -268,10 +260,6 @@ GELU（Gaussian Error Linear Unit）是一种平滑激活函数。
 - 负数不会像 ReLU 那样全部直接归零。
 - 函数具有平滑的非线性特征。
 
-[FFN Activation Functions: ReLU, GELU, and SiLU for Transformer Models - Interactive | Michael Brenndoerfer | Michael Brenndoerfer](https://images.openai.com/static-rsc-4/8rR3le8m8HBPdDrtJQt22tUP7uiHmcw9SJntloeo18x1LMtGaHnsSbYF71Qpicni13XlKWCT1GPHHSndiaAaOEZjN_FulgJ_DWpXWTUjiZqBtV9EbLXs4qjvliEjkRcug5FTCLAeLOgcHDQgbQiQAj3O4QZlOITtPQzV1pQMR38?purpose=inline)
-
-[mbrenndoerfer.com](https://mbrenndoerfer.com/writing/ffn-activation-functions?utm_source=chatgpt.com)
-
 GELU 曾广泛应用于 BERT、GPT 等模型。
 
 ## **3.5 SwiGLU：现代 LLM 常用的 FFN 结构**
@@ -290,10 +278,6 @@ GELU 曾广泛应用于 BERT、GPT 等模型。
 - \\(W_u\\)：信息投影。
 - \\(W_d\\)：输出投影。
 - \\(\odot\\)：逐元素乘法。
-
-[On-device AI — MobileLLM: Optimizing Sub-billion Parameter Language Models for On-Device Use Cases | by Don Moon | Byte-Sized AI | Medium](https://images.openai.com/static-rsc-4/MgneJBQEiJcBoxV2hEYj81KC0URU6thJLhU1zZLU8y93Xcrnej7fnL1i9_ZF-NzW5aleLkesRYHDR3xmqdGyZqJ8BN6n7GeJTmMqo-mbaRYGJB9_6KACUt4gzJilXVfaBbwFxNNKRY4Imj5ARZ-mzGByAj1GyYHuEkXBOXJYJC8?purpose=inline)
-
-[medium.com](https://medium.com/byte-sized-ai/on-device-ai-mobilellm-optimizing-sub-billion-parameter-language-models-for-on-device-use-cases-885cc311daa6?utm_source=chatgpt.com)
 
 与普通 FFN 相比，SwiGLU 增加了一条门控分支。
 
@@ -359,10 +343,6 @@ Block 32
 残差网络：
 
 \\[ y=x+F(x) \\]
-
-[Google Colab](https://images.openai.com/static-rsc-4/Cgr-oOXBN4rNr5Z3fPz2rkD2qLdSgLzQjOySitwcdaUIFJvg82Mu0lyHeYtcFbXgJfnEadvhYnzqQT5LLQD4a_KnBnlSXSM67q8UviJlOlZtLDX5Acd41NIhk8VeM8bPjvD5Z_4WB8xXAFyUkMBgFrF0tCb8o9c7qxlT3KBZ5OQ?purpose=inline)
-
-[colab.research.google.com](https://colab.research.google.com/github/SalChem/Fastai-iNotes-iTutorials/blob/master/Image_Recognizer_Tutorial.ipynb?utm_source=chatgpt.com)
 
 注意这里多了一条直接连接：
 
@@ -502,10 +482,6 @@ Transformer 早期架构使用 LayerNorm。
 - \\(\beta\\)：可训练偏移参数。
 - \\(\epsilon\\)：防止除零的小常数。
 
-[One Piece of Math — Samuel Vaiter](https://images.openai.com/static-rsc-4/hY_zgsMcU7DSaiE578V870aS2kE7m97otsyZwISVUMEYJuQ-DJ2io1GPiGpio4LLWfesT8LojtAi8Br77WjZAoLbJueYxIqzzbOcMmPcDuKju_CySULGbH6G4qpbfO2ahU6UJgT_qPjx1AjLU-Dh2mnljH0i6Rntp3vYh__zhY4?purpose=inline)
-
-[samuelvaiter.com](https://samuelvaiter.com/one-piece/index.html?utm_source=chatgpt.com)
-
 ## **5.3 LayerNorm 的计算示例**
 
 假设：
@@ -595,10 +571,6 @@ RMSNorm（Root Mean Square Layer Normalization）提出了一种更简单的归�
 - 不进行中心化。
 - 不需要偏移参数 \\(\beta\\)。
 - 计算过程更加简单。
-
-[LayerNorm Limitations and RMSNorm Advantages | Dhwanit Agarwal, PhD posted on the topic | LinkedIn](https://images.openai.com/static-rsc-4/uhuxgoRi03ZXh0EjeX-LIvLDabBEV42I__DkxoX-NP6FPGbUhFlMRiQUig1csLdr-Pn83CSmaOUA2Gq2Qlw-c53I7eoigK896ux1ez_EafVtXmKWG4CdND7fM4M4kCSJDGZA-_M_m19iUddYCjjKPXfs0w4Iyje61eqZan-Iugg?purpose=inline)
-
-[linkedin.com](https://www.linkedin.com/posts/dhwanit-agarwal_llm-genai-ai-activity-7419511823919603713-PIpe?utm_source=chatgpt.com)
 
 ## **6.3 LayerNorm 与 RMSNorm 的区别**
 
@@ -802,10 +774,6 @@ Final Norm 对最终隐藏状态进行整理，然后交给 LM Head 预测下一
 - MHA：Multi-Head Attention。
 - RMSNorm：归一化。
 - SwiGLU：门控前馈网络。
-
-[LLaMA Architecture: Design Philosophy and Training Efficiency - Interactive | Michael Brenndoerfer | Michael Brenndoerfer](https://images.openai.com/static-rsc-4/husG9lDCEKrmmFlBnpHUtLkfrKgtms3AIEEsp9SXn4XpixDTVmm7lsoIcE0qA60K_8yOejIRUw7gpvV9zbrnZw1dP-beAScZ9iHEvVcjdobwKrysxL5n6cG1NUKRkJLUbswkYloBgMWBE_qWXLH4y-INNzuibDsOA8NvA7MocjI?purpose=inline)
-
-[mbrenndoerfer.com](https://mbrenndoerfer.com/writing/llama-architecture-design-training-efficiency?utm_source=chatgpt.com)
 
 这就是现代 Decoder-only LLM 中非常典型的一种 Transformer Block。
 

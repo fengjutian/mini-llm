@@ -396,31 +396,21 @@ Benchmark 是一套标准化评估任务和测试数据。
 
 常见评估领域包括：
 
-[Rethinking Genius: Why Top Mathematicians Don’t Need to Be Mental Math Whizzes | by Jonipol Esquillo Fortaliza | Medium](https://images.openai.com/static-rsc-4/qLJRNL3L4Y4Vqhqw5ZzvIyik8rHR4ZXOktjcuj_yINOs8ZPhCzaI7BB9_exWe13mZsWtrM3RFdh1TAwbZHY_h0GmazYNHNWG_8CsP4328svbb6ybCoTial5dHGHVO_IFwDxmqIqfsdOJGoxlEBqxvu1Xs4I-jUc4g9kerxCxLW8?purpose=inline)
-
 **数学能力**
 
 计算、数学问题、逻辑推导、证明。
-
-[Hire a Back-end Dev Outsourced in Vietnam](https://images.openai.com/static-rsc-4/fr9S0Y78YeyPYzZ-z1GwY4ldb6zdcRDWdGnszjKxNMYSAd_fn9VRMcIgn9bHPv4DpMS_A3fTVKLGb91STPDyQwk2ZvgjkeVduog4PFv0G-xscNYTihuz1Bo9YbGfBEUCUnwFv1Roq4sUbXbAXIWwkZI-FQS0Fa5eMsw7O4ryrec?purpose=inline)
 
 **代码能力**
 
 代码生成、代码理解、调试、测试通过率。
 
-[BC hosts annual Graduate Research Symposium](https://images.openai.com/static-rsc-4/X_qqUkFuG_aObi7H5BqFpv6TMUCNc-YB38cVi7g46E3ndRdaOAQlwPbvaXy2pa5nDxX14uaWVVWDXRXw2VCj3PqvORPrRNijZMEKgtQnBQLAYaAO-6EIoDg2Eu0Si_HkuhZyy88kIq6Adh8jE3ZuX56MOpEXDbtLXPkaa9agJ34?purpose=inline)
-
 **知识能力**
 
 科学、历史、自然语言知识、事实问答。
 
-[Jakie są zasady gry w sudoku dla początkujących?](https://images.openai.com/static-rsc-4/Z3TdOkjnzSpNEdNgOEWWEPesGqSZ0r8elU9X6XV50XczsmScCIByGjegdHAb76j109snoMb38H1OF6oAxvXhHHTfb9wLM38GdG0IFBN0mGiO-evJyrvRZYyLxShjwzoN9mJK2JHGopX9iMC_SJJZO6yM8TEcfdeJI_xiwUDjsrw?purpose=inline)
-
 **推理能力**
 
 多步骤问题、条件推理、复杂任务规划。
-
-[Home](https://images.openai.com/static-rsc-4/nsgw0eZnk3cBUKNrs9DVtgYfiIo6Rn2T5itOxIHMF9-6eSIXgH867phMxRgPUQlmcfhKeSDn0vtq7Lz6yRaRk6wgBnpx4YKKDSdlFAkSU-vzlQsQdsPIn10gH6Q9RipuicEuxpOxdxANT00pnY5knODCo7OWI7oieBlDrNv6eTI?purpose=inline)
 
 **指令遵循能力**
 

@@ -173,37 +173,25 @@ AI：杯子位于桌子的右侧。
 
 ## **3.1 机器人有哪些传感器？**
 
-[Luxonis OAK D Pro W OV9782 RGB Depth Stereo IR Robot Kamera Fiyatı, Satın Alma Seçenekleri ve Özellikleri](https://images.openai.com/static-rsc-4/Hd-1WkAXJytetmrlcTF5a1BpwzHgYGt5oOKtYTULHxSuav2vyn0QYTg8KL-_MAogezJwLml6PNpBNutzgUiyaq1LkV9HkfX7cSlUvkHo1mtxGQedKnZNYraw6V_AUleBfudx9khaIblyDLY0ECseRnp-vWNPPqxniUpOl4-TSm4?purpose=inline)
-
 **RGB Camera**
 
 获取颜色、纹理和视觉信息
-
-[Intel 82635DSD455 Vision Camera - Barcodesinc.com](https://images.openai.com/static-rsc-4/tNsZgIJw1ipehyYdmyK400pHD_kohlqYEaPgUwDAkch8YPooHM-nU-rjtHfdifxiDWnrpN3__pZN95pTtk1RWG5SCIa_CJTWyW73SDTYrwWN0na18exPaMzEiLNMlT5S9AVeIXylH2UNLWVMVSnkam9yUHd2qxfbbS9z_yGe-0c?purpose=inline)
 
 **Depth Camera**
 
 获取场景深度信息
 
-[Empowering the Future of Robotic Intelligence | Analog Devices at Digi Key](https://images.openai.com/static-rsc-4/djci37s8zTBITsyjJ0kxeHrtef8tFXAGMh8VgPgoqfWiLcifK7wrPLbdUf2oIG_0p_LK3h52pV3Fz7vXYXdC0uoKJTbG_El6AgvFg10QKxAYcbKnSk7MdXxpUdagnvrA1jE6dHekh0nVx8z-4uGiTg2YCCsWOLsrVeMPYUa4eZE?purpose=inline)
-
 **IMU**
 
 测量角速度和加速度
-
-[Yujin Robot Launches 3D Lidar for Service Robots and Smart Factories - IEEE Spectrum](https://images.openai.com/static-rsc-4/OkKCj0ODkuqjWw76s9VmFPguCrPjQJ93p5-izwxJJdUgnsurpe8m3NOdsuSpyD_pCV1W31yTUrn1yUlkdSMgbvLiw05QAM9daE-RubnVGZt8dcyYb5-a-_87_A_utpwWNfaZqRsVVDVQKEM1OwoEwEdK181MwC4kmyAt5k-nOWQ?purpose=inline)
 
 **LiDAR**
 
 获取周围环境的距离信息
 
-[Bota Systems' new force torque sensor triples sensitivity of small payload cobots | Bota Systems](https://images.openai.com/static-rsc-4/TmD9AznLhGVp4chnqNQ9Njx-fLvRU4HMY6HVCo1wdmfDRC7yZP66IJZ6zhbC5z6zN_kM2mF6wkyEIe-G3thdkjMJpZcOERqVJcvNKSIay1NxWHEhCxDIdPSgS3371MvSZZyZ441Wk15n49hw6OXj0cQ2eoGn9L6o9dR4UYNqplc?purpose=inline)
-
 **Force Sensor**
 
 感知接触力和力矩
-
-[GR-Dexter 技术报告 | alphaXiv](https://images.openai.com/static-rsc-4/Xt_U4aL3NjuSNv9sI-atlF-RQsDRerEzy0etUkzvVlAu6FAanfJX0zjQ4ikirQffZ97og1rFMARUclu_jKe8Ybow4Oc4HkciONRgMYhl_uE1cwu-6pWermW6VwuUPJCeY6OgKxNgvhyf3BhKZUNSg9L-zhsmL1NRCZnStg8fL2o?purpose=inline)
 
 **Tactile Sensor**
 
@@ -248,10 +236,6 @@ AI：杯子位于桌子的右侧。
 例如：
 
 输入一张桌面图片：
-
-[NVIDIA and Stanford Just Gave Robots 3D Vision | by Aarav Bedi | KAIRI AI | Jan, 2026 | Medium](https://images.openai.com/static-rsc-4/WPuCjC-n0Fm9P8og8CFXDvAxCPjNCaYgqIACtoVOCjfKkCr8FP820IbVe7-u9xQskYUp_4oPFydMdGImgOsnAnq3ekS1VrhAsSnHMEZZDgoRp7DQSaoRTZsu7XNeeCmogwNYOjsutw_lt3Qgapfp9Sziw5rguHxT_wnM58A4vCY?purpose=inline)
-
-[medium.com](https://medium.com/kairi-ai/nvidia-and-stanford-just-gave-robots-3d-vision-f0640f11205a?utm_source=chatgpt.com)
 
 模型需要识别：
 
@@ -438,10 +422,6 @@ Kalman Filter 适合线性、高斯假设下的状态估计。
 - Base Frame：机械臂基座坐标系。
 - End-effector Frame：末端执行器坐标系。
 
-[3D视觉坐标系与坐标转换-技术圈](https://images.openai.com/static-rsc-4/2xjy7KEG7rFKr7m4eeraIozL5I6gUqMvZruogtUFHOsIOevAo3KUlnTNNEd-Om5bs6-PsMnhv5oq3Cz2MnhWzq6Um7nWKvLb6vojJKpM-l5-izYYEGpJvev1AMttiFKZLRu1XutbinAwl3mxnB4wveTlWgq16eYPRX-lLkSRbr4?purpose=inline)
-
-[jishu.proginn.com](https://jishu.proginn.com/doc/47826475d39cec57a?utm_source=chatgpt.com)
-
 同一个物体，在不同坐标系下的位置可能不同。
 
 例如：
@@ -567,10 +547,6 @@ x = 1 米
 SLAM（Simultaneous Localization and Mapping）解决一个经典问题：
 
 **机器人不知道自己在哪里，也不知道环境地图是什么，但它需要一边移动，一边建立地图，同时估计自己的位置。**
-
-[How Robots 'See': Cameras, Sensors, and Obstacles | OnOff.gr](https://images.openai.com/static-rsc-4/U4uJtHFmZddIFugY-QXqqEW-TVodeW1OJZX6KEd_R9ARLlCGJimtwtfTBUeV_R9a7VYKID2pfSnGlXeX__SF418QHF6asX_F_PmGl6ER3O1ikBsC9RnxAW2m2mH47tx8ue1zLmHSZpfORZ23m7lerIE0FmFPdeLIHPv-Iz2swQI?purpose=inline)
-
-[onoff.gr](https://www.onoff.gr/blog/en/robot/how-robots-see-cameras-sensors-obstacles/?utm_source=chatgpt.com)
 
 SLAM 的基本流程：
 
@@ -1210,53 +1186,29 @@ V1 基础
 
 可以基于成熟的机器人软件生态构建。
 
-[Open Source First — The Anomalous Company](https://images.openai.com/static-rsc-4/f2CodnzRzIXR9AvvpQzqKXuesQ-8ZUdY7dLFliQvv9WFlznxP8dP4NsOFRhY_pSxayRVp4JysB7YV7hFrLskXBv_eHBjna23x4FMqmjDR9L-fUmiimpHvKrjJ9UjZodhHeqr50TU57giV32yUAiEtnK7dfZn66kE3eDHJ8O6WsY?purpose=inline)
-
 **ROS 2**
 
 机器人通信、节点管理、传感器数据和控制接口。
-
-[官方文档](https://docs.ros.org/?utm_source=chatgpt.com)
-
-[Getting Started — MoveIt Documentation: Humble  documentation](https://images.openai.com/static-rsc-4/T1hdc8d-bvfk6_L-oL4e8NjhroDfyTK_IP5vd7OuE3htKwC2QlDEGyjQIxbwxXKZPjU7nxlrR6L6BqWuG2DNAlwL-P6PYlwpCC5Y1h7afH8hW4zH137qh2mON3oAj8zMvIq4vAvC-EVr2fgID-qXJSujUrFhGBK6WbgW62eHBeU?purpose=inline)
 
 **MoveIt 2**
 
 机械臂运动规划、碰撞检测和抓取任务。
 
-[官方文档](https://moveit.picknik.ai/?utm_source=chatgpt.com)
-
-[ROSCon 23: Simulation of Highly Dynamic Omnidirectional Robots in Isaac Sim | Vu N.](https://images.openai.com/static-rsc-4/iC9qrSM3hgu33sBLW3cE90UYqtcZMM-sVZvUyxv44A2--IV83B1bw_ShCkLC5h6KiME60vEpTwh7kCjibLF5i4gNIq-NnmUjeIpbtgPlrF6RHdQ6YjoR-DORAeP8ZbRrRzSSMUbUr64HlshgioCyA3IpAqC_FfdNVe8HFmK86d0?purpose=inline)
-
 **NVIDIA Isaac Sim**
 
 机器人仿真、传感器模拟和 Sim-to-Real 研究。
-
-[官方网站](https://developer.nvidia.com/isaac/sim?utm_source=chatgpt.com)
-
-[RobotRank.ai - Benchmark Your Robot Controllers](https://images.openai.com/static-rsc-4/Vev2GRf4iw17uYfGrQ-T5ZQWLr9MyNF6omTNrG8jlxTW6qSa7QbElS7N0YtsFVhYH7jGNSa9i7egcBda-Zp86ffKtiWtqctLZ6YkR-ms7PVIS9PpQ9DNstBL188s2z7Y8ZWDyjfn91rnF9Pnai-ScD5qPU-6J7PaL8JS8co2nUc?purpose=inline)
 
 **MuJoCo**
 
 物理仿真、机器人控制和强化学习。
 
-[官方网站](https://mujoco.org/?utm_source=chatgpt.com)
-
-[Open Source Initiative :osi: (@osi@opensource.org) - OSI Mastodon](https://images.openai.com/static-rsc-4/fxbAqZD5n5r2OBCd4nPHCiC6wbv3lpJ97epHKcaq6WLVDdG2RwhPhm3RDDJFQZtRUAjvcKEjE2uENyHdZqm3FQKIyYIOjKI8SeTzrUyYnydrkO5AqrtCdqw32Vjmry3HQhHTTdCSbmNl8lq4Kbx6Mgj0sK1TokBFoOM9JsgCUuE?purpose=inline)
-
 **OpenCV**
 
 图像处理、相机标定、视觉算法。
 
-[官方网站](https://opencv.org/?utm_source=chatgpt.com)
-
-[Open3d React Icon SVG](https://images.openai.com/static-rsc-4/Em0ZGB6HRHhkSiezo16OxYIxL2cfkmyerv7ageEQN4f-i5xzL_ztXSR-t2p7rw7RKdyGSeD9HwOhQ8s0CEJPQk94lZtBwDb9gL411KUyRAjG-m0dhJ_JCZf0Kk69mjReC9QzbB9ZC5TyrPhep1r3T84UAE-7ZCko7BDY-04HrEQ?purpose=inline)
-
 **Open3D**
 
 点云、三维重建和空间数据处理。
-
-[官方网站](https://www.open3d.org/?utm_source=chatgpt.com)
 
 这些项目不是互相替代的关系：
 

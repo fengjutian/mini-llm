@@ -1081,10 +1081,6 @@ ANM 也依赖加性噪声及相应的可识别条件。
 
 假设我们给神经网络输入一张图片：
 
-[Empty Space Detection — Isaac Sim Documentation](https://images.openai.com/static-rsc-4/d-9WMYgTbJkG6yduy7OLQRJRVxkLRJS6yaZMlomxoYV7f6GoHij3XuBU0WkDn4oKVp9pM3l70EOTBNJaIHmpmPDT3b4ovBJK1ptWhWbR6jZJqwWIwD4m4zL5sqfHYVUX2TLKWGbCAME3oQi_I1qJHFAWq6kgWqPvAvPrb1VT4P4?purpose=inline)
-
-[docs.isaacsim.omniverse.nvidia.com](https://docs.isaacsim.omniverse.nvidia.com/6.0.0/action_and_event_data_generation/ext_replicator-object/empty_space_detection.html?utm_source=chatgpt.com)
-
 Encoder 提取潜在表示：
 
 \\[ z=Encoder(x) \\]

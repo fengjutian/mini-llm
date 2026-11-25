@@ -21,7 +21,6 @@ Generation Engine 不只是简单地从模型输出中选择一个 Token。它�
 
 从工程角度看，Generation Engine 是连接模型推理能力与外部应用的重要桥梁。
 
-
 ![一台面向本地推理的 AI 计算盒子](assets/images/gpu-server-front.jpg)
 
 _图：一台面向本地推理的 AI 计算盒子。生成阶段的成本几乎全部落在解码循环上，这也是 KV Cache、批处理与投机解码被反复优化的原因。图片：Daniel Lu，[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Nvidia_DGX_front_view_dllu.jpg)，[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)。_
@@ -288,7 +287,6 @@ KV Cache 主要减少历史上下文的重复计算，但并没有消除逐 Toke
 
 _图：三种解码策略的搜索形状。Greedy 最快但会重复，Beam 更稳但更贵，Sampling 更有多样性但不可复现。_
 
-
 Decoding Strategy 是决定如何从概率分布中选择 Token 的策略。
 
 不同策略会影响生成内容的：
@@ -368,10 +366,6 @@ C: 0.1
 \\[ Score(x\_{1:T}) = \sum\_{t=1}^{T}\log P(x_t\mid x\_{\<t}) \\]
 
 实际 Beam Search 常加入长度惩罚或其他评分机制。
-
-[Foundations of NLP Explained Visually: Beam Search, How it Works | by Ketan Doshi | TDS Archive](https://images.openai.com/static-rsc-4/2B2jit3lwN-An6wqJZdUXEbwHeOQzzbC-CPJwVrLOjZ4ULavgmHLCM-ORY4kYlkIeKMhmqV2s2_1ZzYC1EByf9pQUqkX6abUaaivTKNBEiAi_Lh8TOCHyz92QddoTMlO1t1ljUlY-pZTdXsudk1Kdo5HYggEw1WsD4BJboPCj2U?purpose=inline)
-
-[medium.com](https://medium.com/data-science/foundations-of-nlp-explained-visually-beam-search-how-it-works-1586b9849a24?utm_source=chatgpt.com)
 
 优点：
 
@@ -647,7 +641,6 @@ def repetition_penalty(    logits,    generated_tokens,    penalty=1.2):    for 
 
 _图：投机解码。Draft 模型一次猜 K 个 Token，Target 模型用一次前向并行验证；猜对的越多，加速越明显。_
 
-
 这是 Generation Engine 中非常重要的性能优化技术。
 
 普通自回归生成的主要问题是：
@@ -681,10 +674,6 @@ Small Model：
 如果候选 Token 被接受，就可以一次推进多个 Token。
 
 如果某个候选被拒绝，则按照校正分布重新采样，并从新的上下文继续。
-
-[Speculative Decoding in vLLM: Complete Guide to Faster LLM Inference | Jarvis Labs Blog | Jarvis Labs](https://images.openai.com/static-rsc-4/f1jLS8KDGu3zvdZG17yl2epVoaHG4fYtFLW-XkhgMvy3P7TOhqI44Gl8zIHeK5n5--c5Ws6UAb6E0UO771lQUyiZ6oNz2kyS7wMQAcT4H-TmDGSbgfAxSP6F8tf8iR9jvgDQErcVa2alklUYehW7slL6UKuvioxDirCSXSQ0EvI?purpose=inline)
-
-[jarvislabs.ai](https://jarvislabs.ai/blog/speculative-decoding-vllm-faster-llm-inference?utm_source=chatgpt.com)
 
 ## **6.2 为什么需要大模型验证？**
 
@@ -886,10 +875,6 @@ JSON Schema 本身通常负责描述和验证结构，并不会自动改变模�
 - Regex Constraint
 - Schema-Guided Decoding
 
-[Why SGLang is a Game-Changer for LLM Workflows](https://images.openai.com/static-rsc-4/bET5tkk9OjvH97zJXHC-OdPJ_sUpSQzELLO4McWWYEVpcbf3c7IVqKVR25HWsJQRY_zLeO33FYIPlxdeiwVpIc9lKTpAFcuD4udE8WjpxPKbvHtjxgYJm8NcUwthDhPcc2mUsWq1OqMQ8s-YGJQt9qnFRYKX3ZLBTILpeFzY0us?purpose=inline)
-
-[huggingface.co](https://huggingface.co/blog/paresh2806/sglang-efficient-llm-workflows?utm_source=chatgpt.com)
-
 ## **7.4 Constrained Generation 的边界**
 
 非常重要：
@@ -963,10 +948,6 @@ Client
 ```
 
 每生成一部分 Token，就可以发送给用户。
-
-[How To Deploy LLM Applications - by Damien Benveniste](https://images.openai.com/static-rsc-4/jvl-ZZEEsLpG4YNp88-pJIm_9Wkal_mNECRDRr_dJtF6xO2_oJnS5errPEygfX4boezaC-AP2c7xkvNbu6HwvtuIuUqLBl1R6JSFs-ut9WbZLYDWDAjvDY0pVzyOknBX87g63pCKOk-k13DZaqWw-TFaB02K9ctHVklANJdCVOQ?purpose=inline)
-
-[newsletter.theaiedge.io](https://newsletter.theaiedge.io/p/how-to-deploy-llm-applications?utm_source=chatgpt.com)
 
 ## **8.3 Streaming 的关键指标**
 
@@ -1085,10 +1066,6 @@ Text
 
 \\[ Image=Decoder(z_0) \\]
 
-[Stable Diffusion on the Panther Lake NPU | by Scott Baker | Apr, 2026 | Medium](https://images.openai.com/static-rsc-4/7aRlpsI9iNt04W-3YlYlHbiHvLj8TaX-sViSxFPIOuK0RGpUtBZvRixG6ua77PBMaY7K4sStHqYUey_mOtp8hEHOS38GUo9_LAOa3Xl4GUK-gUa9EQB2VCMfzdoI9vuj8EwifkyHawGfCfWneA0wO6mhhVGqN9GUyx_x08Z5nRk?purpose=inline)
-
-[medium.com](https://medium.com/%40smbaker/stable-diffusion-on-the-panther-lake-npu-2081855e3c30?utm_source=chatgpt.com)
-
 这里的公式是简化表示，实际扩散采样还取决于噪声调度器和具体参数化方式。
 
 ## **9.3 Audio Generation**
@@ -1202,10 +1179,6 @@ Diffusion Model 是现代图像和视频生成领域的重要技术路线。
 \\[ x_T\rightarrow x\_{T-1} \rightarrow\dots\rightarrow x_0 \\]
 
 最终从噪声中逐渐生成图像。
-
-[What Are the Types of Generative AI: Examples and Uses | VOSU.AI](https://images.openai.com/static-rsc-4/1j_1BJHLI5Sfvby94YczK8lIKvG-FN0tiFS7lDoqx7UV8Jmz5GPgcSzxeiGNRy87wS9CdpZDA2CIzMuU5xfncM5L90Rwd2Bn1N9JPnOUQnTBChhR-JpNuqkTxy_II2hdZx3o60pHCiujH34LTMJDO3N5AkX0HCuQzwfl2t4Iw1k?purpose=inline)
-
-[vosu.ai](https://vosu.ai/artificial-intelligence/generative/types?utm_source=chatgpt.com)
 
 ## **10.3 Diffusion 与 Autoregressive 的区别**
 

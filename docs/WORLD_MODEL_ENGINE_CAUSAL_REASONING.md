@@ -119,10 +119,6 @@ State（状态）是对系统在某个时刻情况的描述。
 
 例如，一个简单的机器人环境：
 
-[HandoverSim: A Simulation Framework and Benchmark for Human-to-Robot Object Handovers | Research](https://images.openai.com/static-rsc-4/jw7Ypku19OD88sbsJedL0wSLr8QsFAW1d0F9PN6N4URyTkZBy6g27IeMcr3kEtXGleSfhMW3kTTMrqs1y-ZKKGKwpp1ulykvNhva4S0Xdh1qFXln_FWZcDCGJUu9hQFVc0sJYwxJn5L69VL_rewhGYpeA7rWI7MLXvzkaC7ALPY?purpose=inline)
-
-[research.nvidia.com](https://research.nvidia.com/publication/2022-05_handoversim-simulation-framework-and-benchmark-human-robot-object-handovers?utm_source=chatgpt.com)
-
 可以定义：
 
 \\[ S_t = \\{ Position, Velocity, Object, Environment, Robot \\} \\]
@@ -248,10 +244,6 @@ import numpy as npstate = np.array([    0.5, 0.2, 0.1,    0.0, 0.0, 0.0])
 
 \\[ z_t = Encoder(O_t) \\]
 
-[World Models: Learning to Dream for Efficient Reinforcement Learning - FeynmanWiki](https://images.openai.com/static-rsc-4/r6a8Ucqf-H1d1PquXj2TU2Pyzxd45jBQsW_g8JzUGfMcOPeo-T372th8jPckpZfCsMJp4bKhmCTJ1YwG92OA2Xyf4EB7TFEX0tTxebeWFEcHkqoDxGR9FAPVTGFQKiXVPoXOH0l3QzHRmT-qEKLsevHidgf5K7zlZbq_aPShFc4?purpose=inline)
-
-[feynmanwiki.com](https://www.feynmanwiki.com/library/world-models-dc29?utm_source=chatgpt.com)
-
 ```
 z_t = encoder(observation)
 ```
@@ -342,10 +334,6 @@ z_t = encoder(observation)
 - 减速。
 
 不同动作会产生不同的未来状态。
-
-[An Intelligently Enhanced Ant Colony Optimization Algorithm for Global Path Planning of Mobile Robots in Engineering Applications](https://images.openai.com/static-rsc-4/5n7fUdrP5bUQzKunt_tJZ0fHg89mTMTkHsQHegsIk3EuWzXSn_JXMbvi8jhr5wJQ0xEywY_AQ66aRkYp9phUL4nn_c7y7TilSvi_FbpoUaZVkgB2yUhCO0J2kMmk0LS7yhtqIg0Sly4xjFIwLyzMw3tcjNqIU-8PWU9An_upGlo?purpose=inline)
-
-[mdpi.com](https://www.mdpi.com/1424-8220/25/5/1326?utm_source=chatgpt.com)
 
 因此，规划问题可以理解为：
 
@@ -712,10 +700,6 @@ class DynamicsModel:    def __init__(self, encoder, network):        self.encode
 选择行动
 ```
 
-[A Complete Guide to the MPPI Controller in Nav2: How Do Robots Avoid O  – Amovlab](https://images.openai.com/static-rsc-4/BA8vnZKTHxEJUFCX3F9l-gY7grK_pR_Bm6D-BxhFGAsLiOcQQxcNBnf-h4xZigb8_bXkHNIYY07YMbHM6OUseIA1UU4UinFbDwpYyXjVoJfAmUR68v1o5szj9Fq60KSQrHMFj758mttm2AqXSRb6VFozrRASEM36sW9hV5M-jVs?purpose=inline)
-
-[amovlab.top](https://www.amovlab.top/blogs/news/a-complete-guide-to-the-mppi-controller-in-nav2-how-do-robots-avoid-obstacles-so-smoothly?utm_source=chatgpt.com)
-
 核心思想：
 
 **先在内部预测行动后果，再决定现实中采取什么行动。**
@@ -762,10 +746,6 @@ MPC 是一种重要的模型式控制方法。
 3. 只执行第一个动作。
 4. 获取新的环境状态。
 5. 重新规划。
-
-[Model Predictive Control (MPC) for Autonomous Vehicles | by Amit Patel | Medium](https://images.openai.com/static-rsc-4/Nis2sdgs2Oeo2I5SfBbg12KfL2DyKqqSgUvBu1D3xC9M8k9I49MM_0CKiRR6U0et7uUWfTqFs-9ZfgMz3IAbxOeqgsyQVQ-drPJ0BInsR2xhESqdYqLGOE7_imL81yKsl3Yi9cK8BRYxXvgHRHQ-Z9BcO8y1qtxGNgK94RQuYD0?purpose=inline)
-
-[amitp-ai.medium.com](https://amitp-ai.medium.com/model-predictive-control-mpc-for-autonomous-vehicles-e0fdf75a9661?utm_source=chatgpt.com)
 
 例如：
 

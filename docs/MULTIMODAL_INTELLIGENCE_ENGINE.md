@@ -33,8 +33,6 @@ _图：自动驾驶汽车是天然的多模态系统：摄像头给纹理和语�
 
 [Video Object Detection: Definition, Algorithms, and Best Practices \[2023\]](https://images.openai.com/static-rsc-4/gcH0GLTJyUNLxHMyUUh5Ot_Z85lRC-JrAIS0aKpmH0WzTOFdB1B06VQ_e175nBqa36vPbK8Ea-u8jr5acoT05V-deH7VFbXsvZ-1-Qhjz8ZAvv-B_2yiPOtmjdXvRsaVrR6EcOXT-EYiaCEMEVatBkFeEFlJFEG2BJGnLs6LVY4?purpose=inline)
 
-[kili-technology.com](https://kili-technology.com/blog/what-is-video-object-detection-definition-and-best-practices?utm_source=chatgpt.com)
-
 用户提出：
 
 > 视频中这个人为什么突然停下来？
@@ -111,10 +109,6 @@ RGB 图像通常有三个颜色通道。
 - 物体。
 - 场景关系。
 
-[Ledge.ai | ラーニング](https://images.openai.com/static-rsc-4/nnxfWqaI5V4LamNb35A6Ss69gH9ssKXAOmpU-V98AD9APO0pUPjftlRd5A2XoH36Rucqpbn0C_4y-T6gpVZM3CiYLk1ews-zGLcTNLXqqmBIOT1Ud4jeJS6IxutuoswvCwOSZIYAcZ-COb9z7sgkV7F19o0iDyx6ki50TUkv76Y?purpose=inline)
-
-[ledge.ai](https://ledge.ai/categories/learning?utm_source=chatgpt.com)
-
 Vision Transformer（ViT）的一种典型方法是将图像切分成 Patch。
 
 例如：
@@ -177,10 +171,6 @@ Patch 大小为：
 - Mel Spectrogram：梅尔频谱。
 - Audio Embedding：音频向量表示。
 
-[Calculating Audio Song Similarity Using Siamese Neural Networks | by Thomas Vassallo | TDS Archive | Medium](https://images.openai.com/static-rsc-4/ddY29p37o8hEkqTkisLsfT8j-6LoV57KvbQ_Wa9Wv5CNYvaI5UMK47_fbbgUVuiG6JhUPeaOFmEfVp4O0R6xZzBoLfhpdWs41kftiFunL0Y_cgnYICRXOM73Y7hBq62kV5X3S8_2-tlboTnmayCeqR6QYPEYlHu0DOd8-0PSAS0?purpose=inline)
-
-[medium.com](https://medium.com/data-science/calculating-audio-song-similarity-using-siamese-neural-networks-62730e8f3e3d?utm_source=chatgpt.com)
-
 常见音频处理流程：
 
 ```
@@ -225,10 +215,6 @@ Audio Tokens
 - 事件。
 - 因果线索。
 
-[Video Classification: Human Action Recognition on HMDB-51 dataset | PDF](https://images.openai.com/static-rsc-4/x13SIpWMwUkMCxQdGga2ZcT6XaDyfnBPFUQNwPIMNux9slxGG67wm_aozVtHtD4yzpEMohG9XC_Lmk4qZhHm30mGYO27yQoFf_yX6-DfhFfPIS4lcrsf5Luwy8sqIQ0pmgNsUt9txbfvDBYTc9mx7hCQ_9GI8ESSlr9oKMXdKdY?purpose=inline)
-
-[slideshare.net](https://www.slideshare.net/slideshow/video-classification-human-action-recognition-on-hmdb51-dataset/255907267?utm_source=chatgpt.com)
-
 如果只把视频中的每一帧单独处理，模型可能知道每一帧发生了什么，却不知道动作是如何连续发生的。
 
 例如：
@@ -262,7 +248,6 @@ Frame 5：人放下杯子
 **为不同模态设计专门的 Encoder，将其转换为可以被后续模型处理的向量表示。**
 
 ### **3.1 不同模态的 Encoder**
-
 
 ![各模态先由独立编码器转成向量，再经投影层对齐到语言模型可消费的表示空间](assets/diagrams/multimodal-encoder-architecture.svg)
 
@@ -346,14 +331,9 @@ Cross-Modal Interaction / Fusion / Reasoning
 
 _图：跨模态对比学习就是一个相似度矩阵——对角线上的正样本拉高，非对角线上的负样本压低。_
 
-
 这是多模态智能的核心问题之一。
 
 假设我们有一张图片：
-
-[Golden Retriever-Shepherd Mix Looks Like a Mozzarella Stick - Parade Pets](https://images.openai.com/static-rsc-4/3qWzYFOSl9qYrX4Asx4jzE_GVO6AV2sdslV4fHuEJtu40l5KqVWyY_HCsQsekV7WPRsxlN4WpgdCmzZzgO-XEqpQFessGRHuOxid2WkClPI0IJpahUEGX9kDj4Zk4RXODEz39_4kBCaITMudyWN2JG8HAh3pBUbxUW9EwrkRd-0?purpose=inline)
-
-[paradepets.com](https://paradepets.com/pet-news/golden-retriever-shepherd-mix-mozzarella-stick?utm_source=chatgpt.com)
 
 对应文字：
 
@@ -605,10 +585,6 @@ Cross-Attention：
 
 \\[ Attention(Q,K,V) = Softmax \left( \frac{QK^\top}{\sqrt{d_k}} \right)V \\]
 
-[The Architecture of Vision-Language Models](https://images.openai.com/static-rsc-4/nRux7aTzVqeWbwdC6AJ-QqeVYhKFFcvs0s8THNA8RXLYej11CyvIolvdji_yOLwEyX2vjX1nV44XqrxErxel00joYSZpTnrLI8aZ1vKKSs9fKI4_pLqoDul0wZoHpu4SQX7fO2POv0VXCEEPNe6Hax_sZmXULZy36ALuDGzcaqY?purpose=inline)
-
-[togoailabs.substack.com](https://togoailabs.substack.com/p/the-architecture-of-vision-language?utm_source=chatgpt.com)
-
 这意味着：
 
 文本中的每个 Token 都可以根据注意力权重，从图像表示中提取相关信息。
@@ -833,8 +809,6 @@ Event 4:
 
 例如：
 
-[Asian Musician Playing Acoustic Guitar And Singing Into Microphone During Live Stream Video Recording At Home Studio](https://images.openai.com/static-rsc-4/6qEfN7IFiERsIJhexd2-SoiXKvhV_UYer11VZed1pAAbQ3LZJhVNGm5dxcCzd9FWyIRDu-GpNM52SbL1p9bmOBZVfotgXrZ-fGOzeUV7URA64SkTCfpz_p9uR1PVhnlWK0nAOyHaJX2u398Kl4MG7yprYMOZBFYrElp3fA8McIv3lTNPMAh5B0hhIhC5b9-f?purpose=inline)
-
 视频画面可能显示：
 
 一个人正在弹吉他。
@@ -920,10 +894,6 @@ audio_event = {    "start_time": 2.1,    "end_time": 2.8}video_event = {    "sta
 用户上传一张图片和一段录音：
 
 图片：
-
-[Porcelanato Esmaltado Rectificado Tact 80X80cm Ash - Portobello Free d – ELMEC](https://images.openai.com/static-rsc-4/K4VeazC6gDVpbhmF5bW8WicDHTZzAL8pgQQOLXyxk5tJndn8N9X6ZpPIhzgz8G96D9qQEWcTWPanHRzhMwMi4ZTeoHc2J_bRFjCiCMlBc3XUvSrS4nbT-ME_BR8iR2rQkzggMiCh3qWAxmPzgM9EC2yngsC2ZsSre5k8yyyet6M?purpose=inline)
-
-[elmec.com.pa](https://www.elmec.com.pa/products/porcelanato-esmaltado-rectificado-tact-80x80cm-ash-portobello-free-dom?utm_source=chatgpt.com)
 
 音频：
 

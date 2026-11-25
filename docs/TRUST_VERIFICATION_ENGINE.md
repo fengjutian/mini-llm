@@ -32,7 +32,6 @@ Trust & Verification Engine（可信与验证引擎）就是为了解决这个�
 
 它不仅需要检测模型幻觉，还需要验证事实、管理证据、估计不确定性、校准置信度，并决定什么时候应该回答、什么时候应该拒绝回答，以及什么时候应该请求外部验证。
 
-
 ![NASA 与 JAXA 在超音速风洞中验证 X-59 缩比模型](assets/images/evaluation-wind-tunnel.jpg)
 
 _图：NASA 与 JAXA 在超音速风洞中验证 X-59 缩比模型。可信度也需要独立的验证手段：换一个信息源、换一种问法，看结论是否仍然成立。图片：JAXA，[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Researchers_from_NASA_and_JAXA_tested_a_scale_model_of_the_X-59_experimental_aircraft_in_a_supersonic_wind_tunnel_located_in_Chofu,_Japan.jpg)，公有领域。_
@@ -42,7 +41,6 @@ _图：NASA 与 JAXA 在超音速风洞中验证 X-59 缩比模型。可信度�
 ![可信验证流水线：答案 → Claim 抽取 → 证据检索 → NLI 判定 → 置信度校准；证据不足时回到重写或补检索](assets/diagrams/trust-verification-pipeline.svg)
 
 _图：可信验证流水线：答案 → Claim 抽取 → 证据检索 → NLI 判定 → 置信度校准；证据不足时回到重写或补检索。_
-
 
 ## **1.1 生成能力不等于真实性**
 
@@ -741,7 +739,6 @@ Epistemic Uncertainty，认知不确定性。
 ![置信度校准曲线](assets/diagrams/calibration-curve.svg)
 
 _图：置信度校准曲线。曲线在虚线下方是过度自信；校准之后，0.8 的置信度应对应约 80% 的正确率。_
-
 
 这是让 AI 系统变得可信的重要技术。
 

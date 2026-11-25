@@ -1,6 +1,5 @@
 # **《mini-llm Multi-Agent Engine 深度解析：从 Agent Collaboration、Task Delegation 到 Consensus、Negotiation 与 Collective Intelligence》**
 
-
 ![共享场地中协同执行任务的多台移动机器人：它们必须就任务分配与路径让行达成一致，否则会互相阻塞](assets/images/multi-agent-robot-fleet.png)
 
 _图：共享场地中协同执行任务的多台移动机器人：它们必须就任务分配与路径让行达成一致，否则会互相阻塞。图片：本仓库 AI 生成图。_
@@ -151,7 +150,6 @@ class Agent:    def __init__(        self,        model,        policy,        t
 ![四种协作拓扑](assets/diagrams/multi-agent-topologies.svg)
 
 _图：四种协作拓扑。拓扑决定信息流向：星型适合调度，流水线适合处理，层级适合大规模，黑板适合共享证据。_
-
 
 Agent Collaboration 是多智能体系统最核心的能力之一。
 
@@ -636,7 +634,6 @@ Agent Platform B
 ![共识不是简单多数：僵局时需要让步与方案修改，否则会反复投票](assets/diagrams/consensus-loop.svg)
 
 _图：共识不是简单多数：僵局时需要让步与方案修改，否则会反复投票。_
-
 
 假设三个 Agent 对同一个问题提出不同结论：
 
@@ -1309,25 +1306,17 @@ class SpecializedAgent:    def __init__(        self,        name,        model,
 
 **四个核心 Agent**
 
-[Agentic Design Patterns: Connecting the Dots | by Gaurav Caprihan, Ph.D | Medium](https://images.openai.com/static-rsc-4/JiL9g3q_H_pu0PmfQ7hhHZLR3U-GuwWdnM1PlqlQxVDHkkC3o1V41I7Epof9S5n0DSpujYY_C4PXjWcoF4WdagjveJsRxTSomxX5PQOKoiUjgeHdWaOPeFb2WCcTn5toUxayoeAfE6wn_Zwyc8cWaAQBGhvtTwlDTdHP1JASH9A?purpose=inline)
-
 **1. Architect Agent**
 
 分析需求、设计架构、定义接口契约。
-
-[Backend development coding and programming. Woman write, test and optimize code, work with different program languages. Vector illustration with line people for web design.](https://images.openai.com/static-rsc-4/Sz0oiR7Sw-HIHEqN4_f1BiUMlTZdKD4xK1SEIDd2fZhHCdATNZjB5bBazg2dhj9ffJoWjlenjmqzw3x5dyI9fZ1ZuzDwFzz2l-DA93v2k7SRrOqpuVU-rywxYbFRnOfqHoiESmr3PSTvwQUKEs2iWssXDreFIavX9uKYqdzdgS28tiSozbfZ_5CkSVJcp8qF?purpose=inline)
 
 **2. Developer Agent**
 
 实现代码、修改文件、调用开发工具。
 
-[Automation testing abstract concept vector illustration.](https://images.openai.com/static-rsc-4/DLrbOlH8aEXJGa15EfPfEwGqeBSVD9zeeDzCfSGMG0COfXS0U1JAeIF_HoWzJiPmvfmIYLvtAlW9vE9OdKlYL7yVbrkSXMDUw_oSFkBrGJbWuV8QRIDRixQRPSBKrt8HeNO4PATu0frO8ib1pSfhUhNDUl0r-oI4zz8c6c7TEkJKldzMdSiQP9uB_dhVCzHm?purpose=inline)
-
 **3. QA Agent**
 
 运行测试、检查结果、定位问题。
-
-[What is a secure code review? A complete guide for developers | Sonar](https://images.openai.com/static-rsc-4/jZYAgekICmXmTp1LUpxCxDASMosRfnvDpyOUANpPUHws6VO32gi0Gnpp2jzyE4Mth_MGYg0UtPvPjEANyezn0mpXeUwj_3_tuSO7G39ZPeYguLpKzhjv54PkfaumX3IqAIDvvxCz0-h6nEzVjlnIW1KbfWAQfU1pG63O2XJfUus?purpose=inline)
 
 **4. Reviewer Agent**
 

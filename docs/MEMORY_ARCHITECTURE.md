@@ -59,10 +59,6 @@ Memory Architecture 是智能系统管理信息生命周期的一套机制。
 | 如何长期保留？ | Memory Consolidation |
 | 什么时候遗忘？ | Forgetting Mechanism |
 
-[Agent Memory Architecture — Four Subsystems That Turn Stateless Chatbots Into Persistent Agents | Medium](https://images.openai.com/static-rsc-4/bWkBfp4b9kVHrwVx2jMLRmY0dXEpX5dZP4I1vCDgJNO-mPmQ-2Dlx8wFyz_7j4zl1tgwULgTUg3zU9aQ-iw5EP8-KTbHLCJEScmUvnnbfzaiYVoaHoBajsicPcBMHQ3lwEOaeYKFb-iWteyWgWocO23h_qBplq72T2KxJS7ApHc?purpose=inline)
-
-[medium.com](https://medium.com/%40wasowski.jarek/agent-memory-architecture-four-subsystems-that-turn-stateless-chatbots-into-persistent-agents-307c56a49b3d?utm_source=chatgpt.com)
-
 可以把 mini-llm 的记忆系统抽象成：
 
 ```
@@ -550,10 +546,6 @@ M3：Docker Compose 可以定义多个容器服务。
 
 系统可以找到与当前问题语义最接近的记忆。
 
-[LLMs + Vector Databases: Building Memory Architectures for AI Agents | HackerNoon](https://images.openai.com/static-rsc-4/Rd7H8Q-pZK2PqTDG8vDooA48fhXv36i1xf2CyP4d-ElVm4czK6DwhD-9TrWXSX6Ynr3zfRvkMHu1oEshdNalGUdbN2yZCIC30YGxplelNVp1SboXKwhMCAfAi6iuZI9RzCFCPp6yBZUP1XgB3cMeqpU__8onQOhZKS6pTUBNoWk?purpose=inline)
-
-[hackernoon.com](https://hackernoon.com/llms-vector-databases-building-memory-architectures-for-ai-agents?utm_source=chatgpt.com)
-
 ### **简化实现**
 
 ```
@@ -628,10 +620,6 @@ Decoder
 \\[ (Decoder, uses, KVCache) \\]
 
 一个简单的知识图谱：
-
-[Getting Started - RDFLib-Neo4j](https://images.openai.com/static-rsc-4/Mwm8ZyKL3gDxrGjXRpXudGeIyw-We8x9f3W_uqLpBVgakK3EH3a2FBLfYzisDb4vpUcV8AQgQpLKPl_QsYuzOazcU7O3ttglvMIWbtyLx51gwBbdjd_VdX0gfN0LGoN8mr0LC5f2Xkr8JEuujaizIveVzp1HbX4PY4KsYdqtFXk?purpose=inline)
-
-[neo4j.com](https://neo4j.com/labs/rdflib-neo4j/1.0/gettingstarted/?utm_source=chatgpt.com)
 
 ### **简化实现**
 
@@ -1134,10 +1122,6 @@ AI Agent Sandbox。
 我们可以为 mini-llm 构建一个独立的 Memory Engine。
 
 ## **11.1 总体架构**
-
-[Designing Memory Systems for AI Agents Beyond RAG | by Libin Mathew | Mar, 2026 | Medium](https://images.openai.com/static-rsc-4/1IFDyIFRrlnKobVbRuEB4waaCnGSmzqeYKFkJVXkb7uh_1Pgqo66U0MV13T4wY4FNJRQRslhPpT8jgVdOVeIOGm7Wg2CKpvQpowPllIT-KRuDPh-YVbij5AKYbT3XCdsZANTtt6_NtqrbDvEqw5lfB5fZuXkhl2ffMQE4QfghjI?purpose=inline)
-
-[medium.com](https://medium.com/%40libinpmathew07/designing-memory-systems-for-ai-agents-beyond-rag-cc5711a124fd?utm_source=chatgpt.com)
 
 ```
                     AI Agent

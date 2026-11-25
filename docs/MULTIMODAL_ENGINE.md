@@ -20,16 +20,11 @@
 
 因此，需要建立一个统一的多模态处理架构：
 
-
-
 核心模块
 
 **Multimodal Engine（多模态引擎）**
 
-
-
 它负责将不同类型的信息转换为模型能够处理的表示，并建立不同模态之间的关联，使模型能够进行跨模态理解、推理和生成。
-
 
 ![一辆 Waymo 自动驾驶出租车](assets/images/spatial-waymo-front.jpg)
 
@@ -40,7 +35,6 @@ _图：一辆 Waymo 自动驾驶出租车。摄像头给纹理与语义，激光
 ![多模态处理流水线](assets/diagrams/multimodal-pipeline.svg)
 
 _图：多模态处理流水线。先对齐再融合：对齐解决“同一个语义”，融合解决“如何共同决策”。_
-
 
 ## **1.1 什么是多模态？**
 
@@ -93,15 +87,11 @@ Modality 可以理解为信息的表现形式或感知模态。
 
 ## **Multimodal Model Architecture**
 
-[Куда поехать и что посмотреть в Албании: свежая подборка мест 2024](https://images.openai.com/static-rsc-4/MUF3Z10ksbvEnm63041VlbnwitVkSVjLml37Zt2f_TYDj3qCFGahqospE7QfpdBBHUWoNbSBLujVXJmtes91toYKF-mORyuR3SfzFFTlkrvwX-pQyJ0kQTomtaZZXnG_SsbdQsUKUP0Xv06q-UsF9nzFwgjangdtNFIRQNriotU?purpose=inline)
-
 **Image**
 
 图像输入
 
 Image Encoder
-
-[Audio Feature Extractions — Torchaudio 2.6.0 documentation](https://images.openai.com/static-rsc-4/JfsBeGcF6OFLRmXOaeJbk1vuNgUt2SCEDtZ3ZhDJF3Y7bkwH226E8g35_jqnD_Jo5cclU-C80s5U8b2FoF0J141P9Bafe0xe2ES5EgSPzHvTklnzdYRGMYXGaFsNqtRElm_dOAgJ6y4pSo9qzpKpTKhrvZrE9K_81VMNQq9r97g?purpose=inline)
 
 **Audio**
 
@@ -109,15 +99,11 @@ Image Encoder
 
 Audio Encoder
 
-[How To Storyboard For Film Faster In One Studio | CinemaDrop](https://images.openai.com/static-rsc-4/XG3ok2rMSGDEqeuOLXv987lYKla3k69cF0CJpVIihZsPmmhOq7E9wb4FWCTn4C2KlhflTgQEGaeK2H-pEuGkbwAutWcqaSFzkiFJMUyHcRr4IcVKNSZ-5e2ztR739WKhv-FQLPoUOLGFK2Cj9yNzqgwXfVEr6gMAi18b6PMkS1I?purpose=inline)
-
 **Video**
 
 视频输入
 
 Video Encoder
-
-[Vilitus Engine- by Travis Clark - Isaac Sim - NVIDIA Developer Forums](https://images.openai.com/static-rsc-4/He_xPf0OEKVbjvUwqB-bAsQ5lxxM-ZebnFn4aAs-DZpkw8b76wMIzKSjf3IiDaOGlEjhnJFcoC-KPTKfquNvR8hYGwb8s6bWwdj_uagXCKVGwyCYKoaUCwWBaST7R6pHsW8lQzvV7AkkI2-zBfyVH5_WLt0rcHomK5r_K_KV96g?purpose=inline)
 
 **Spatial**
 
@@ -237,7 +223,6 @@ Visual Tokens
 
 _图：ViT 把图像切成 Patch，展平后线性投影成 Token 序列，再加位置编码送入 Transformer。_
 
-
 Vision Transformer，简称 ViT，是将 Transformer 应用于图像处理的重要架构。
 
 它的核心思想是：
@@ -265,12 +250,6 @@ Vision Transformer，简称 ViT，是将 Transformer 应用于图像处理的重
 \\[ \frac{224}{16}\times\frac{224}{16} =14\times14 =196 \\]
 
 个 Patch。
-
-[How LLMs See Images, Audio, and More](https://images.openai.com/static-rsc-4/EkfNeW-JFERN9d4ta65qelZ13bc4jLhHVj8uI4f5az4WKK6ugFjI0R-ZEYtOYdaRq_Y775DaqlnSEhlnjtvGVA4OPnIH0YzxlGKwyz0wyZBKXuHp9pLC9P5hGSN-eLlTI-D5isjiGneoof-tafDZNAvgAwsjs15H_KdYafsQuT8?purpose=inline)
-
-[How Vision Transformers Work: An Intuitive, Visual Deep Dive. | by Sumanthmeruga | Medium](https://images.openai.com/static-rsc-4/9TqSlfkLnZVM2IEvhcM57-CIF_mZLVlCtBUTUwid5tqJtWMXXKofJSPZLlNOt2tuiSMfycCunhgaDGfo5QfVlvieEFvYb7tL3jtNaSRvQCajp-Cr7s8u27TlesZBuFSl-34Y262V-6NTLCSXdT6IufKqqYmP7kJw6IwPx4_OKQs?purpose=inline)
-
-[Vision Transformers (ViT) Explained | AI Tutorial | Next Electronics](https://images.openai.com/static-rsc-4/X8IC72DQHJdLmUiYp8kAh6yYXEsExq8ps0iqT-CW38X-9Pz8LTrlmzqLbH_st-xbSv9SRHJdN7exNPZSinz1ABIbKHZmaHBhlN1eQP9cN7OwioJL9lCTWvW6dKAzUAfmlqcVs193XukQgW5gQucc1evlgfMxh1LaSgcMg5wrBVg?purpose=inline)
 
 10
 
@@ -441,12 +420,6 @@ CLS Token 经过 Transformer 层后，可以作为整张图像的聚合表示。
 
 意味着会产生 160,000 个采样值。
 
-[Speech-Language Integration: Connecting Audio to Large Language Models - Interactive | Michael Brenndoerfer | Michael Brenndoerfer](https://images.openai.com/static-rsc-4/6k6iUgGIerBkoTg_vlE_RXijFEgCKSGPFsEyfJKmflttfHVX2cNmzdfRasysKdSDoKLgNWpkvTbKY_d8pyQpJwq4a6aPobr6elBUpnf0mTTb5A3OVkb7kvRPzve3llf5Fj61gZ_kVhWnZnVE_uJ5TBC2Fck-WzsPnY6gFWhjXho?purpose=inline)
-
-[Calculating Audio Song Similarity Using Siamese Neural Networks | by Thomas Vassallo | TDS Archive | Medium](https://images.openai.com/static-rsc-4/ddY29p37o8hEkqTkisLsfT8j-6LoV57KvbQ_Wa9Wv5CNYvaI5UMK47_fbbgUVuiG6JhUPeaOFmEfVp4O0R6xZzBoLfhpdWs41kftiFunL0Y_cgnYICRXOM73Y7hBq62kV5X3S8_2-tlboTnmayCeqR6QYPEYlHu0DOd8-0PSAS0?purpose=inline)
-
-[Mel spectrogram and MFCC - DEV Community](https://images.openai.com/static-rsc-4/Isv5g7Lsb_IyNjXk-YD6gNWjIoYB2Xjt0ThgoYeYXZsWlrEE0rh21cvxBX0UWINs1XMRrQk1ZU5cKvcH68sX_aRaBWRg9Ndkx-HPd1wKAbfkuhf1ydVtMNeCCICtU3SU9KDtmNCFi8isddq7cvKR0P91BBfU-LX8iT6yP8hfGR0?purpose=inline)
-
 6
 
 ## **4.2 为什么不能直接把波形当成普通文本？**
@@ -608,10 +581,6 @@ Speech Recognition 和 Speech Understanding 并不是一回事。
 
 **Audio Input**
 
-[from waveforms to speaker classification | jonas reger](https://images.openai.com/static-rsc-4/xppJ7gNYbcIfmdr-LbxFlcZtwnrWY4Wu7q2aWwLAk4Ad2UjHvvpLmSYW_qiTfS0yRkVLcXxGrwIIqZB1Q-tJFW0C1-6jCkvjdLBMPB8o1DNb25A1NKFVTH6sQ-0hEZGvzKP-HFvNb0yPK2LMVTRZjQsp8pvDxAUg8wwrHMxYFz4?purpose=inline)
-
-[wjonasreger.ai](https://wjonasreger.ai/articles/from-waveforms-to-speaker-classification?utm_source=chatgpt.com)
-
 **Speech Recognition**
 
 语音转文字
@@ -764,12 +733,6 @@ User Hears Response
 如果每帧都使用高分辨率视觉编码器，计算成本会非常高。
 
 ## **6.2 视频理解的基本流程**
-
-[#video_text_retrieval #multimodal_learning #video_sampling | Hellen WANG](https://images.openai.com/static-rsc-4/NrRMi-fjDqAfpQFaZsjD5mQaVagNfw_pftDm4WMV_WAbz2UMmPcmA1PDHJ_1pdERue_uZEUPVc0qPsZXB1RcHTZBZN6MMD8iVYAa4k6mdOMylh8MK71OXzpU9naYPAU_zEhV5swp4LSh6eLnvYHOkhU2R1mzYBAl5Ogek5SfWl0?purpose=inline)
-
-[KTH Action Recognition Dataset | Datasets | HyperAI](https://images.openai.com/static-rsc-4/JA5eTR4KMM8UJIjYtN0S64u_R3c9e7VD8qYiqL7AvrmyIxgjLFIqBtqv3Y7IRBu12yIJdEWdHcZfrI9zJt_rODsmY-WFrfM2XPeW1vT_giOANt1Jc0F8W1d6pRBfn0kaBBs8YRMl_k9gDOO4e6q5XCk1XkIGKc0yYhqDKZAAC6M?purpose=inline)
-
-[Challenge Description | International Challenge on Activity Recognition 2020 (ActivityNet)](https://images.openai.com/static-rsc-4/UdEX1FP8OIR5jXcICPrRGC33h_QzySBPasDgyUjVjnc0jTxvmqVqRXFgMu3tTqI7zEVEEH5Czo5QOGHjJczUKWStBdINWSXw5lOAYJFsPgJHLxQuI4h1yTaPcg_UKYFV0H4_DAzER_HBDpKnoSz0qpau0OG2ElYX7ArknzEeg6Y?purpose=inline)
 
 11
 
@@ -941,11 +904,7 @@ Frame 3: 人喝水
 
 假设我们有：
 
-[Orange Domestic Shorthair Tabby Cat Sitting](https://images.openai.com/static-rsc-4/rayoNo00Vsg_YynnCg-GeTWFpH6ATN0PSxNAb56rlIeXxp7_o_85hzHNpbNJKFv3o1Ck8b6kifRWKqX9k5T_08wKQkMCnMZOkXDbKKtjjA0r3_Q9cqp7VftLQRiMvKpdxLrMt2MHj05q8mMQ78fzwzZyZkq7WZlhlF3_CSQRt__JAQieiTyu3Onhe1piJHvx?purpose=inline)
-
 Image
-
-[1: Spectrogram representation of (a) Cat Meow and (b) Dog Bark | Download Scientific Diagram](https://images.openai.com/static-rsc-4/IJdcnxp4CZCPd7k_cNjppMLSDVqE4CschuYnbkQnLlhtsEHd6OhQt96ETBP5TFeJxtrOiTOaB1c6zu_B_gX3Xw4wX0GScIYSUi98rgGr9p0NB3BR2dH7Bme5xS2wsX0AHzIqW5CTjd1VOLbZKxA94X0fllRaovHkWYleR2DSMy0?purpose=inline)
 
 Audio
 
@@ -1164,10 +1123,6 @@ Cross-Attention 是多模态融合的重要技术。
 > 这辆汽车是什么颜色？
 
 文本中的“颜色”相关表示可以通过 Cross-Attention 从图像特征中提取对应信息。
-
-[Building an Image Captioning Transformer from Scratch - Yi's Blog](https://images.openai.com/static-rsc-4/uU8Y_rYj_k0rjwQAbL-QqSzv8Q3jcdkjE9X-oXvF9tI1UJ6giHYGqMW78GGJpseY5HBq95RfpsSVwjVG-bfFAwciVosXlek4X2mV5KFcgYsLRGpX3p8YVLwVNt5igKpLjLKPerw9-IjC0v7Fpix-QOEEpDTzWUjdGpK3OSiWOZ4?purpose=inline)
-
-[wangyi.ai](https://wangyi.ai/blog/2026/01/30/image-captioning-transformer-from-scratch/?utm_source=chatgpt.com)
 
 需要注意：Cross-Attention 只是信息交互机制，不能保证模型一定正确定位了图像中的目标。准确性仍然取决于训练数据、视觉表示、任务设计和模型能力。
 
@@ -1501,10 +1456,6 @@ Image / Audio / Video
 这形成一个感知—推理—行动—反馈循环。
 
 ## **11.3 示例：机器人多模态 Agent**
-
-[Mobile Manipulation - Bachelor Thesis |          Alexey Gorskiy](https://images.openai.com/static-rsc-4/4HVnJAOaiL6GhC4PuxT1zCb4aJd_eppUMs5ZpgRaETiTktp-4y70m3kjj6sNBHhqKjKDmRynvd7G2_c09MxkXwrU3x92CnAEzrTzlW0sWJHKy1Nekz9n5kjTulYJpevITSPDpE2p4t8-Dc-_t73k5uLJo6Vzi6eEqBhEg7535_w?purpose=inline)
-
-[alexgran875.github.io](https://alexgran875.github.io/projects/mobile_manipulation?utm_source=chatgpt.com)
 
 假设机器人需要拿起桌上的水杯。
 

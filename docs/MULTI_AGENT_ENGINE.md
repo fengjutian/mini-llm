@@ -563,8 +563,8 @@ mini-llm 不需要重新发明所有通信协议。
 
 参考：
 
-- [Model Context Protocol](https://modelcontextprotocol.io/?utm_source=chatgpt.com)
-- [Agent2Agent Protocol](https://a2a-protocol.org/?utm_source=chatgpt.com)
+-
+-
 
 # **五、Shared Memory：多个 Agent 如何共享知识和上下文？**
 

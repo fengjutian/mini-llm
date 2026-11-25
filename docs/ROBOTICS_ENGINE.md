@@ -105,9 +105,6 @@ _图：真实机械臂通常由基座、多个旋转关节、连杆、腕部和�
 
 以六自由度机械臂为例。
 
-
-
-
 11
 
 一个典型机械臂由以下部分组成：
@@ -150,11 +147,9 @@ Link 是机器人结构中的刚性或近似刚性部件。
 
 常见关节有两类：
 
-
 **Revolute Joint**
 
 旋转关节，围绕指定轴旋转。
-
 
 **Prismatic Joint**
 
@@ -230,9 +225,6 @@ Link 是机器人结构中的刚性或近似刚性部件。
 - Z 轴。
 - 原点。
 - 轴的方向。
-
-
-[studylib.net](https://studylib.net/doc/28011693/robot-manipulator-spatial-description-p1?utm_source=chatgpt.com)
 
 例如：
 
@@ -369,9 +361,6 @@ Rotation = ...
 _图：给定关节角可计算末端坐标；给定末端坐标时，通常存在肘上与肘下两组逆解。_
 
 先研究最简单的平面两关节机械臂。
-
-
-[blog.csdn.net](https://blog.csdn.net/weixin_38452841/article/details/108631723?utm_source=chatgpt.com)
 
 假设：
 
@@ -561,9 +550,6 @@ import mathdef forward_kinematics(    l1,    l2,    theta1,    theta2):    t1 = 
 
 - 肘部向上。
 - 肘部向下。
-
-
-[brianjsl.com](https://www.brianjsl.com/blog/2024/04/23/mixture_density_networks/?utm_source=chatgpt.com)
 
 对于真实机械臂，可能存在更多解。
 
@@ -799,9 +785,6 @@ Configuration Space（配置空间），简称 C-space。
 
 障碍物不再只是现实世界中的几何障碍，还会映射为配置空间中的不可行区域。
 
-
-[courses.grainger.illinois.edu](https://courses.grainger.illinois.edu/cs440/fa2025/lectures/robots.html?utm_source=chatgpt.com)
-
 规划目标变成：
 
 在配置空间中，从：
@@ -851,9 +834,6 @@ RRT 的基本思想是：
 5. 检查是否发生碰撞。
 6. 如果安全，将新节点加入树。
 7. 重复直到到达目标附近。
-
-
-[dilipkumar.medium.com](https://dilipkumar.medium.com/journey-through-robotics-path-planning-from-basic-bugs-to-ai-brains-fcff690fadcd?utm_source=chatgpt.com)
 
 伪代码：
 
@@ -1135,9 +1115,6 @@ Manipulation 是机器人从运动能力走向实际任务能力的重要一步�
 - 抓取姿态。
 - 夹爪开口。
 - 夹持力度。
-
-
-[nanalyze.com](https://www.nanalyze.com/2017/01/9-industrial-robots-warehouse/?utm_source=chatgpt.com)
 
 ## **11.2 Grasp Pose**
 
@@ -1446,47 +1423,29 @@ _图：Gazebo 教程中的移动操作机器人模型包含移动底盘、传感
 
 Robotics Engine 涉及大量成熟的数学算法和机器人软件基础设施。建议不要全部从零开发。
 
-
 **MoveIt 2**
 
 机械臂运动规划、逆运动学插件、碰撞检测和操作任务。
-
-[官方文档](https://moveit.picknik.ai/?utm_source=chatgpt.com)
-
 
 **Pinocchio**
 
 高性能刚体运动学和动力学计算，适合构建底层数学模块。
 
-[项目主页](https://stack-of-tasks.github.io/pinocchio/?utm_source=chatgpt.com)
-
-
 **Drake**
 
 机器人建模、动力学、优化和操作规划。
-
-[官方文档](https://drake.mit.edu/?utm_source=chatgpt.com)
-
 
 **Tesseract Robotics**
 
 机器人环境建模、碰撞检查和轨迹规划。
 
-[GitHub 项目](https://github.com/tesseract-robotics/tesseract?utm_source=chatgpt.com)
-
-
 **Ruckig**
 
 支持速度、加速度和 Jerk 限制的在线轨迹生成。
 
-[官方网站](https://ruckig.com/?utm_source=chatgpt.com)
-
-
 **MoveIt Servo**
 
 将末端速度或姿态增量转换为机器人关节运动命令。
-
-[官方教程](https://moveit.picknik.ai/main/doc/examples/realtime_servo/realtime_servo_tutorial.html?utm_source=chatgpt.com)
 
 这些工具可以组合使用：
 

@@ -593,7 +593,12 @@ and re-exports.
   (`forward_with_cache` + `backward`), and tests compare `dx`, `dW` and `db` for
   both layers with host autograd on `Cpu` and `Candle(Cpu)`. `DeviceValue` is the
   device tape proper: `matmul`/`add`/`relu`/`mean`/`scale` build a graph with
-  topological backward, gradient accumulation and host-autograd parity tests.
+  topological backward, gradient accumulation and host-autograd parity tests. A
+  40-step MLP regression keeps parameters as `DeviceTensor` and updates them with
+  device `add`/`scale` after each backward; tests compare every step's loss and
+  the final parameters with host autograd. `DeviceAdamW` keeps the first/second
+  moments on the device, applies bias correction and decoupled weight decay there,
+  and matches the host reference formula over eight synthetic steps.
 - Future backends implement `Backend` and reuse the same parity harness.
 
 Autograd and the model still operate on host `Tensor` values; making the training

@@ -50,10 +50,6 @@ _图：认知架构的概念大量借自认知科学。图中受试者戴着高�
 
 在 AI 工程中，我们可以把这些理论转化为可实现的软件模块。
 
-[Methodological aspects for cognitive architectures construction: a study and proposal | Artificial Intelligence Review | Springer Nature Link](https://images.openai.com/static-rsc-4/msMhUIazDJckfhGxqPg4yI8Yc4MbNPCaI7wpSPNP0RgS5Yd7T0M-YGj36rU2jA54hH-kMVYtlULLY2U3BPZj-Z3ArInPZrV1xSCi9I-kmjO1P1iI7CWKaXBs2ADJ-oXUdtHE_ecd6bJdMq-EytL4LBPWK1-a-YviIyhG5k1da3E?purpose=inline)
-
-[link.springer.com](https://link.springer.com/article/10.1007/s10462-020-09901-x?utm_source=chatgpt.com)
-
 一个简化的 mini-llm Cognitive Architecture 可以表示为：
 
 ```
@@ -608,10 +604,6 @@ class ExecutiveFunction:    def __init__(self):        self.tasks = []        se
 
 一个简化的认知循环：
 
-[Schrödinger's AI Part 7:  What Is an AI Agent](https://images.openai.com/static-rsc-4/5NghmCjETDXxOl_cFyfRjivqTHxnZEKjD8bfgPQzLlDDFJQGEIKIsGrNqBIYQhc4k3EWSaepn3PSn5y3UMv6sWjE9Qa3M6yGvnbD2JSr69d-eCjETV_NIseZG5igbPdloJgiVf2SqdK7q5SElH7iUNaWdZ30lnIPGK8M1K8EK0s?purpose=inline)
-
-[c-sharpcorner.com](https://www.c-sharpcorner.com/article/schrdingers-ai-part-7-what-is-an-ai-agent/?utm_source=chatgpt.com)
-
 ```
          1. Perception
                |
@@ -732,10 +724,6 @@ Access denied for user
 - 执行系统根据识别结果做出决策。
 
 当某条信息成为当前认知活动的中心时，它能够影响多个处理模块。
-
-[Medium](https://images.openai.com/static-rsc-4/Gu3IQqKH3IJ1uEYgDXPH8-gep72gWVuYvhm_PSGgzgPnev1G0qXun1bpPzzgPcSuh726AKrZniGFuPvqJNsQCW6KZNjVpR_xhlLjeFPkQBnz9rRIjTNq9dk1hZ33LJ2m2xzM2OLix7uRq-AkiDFUUJmJmHx15zM5KKtCF9eCGrA?purpose=inline)
-
-[grahamjroy.medium.com](https://grahamjroy.medium.com/the-spotlight-on-the-stage-dcbf35ebb9fe?utm_source=chatgpt.com)
 
 在 mini-llm 中，可以尝试设计一个类似的机制：
 

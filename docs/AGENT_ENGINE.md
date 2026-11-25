@@ -31,12 +31,6 @@ _图：目标驱动的 Agent Loop。从左到右展示本章核心概念之间�
 
 这就是 Agent（智能体）需要解决的问题。
 
-[Agentic AI Engineering Guide: 6 Critical Mistakes](https://images.openai.com/static-rsc-4/o6rUSHQ_fzzIBxXkxiFowdYD_GQaipmbIb4worfOQbxGPKaiajFLuoCkfzsh1E-9MaLVMlOAxrJYUFBK5cI2hUShiSU2pc1LqDwDiMki3CAw1a24X3ykWkUXo-VEH_xmU26msrjD047xUBjW4yRAhdGdbUt9HjjrFNJAWWHThpk?purpose=inline)
-
-[Agent Building Blocks: Build Production-Ready AI Agents with LangChain | Complete Developer Guide | Ranjan Kumar](https://images.openai.com/static-rsc-4/Wzj800EPy3naGD3vgf7ZSy5qpVjjwHkkAobJRCzt4zLV3BzUG2dZsz3wKty5dQACLK2cdXnMh7GtWpKhQB2fpoS72fl9Vw-kNULrc0S2jW1U_A5piXXgjBOXqD34PxVoEVhZm7DK-sZgFAQsSa2PPrPIWJEoiBoQk4A8LuS8uhI?purpose=inline)
-
-[The Rise of Agent Collectives: Could the First AGI Be a Team of AIs Instead of One Super Brain? | by Micheal Lanham | Medium](https://images.openai.com/static-rsc-4/C2JDhMbTk09ti7qDB8gImAs8L_JzvdNjNv8Mi0yubrvkrwen06WxMqBoTebSHUWlfvRZk7HvdhglxaXSxTU-sLqeKgsdzMATJxHIYS2Sa4K4S3zGkWsjATcZUSqxRiCaDL9SDN6sUxVELgL_uO9nb4-mPavPsVHIQmRNyh8ZSfw?purpose=inline)
-
 13
 
 # **一、什么是 Agent？**
@@ -136,10 +130,6 @@ Agent 的执行过程：
 _图：一台正在被编程的人形机器人。Agent 的真实形态往往不是一段 prompt，而是感知、规划、执行与评估共同组成的闭环系统。图片：ZhanatKappassov，[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Humanoid_robot_is_being_programmed.jpg)，[CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)。_
 
 我们先构建一个完整的 Agent 架构。
-
-[How an AI Agent Works: Planner, Evaluator, Executor | Santiago Valdarrama posted on the topic | LinkedIn](https://images.openai.com/static-rsc-4/enQ8M-JnQ254q7wSvcZR62qzzpwkOTwE9bdopPTytUzgCawmtHtCENiwReXeXQT33kV_vNWQse5k4z5dIrspUTiQqA5fk2TER57J0oi0kuFt-tU63tbZBmSa1j0kwIOzdSmosZFQ8RqI53wJxQqNRqTkb0QoiST_iTLKr_7aHCs?purpose=inline)
-
-[linkedin.com](https://www.linkedin.com/posts/svpino_here-is-the-inside-of-an-ai-agent-three-activity-7390375836480294912-r3W6?utm_source=chatgpt.com)
 
 可以划分为九个核心模块：
 
@@ -984,10 +974,6 @@ LLM 自己生成的错误分析不一定正确。
 - Testing Agent：负责测试。
 - Review Agent：负责代码审查。
 
-[Major AI coding tools comparison 2026 (Claude Code, Codex, Gemini) | by Terry Cho | Feb, 2026 | Medium](https://images.openai.com/static-rsc-4/NahNGyav3uC1AhEjwox-0CLRJM9jn7xKjlQtVr9i6VxZDnTfCF5bpdXsnA4dlJRE48qSArQdsHhIWuRZ9uf79reNfbPZms2lBv7sZe5duTsH2V-08jnKGiVWbiRagurCee6Bj0-9cfk-cwwRi9Ru_JnB5bzzZGL3Luveja8utNw?purpose=inline)
-
-[medium.com](https://medium.com/%40terrycho/major-ai-coding-tools-comparison-2026-claude-code-codex-gemini-55f1140cd05e?utm_source=chatgpt.com)
-
 ## **11.1 多智能体协作结构**
 
 可以表示为：
@@ -1053,10 +1039,6 @@ Agent 解决：
 > 我想完成什么？应该执行哪些行动？
 
 两者可以组成一个完整闭环。
-
-[英伟达科学家提出第二代AI范式：世界模型（LWMs）将取代语言模型主导地位 - Houdao AI](https://images.openai.com/static-rsc-4/q7rWY176HKlZEpvMu2RMkQeRH-zvxiMCsqIBskUu8ZqfDK3bOpqTlTIXTGAsx7agnacsQU--BLkaiOMtnlZkdQlQn3LaJCyoZ7RSWvm2iYel0xztuHr5qnrI3LquDN2tQIItDoP9cyxneR5Ud7ZSuaoB-HwpfjMN6YAgR1SaJd4?purpose=inline)
-
-[houdao.com](https://www.houdao.com/d/1858-ying-wei-da-ke-xue-jia-ti-chu-di-er-dai-AI-fan-shi-shi-jie-mo-xing-LWMs-jiang-qu-dai-yu-yan-mo-xing-zhu-dao-di-wei?utm_source=chatgpt.com)
 
 我们可以建立以下关系：
 

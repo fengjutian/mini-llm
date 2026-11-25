@@ -451,10 +451,6 @@ _图：状态空间搜索中的分支、剪枝与最优计划路径。_
 
 假设一个机器人在网格中移动。
 
-[Robotics Module 8# Discrete Space Planning | by Dilip Kumar | Mar, 2026 | Medium](https://images.openai.com/static-rsc-4/f0EIoOj6nWkaJh_JO5IoxpXwDkJZcpNabbOU8MD9B8HhY18CMJ_tEL3UxUSC0RVJRIvpAOQwjDbmi4OnAN1nzBtb55PA-vtTNtEPOjV9fe--UiDpiU8GcMOy17f59wLI2fuR5wJIfrMwKoTNrVP7z7htmXT1b3V-8oxvSeXBB38?purpose=inline)
-
-[dilipkumar.medium.com](https://dilipkumar.medium.com/robotics-discrete-space-planning-70a1d97b6d45?utm_source=chatgpt.com)
-
 它的状态可以表示为：
 
 \\[ S=(x,y) \\]
@@ -961,10 +957,6 @@ MPC 的核心思想是：
 6. 重新规划。
 
 这也叫 Receding Horizon Control（滚动时域控制）。
-
-[Introduction to Model Predictive Control - imperix Technical notes](https://images.openai.com/static-rsc-4/XhPFsWxnKCy34T3xK8YwZZ7RsvQlm7bW7Nm09FpHfcWxZ_i1O5YAR5ukS0xjOyl4cVWwU40XL5YOG7UluAOS6EW9iZV5nixiXxOZBM55WavUwjj5bbAOwpLWMsl8zgzGTvIlrr5kGFnqIdQ56mVcZCQE-jLF4fgONtwTSIPUZAc?purpose=inline)
-
-[cn.imperix.com](https://cn.imperix.com/doc/implementation/model-predictive-control.html?utm_source=chatgpt.com)
 
 ## **10.2 数学表示**
 

@@ -35,10 +35,6 @@ _图：世界模型的预测与行动。从左到右展示本章核心概念之�
 
 [Learning to Model the World: A Survey of World Models in Artificial Intelligence\[v1\] | Preprints.org](https://images.openai.com/static-rsc-4/hZ7VDEp9VBY4YGVT743dgYhWy_3MVKYztbADQpoag2xXTy3fUX_d3kQGmNWBs_MPXHemPkYiyBOfbV-qyy-YHgXVTFDSDMVRnkDumlJL8lMPMtKjVj-qSRgWsdk5n6AI0X1LnP923hCeKFs-ypad2mgCYDyHdcfYvH33xXpH6oU?purpose=inline)
 
-[World Models in Robotics - How Robots Learn to Predict the Future (and Why It Changes Everything)](https://images.openai.com/static-rsc-4/Y_d3r-9kdwjWRO7Lut-DbX3_BXO5kxfCeEb_lBDPo7njv3jrsHgLZRee8RytPUs4rEznGckenw-u8we5KytYcD72zH6MFBnmVoVlGDyO6W7gUulMQrOgDCgWsslq0Bg31VNYUyH-8UOpH9B7TKsBG-0Cil5dxYKBJo9Q3gdqbgg?purpose=inline)
-
-[Offline motion libraries and online MPC for advanced mobility skills - Marko Bjelonic, Ruben Grandia, Moritz Geilinger, Oliver Harley, Vivian S Medeiros, Vuk Pajovic, Edo Jelavic, Stelian Coros, Marco Hutter, 2022](https://images.openai.com/static-rsc-4/D6okKuGaJoYjkf_BQbw3VgkQqB29liXFiBJiNKGKHgY0uDSpi97dcUasl2t61uoIOx4WF3CAM3nRd6N8hRA2aCuhcZcsTV65pizL7uiZTuLUmByP5tjR7hYQvfSj8dAXX5lD2gTQSWNC7n0IAApx3gmXyuIx_pGtqpI5lTiWkgY?purpose=inline)
-
 11
 
 ## **一、什么是 World Model？**
@@ -217,10 +213,6 @@ Representation Engine 负责构造内部表示，而 World Model Engine 使用�
 \\[ (\text{person},\text{near},\text{table}) \\]
 
 这些关系可以构建为知识图谱或场景图。
-
-[Leonid Sigal's Personal Web Page](https://images.openai.com/static-rsc-4/nfMy_cs8kHETcAWS1km-Z6ZQMw4fCbl0noOaTgpXXXOY1pWZ4d79AVN88ajWblzuGMwOYhf6tdRpy1hKiVi5_tjsyrBdEuPxuOjhViVrKMd8F5O06LiqQov9dCEavFQ0vZVU3FLh6En95hffEvY4pUgSXfw732rVfKs0mpHNaFE?purpose=inline)
-
-[cs.ubc.ca](https://www.cs.ubc.ca/~lsigal/publications_year.html?utm_source=chatgpt.com)
 
 一种简单的数据结构：
 
@@ -420,10 +412,6 @@ World Dynamics（世界动力学）则关注更长期、更一般的变化规律
 
 这就是一个简单的未来状态序列。
 
-[Physics Virtual Lab | Free Interactive Simulations | SciSimulator](https://images.openai.com/static-rsc-4/aMqCNrDen4ghWb9YyeQvRviMKkF0zPZgU06fYuu-g39DLsuh2xuHKUbPAV7QaMsKO07OkQwJCYiuruar8IvAIWteNVhC9N5I3wGV6_0qNl27fVx2TlYh05HvgJvstcKW1u5hah-104CnhUF_q6OhNNogIg03sZCNLc9o0xkqq-c?purpose=inline)
-
-[scisimulator.com](https://scisimulator.com/en/subject/physics?utm_source=chatgpt.com)
-
 ### **4.2 多步预测为什么困难？**
 
 假设模型每一步都有预测误差：
@@ -595,10 +583,6 @@ World Model 的重要能力之一是预测。
 5. 执行一步。
 6. 获取新状态。
 7. 重新规划。
-
-[Introduction to Model Predictive Control - imperix Technical notes](https://images.openai.com/static-rsc-4/XhPFsWxnKCy34T3xK8YwZZ7RsvQlm7bW7Nm09FpHfcWxZ_i1O5YAR5ukS0xjOyl4cVWwU40XL5YOG7UluAOS6EW9iZV5nixiXxOZBM55WavUwjj5bbAOwpLWMsl8zgzGTvIlrr5kGFnqIdQ56mVcZCQE-jLF4fgONtwTSIPUZAc?purpose=inline)
-
-[cn.imperix.com](https://cn.imperix.com/doc/implementation/model-predictive-control.html?utm_source=chatgpt.com)
 
 它的核心不是一次规划完整的未来，而是不断根据新观察修正计划。
 
@@ -777,10 +761,6 @@ World Model 的重要能力之一是预测。
 ### **8.3 LLM + World Model 的组合架构**
 
 一个值得研究的方向，是让 LLM 负责高层语义推理，让专门的 World Model 负责状态预测和动态模拟。
-
-[AI in Robotics - An LLM Is Not a Brain - The Real Role of LLMs — and Other AI Models — in a Cyber-Physical system](https://images.openai.com/static-rsc-4/VX1nzhlxxhxwDjZn5q3HfwajqqsV83NXMvPDHFWTG_tgXoLDY1TItlf_QPVjFcM0GbOFyk-VfwlSNWG2eN-S79ouWXvZMlRKqNTjJp_UVw9PFW3GpXHIH_PNAN3xpGPKx5RgycYrxTCKZ-ahFAjxIMGowRlIdhTAS2fMvgOebt4?purpose=inline)
-
-[thomasthelliez.com](https://thomasthelliez.com/blog/real-role-of-llms-and-other-ai-models-in-a-cyber-physical-system/?utm_source=chatgpt.com)
 
 可以设计成：
 
@@ -995,10 +975,6 @@ class PlanningEngine:    def __init__(self, prediction_engine, cost_function):  
 行动改变环境，环境又产生新的观察。
 
 智能体通过这种循环不断修正内部模型。
-
-[What Is Embodied AI? A Simple Guide to AI in the Physical World | Loona Blog](https://images.openai.com/static-rsc-4/2M4Mdz1zNMnXNYzGbhFUmR1aLnouZFsJuMcGnT4sVbh_GaB5Zo2uxonr1iVuJ2un1YArok4c66p_h_IPIaSngYxKhpv9npca3lSI2hWodlyfyrm04iuu7QWMP-BrCuRW8nNCFUuMDVwjkXYyis4AzfYyxT3qw6dDBFvEhXzTV8g?purpose=inline)
-
-[keyirobot.com](https://keyirobot.com/blogs/buying-guide/what-is-embodied-ai-a-simple-guide-to-ai-in-the-physical-world?utm_source=chatgpt.com)
 
 ## **十二、核心结论：智能不仅是理解世界，还要能够推演世界**
 

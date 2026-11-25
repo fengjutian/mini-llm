@@ -866,10 +866,6 @@ B 处于中间。
 
 **Pareto Frontier（帕累托前沿）。**
 
-[Bohrium | AI for Science with Global Scientists](https://images.openai.com/static-rsc-4/sq4uV5hPX8A0-mvn0YgpNoGnFCTQ9b4THFiyeFYb6oSt5JFDu8sFCUs-EYsMd2vjgT3Fpqg_sCBMZuqoSOdcXKi1uQNbTpWuVSzuVW5XKHpEgJr5o5I6wI642huVjDQRA25Yya-4px02yYRv3ecGmJJ5-thLLyEBvy_TuxO6VIU?purpose=inline)
-
-[bohrium.com](https://www.bohrium.com/en/notebooks/98192345231?utm_source=chatgpt.com)
-
 ## **7.3 Weighted Sum：加权求和**
 
 最简单的多目标优化方法：

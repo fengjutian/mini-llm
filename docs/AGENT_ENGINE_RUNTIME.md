@@ -805,10 +805,6 @@ COMPLETED
 
 因此需要 Sandbox。
 
-[What is Sandbox Security? | Docker](https://images.openai.com/static-rsc-4/Z-gecfELNWMhq3mD0idUOQW0uSls41kYd0W6AoB0gMslvfj7tok9pwsmktML8Sga7IIhsVibJH3GL8l7ReWK9vkKskwvLlbwRnv8GoqlIcF5ActZdpG3mdorpUJWwJkXTg2_cEJWR6tqBBb021L4l0XizWTHSgVQLC0lYSqKpcA?purpose=inline)
-
-[docker.com](https://www.docker.com/blog/what-is-sandbox-security/?utm_source=chatgpt.com)
-
 ## **8.2 Sandbox 的隔离维度**
 
 | 隔离维度       | 控制内容   |

@@ -73,13 +73,9 @@ _图：机械臂从实验台上取放检测板。具身智能的难点往往不�
 - 无人机通过飞行改变自身观察位置。
 - 虚拟智能体通过模拟身体与数字环境交互。
 
-[Hallucinations in Large Language Models: Root Causes and Fixes - Blog - Acalytica](https://images.openai.com/static-rsc-4/t1xsCBjVu-GAHlS9APQg_WxNyjSrOeL7wlnLamLpePtGBumfiELgqDMfhmrAR6qlvq0Hx7MT6DxIWjViBiT8tNvbFd6dzFYA_QIveMCNecEtAsc5wsNkhkgNNR1Ila5iGOTQsnP2b7BSJFVEEP6GpSg3ELRc6qnaBnetxCG25ME?purpose=inline)
-
 **离身智能**
 
 主要通过信息输入和输出与外部世界交互
-
-[Beyond Large Language Models: Why Embodied AI Is the Next Frontier in Tech](https://images.openai.com/static-rsc-4/oIw9vvEgGht--jvX3UJpiFyB14LUZvlmCjI8el0wxWi0kVbk0elwquLO64pMaCx1gVJ91DSjuGQMeJ9HNtIm4WuMxKLHOocDhau8MEwKbSSQI0s4MVO9Svspgwd5j3TcbJddI_f1TeuCpbwoRepmGOJ5cCReV8KTErqeIaJvwB8?purpose=inline)
 
 **具身智能**
 
@@ -205,7 +201,6 @@ _图：机械臂从实验台上取放检测板。具身智能的难点往往不�
 
 _图：具身智能的分层结构：传感器 → 感知 → 世界模型 → 策略 → 执行器，执行结果再通过环境反馈回来。_
 
-
 具身智能可以用一个简单的数学模型描述。
 
 定义：
@@ -235,10 +230,6 @@ _图：具身智能的分层结构：传感器 → 感知 → 世界模型 → �
 - \\(L\\)：任务指令。
 
 这构成了具身智能的基本交互模型。
-
-[The Realities of Robot Deployment: What It Takes for Embodied AI to Succeed | by Goh Jia Yi | AI Practice and Data Engineering Practice, GovTech | Jan, 2026 | Medium](https://images.openai.com/static-rsc-4/4h3XyxNmdiBAKRm0G5JQT_bZ-xz6oCiGoUC0xhtO3fGD8k88V5kMAn9Od17-xDQIuQkKH4aQoGZ9X8t5CX-3ZR8eIkP1qmXlTfuAICymTDfJI8O65sEP1hd70UuwupMT-32NVH2Wko7kL5LNBWFrWK4wgSnAPZtDQ1mMZkHplbI?purpose=inline)
-
-[medium.com](https://medium.com/dsaid-govtech/the-realities-of-robot-deployment-what-it-takes-for-embodied-ai-to-succeed-172a8f36fb2c?utm_source=chatgpt.com)
 
 整个过程可以表示为：
 
@@ -283,7 +274,6 @@ _图：具身智能的分层结构：传感器 → 感知 → 世界模型 → �
 ![感知—行动闭环](assets/diagrams/embodied-perception-action-loop.svg)
 
 _图：感知—行动闭环。Active Perception 用 Information Gain 决定下一步看哪里，而不只是被动接收观测。_
-
 
 ## **1. 为什么感知和行动不能分离？**
 
@@ -356,10 +346,6 @@ _图：感知—行动闭环。Active Perception 用 Information Gain 决定下�
 任务：
 
 > 把桌子上的杯子放到抽屉里。
-
-[Meta-Ctrl: Guaranteed Plan Generation by Decoupling Syntactic and Semantic Constraints](https://images.openai.com/static-rsc-4/SDUIfrc7D1eXYx5S9ZnosUI51m9S7G_uGZxp5VocEacCMAhB86GYRgwtrrLu9s2_wiPLML9XhC-kHt-lhwv4RVJOEglFU-_1X-Ko3k5v7Anim8xQxBwl-B-M_rZ4cjlLkm-oT_xLmCXMNTZoYVIjY6v3IT6ipOKGKLMavtm9bfc?purpose=inline)
-
-[meta-ctrlg.github.io](https://meta-ctrlg.github.io/?utm_source=chatgpt.com)
 
 机器人需要完成：
 
@@ -441,10 +427,6 @@ Active Perception 则进一步提出：
 如果仅仅等待摄像头输入，机器人可能无法获得足够信息。
 
 ## **2. 主动感知的基本过程**
-
-[Act, Sense, Act: Learning Non-Markovian Active Perception Strategies from Large-Scale Egocentric Human Data](https://images.openai.com/static-rsc-4/rkj75UwVtRr32x00XoCbtc0-6v0Gw7yQY9v6cdW8ghNK9_mKk3BdYzaevemhE75VbfQNou2-Xu4QO5nAhSqTJomgR-Nexe9CSaeN8crmoOODso38Bv2mnZGrvVfSv0eUGO6HiL8ae9h9tuqc-GPJ4uiyyAv9XSwZez-p3HSvjWI?purpose=inline)
-
-[jern-li.github.io](https://jern-li.github.io/asa/?utm_source=chatgpt.com)
 
 机器人可以主动改变观察位置：
 
@@ -568,10 +550,6 @@ Active Perception 则进一步提出：
 4. 施加一定的拉力。
 5. 观察抽屉是否移动。
 6. 根据反馈调整拉力和方向。
-
-[Helping Robots Interact With a Messy, Changing World](https://images.openai.com/static-rsc-4/Dxj6F6vuNfdfcm_4JS-v8CeajD-Ms9ALNa70FvUOhR8Y48uz3H7Ece0Pa3TfYwMz29yPj-LaNQ-Q-KxN8vuIVsILepi87pd90ViFTIjA1kt-o8-RO00lDjzAQZDUBi2fxk_0dmMXF-nJnDvL0kEgS6Hx21i9vJSbxedhrDUc52s?purpose=inline)
-
-[cs.cmu.edu](https://www.cs.cmu.edu/news/2024/manipgen?utm_source=chatgpt.com)
 
 这里，机器人不仅观察世界，还通过动作改变世界。
 
@@ -1083,10 +1061,6 @@ Predictive Processing 是另一个重要研究方向。
 
 现在可以把前面研究的多个 Engine 组织成一套完整架构。
 
-[解构多模态：跨越从“看懂”到“行动”的惊险一跃 | 人人都是产品经理](https://images.openai.com/static-rsc-4/6wwhyb8S3GAir1Al9WcBA7RJH3Op0doAjpEepM291OSiy8CVBhmdw6nbPhw47gyo_tBuJm6TGM0tvu4YBvkLGsBtiRTz00dGAtlb_XvWBw8oZfoVk5J3GTvD_fRgrSpbZtT0g2qhIEh2Mdgw1jppbPP3quzOBAz3-eY8RwVyT2I?purpose=inline)
-
-[woshipm.com](https://www.woshipm.com/ai/6327176.html?utm_source=chatgpt.com)
-
 建议将具身智能视为一个跨 Engine 的系统级架构，而不是单纯的模型模块。
 
 | Engine                 | 在具身智能中的作用    |
@@ -1352,17 +1326,9 @@ class ActivePerception:    def __init__(self, sensor, evaluator):        self.se
 
 更合理的方式是从一个可以闭环验证的任务开始。
 
-
-
 推荐 V1
 
 **桌面物体抓取与放置**
-
-
-
-[robosuite | Open Source Robotics](https://images.openai.com/static-rsc-4/IX54TePv9t8ylbl1RyFAsqfjWKH1aH5KqIm_EP31KJOUjfuPL-b2J_ve0ztFDCV32DH6ryedMtafI-FPlVq0yrB7UCSjN-cmR9bz46dYilPY0Qm71j1un_1K-nFuwX7XOEgU87p27Q4vZp2ZjsYTTJb3HYKc_P5IZbv5H7tigbs?purpose=inline)
-
-[robotics.growbotics.ai](https://robotics.growbotics.ai/projects/simulators/robosuite?utm_source=chatgpt.com)
 
 ### **阶段一：建立虚拟身体**
 

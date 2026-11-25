@@ -184,12 +184,6 @@ _图：地球仪是现实世界的一种表示：它保留了位置、距离和�
 
 **Embedding Space（嵌入空间）。**
 
-[Oracle AI Vector Searchの概要](https://images.openai.com/static-rsc-4/6xfOogcVRwIIeeOeNMQlfN7ZUC46GlQ_SvjLqIMuwB3ujH0HfFgvpkl7Ctm1KrsUzv7GQ-3AbXnVeLUOC0XaIrJ3mcJtuou-XABFJBumuGtUYX3C2YJYoYWdjWoA7tPQq1oXk3n2YZCHkYpW7th7EAZx3GiFb_7OqrMneatTjWY?purpose=inline)
-
-[The Evolution of Word Embeddings in Natural Language Processing: A Journey from One-Hot Encoding to Transformers | by Kiran Gajjana | Medium](https://images.openai.com/static-rsc-4/Z6kpNex3HN8sh2xyeE4x977uzUT_wUD8gMu26-wotnhtq6NdYTP-xs1Smoya782UeguiG6aruO9nYHrBvWKwo24OL6eznHN0HtKBnhh2dCedeCiSKwdwSmCHybMd_tYqBEjOIlM07HV3_ovgcv-D8B1PxZENf5WRM3N0QAjrWPA?purpose=inline)
-
-[矢量数据库与LLM的集成：实践指南 - charlieroro - 博客园](https://images.openai.com/static-rsc-4/4_oayHcEDkrHxQwFVKspTjK7cBq4_L93QBR1eqIL7FJffKP-ZzfTXTbHQJE6Nvg3nvZYgnJ4_ldICwTJ3RPzETSMltgN6D5XVyjtuPKADJaybPRXZo8uyDSJenoDpZkD4DnawTzL5BLKZb5F6P7PPxA9XfIBSpfE1QVjRetcG90?purpose=inline)
-
 12
 
 ## **2.1 向量相似度**
@@ -370,10 +364,6 @@ Context B
 
 \\[ v\_{king}-v\_{man}+v\_{woman} \approx v\_{queen} \\]
 
-[Interpreting word representations and topic analysis using matrix factorization](https://images.openai.com/static-rsc-4/O7XVdShPj2W83HvwGreVs_GdG1UJAj5l1uos8ujidz-3Rq8krgAxbAVMTjCiDK53i-WKLW5Yl5qYMxo_X0GgqjtewQxSdZ3DViJwVFPiz4KVZtfygKL6traJU7AMZZkNisA2GTuVudGXkLcUOBJy61XBK7yybN_ctz0sRCozr9I?purpose=inline)
-
-[lamarr-institute.org](https://lamarr-institute.org/blog/dedicom-matrix-factorization/?utm_source=chatgpt.com)
-
 但这里必须澄清：
 
 这不是所有模型、所有词、所有上下文都成立的普遍定律。
@@ -545,10 +535,6 @@ Feature E：情绪
 **让多个特征共享同一组神经元或方向。**
 
 这就是 Superposition（叠加）。
-
-[05 - Sparse autoencoders](https://images.openai.com/static-rsc-4/SUG8W7_tP42wfNg88DUJI4rzEuunaXpHyHrbXxAzw8hXEB9YFJ6puvIVLWr8A7zhRf5YlawEa8DHV-7FbJqo1hjivxPwzLaNkJ-NAC4ZVe1gsRkgXx0dJw69wXbclJbT7owvfg3RsGiRfBO80XC_njY8qhH3vPLK8StXMAxwTAQ?purpose=inline)
-
-[learnmechinterp.mcgee.cat](https://learnmechinterp.mcgee.cat/steps/05-sparse-autoencoders?utm_source=chatgpt.com)
 
 ## **6.1 用数学理解特征叠加**
 
@@ -781,10 +767,6 @@ SAE 在此基础上增加稀疏约束。
 那么 SAE 的特征空间比原始隐藏空间大 8 倍。
 
 它可以尝试将混合在原始隐藏状态中的信息，表示为更多相对稀疏的特征。
-
-[Mechanistic Interpretability for AI Safety — A Review | Leonard F. Bereska](https://images.openai.com/static-rsc-4/4eLnWx_qPjDTT2Fm65CBqpThxlPNP9ooq-WhyGXu7VLFzV4_EnH0sRFC9wW7JdUdzMJaLMoItUlEbTvwXlM4Rj6d3EekfGhHTs8q5R-7oxm2jl4dHCxcQ4_y5eVkmc1cgGwEGVdhr3iVwZbIzjBaywrbvWmebNz3Pr5IvQ8iEvI?purpose=inline)
-
-[leonardbereska.github.io](https://leonardbereska.github.io/blog/2024/mechinterpreview/?utm_source=chatgpt.com)
 
 例如，经过 SAE 后，可能观察到：
 

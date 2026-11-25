@@ -182,6 +182,10 @@ SFT 语料仅用于展示掩码机制。
 - `DeviceValue`：设备 tape，`matmul/add/relu/mean/scale` 拓扑反向、梯度累加，
   与 host autograd 逐梯度对照；
 - `DeviceLinear`/`DeviceMlp` 是手工反向版本，保留作为对照；
+- 设备训练循环：40 步 MLP 回归，参数常驻设备，逐步 loss 与最终参数和 host
+  autograd 一致；
+- `DeviceAdamW`：矩、偏差校正与解耦权重衰减都在设备上，8 步合成梯度与 host
+  参考公式逐参数一致；
 - `.github/workflows/cuda.yml`（手动触发）在 GPU runner 上跑 `--features cuda`；
 - CUDA 路径与 Candle CPU 共用代码，但本环境无 GPU，未做运行验证。
 

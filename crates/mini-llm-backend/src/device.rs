@@ -578,3 +578,90 @@ impl DeviceTensor {
         }
     }
 }
+
+impl DeviceTensor {
+    /// Element-wise square root on the device.
+    pub fn sqrt(&self) -> Result<Self, BackendError> {
+        match &self.storage {
+            Storage::Host(tensor) => {
+                let data = tensor.data().iter().map(|value| value.sqrt()).collect();
+                Ok(Self::from_host(Tensor::new(data, tensor.shape().to_vec())?))
+            }
+            #[cfg(feature = "candle")]
+            Storage::Candle { tensor, .. } => {
+                let result = tensor
+                    .sqrt()
+                    .map_err(|error| BackendError::Backend(error.to_string()))?;
+                Ok(Self::from_candle(result))
+            }
+        }
+    }
+
+    /// Element-wise division; operands must share the same shape.
+    pub fn div(&self, other: &Self) -> Result<Self, BackendError> {
+        match (&self.storage, &other.storage) {
+            (Storage::Host(left), Storage::Host(right)) => {
+                let data = left
+                    .data()
+                    .iter()
+                    .zip(right.data())
+                    .map(|(a, b)| a / b)
+                    .collect();
+                Ok(Self::from_host(Tensor::new(data, left.shape().to_vec())?))
+            }
+            #[cfg(feature = "candle")]
+            (
+                Storage::Candle {
+                    tensor: left,
+                    device: left_device,
+                },
+                Storage::Candle {
+                    tensor: right,
+                    device: right_device,
+                },
+            ) => {
+                if !left_device.same_device(right_device) {
+                    return Err(mixed_device_error());
+                }
+                let quotient = left
+                    .broadcast_div(right)
+                    .map_err(|error| BackendError::Backend(error.to_string()))?;
+                Ok(Self::from_candle(quotient))
+            }
+            #[cfg(feature = "candle")]
+            _ => Err(mixed_device_error()),
+        }
+    }
+
+    /// Adds a scalar to every element on the device.
+    pub fn add_scalar(&self, value: f32) -> Result<Self, BackendError> {
+        match &self.storage {
+            Storage::Host(tensor) => {
+                let data = tensor.data().iter().map(|entry| entry + value).collect();
+                Ok(Self::from_host(Tensor::new(data, tensor.shape().to_vec())?))
+            }
+            #[cfg(feature = "candle")]
+            Storage::Candle { tensor, .. } => {
+                let shifted = tensor
+                    .affine(1.0, f64::from(value))
+                    .map_err(|error| BackendError::Backend(error.to_string()))?;
+                Ok(Self::from_candle(shifted))
+            }
+        }
+    }
+
+    /// A zero tensor with the same shape and device.
+    pub fn zeros_like(&self) -> Result<Self, BackendError> {
+        match &self.storage {
+            Storage::Host(tensor) => Ok(Self::from_host(Tensor::zeros(tensor.shape().to_vec())?)),
+            #[cfg(feature = "candle")]
+            Storage::Candle { tensor, device } => {
+                let zeros =
+                    candle_core::Tensor::zeros(self.shape.clone(), candle_core::DType::F32, device)
+                        .map_err(|error| BackendError::Backend(error.to_string()))?;
+                let _ = tensor;
+                Ok(Self::from_candle(zeros))
+            }
+        }
+    }
+}

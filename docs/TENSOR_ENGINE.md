@@ -126,10 +126,6 @@ Tensor（张量）是一个多维数据结构。
 
 这里包含两个 \\(2\times2\\) 的矩阵。
 
-[Tensors Made Simple: From Math to Machine Learning | by Amarjeetsingh | Medium](https://images.openai.com/static-rsc-4/_d9YGIYs7U5T37OQ-GKmKOL-nN6e1Ab6qJURHIHS50BNHW6KQbsoD2x2efui-Lwc2eMDYNQzerP9VVvIPsOSzzN-A9HorePUQfFhattQELZIUXguqG3f2sq3Mk-IR8SwPBn6Fix9wrY_P67SIJtwS2c6rioCtVenOQH1E4f90ic?purpose=inline)
-
-[medium.com](https://medium.com/%40amarjeetsingh23833/tensors-made-simple-from-math-to-machine-learning-9a83eeb2946d?utm_source=chatgpt.com)
-
 ## **2.2 Tensor 的四个基本属性**
 
 一个 Tensor 至少需要考虑四个基本属性：
@@ -809,10 +805,6 @@ for i in 0..m {
 
 例如将一个 \\(8\times8\\) 矩阵拆成多个 \\(2\times2\\) 小矩阵。
 
-[Fast Multidimensional Matrix Multiplication on CPU from Scratch](https://images.openai.com/static-rsc-4/XMaCfsuPV_swME7D78srmtQ0E0sVK_Ifd-L9pE_tD5yCc5tawtXZdam385cBx7lfKhBnGRtwox4GIh2CKshnen1plaKhD1u8fCBF1uQi_2oAtCOaimIO4JlRMXPa8xwxWbfbgkafWJnizKBxKOFYBXJgxE9jre2f7iG7UyVSGTA?purpose=inline)
-
-[siboehm.com](https://siboehm.com/articles/22/Fast-MMM-on-CPU?utm_source=chatgpt.com)
-
 基本思想：
 
 1. 将矩阵分割成多个 Tile。
@@ -844,10 +836,6 @@ GPU 更擅长：
 - 大规模并行计算。
 - 向量和矩阵运算。
 - 高吞吐量数据处理。
-
-[GPUs Trade Complexity for Massive Parallelism: What Every Machine Learning Engineer Should Know | HackerNoon](https://images.openai.com/static-rsc-4/duILus5kz5pEdVq5CUEJQ6_2gVxXqXyU_6XPXcafRBM2xIUqke69ohEZYErqHw6ABu1Pyh9yXGmXIiDoW-Zjrsh9j_CE282WyNxcnpis6c1ZnhF2leBhqBqG1A-15JXwHbwUblLZIrNpqUXDPIXoDleSCm1sivL9V2xnL76f8ik?purpose=inline)
-
-[hackernoon.com](https://hackernoon.com/gpus-trade-complexity-for-massive-parallelism-what-every-machine-learning-engineer-should-know?utm_source=chatgpt.com)
 
 矩阵乘法有一个非常适合 GPU 的特点：
 

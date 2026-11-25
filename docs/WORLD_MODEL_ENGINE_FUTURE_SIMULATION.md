@@ -47,7 +47,6 @@
 
 这就是 World Model（世界模型）试图解决的问题。
 
-
 ![搭载多种传感器的自动驾驶研究车辆](assets/images/world-model-autonomous-vehicle.png)
 
 _图：搭载多种传感器的自动驾驶研究车辆。世界模型要在内部预测周围车辆与行人的下一步变化，规划才有依据。图片：本仓库 AI 生成图。_
@@ -57,7 +56,6 @@ _图：搭载多种传感器的自动驾驶研究车辆。世界模型要在内�
 ![从一条轨迹到一棵树](assets/diagrams/world-model-rollout-tree.svg)
 
 _图：从一条轨迹到一棵树。树的宽度是行动的个数，深度是预测的步数；反事实分支问的是“换一个行动会走向哪里”。_
-
 
 ## **1.1 从识别世界到模拟世界**
 
@@ -173,7 +171,6 @@ World Model 则试图进一步回答：
 ![POMDP 的信念更新](assets/diagrams/pomdp-belief-loop.svg)
 
 _图：POMDP 的信念更新。真实状态 s_t 不可直接观测，Agent 只能根据观测维护信念 b_t = P(s_t | o_1 … o_t)。_
-
 
 World Model 的第一项基础能力，是构建 State Representation（状态表示）。
 
@@ -295,10 +292,6 @@ world_state = {    "robot": {        "position": [0.1, 0.2, 0.3],        "joint_
 
 ## **2.4 State Representation 的不同层次**
 
-[摩尔线程具身智能社区](https://images.openai.com/static-rsc-4/F4C50D-D7emxz5x-jYQohy8GJfIpq-UM_HK3EPIqvBP_H2SXTg8SvulGA6uUNBl7gn70C3fFPqqrNDHA7Vf_E1j_Gw_rqwp3r-9Y3gmTJ1_OXh5dRFbFCUl-5G_fgbZHrAcWqHCeaziOID4_i3tsAqh_GdF_wGlKjiXNkgJcXgA?purpose=inline)
-
-[developer.mthreads.com](https://developer.mthreads.com/embodied-ai/?utm_source=chatgpt.com)
-
 World Model 可以维护多层状态：
 
 | 状态层次            | 内容             |
@@ -400,10 +393,6 @@ World Model 可以维护多层状态：
 - 流体力学。
 - 热力学。
 - 电路模型。
-
-[GTC 2020: NVIDIA Isaac SIM — Amazing Robot Models and Tasks Simulated in Isaac Sim 2020.1 | NVIDIA Developer](https://images.openai.com/static-rsc-4/O5At4JzZKvJ4kn-JQIvPrjQEdDqe5KwWQgC8uYTu00r2v_QGFeaTXvvsqH5Ad4nOB1r-8FA0s1qf58Q8aDXzEXevzD4aIhR6EmCjusT36zwjYOYKN2tlsIQksU1XuOkYy2pKxRXS8h1hNFm9sis9JBWZ4FcG5Y8h-Cr4Z9dvbso?purpose=inline)
-
-[developer.nvidia.com](https://developer.nvidia.com/techdemos/video/d2s43-vid?utm_source=chatgpt.com)
 
 优点：
 
@@ -557,10 +546,6 @@ World Model 的重要能力是 Future Prediction。
 
 其中 H 是预测步数。
 
-[LAGO Policy: Latency-Aware Asynchronous Diffusion Policies with Goal-Directed Collision-Free Planning for Smooth Manipulation](https://images.openai.com/static-rsc-4/kgCpkj1RokbgWdM1x7C-nhx2kAMHGcA1BmTCJF_VYWFppIBRySVzy9iSfq_Kowc74uWFJTzr7Ec9uv7ydv5seo7Ntarhq_GHH07F-gWmlX1m2gUR0wbvgONlrSCOcnGQ4GBJTikTIz3Got6fH8bCuIEswNTEzi7N74VREvuSGSM?purpose=inline)
-
-[lago-policy.github.io](https://lago-policy.github.io/?utm_source=chatgpt.com)
-
 ### **多步预测为什么更困难？**
 
 因为预测误差会逐步累积。
@@ -623,10 +608,6 @@ World Model 的重要能力是 Future Prediction。
 - 预测三维场景变化。
 - 预测机器人动作执行结果。
 - 预测交通参与者行为。
-
-[World Models in Robotics - How Robots Learn to Predict the Future (and Why It Changes Everything)](https://images.openai.com/static-rsc-4/Y_d3r-9kdwjWRO7Lut-DbX3_BXO5kxfCeEb_lBDPo7njv3jrsHgLZRee8RytPUs4rEznGckenw-u8we5KytYcD72zH6MFBnmVoVlGDyO6W7gUulMQrOgDCgWsslq0Bg31VNYUyH-8UOpH9B7TKsBG-0Cil5dxYKBJo9Q3gdqbgg?purpose=inline)
-
-[thomasthelliez.com](https://thomasthelliez.com/blog/world-models-in-robotics/?utm_source=chatgpt.com)
 
 但是需要区分：
 
@@ -760,10 +741,6 @@ Model Predictive Control（MPC）是将预测模型用于行动决策的重要�
 4. 只执行第一个行动。
 5. 获取新的观察。
 6. 重新预测和优化。
-
-[Receding Horizon Model Predictive Control, HD Png Download - vhv](https://images.openai.com/static-rsc-4/V2nCKTGWba0w1Cg-hxk8uNZpsbheseTPd1VKTeeV7FCGhhJUpys0PW9xV8MC3I5AgXezfuILx9qHOc1Zy4Lu_gaEgdDzYFgoU_ok-mABT8F2usevVedVYqfxMkEWpjHa5OPXGf9JyGclcOTQH8Pmtr0yEUxhHM7LFa2T1I-O02I?purpose=inline)
-
-[vhv.rs](https://www.vhv.rs/viewpic/hwiTwoJ_receding-horizon-model-predictive-control-hd-png-download/?utm_source=chatgpt.com)
 
 假设规划未来 H 步行动：
 
@@ -1044,10 +1021,6 @@ Planning Engine 再根据目标、成本和约束进行选择。
 
 当行动选择比较复杂时，可以考虑 Monte Carlo Tree Search（MCTS）。
 
-[reinforcement learning - Confusing convention in Sutto-Barto on Monte Carlo Tree Search: is a leaf node a state leaf node or state-action leaf node? - Artificial Intelligence Stack Exchange](https://images.openai.com/static-rsc-4/dx_h4gltMzkrSazUQyLQ7mfyX7sPMBJtnO_frfg05qyrHvbvLzrL96U5SJe7kw9qOx917xL32Rs1PXBMcGM2Xsg9zq0dR4T1BAndBebqMXDaewU7fVv8lUyPCFfB23gUkTj7xvzXv7BbeOrxlA90jsr0xTXpPm7CK7Tx8vvtwBg?purpose=inline)
-
-[ai.stackexchange.com](https://ai.stackexchange.com/questions/45829/confusing-convention-in-sutto-barto-on-monte-carlo-tree-search-is-a-leaf-node-a?utm_source=chatgpt.com)
-
 基本思想：
 
 ```
@@ -1104,10 +1077,6 @@ World Model 并不是一种固定的神经网络架构。
 - \\(z_t\\)：潜在状态。
 - \\(a_t\\)：行动。
 - \\(f\_\theta\\)：潜在状态转移模型。
-
-[How AI Systems Use World Models to Predict, Plan, and Dream? | Geeks](https://images.openai.com/static-rsc-4/N36aSgfU__2LjzdH68zscjLSjM2JOCHEtUFeghRryFAuAgpAHRgUMEgX5HvFzqAIPyYi2Qwog0GErMzhNz2f70Vkr-nO597CABYPgcNPqYLLnNZbopCw0lU62S02egR9zpjGHjyVcbCLXBaM_gMPEe4ZU1qdTP_5d7-JyA9fixs?purpose=inline)
-
-[vocal.media](https://vocal.media/geeks/how-ai-systems-use-world-models-to-predict-plan-and-dream?utm_source=chatgpt.com)
 
 完整流程：
 
@@ -1439,10 +1408,6 @@ Dreamer 是基于世界模型进行强化学习的重要代表方向。
 它的核心思想是：
 
 **智能体可以先学习环境动态，再利用学习到的世界模型进行内部想象和策略学习。**
-
-[DeepMind ｜用世界模型让强化学习更适应多样域 - 智源社区](https://images.openai.com/static-rsc-4/2i4MpliSn2e9pvg-Q-AvZ5gI2x_jgfXUFAsrFNucjGU4h_Ycmhfupq8llreHYGcD9A5E0HYtdNGghIJZrIX1jX38vDcojRwMQh7GRoDyIFF48DqTjmB3SDhXiApCkgJEc9D_3tQu5ctJSjytNlCt2PQDH6Zirp7j7GsddL8O_bU?purpose=inline)
-
-[hub.baai.ac.cn](https://hub.baai.ac.cn/view/23283?utm_source=chatgpt.com)
 
 ## **11.1 传统强化学习**
 
@@ -1912,10 +1877,6 @@ Planning Engine 可能就会选择这条路径。
    - 记录模型假设和证据。
 
 ## **17.1 推荐第一个实验：桌面物体运动预测**
-
-[李飞飞署名具身新论文：Sim2Real烧不起，Real2Sim量大管饱 - 科技区角](https://images.openai.com/static-rsc-4/84oP1a6QSP7N4ffZBG75OWRT_TIltASw8sRMbs3pQ48HodkiV4OcvZIzAYwdbBBgeNPdaDaW6DrcHBhdK-wqpEXa96LdZ1c30Cag-5V_u6PBEaPF9DAgFzvaM6xX2288D1UuRGWHV17VXgD8mDk0y8-PIEM9TXFcYcem9i33N7I?purpose=inline)
-
-[x-techcon.com](https://www.x-techcon.com/article/159480.html?utm_source=chatgpt.com)
 
 实验对象：
 

@@ -32,12 +32,6 @@
 
 例如：
 
-[论文阅读：Code as Policies: Language Model Programs for Embodied Control - 技术栈](https://images.openai.com/static-rsc-4/HtTw18AMah0YdANecgbpN6wmpJqAeQ-y0w9HuAwVpIbd81Rua-an2c1HX67a5FfV3ompztFU1BOq5gOTn-LEEkyNfcGr28E52DOMA-OnFi7M_dDWQSYk9StVsZOy-SP3kucMECDWe8wWd4ngp1unf4ivkGphh5_sthO4_3u9738?purpose=inline)
-
-[BRRP](https://images.openai.com/static-rsc-4/PZvc-AfPojAW4vw5bjoPoPJdJkfvo808z6YJde9cKFrFOSBolxCb6o0klmj6RG5KUsm34cEUxA-MLOdqgBHZcycV76QVGaa6RgLo8scCiK2_KkKiKdkw1JqBWCmt0-rOJs99bwrYTnHyW9Mdrd_shj4F3QE2J35Im65FsX5ECz8?purpose=inline)
-
-[ExploreVLM：基于视觉-语言模型的闭环机器人探索任务规划框架 - 知乎](https://images.openai.com/static-rsc-4/XJy0_4Ogaxnse2CLntB0vUBHHJbesJQA9P-YR6dD2c7mEoNXnmLHXlhurX3rgwPnVpbY901cAl8bocae8byqDMi7_BASWrxilQQmHF7YyX4pd1A-LbDjwSOMJ91Be-4jqj3XMNTT8dFU-tRo9LtBxCf73XaIdqt4o9iMu2lv5s4?purpose=inline)
-
 15
 
 一个普通视觉模型可能识别出：
@@ -83,10 +77,6 @@ _图：一辆 Waymo 自动驾驶出租车。车顶的激光雷达，连同车身
 
 例如：
 
-[vla.cpp: A Unified Inference Runtime for Vision-Language-Action Models](https://images.openai.com/static-rsc-4/sr2uPH-gmTmOYT4wDMQnix86yCNc0abebVARZgF1lXbE5NcfeTmQEZqTCwoB-jesmFHXQBDVIbtHIsTUo6u3B_ueWHNHQw8b7SK6Z2nUIzbwLyYZAMQoJtBGWBzCCQyTD9bA9g0NBSZgaoNt0vIIzDNRHWKes4U4iie5wby_Clo?purpose=inline)
-
-[fai-modelopt-tech.github.io](https://fai-modelopt-tech.github.io/vla-cpp.github.io/?utm_source=chatgpt.com)
-
 图像中的像素只有两个坐标：
 
 \\[ p=(u,v) \\]
@@ -131,7 +121,6 @@ _图：一辆 Waymo 自动驾驶出租车。车顶的激光雷达，连同车身
 
 _图：空间智能的六层能力。越靠下越接近原始传感器数据，越靠上越依赖对空间结构的抽象与预测。_
 
-
 1. **3D Perception**
 
    从图像、深度和点云中识别三维物体。
@@ -159,7 +148,6 @@ _图：空间智能的六层能力。越靠下越接近原始传感器数据，�
 
 _图：点云、体素、Mesh、SDF、NeRF/3DGS 与 Scene Graph 的取舍：没有一种表示能同时满足渲染、碰撞与语义推理。_
 
-
 空间智能首先需要解决：
 
 **计算机应该使用什么数据结构表示真实世界？**
@@ -177,10 +165,6 @@ _图：点云、体素、Mesh、SDF、NeRF/3DGS 与 Scene Graph 的取舍：没�
 \\[ p_i=(x_i,y_i,z_i) \\]
 
 每个点可以附带颜色、法向量、强度等信息。
-
-[A generalizable, Al-enabled 3D vision system for industrial robotics  | Intrinsic](https://images.openai.com/static-rsc-4/sR03Cry9JjbmFVLTOhosOGnX-F1J2yVj5_Kdm6qSox9Yu37JBJjA45u7euqWIy5fmBF6UCLo_6S89xcr-J7hBuPk-fMuzqDoI8wlmbfMQVU-aFkmIPKAgtPf1CSAr4gc7fxPAU_6b9hX82XFEt4H9601es5bv0chxX0yrmO35Gw?purpose=inline)
-
-[intrinsic.ai](https://www.intrinsic.ai/blog/posts/a-generalizable-al-enabled-3d-vision-system-for-industrial-robotics?utm_source=chatgpt.com)
 
 例如：
 
@@ -239,10 +223,6 @@ Voxel 是三维空间中的体积像素。
 
 二维图像由 Pixel 组成，三维体素网格由 Voxel 组成。
 
-[Convolutional neural networks in a 3D world | by Thomas Vial | Medium](https://images.openai.com/static-rsc-4/ly1KWCu7cVX18Ko6psIPlaTyDt2mdiS2TeaLL44Lz28fQL_jzUF-Ye71zJJPJRI2l-n1llR8PyqAfZmlRuDF45F5vnPt1E4JYDuECttk9lN7Oe8E5Dh9VHps5Nj8-e6bRDXh123VqR8HAjUI6jawAFZmd7-NE8I7FJX7q9iYF-I?purpose=inline)
-
-[medium.com](https://medium.com/%40tvial_77168/convolutional-neural-networks-in-a-3d-world-30d66b304bfd?utm_source=chatgpt.com)
-
 例如：
 
 \\[ V(i,j,k)\in\\{0,1\\} \\]
@@ -281,10 +261,6 @@ Voxel 是三维空间中的体积像素。
 
 Mesh 使用顶点、边和面构成三维表面。
 
-[UnstructuredGridFilters.reconstruct_surface — PyVista 0.48.4 documentation](https://images.openai.com/static-rsc-4/GDjYxwsLNkdiH_ZzdpqkPCPTai21-jBbLQ2yI5708BmL0Sg1sQ3Tv6ylj2fSymWVGkPzud-1P2uOT7C6vQY10K_WdNx_sUV2uZMZWYwzPwAorzevquhXRZ1W7QXCk5r-bY_1Mwx196YndT8XpXSKSFONGN2kO188v75EpX7cWA0?purpose=inline)
-
-[docs.pyvista.org](https://docs.pyvista.org/api/core/_autosummary/pyvista.unstructuredgridfilters.reconstruct_surface?utm_source=chatgpt.com)
-
 典型结构：
 
 ```
@@ -317,10 +293,6 @@ Mesh 适合：
 - \\(d=0\\)：点位于表面。
 - \\(d>0\\)：点位于物体外部。
 
-[1-Lipschitz Neural Distance Fields | Guillaume Coiffier - Personal Website](https://images.openai.com/static-rsc-4/ig0mEEFMWdJQwp8-AYskFKy14uFtogFrKBWkQ-S-Y6vlgdoor6aHH0Qa3A-yxta87lW1pmQvyDb1BZU4tYbP03DQLa-ZMx6Lc87rThIQn32V80BWCq2FQ43Wryf77wPNAuK-0jLjlrSi5iL5UIqlAGMDStaiDCDQrNFaD6FnmM0?purpose=inline)
-
-[gcoiffier.github.io](https://gcoiffier.github.io/publications/onelipsdf/?utm_source=chatgpt.com)
-
 SDF 可以用于：
 
 - 表面重建。
@@ -337,12 +309,6 @@ SDF 可以用于：
 ### **3.5 NeRF 与 3D Gaussian Splatting**
 
 NeRF 和 3D Gaussian Splatting 能够通过多视角图像构建具有较强视觉表现力的三维场景。
-
-[What Is a Neural Radiance Field (NeRF)?](https://images.openai.com/static-rsc-4/5DxSpQn1l1PzBJ-2IfY3u8Xqwd-ZgHkhJfXQduwOP2agOEuhFX2HrSMEYV8Hi4VDMAyTXHAx94RLzEhRc3zuXAer1adTmboenbyhSYFo5YLUq5lMMZEP2TlJjszDT64kOsyxeQ6ziM2lTLNZ8_VVLf8M3zdUqBble-sWs4XNP1M?purpose=inline)
-
-[Kunyi Li](https://images.openai.com/static-rsc-4/bmWMxFBNSNlhOKAzU8maXRBM_GjDWQSxzbHywS2CrjaGHeF1EaYfYzl2WWvP9LElfOitYbXzeNPWlWub51E-fnP-VHZzbzDELTyyF0yE31ru80rScEIg_mJ5W_6YFKq4wgPCLaftSpJMnEeGNrvzYu_mHZD9oluhDmGdEOh24dc?purpose=inline)
-
-[3D Gaussian Splatting (3DGS) 从入门到精通：安装、训练与常见问题全解析 - 技术栈](https://images.openai.com/static-rsc-4/IhwhSJx29FEA8rGjJnUFWoShF-WvaASL5aTu6cheb06mh4ZhWe-j0mVRVXxJbBNivv4NlGEAlpISEZ-t77j1C17ZlSqfdP0wUmybXJkdGVgD59dD0Bsux8dNpwrloBhLgN6fgvFye4b-MmEoE2UJnM6TJTaaXP2r7xLWF04Cz7A?purpose=inline)
 
 10
 
@@ -385,10 +351,6 @@ mini-llm 的 Spatial Intelligence Engine 应当采用多表示架构，而不是
 - End Effector Frame：末端执行器坐标系。
 - Camera Frame：相机坐标系。
 - Object Frame：物体坐标系。
-
-[Publisher of Open Access Journals | MDPI](https://images.openai.com/static-rsc-4/f1pXQ_sY8bCNfa5HojfGlC4YQleqW7MHukJYuyA1Nka6GNfe2ssgyeSWpkhoha1U6VDqrMspsj1y9ky0zCfdRDsH5-XqLYLdoagKsqKo4gbQ_yAieoghbAPSTldIArWEuvJfhD-Mg6LdMVNlzsHxWWJHgB1QJLazlj9ICYdOu9w?purpose=inline)
-
-[mdpi.com](https://www.mdpi.com/1424-8220/18/11/3949/xml?utm_source=chatgpt.com)
 
 ### **4.1 为什么需要坐标变换？**
 
@@ -513,10 +475,6 @@ World Frame
 
 这样就可以把二维深度图转换为三维点云。
 
-[Depth Image Rendering: PNG Support and RGB Colorization](https://images.openai.com/static-rsc-4/jqn3cDQGkYUSBowgN93rtAVKrk1qccxbxKTwc5DhJGw37fm5QEB0BRazTdupwidy_DhRNQ_HB0VZUp5prm1qw69NThsknumYQj2tdFG6MUihFJxiAla-J_EtvYETYwdNVvZRDLRcnK6Nd12Jzcv8rfZPzoTdf1v3MenIBoPVwP8?purpose=inline)
-
-[foxglove.dev](https://foxglove.dev/blog/depth-image-rendering-png-support-and-rgb-colorization.html?utm_source=chatgpt.com)
-
 ### **5.2 点云预处理**
 
 原始点云通常包含噪声和冗余数据。
@@ -608,10 +566,6 @@ ICP 通常依赖较好的初始位姿，容易陷入局部最优；实际系统�
 
 所以通常称为 6D Pose。
 
-[Category-Level 6D Object Pose Estimation in the Wild:      A Semi-Supervised Learning Approach and A New Dataset](https://images.openai.com/static-rsc-4/HCbGOFPLn7rq0k9jG_x3c0OHisM4rj_GhZH1eV9aJqOofVT84Fi2KbnNsuxbpFkcVVVlYVazuoNkFGKi5qt4yKEn53Jq5X957xZ3IBFWMnvFI73jSNmD5amIMi7_4CsUVtN0qxPk0GehL8Z8InpyyammsCDthybQAEOc7KjkBEk?purpose=inline)
-
-[oasisyang.github.io](https://oasisyang.github.io/semi-pose/?utm_source=chatgpt.com)
-
 ### **6.2 三种常见旋转表示**
 
 **欧拉角（Euler Angles）**
@@ -685,10 +639,6 @@ Object Pose 告诉我们物体在哪里。
 这些关系可以使用 Scene Graph 表示。
 
 ### **7.1 Scene Graph 的基本结构**
-
-[Hierarchical Planning for Long-Horizon Manipulation with Geometric and Symbolic Scene Graphs – UT Austin Robot Perception and Learning Lab](https://images.openai.com/static-rsc-4/6Tgh99usuL4z0-guE9IaSzAsva6EfL3oA-kjtCPXjw-6y5ryNNB0hHHSMgYJQEYtS98A_DBtSIfe6rUO6y2vNp4XXy0vUkZDBRCsGHjIJZvIxRXqviyabZeNg-3_NWDIKWk616GsUQ2p0BJ2PVmws1QptveJ1pfENhuSlxeaB9Y?purpose=inline)
-
-[rpl.cs.utexas.edu](https://rpl.cs.utexas.edu/publications/2021/06/03/zhu-icra21-scene-graph/?utm_source=chatgpt.com)
 
 Scene Graph 是一个图结构：
 
@@ -966,10 +916,6 @@ cup held_by robot
 
 这几个 Engine 容易混淆，但职责不同。
 
-[Physical AI Landscape: From Digital Intelligence to the Embodied Physical World - RobotToday](https://images.openai.com/static-rsc-4/TzB3ulsq0MnApt_yxpGs-9LsPvq9SdzR-ZYwdSZYN-f3zaun85CRdjYcRT3ZL9tYX8Inx3SBi4d5qtZtTcQYs-z5F8dxBmyf-RexslikZj7w6NTBtgoXOf20aV6FlfMoUikMbPrsWfg7KY_e4cQI7RmxJ4FhXdhIZrKc4PDNezE?purpose=inline)
-
-[robottoday.com](https://robottoday.com/article/physical-ai-landscape-from-digital-intelligence-to-the-embodied-physical-world?utm_source=chatgpt.com)
-
 | Engine                | 核心职责              |
 | --------------------- | ----------------- |
 | Embodied Intelligence | 通过身体和环境进行感知、行动与学习 |
@@ -1217,10 +1163,6 @@ False
    - 最后进行低速真实设备测试。
 
 ### **V1 推荐桌面实验**
-
-[A pixel-level grasp detection method based on Efficient Grasp Aware Network | Robotica | Cambridge Core](https://images.openai.com/static-rsc-4/wvw8e5JDPC6tJGa_y_qxqg550hckuAXrOk_dWguJp73CzM52Tx5xJmaXxEAhFGeXvgt79HpJw5smh-gc182uEcPhQvqKsMlpFE87dh2QRiDKJv1ckR0dqEwQHFuCljeQIqfc5Ox818-RYA81Y3TtIN9ntWoHJcFMmx-IN-MdDS0?purpose=inline)
-
-[cambridge.org](https://www.cambridge.org/core/product/B91DEE481662833081F75D0D2FCD9BFC?utm_source=chatgpt.com)
 
 场景中只放置：
 

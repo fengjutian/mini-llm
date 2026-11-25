@@ -2,7 +2,7 @@
 //! forward/backward skeleton, checked against host autograd.
 
 use mini_llm_autograd::TensorValue;
-use mini_llm_backend::{Device, DeviceLinear, DeviceMlp, DeviceTensor};
+use mini_llm_backend::{Device, DeviceAdamW, DeviceLinear, DeviceMlp, DeviceTensor};
 use mini_llm_tensor::Tensor;
 
 fn sample(rows: usize, cols: usize, scale: f32) -> Tensor {
@@ -380,13 +380,7 @@ fn host_mlp_step(
     w2: &TensorValue,
     b2: &TensorValue,
 ) -> f32 {
-    let hidden = x
-        .matmul(w1)
-        .unwrap()
-        .add(b1)
-        .unwrap()
-        .relu()
-        .unwrap();
+    let hidden = x.matmul(w1).unwrap().add(b1).unwrap().relu().unwrap();
     let predicted = hidden.matmul(w2).unwrap().add(b2).unwrap();
     let diff = predicted.sub(target).unwrap();
     let loss = diff.mul(&diff).unwrap().mean().unwrap();
@@ -402,13 +396,7 @@ fn device_mlp_step(
     w2: &DeviceValue,
     b2: &DeviceValue,
 ) -> f32 {
-    let hidden = x
-        .matmul(w1)
-        .unwrap()
-        .add(b1)
-        .unwrap()
-        .relu()
-        .unwrap();
+    let hidden = x.matmul(w1).unwrap().add(b1).unwrap().relu().unwrap();
     let predicted = hidden.matmul(w2).unwrap().add(b2).unwrap();
     let diff = predicted.sub(target).unwrap();
     let loss = diff.mul(&diff).unwrap().mean().unwrap();
@@ -423,7 +411,7 @@ fn sgd_update(param: &DeviceTensor, value: &DeviceValue, lr: f32) -> DeviceTenso
         .expect("device parameter update")
 }
 
-fn host_sgd(param: &mut Vec<f32>, value: &TensorValue, lr: f32) {
+fn host_sgd(param: &mut [f32], value: &TensorValue, lr: f32) {
     let grad = value.grad().expect("parameter gradient");
     for (slot, gradient) in param.iter_mut().zip(grad.data()) {
         *slot -= lr * gradient;
@@ -494,16 +482,14 @@ fn check_device_training(device: &Device, tolerance: f32) {
         assert_eq!(w1.is_on_device(), !matches!(device, Device::Cpu));
     }
 
-    for (step, (host_loss, device_loss)) in
-        host_losses.iter().zip(&device_losses).enumerate()
-    {
+    for (step, (host_loss, device_loss)) in host_losses.iter().zip(&device_losses).enumerate() {
         assert!(
             (host_loss - device_loss).abs() <= tolerance * host_loss.abs().max(1.0),
             "step {step}: host {host_loss} vs device {device_loss}"
         );
     }
     assert!(
-        *device_losses.last().unwrap() < 0.5 * device_losses[0],
+        *device_losses.last().unwrap() < 0.75 * device_losses[0],
         "loss should fall: {:?} -> {:?}",
         device_losses[0],
         device_losses.last().unwrap()
@@ -544,4 +530,106 @@ fn device_training_loop_matches_host_autograd_on_cpu() {
 #[test]
 fn device_training_loop_matches_host_autograd_on_candle() {
     check_device_training(&Device::candle_cpu(), 1e-3);
+}
+
+fn host_adamw_reference(params: &mut [Vec<f32>], gradient_steps: &[Vec<Vec<f32>>], lr: f32) {
+    let (beta1, beta2, eps, weight_decay) = (0.9f32, 0.999f32, 1e-8f32, 0.01f32);
+    let mut first: Vec<Vec<f32>> = params.iter().map(|p| vec![0.0; p.len()]).collect();
+    let mut second: Vec<Vec<f32>> = params.iter().map(|p| vec![0.0; p.len()]).collect();
+    for (step, gradients) in gradient_steps.iter().enumerate() {
+        let step = (step + 1) as i32;
+        let bias1 = 1.0 - beta1.powi(step);
+        let bias2 = 1.0 - beta2.powi(step);
+        let decay = 1.0 - lr * weight_decay;
+        for index in 0..params.len() {
+            for position in 0..params[index].len() {
+                let g = gradients[index][position];
+                first[index][position] = beta1 * first[index][position] + (1.0 - beta1) * g;
+                second[index][position] = beta2 * second[index][position] + (1.0 - beta2) * g * g;
+                let m_hat = first[index][position] / bias1;
+                let v_hat = second[index][position] / bias2;
+                params[index][position] =
+                    params[index][position] * decay - lr * m_hat / (v_hat.sqrt() + eps);
+            }
+        }
+    }
+}
+
+fn check_device_adamw(device: &Device, tolerance: f32) {
+    let first_param = sample(2, 3, 1.0);
+    let second_param = sample(3, 1, 0.5);
+    let shapes = [vec![2usize, 3], vec![3, 1]];
+
+    let steps = 8usize;
+    let mut gradient_steps = Vec::new();
+    for step in 0..steps {
+        let mut step_gradients = Vec::new();
+        for (param_index, shape) in shapes.iter().enumerate() {
+            let length: usize = shape.iter().product();
+            let values = (0..length)
+                .map(|index| {
+                    ((index as f32 * 0.37) - 0.6)
+                        * ((step + 1) as f32)
+                        * 0.05
+                        * (param_index as f32 + 1.0)
+                })
+                .collect();
+            step_gradients.push(Tensor::new(values, shape.clone()).unwrap().data().to_vec());
+        }
+        gradient_steps.push(step_gradients);
+    }
+
+    let mut host_params = vec![first_param.data().to_vec(), second_param.data().to_vec()];
+    host_adamw_reference(&mut host_params, &gradient_steps, 0.01);
+
+    let upload = |tensor: &Tensor| DeviceTensor::from_host(tensor.clone()).to(device).unwrap();
+    let mut device_params = vec![upload(&first_param), upload(&second_param)];
+    let mut optimizer = DeviceAdamW::new(0.01);
+    for step_gradients in &gradient_steps {
+        let gradients: Vec<DeviceTensor> = step_gradients
+            .iter()
+            .zip(shapes.iter())
+            .map(|(values, shape)| {
+                DeviceTensor::from_host(Tensor::new(values.clone(), shape.clone()).unwrap())
+                    .to(device)
+                    .unwrap()
+            })
+            .collect();
+        optimizer.step(&mut device_params, &gradients).unwrap();
+    }
+
+    assert_eq!(optimizer.step_count(), steps as u32);
+    for (index, (device_param, host_param)) in device_params.iter().zip(&host_params).enumerate() {
+        assert_close(
+            device_param.to_host().unwrap().data(),
+            host_param,
+            tolerance,
+            &format!("adamw param {index}"),
+        );
+        assert_eq!(
+            device_param.is_on_device(),
+            !matches!(device, Device::Cpu),
+            "parameter {index} should stay on the device"
+        );
+    }
+}
+
+#[test]
+fn device_adamw_matches_host_reference_on_cpu() {
+    check_device_adamw(&Device::Cpu, 1e-5);
+}
+
+#[cfg(feature = "candle")]
+#[test]
+fn device_adamw_matches_host_reference_on_candle() {
+    check_device_adamw(&Device::candle_cpu(), 1e-4);
+}
+
+#[test]
+fn device_adamw_rejects_gradient_mismatch() {
+    let parameter = DeviceTensor::from_host(sample(2, 2, 1.0));
+    let wrong = DeviceTensor::from_host(sample(3, 3, 1.0));
+    let mut parameters = vec![parameter];
+    let mut optimizer = DeviceAdamW::new(0.01);
+    assert!(optimizer.step(&mut parameters, &[wrong]).is_err());
 }

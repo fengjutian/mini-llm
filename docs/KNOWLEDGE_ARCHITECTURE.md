@@ -123,10 +123,6 @@ Self-Attention -> uses -> Key
 Self-Attention -> uses -> Value
 ```
 
-[Scholcast: Generating Academic Paper Summaries With AI](https://images.openai.com/static-rsc-4/oslf1L0HDfZIhQIDL9L6lxQm8_8j_Gx5LY3yBYea08Dk9WkEHpH2Pv2rYh_n787DaZwnFnTfHSf15tk2tCzN9kPCBXNx1-RiC05adXyfKrVjQIoIky3USTwrwM_1ziBqzGD65viL7JAKFG17UZvQRlKf5vQvHSzI_0JVUvjmK7I?purpose=inline)
-
-[dzone.com](https://dzone.com/articles/generating-academic-paper-summaries-with-ai?utm_source=chatgpt.com)
-
 这就完成了从非结构化文本到结构化知识的转换。
 
 ## **1.3 常见的知识表示方法**
@@ -255,10 +251,6 @@ AI Technology
 ```
 
 这就是一个初步的概念体系。
-
-[AI Agents and Agentic AI-Navigating a Plethora of Concepts for Future Manufacturing | alphaXiv](https://images.openai.com/static-rsc-4/pynfMaDQGQQBRjiOew6S96t7NpcL5tGkRYJBv0hbnwjZbtIdCI8KKrWT5d0fkFn07AfUaQ0yYeQ-3dLO6R3KucGNYLb8f1r8TkwN7EsJfa4FNGR6Uem3GuOfux59zs2S5UNJcjSOFigrPVHV6QiI5V5EqH0_AWTEDY-p17EDTXE?purpose=inline)
-
-[alphaxiv.org](https://www.alphaxiv.org/overview/2507.01376v1?utm_source=chatgpt.com)
 
 ## **2.2 Ontology 与普通分类有什么区别？**
 
@@ -399,10 +391,6 @@ Knowledge Graph 是通过节点和边表示知识的结构。
            v        v       v
            Q        K       V
 ```
-
-[浙江大学朱强教授深度解读DeepSeek技术：探索AI前沿-CSDN博客](https://images.openai.com/static-rsc-4/PAeOVShZHRvP6KtGJz8gpvcb8fN8aZuve-pxSRCFnzkBogAudkYfieA8W6e_3EZdRkAjnrgg2zq_QV8RbTaBi4EeyjSd4B4NxsleMvF8RDNcnEvQdwa--Rm8hap8DhkJJzUg1B2nhe9EtvQRCKZi2UXsBZ2vPOHHUd27lDTj1VE?purpose=inline)
-
-[blog.csdn.net](https://blog.csdn.net/2502_91176038/article/details/146690242?utm_source=chatgpt.com)
 
 知识图谱的关键不是画出一张图，而是将实体和关系转化为可以查询、验证和推理的数据结构。
 
@@ -1322,10 +1310,6 @@ Symbolic 部分主要负责：
 - 约束检查。
 - 确定性推理。
 - 结构化知识操作。
-
-[Computación Neuro-simbólica: Un Cambio de Paradigma en la Inteligencia Artificial](https://images.openai.com/static-rsc-4/SPLhHCRC_v4wQBo1ZrmpaUR5kXBDNlUSrCCmuRrqZpRB55aNg0GUvMUuUHf6ZBx9HcoJbtMql6_eOjjt8z-v3iwFjNVJd2tXP7U8moAUEHlXHbiFJqJTqtOH2FwAIr1NkYVlsW-RE43_4tbwH0tLG0esPuVsD30ToCNpTmZf7mU?purpose=inline)
-
-[es.linkedin.com](https://es.linkedin.com/pulse/computaci%C3%B3n-neuro-simb%C3%B3lica-un-cambio-de-paradigma-en-gonz%C3%A1lez-disla-lexse?utm_source=chatgpt.com)
 
 ## **10.2 神经网络与符号系统的差异**
 

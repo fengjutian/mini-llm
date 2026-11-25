@@ -73,10 +73,6 @@ _图：同一台 AI 计算设备的斜视图。Decoder 一次只生成一个 Tok
 
 原始 Transformer 采用 Encoder-Decoder 架构。
 
-[Encoder, Decoder, Both: The Three Transformer Architectures | Daniel Fridljand](https://images.openai.com/static-rsc-4/oG2P1MUz1gweH9cxtiACTfM7ZukXzqemMBde-R4qUvFpG-oH9lyQ0ijWMOW1As9K2pl_mZB1tx-Vuq5pEOGRzOzgeEWViwt_FoS0De2y-MutXVHDmhH-vXM7dkyBRTS-iEgZs3SvGN6OcobmZ_pUq4d7ccF87_c4IrDCFMJYTb4?purpose=inline)
-
-[danielfridljand.de](https://danielfridljand.de/post/transformer-architectures?utm_source=chatgpt.com)
-
 它包含两个部分：
 
 **Encoder：编码器**
@@ -119,10 +115,6 @@ GPT 使用了另一种设计：
 这里的 Decoder-only 并不是说它只使用了一个 Decoder Block，而是说它使用多层带因果掩码的 Transformer Block，不再使用独立的 Encoder 和 Encoder-Decoder Cross-Attention。
 
 结构：
-
-[NLP (6): GPT and Generative Language Models · Chen Kai Blog](https://images.openai.com/static-rsc-4/qnBLFmlmGKbJTnCFMNy3p-Mv2pof9eYdB22u7KPkYqE1SfBo_YG4Y2dEJ5Dd5yYTV8Ueq1eSJ4iyEzBFgKMS6qPKIgAp4kKOE8jb6A4uPfk60Rq4EIsSoF6tD3_Swrrh4Qq04oxfSwR838S35S8T8XSNQgbUpaUNaX-zVeTn6oU?purpose=inline)
-
-[chenk.top](https://www.chenk.top/en/nlp/gpt-generative-models/?utm_source=chatgpt.com)
 
 输入：
 
@@ -187,10 +179,6 @@ num_layers = 12d_model = 512num_heads = 8
 那么模型包含 12 个 Transformer Block。
 
 结构：
-
-[Generalized Language Models](https://images.openai.com/static-rsc-4/RzKEmtj9D6Jbj_2GMlVVdpzZNU06xojykb3-0dOLuMCQYJGCdyZyT_bpt3bVEWXqZXMSMl9gMY90PJGA7oAFJgwbs9HqmiX5fl7n6SUwCz8d5a-zRxPI8zdG3VIouHemu3IoaT-kE-aqmXck5KNAWAiiHCFiC1GMjC9xjVTfXq0?purpose=inline)
-
-[lilianweng.github.io](https://lilianweng.github.io/lil-log/2019/01/31/generalized-language-models.html?utm_source=chatgpt.com)
 
 计算过程：
 
@@ -376,10 +364,6 @@ LM Head 权重：
 
 每个 Token 位置都可以得到一个长度为 10000 的分数向量。
 
-[A Visual Guide to Gemma 4 - by Maarten Grootendorst](https://images.openai.com/static-rsc-4/fEbfZnPxv6x-yrNbxyT8Zc16qi1XeiMx8BrhxMq8nYz0rNgUKsn5JtSoENNpj4gtRJpN_IdOA19Ib3SmjEL_qtqK1IF4k_jTAg085YpGPDRisy0OqVeIM7g_BibdCq1nfaLEtB7-OAl5WrLmTGQzquZ3tE-cSAM_BzLobSxHUMw?purpose=inline)
-
-[newsletter.maartengrootendorst.com](https://newsletter.maartengrootendorst.com/p/a-visual-guide-to-gemma-4?utm_source=chatgpt.com)
-
 ## **5.2 为什么要映射到词表空间？**
 
 假设词表只有 5 个 Token：
@@ -468,10 +452,6 @@ LM Head：
 \\[ Logits=HE^T \\]
 
 这种设计叫作 Weight Tying（权重共享）。
-
-[Weight tying in language models: when and why LLMs share embeddings | by VISHAL SINGH | Jun, 2026 | Medium](https://images.openai.com/static-rsc-4/8W06YIrOZB-SIQl2KQkRor15NMa9vsOFda_O7rBcqrCUO8mBMtHNfozkQ5KSr1ZAO43WIsm26oAHHcgLzGq2_qaNRqDZCCDv1owP4L5Ur_FIJcXK8bWa4vtmi02alWFiqUE1pENJqlCAWjgRT7Y9QQY5izlKfteIjXweclTRKHs?purpose=inline)
-
-[medium.com](https://medium.com/%40vishal09vns/weight-tying-in-language-models-when-and-why-llms-share-embeddings-7f5f5376c625?utm_source=chatgpt.com)
 
 ## **6.2 为什么可以共享？**
 
@@ -573,10 +553,6 @@ Logits:
 以上为示意数值，实际 Softmax 结果应归一化为总和 1。
 
 更准确地说，Softmax 会让所有概率相加等于 1。
-
-[GitHub - FareedKhan-dev/Understanding-Transformers-Step-by-Step-math-example: Understanding Large Language Transformer Architecture like a child](https://images.openai.com/static-rsc-4/GjoBBiXppkRxxRwl5UUnI9nUY1xG3dG_u01HxSEKLsC1thPPsOmi-P81mrvupmAd2zjQjHCsnH6vWngnmOwwCUCWK9CzbKCKYbhbGdej4N_f_FQSyviQbCTz4AB_qI4YiP6AkXkFDHKSiQT3Id1_aUNWjCmgLZipcALBy0R_mlQ?purpose=inline)
-
-[github.com](https://github.com/FareedKhan-dev/Understanding-Transformers-Step-by-Step-math-example?utm_source=chatgpt.com)
 
 ## **7.3 Softmax 的数值稳定性**
 
@@ -696,10 +672,6 @@ Temperature 用于调整概率分布的尖锐程度。
 \\[ P_i= Softmax\left(\frac{z_i}{T}\right) \\]
 
 其中 T 是温度参数。
-
-[Understanding OpenAI's Temperature Parameter | Colt Steele](https://images.openai.com/static-rsc-4/ocKOg_bGFAMbH1JzekF_VJGQ2XGiAGAtf0Ui4ciOIXGEdIkLsx8aLGDRQsZ_7HrTnu1Whra3TjBBHjtF5fCdJ778lfW3h98OFpYeeotthrtg4AJTqq2MA3VxrQYGxuqxzGxDqKLUxTcArrBDTe9LkauTNSzu0AS_Xl0__GJK-Gg?purpose=inline)
-
-[coltsteele.com](https://www.coltsteele.com/tips/understanding-openai-s-temperature-parameter?utm_source=chatgpt.com)
 
 | Temperature | 影响               |
 | ----------- | ---------------- |
@@ -906,10 +878,6 @@ def generate(    model,    input_ids,    max_new_tokens=50,    temperature=1.0):
 
 下一轮只需要计算新 Token 的 Query、Key、Value。
 
-[KV Caching in Autoregressive Transformers - FeynmanWiki](https://images.openai.com/static-rsc-4/WQwWpbZZdMkQshIElpsHZek1rkI2JlQpA4KwjcUJseoity3vBoztsrezdGK3PJUDGmLfMssQEvSZ1MHwicIkquT2k576DLFZeuWMfpecxgGdwRu9IEIJ8A-ZY_7-Rec-h1q1WuPWGyQN3GS48qrDX1PwQlvJ2U92O_IDLEcxLaY?purpose=inline)
-
-[feynmanwiki.com](https://www.feynmanwiki.com/library/kv-caching-pvo5?utm_source=chatgpt.com)
-
 例如：
 
 第一轮：
@@ -1114,10 +1082,6 @@ class DecoderModel:    def __init__(self, config):        self.embedding = Embed
 概率越低，损失越大。
 
 ## **13.2 训练完整流程**
-
-[Andrej Karpathy's microGPT Architecture — Complete Guide - DEV Community](https://images.openai.com/static-rsc-4/JWp9yD2gQBnc_qMXYagE-BaDbTR0TPET4y5QdBQvvtGnYx0Ti5SosAmMMgk2YYSvNxhhAcNo-asj-DZ-CooBVAoDQXXc84seF1CNGxndDx0MsvWtOF86wXCIpOtVjb94Az4TqlRQUJ3IyYEi2Z8D-AuYQYqATSYD1L2RKF1p-Nc?purpose=inline)
-
-[dev.to](https://dev.to/rsrini7/andrej-karpathys-microgpt-architecture-complete-guide-em8?utm_source=chatgpt.com)
 
 ```
 训练文本

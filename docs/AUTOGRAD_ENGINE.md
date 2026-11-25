@@ -393,10 +393,6 @@ let d = c + 4.0;
 
 这就是反向传播（Backpropagation）。
 
-[4.3.5 Chain Rule and Backpropagation Preview | AI Roads](https://images.openai.com/static-rsc-4/4e_WKEExjQATkEhQX-Yd326PQYg-0G3sZiiImiQj-iUvwFmbL14D_YYSMmA5HUo_rMDcclcX4PtFVmT4mgd_XLsQ7PaIkesfpFHOCNqaU9COlYPi_gNNy6hR4-1_hgyo9VYEj6J2IRJ6AAwHPYuvRTmcoITrK8TsBC4z0MQZ_I8?purpose=inline)
-
-[airoads.org](https://airoads.org/ch04-ai-math/ch03-calculus/04-chain-rule-backprop/?utm_source=chatgpt.com)
-
 **前向传播计算数值，反向传播计算梯度。**
 
 # **五、什么是 Reverse-mode Automatic Differentiation？**

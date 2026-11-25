@@ -96,7 +96,6 @@ Message Bus · State Store · Memory Store · Model Gateway
 
 一个任务可以在 Node A 上创建，在 Node B 上执行，在 Node C 上验证，最后由 Control Plane 整合结果。
 
-
 ![数据中心里的服务器机架](assets/images/runtime-datacenter-racks.jpg)
 
 _图：数据中心里的服务器机架。分布式 Agent 引擎要解决的调度、状态同步与故障恢复，和机房运维面对的是同一类工程问题。图片：Carl Lender，[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Datacenter_Server_Racks_%2822370909788%29.jpg)，[CC BY 2.0](https://creativecommons.org/licenses/by/2.0/)。_
@@ -106,7 +105,6 @@ _图：数据中心里的服务器机架。分布式 Agent 引擎要解决的调
 ![GateWay–Scheduler–Worker–State Store 的分工：调度器只做决策，Worker 只做执行，状态放在外部存储，三者可独立扩缩容](assets/diagrams/distributed-cluster-topology.svg)
 
 _图：GateWay–Scheduler–Worker–State Store 的分工：调度器只做决策，Worker 只做执行，状态放在外部存储，三者可独立扩缩容。_
-
 
 ## **2.1 什么是 Agent Cluster？**
 
@@ -938,7 +936,6 @@ class MemoryRecord:    id: str    namespace: str    content: str    source_agent
 ![租约超时与重调度](assets/diagrams/distributed-lease-reschedule.svg)
 
 _图：租约超时与重调度。没有租约，崩溃的 Worker 会永久占着任务；有了租约，失败可以被检测并被重新接管。_
-
 
 分布式系统无法假设节点永远正常。
 

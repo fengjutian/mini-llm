@@ -32,16 +32,11 @@
 
 因此，AI 系统需要一个独立的上下文管理模块：
 
-
-
 核心模块
 
 **Context Engine（上下文引擎）**
 
-
-
 它负责将分散的信息组织成适合当前任务、当前 Agent 和当前模型的一份上下文。
-
 
 ![图书馆书库：书架是存储，索书号是索引，读者沿过道行走完成检索](assets/images/knowledge-library-stacks.jpg)
 
@@ -202,7 +197,6 @@ Context 通常翻译为上下文。
 
 _图：Context Assembly 流水线：多路来源先打分去重，再按预算裁剪，最后组装成 Prompt——顺序本身会影响注意力。_
 
-
 Context Assembly 是上下文组装模块。
 
 它的工作是从不同的信息源收集数据，形成当前任务所需的上下文。
@@ -350,7 +344,6 @@ interface ContextItem {
 ![128k 窗口的预算分配](assets/diagrams/context-budget-allocation.svg)
 
 _图：128k 窗口的预算分配。总量固定，任何一类变多都意味着另一类被挤掉；Reserve 是给输出和工具返回预留的空间。_
-
 
 Context Window 是大模型一次推理能够处理的最大上下文长度。
 

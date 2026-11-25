@@ -149,10 +149,6 @@ Transformer 后续的大部分计算，都建立在这些矩阵之上。
 
 当两个向量方向相同时，点积较大；当两个向量正交时，点积为零；方向相反时，点积为负。
 
-[ベクトルの内積とコサインの関係｜澁谷直樹](https://images.openai.com/static-rsc-4/cp0nw76vrYB4SaAbk5T0KwChRScZZYniJBYtI_7GiLN9lmgAqhDl-t-sxAYof4zmKcwbyKiJ--nxDH9o8wGFeWcRV49zxXgjANonB3QFsP5v7l59Ci_F1iMTiSF4uA-uUUv-E_q7UL34zZH8umU9YOrMGA9hp_DuxmW7uUj2pNo?purpose=inline)
-
-[note.com](https://note.com/kikaben/n/n4a2124743027?utm_source=chatgpt.com)
-
 ### **点积与 Attention 的关系**
 
 Transformer 中，Attention 需要计算 Query 和 Key 的相似程度：
@@ -357,10 +353,6 @@ Linear 层并不意味着输出一定与输入成比例，而是通过一组可�
 
 从几何角度看，导数就是曲线在某一点的切线斜率。
 
-[Gilbert Strang’s Calculus: Big Picture on Derivatives – ∇ ickma.dev](https://images.openai.com/static-rsc-4/4CEhvjvlF6HJMZ-2ugoHl2Sz-YsojogmEzqmRr4D_oTXgAMGkYcm2cHC5mhgWT9tSEmRFTI5yGzBskv12bKOAmmEUljvmBjdjEf65myoZc1xbuvWynXaUoAPANaLWKkaPVW9DpEeuFFZSmxH49kFl7owSKN6jz6sCLAZfj9FUR8?purpose=inline)
-
-[ickma2311.github.io](https://ickma2311.github.io/Math/Calculus/big-picture-derivatives.html?utm_source=chatgpt.com)
-
 ### **导数为什么对 AI 重要？**
 
 因为模型需要知道：
@@ -457,10 +449,6 @@ Loss 是通过多个函数连续计算得到的。
 这就必须将梯度从最后一层逐步传递到前面的层。
 
 这就是反向传播（Backpropagation）。
-
-[42. Backpropagation: How Neural Networks Learn | by Kiran vutukuri | Medium](https://images.openai.com/static-rsc-4/j2QITLyW3cmpxR-XHSzGVg3qvlvljk8FS2aZ5l-JKsw8KznEHmkX7UCkgh5S7odeKffx9LES3SmtAS3QPSwVgkpKGW_3RCuoxjJchTtkW0r11HUjkkPuAm6YHF8bWew3852gfGdTgRWOKYhguyu0i_RbJgVGGjT7QzjXeFpw_KI?purpose=inline)
-
-[medium.com](https://medium.com/%40kiranvutukuri/42-backpropagation-how-neural-networks-learn-f4a4a1270dd5?utm_source=chatgpt.com)
 
 ## **2.6 反向传播的简单例子**
 
@@ -608,10 +596,6 @@ Softmax 公式：
 \\[ P\approx[0.665,0.245,0.090] \\]
 
 模型将原始分数转换成了概率。
-
-[RNNs | Why Positional embeddings Transformer Part-1 | by Asifrazartu | Medium](https://images.openai.com/static-rsc-4/5xRbRhnJTMXMDoXsE09B5Dl0TkGq9Ev0wEYyHFnlJEg1_14pIHHvgGGjCQoYyV4XtW7uqvV8I-UtM6Emu1XjjzLGjOronP1wcHq2QWYXHfonQUlVKmjGcViCFD5e-8-azi7f8x6J7tcW5EC6QLCoV6Y3Rn3lbwBYnQI98yb4Iug?purpose=inline)
-
-[medium.com](https://medium.com/%40asifrazartu/rnns-why-positional-embeddings-transformer-part-1-3c9c7939ea6d?utm_source=chatgpt.com)
 
 ### **为什么不能直接使用 Logits？**
 
@@ -865,10 +849,6 @@ AdamW 是 Transformer 训练中常用的优化器之一。
 
 学习率决定每一次参数更新的幅度。
 
-[Gradyan İniş (Gradient Descent): Makine Öğreniminde Optimizasyon | by Murat Kose | Devops & AI Türkiye☁️ 🐧 🐳 ☸️ | Medium](https://images.openai.com/static-rsc-4/TG4M38cMLQs_mEpv4uOO0264CtBaRP8WrYa0uuSapQBJ1Npjv2PndIlRCoHIwopxl_2kYgqsrSjSq2a5ORiYSfFk8vIC7SWEY5JwnBMIocfj8gl4zsAwqJynaE9qf6H0PRY09lihZ-bAEHeQPqCWBxbjeVf_06gLHUc6IaGOGG4?purpose=inline)
-
-[medium.com](https://medium.com/devopsturkiye/gradient-descent-gradyan-i%CC%87ni%C5%9F-57548540e0a4?utm_source=chatgpt.com)
-
 - 学习率太大：可能越过最优区域，甚至无法收敛。
 - 学习率太小：训练速度非常慢。
 - 学习率合适：能够逐步接近较好的参数区域。
@@ -897,10 +877,6 @@ AdamW 是 Transformer 训练中常用的优化器之一。
 \\[ x\rightarrow Linear_1\rightarrow ReLU\rightarrow Linear_2\rightarrow y \\]
 
 神经网络通过训练调整内部参数，使输出越来越接近目标结果。
-
-[High-dimensional aerodynamic data modeling using a machine learning method based on a convolutional neural network | Advances in Aerodynamics | Springer Nature Link](https://images.openai.com/static-rsc-4/Ne1cBl0rzI0rW7XHiimfiBX_7YYAKoUq3gXAyhS7UySoYbzfiMVLhQp6LjqwMRGG4Dkkoi_A5VbtputeBuSH2HkUdiUSDkemQZgrlOA14OXiyuirFCom3KRPYwy_F8XMgKZCatL43sWJyWmKAznc_b3TSNLxp7U8npbykpVXZzM?purpose=inline)
-
-[link.springer.com](https://link.springer.com/article/10.1186/s42774-022-00128-8?utm_source=chatgpt.com)
 
 ## **5.2 Linear 层**
 

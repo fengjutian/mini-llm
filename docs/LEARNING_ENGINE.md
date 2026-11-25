@@ -41,12 +41,6 @@ _图：机器人靠力传感器完成柔顺抛光：每一次接触都会产生�
 
 这就是本篇要研究的问题。
 
-[Verso la valutazione olistica dei LLM: integrare il feedback umano con le metriche tradizionali | HackerNoon](https://images.openai.com/static-rsc-4/QYLpTWbcGqOJqEMAuqWMgQhvEGK0BjXkKVDy9XzjBaIsnOxNIiLhRF3HxYl3rjzqhQ4AsFJZEFWIlslPKQYsN0WRjzozV8Fil75NmcUss9lkwKtmWkW9lz5yRSmcbWUsvN5gZHQrTbRKf0gIAgbBH953vjPBawqXK55_zwaHTM4?purpose=inline)
-
-[From Moon Landings to Medicine: How Deep Q-Learning is Shaping the Future of Healthcare](https://images.openai.com/static-rsc-4/YrW8hmj5_MiLgjG64Tm25r-tj9M7Jx863XuClXZXDlDxdZoaST_tKXpIeKRbl3XUe3C5dDZJwD3rmYVeZjGh7EdahRHXtoojx37jSF-axIresiHkxUw9PVUFM_cJBZgKOFZvYD74BHAfide1Fipfb54T6VejeH0QPDz1milt9kA?purpose=inline)
-
-[Catastrophic forgetting in Large Language Models | UnfoldAI](https://images.openai.com/static-rsc-4/v-otblpo97K_A8cJSldHJl_ngSmaDJr9QVyANE0NDOjHYOZyj5d0vJK2F6FQe-3k84YicYVk8fR2V5nesMBbenzAR5Da9YJJogrWm7JmnNgKI0YxLWTDotCb3_XTfHJVlesEajBB7NRi7x57bbDzA7RTp6SwNfvLQY4sPiop7h0?purpose=inline)
-
 11
 
 # **一、Feedback Learning：智能体如何获得反馈？**
@@ -229,10 +223,6 @@ Experience Replay 的核心思想就是：
 
 在深度强化学习中，常用 Replay Buffer 保存历史经验。
 
-[Medipixel, Inc](https://images.openai.com/static-rsc-4/y3GNZ7VSG3S_jQGTiSTJwp47tId382HdDe7yHrJuqId9-l70CO1H0jZtAz6onN4eM1sIF9cuh8TNnJWhv1QrWY4toAr0HxI1J-7nCGCRJ7B0Qgsz6SAcB44P4JoH_HcWXKJLvGbOccYHM2TrMQA6L4f4fXYPQJANVQ-8DhoNQ4k?purpose=inline)
-
-[medipixel.io](https://medipixel.io/products/blog/%EA%B0%95%ED%99%94%ED%95%99%EC%8A%B5%EC%9D%98-%ED%98%88%EA%B4%80-%EC%86%8D-%ED%83%90%ED%97%98-3-%EC%8B%A4%ED%97%98%ED%99%98%EA%B2%BD-%EA%B5%AC%EC%84%B1%EA%B3%BC-%EA%B0%95%ED%99%94%ED%95%99%EC%8A%B5-%EC%95%8C%EA%B3%A0%EB%A6%AC%EC%A6%98-%EC%86%8C%EA%B0%9C?utm_source=chatgpt.com)
-
 简单实现：
 
 ```
@@ -313,10 +303,6 @@ _图：状态、行动、奖励和下一状态构成强化学习交互闭环。_
 强化学习的核心思想是：
 
 智能体通过与环境交互，根据行动结果获得奖励，并逐渐学习更好的行为策略。
-
-[Building Heat Demand Prediction Based on Reinforcement Learning for Thermal Comfort Management | MDPI](https://images.openai.com/static-rsc-4/NWrnDDj9ff2hJlKwjjKs82yy_Gy_FrOVL9RVI4tX26pAomcF1Gno407EMAvM2YxyGvsVb9egefEsP80OkaGpi_FRppuXjNnMvrf5ADBrrXLE2wU3pGH9qjVLz-DBpjxsnRQiPlr0dymF_tjHb7EvsG-EDOit2mASeyDA3h44Dks?purpose=inline)
-
-[mdpi.com](https://www.mdpi.com/1996-1073/15/21/7856?utm_source=chatgpt.com)
 
 基本结构：
 
@@ -586,10 +572,6 @@ Reinforcement Learning from Human Feedback。
 即基于人类反馈的强化学习。
 
 经典流程可以分为四步。
-
-[GPT Models & Text Generation - Complete NLP Series Part 10 - Wasil Zafar](https://images.openai.com/static-rsc-4/uiP5ahc60dAulEuDUvd-QqrPM__g5G9g9rixXlIJABeO-MgvNv_aN7Bu9eH4eOIMbLAvfLq5eo3TGBW4H4C2GKqBzyuYjY16wYyvzuVY0p7RY4pIXFApt8DlgRiRI3FrRfyosbXCU0CIvXzvO39r3FwjdYmQeJnhq0HZz_eQOBY?purpose=inline)
-
-[wasilzafar.com](https://www.wasilzafar.com/pages/series/nlp/nlp-gpt-text-generation.html?utm_source=chatgpt.com)
 
 **第一步：预训练。**
 
@@ -1009,10 +991,6 @@ Self-Improvement 则要求系统真正改变后续行为，并且这种改变可
 否则，性能差异可能来自任务难度变化，而不是学习本身。
 
 ## **10.3 自我改进闭环**
-
-[Language & AGI Lab](https://images.openai.com/static-rsc-4/JKskJgEViWrj2vLz1OP5pFV9Yw2fR7q-UlLn7oHW53fnqyHvFwUMhK8E49Qr-76LI1sbMRtjNLI438ruKfsHgs-CZThIvMr6fpOufz3Ae8vOeSbUfEQDS_2qVKeIOyqMuvoPHxFRpm01RUmu4mLF0-6GI9Mt7ocyYkoSkBVTw9Y?purpose=inline)
-
-[langlab.yonsei.ac.kr](https://langlab.yonsei.ac.kr/join?utm_source=chatgpt.com)
 
 可以构建：
 

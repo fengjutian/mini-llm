@@ -44,20 +44,17 @@ _图：VLA 的目标不是描述画面，而是把视觉观测与语言指令转
 
 我们可以将 AI 模型的发展分为三个层次。
 
-
 **LLM：Large Language Model**
 
 输入文本，输出文本。
 
 主要解决语言理解、知识表达、推理和文本生成问题。
 
-
 **VLM：Vision-Language Model**
 
 输入图像和文本，输出文本或其他模型表示。
 
 让模型能够理解图像内容，并结合语言进行推理。
-
 
 **VLA：Vision-Language-Action Model**
 
@@ -119,9 +116,6 @@ _图：VLA 的目标不是描述画面，而是把视觉观测与语言指令转
 _图：摄像头、机器人状态和语言指令被编码为多模态 Token，策略模型输出动作块，经安全验证后交给执行器。_
 
 一个典型 VLA 系统可以拆分成六个主要部分。
-
-
-[voxel51.com](https://voxel51.com/blog/vla-models-data-centric-ai-robotics?utm_source=chatgpt.com)
 
 整体数据流：
 
@@ -189,9 +183,6 @@ Camera Input            |
 
 假设机器人摄像头拍摄到这样一个场景：
 
-
-[archyde.com](https://www.archyde.com/until-the-order-beyond-the-judgment-google-robot-ai-geminai-released/?utm_source=chatgpt.com)
-
 摄像头产生的是图像矩阵：
 
 \\[ I \in \mathbb{R}^{H\times W\times C} \\]
@@ -249,9 +240,6 @@ _图：输入图像按固定网格切成 Patch，经线性投影和位置编码�
 最终得到视觉 Token 序列：
 
 \\[ Z=[z_1,z_2,\ldots,z\_{196}] \\]
-
-
-[vizuaraai.github.io](https://vizuaraai.github.io/vizuara-ai-daily/vision-transformers-vit/?utm_source=chatgpt.com)
 
 这一步非常重要。
 
@@ -365,9 +353,6 @@ Language Encoder 可以把指令转换为向量：
 
 例如，机器人看到三个杯子：
 
-
-[tri.global](https://www.tri.global/research/transcrib3d-3d-referring-expression-resolution-through-large-language-models?utm_source=chatgpt.com)
-
 人类说：
 
 > 把红色杯子拿起来。
@@ -456,9 +441,6 @@ Action Tokens:
 - 哪个对象是当前任务目标？
 - 机器人目前处于什么状态？
 - 当前动作应该朝哪个方向变化？
-
-
-[slideshare.net](https://www.slideshare.net/slideshow/vision-language-actions-brief-history-pptx/284889819?utm_source=chatgpt.com)
 
 ## **2. Action Tokenization：动作如何变成 Token？**
 
@@ -818,9 +800,6 @@ action_chunk = [    [0.10, 0.20, 0.30],    [0.11, 0.21, 0.31],    [0.12, 0.22, 0
 
 机器人可以先执行其中一部分，然后重新观察环境并生成下一段动作。
 
-
-[isprout.com](https://isprout.com/posts/2026-01-15-lesson-4-action-chunking-with-transformers/?utm_source=chatgpt.com)
-
 ## **3. Receding Horizon：滚动执行**
 
 一个实用的策略是：
@@ -963,9 +942,6 @@ Diffusion Policy 的核心思想：
 
 推理时，从噪声动作开始，经过多次去噪，得到最终动作序列。
 
-
-[layernorm.dev](https://layernorm.dev/posts/robotics/1-diffusion-policy/index.html?utm_source=chatgpt.com)
-
 ## **3. Diffusion Policy 的优点**
 
 - 能够表示多种可能的动作轨迹。
@@ -1073,21 +1049,17 @@ Embodiment 指机器人本身的形态和身体结构。
 
 例如：
 
-
 **机械臂**
 
 主要关注关节、末端执行器和抓取
-
 
 **人形机器人**
 
 涉及双臂、双腿、平衡和全身协调
 
-
 **移动机器人**
 
 主要关注移动、定位和导航
-
 
 **不同夹爪**
 
@@ -1172,9 +1144,6 @@ Robot Foundation Model
 但在 mini-llm 中，VLA 不应该独立存在。
 
 它需要与其他 Engine 协作。
-
-
-[fusheng-ji.github.io](https://fusheng-ji.github.io/blog/posts/world-models-for-embodied-ai/?utm_source=chatgpt.com)
 
 可以这样划分职责：
 
@@ -1264,9 +1233,6 @@ Robotics Engine 需要检查：
 现在将理论转换为实际软件设计。
 
 ## **1. 推荐架构**
-
-
-[preprints.org](https://www.preprints.org/manuscript/202606.0400?utm_source=chatgpt.com)
 
 建议采用以下模块：
 
@@ -1662,23 +1628,20 @@ VLA Model Output
 
 相关资源：
 
-- [OpenVLA GitHub](https://github.com/openvla/openvla?utm_source=chatgpt.com)
-- [Octo GitHub](https://github.com/octo-models/octo?utm_source=chatgpt.com)
-- [Diffusion Policy GitHub](https://github.com/real-stanford/diffusion_policy?utm_source=chatgpt.com)
-- [LeRobot GitHub](https://github.com/huggingface/lerobot?utm_source=chatgpt.com)
-- [RoboMimic GitHub](https://github.com/ARISE-Initiative/robomimic?utm_source=chatgpt.com)
-- [MuJoCo](https://mujoco.org/?utm_source=chatgpt.com)
-- [NVIDIA Isaac Lab](https://developer.nvidia.com/isaac/lab?utm_source=chatgpt.com)
-- [ROS 2](https://www.ros.org/?utm_source=chatgpt.com)
+-
+-
+-
+-
+-
+-
+-
+-
 
 这些项目解决的问题并不完全相同：有的是预训练模型，有的是策略学习框架，有的是数据工具或仿真平台。不能简单地把它们当成可以互相替换的 VLA 模型。
 
 # **十八、最终总结：VLA 是让 AI 从认知走向行动的重要桥梁**
 
 回顾整个 VLA Engine，我们可以将其归纳为一条完整链路：
-
-
-[medium.com](https://medium.com/dsaid-govtech/the-realities-of-robot-deployment-what-it-takes-for-embodied-ai-to-succeed-172a8f36fb2c?utm_source=chatgpt.com)
 
 ```
           Human Instruction

@@ -47,10 +47,6 @@ Transformer 并不是一个单独的神经网络算子，而是一套由多个�
 
 先看一个简化的 Transformer 数据流。
 
-[AI-大语言模型LLM-Transformer架构3-嵌入和位置编码 - 技术栈](https://images.openai.com/static-rsc-4/3lGKCbNSdqF_ulQvyJZuBVFD6aywcQlxYW7GGyK7H1HKSWL6yaNuFJdWmpS8hxGc6lzBCj0kGuqUStuAISO22s7w8HTELqw0QbnppMoRMN2_7Kjavimbg6J4HzX0mpzd-wVuMq_qMTpyCGb99d6YpFx4rHsR6fvIGIBa9SD3vXQ?purpose=inline)
-
-[jishuzhan.net](https://jishuzhan.net/article/2016769043689684993?utm_source=chatgpt.com)
-
 假设我们输入一句话：
 
 ```
@@ -109,8 +105,6 @@ Transformer 的原始架构则采用 Encoder-Decoder 结构。
 [image](https://www.google.com/s2/favicons?domain=https://arxiv.org\&sz=32)
 
 arXiv+1
-
-
 
 # **三、Embedding：Token 如何变成向量？**
 
@@ -175,10 +169,6 @@ Embedding 本质上是一个可训练的矩阵。
 \\[ E \in \mathbb{R}^{10000 \times 128} \\]
 
 可以理解为：
-
-[Transformers Encoder Deep Dive - Part 1 - DEV Community](https://images.openai.com/static-rsc-4/fDhY0Rr1dSIcVX1he-vfSaUDDbiu1CjhQ9eZj4uld2sFgIS_y4EcDuBU3hFP1qGCBuOf4q0M_05HWKRXhMq_UZyLt1xyEugQ55OzdTN4CQJrSN4QcT5JnPP42jss_ki2SqGruee3AXWWRMpbN60AL24LrVtYJ1T6M3FeovvqyYo?purpose=inline)
-
-[dev.to](https://dev.to/iamyuvaraj/transformers-encoder-deep-dive-part-1-1g0?utm_source=chatgpt.com)
 
 每一行对应一个 Token 的向量。
 
@@ -366,10 +356,6 @@ Transformer Input
 
 因为不同维度使用不同频率。
 
-[🧭 Understanding Positional Embeddings: How Transformers Know Word Order Without Remembering It | by Himanshu Mittal | Medium](https://images.openai.com/static-rsc-4/eVZZe4Re-GRE4HYc1M21FWqhFhj2MPTqBmLChjJNM8iryaGG4AnWjACS4YwyB4E9jakG4xpfe4tzrh_ReVxeyc4ko0kswRceGVQl24c1gXAMid9fXMZWPdCCFXNntOE7J2i1NoHzgCdAu2V_BmAjX8ij-eoJD9UtgytjrgqMhW0?purpose=inline)
-
-[medium.com](https://medium.com/%40himanshum14/understanding-positional-embeddings-how-transformers-know-word-order-without-remembering-it-bc308cacbb11?utm_source=chatgpt.com)
-
 直观理解：
 
 - 某些维度变化较快，可以表达较小的位置变化。
@@ -419,10 +405,6 @@ x = token_embedding + position_embedding
 | ALiBi         | 通过注意力偏置引入距离信息 |
 
 其中 RoPE（Rotary Position Embedding）是现代 Decoder-only LLM 中非常重要的一种方案。
-
-[Build a DeepSeek Model (From Scratch)](https://images.openai.com/static-rsc-4/xOCPn2bZRzruCTLRBdOZx_fIMqRN_sjbglHoKa_EgWEpKAG6iyCdlA8r-3lLPUFLFSkLtle0QjrqGE_7S8omE82Henrsp0dhOynptzH7-Oftnkj8d6_wNEnJ7hzpaIWhgDFkWr3BLAsHJnCNvYt1R7rjitHTRhwNTD6ldkb0MSY?purpose=inline)
-
-[manning.com](https://www.manning.com/preview/build-a-deepseek-model-from-scratch/chapter-3?utm_source=chatgpt.com)
 
 RoPE 不再简单地将位置向量加到 Embedding 上，而是在 Attention 计算中对 Query 和 Key 进行位置相关的旋转变换。
 
@@ -520,10 +502,6 @@ Self-Attention 引入三个概念：
 输出：
 
 \\[ Q,K,V \in \mathbb{R}^{3 \times 128} \\]
-
-[What is Transformers in Deep Learning: A Guide 2026](https://images.openai.com/static-rsc-4/xO4fPox9ELTrYHdqurOpfbPtoHytHgEgmh5g8rkWfhUFfpkH9hgzv4zmeWEnGHh6LGEIkw3D6VcTWPZ3RiFzyq_UH16e76U4NB1nyfR4-DpZQ3PFTFCPpFlP8Y0-0F4Qn-xpySScL0lnZIl-65d5pOF-xekJxjxZSWjZYNm4X1o?purpose=inline)
-
-[deeplearningcourse.co.in](https://www.deeplearningcourse.co.in/blog/transformers-in-deep-learning?utm_source=chatgpt.com)
 
 注意：
 
@@ -631,10 +609,6 @@ scores = Q @ K.transpose(-2, -1)scores = scores / sqrt(head_dim)attention_weight
 
 它们加起来等于 1。
 
-[Self-Attention Explained Clearly: The Core Mechanism Behind LLM Intelligence | by Dhruv_sharma | Medium](https://images.openai.com/static-rsc-4/Dq7FP73A6ln2zVJXg3Uqrqnxm3_vJSd0ouXD7wuIZd0MBK_oZvnLykaACHfXF2JvgM_fWK_J42wZD-l7vSomvfy7-7bfd9vzT803dC5VSNmwKy-Y3PTAvaZuWYXGFcfNYKwCpbB3gG18jLoAvDZ8t0bv0Fsq_3tEmoSWTHl68Z0?purpose=inline)
-
-[medium.com](https://medium.com/%40dhruvsharmaaugust2003/self-attention-explained-clearly-the-core-mechanism-behind-llm-intelligence-50e04263e4ba?utm_source=chatgpt.com)
-
 这里需要特别注意：
 
 这些权重并不意味着模型在进行人类意义上的有意识关注。
@@ -710,10 +684,6 @@ Value：
 \\[ S'=S+M \\]
 
 经过 Softmax 后，未来位置对应的权重变成 0。
-
-[GPT-3 訓練 vs 推理：完整解析](https://images.openai.com/static-rsc-4/FHbQ4nL6-H9AY96VuUKJIqbNu1_RSBYIApY1-NbISjG_H3BZFXi9JFMCsz5rITVu3oRPdgYxb0ToTGewtgmMxpC4V0zI4JZsMQL5keVDohUAoWx8n96gNvrRTRErvlClyPReqIGeAMwdb_XZC7OCkoqa2VqGFg4ZJKB54Cax358?purpose=inline)
-
-[hsiehchenwei.github.io](https://hsiehchenwei.github.io/ai-paper-archaeology/articles/gpt3-training-vs-inference.html?utm_source=chatgpt.com)
 
 因此：
 
@@ -791,10 +761,6 @@ Multi-Head Attention 的方法是：
                        ▼
                   Final Output
 ```
-
-[Transformer (Attention Is All You Need) 구현하기 (1/3) | Reinforce NLP](https://images.openai.com/static-rsc-4/PbmGHsrVqSJ3L2q6hWm-LLq067vDL0xH_meEpsGV1RdZUQaAxKgM7exqbqKgHTz9mpMvcBMX5w0CtSqPROXf3vbjzQhIaqJOFCb3J9w7eZTdEE05EF-3gR7BeiCYzD6QeUn9BnrK3r72CApGrkMyc6XDL-_1hWKEpl0qQqozB7o?purpose=inline)
-
-[paul-hyun.github.io](https://paul-hyun.github.io/transformer-01/?utm_source=chatgpt.com)
 
 每个 Head 都拥有独立的：
 
@@ -1077,10 +1043,6 @@ mini-llm/
 
 现在可以将 mini-llm 的底层架构理解为一个完整的分层体系。
 
-[PyTorch](https://images.openai.com/static-rsc-4/GNJoLb3vs9vN3wVGOWTVhNT4eyjUCmT4Ap0EBVmT-r_N0HP6XqM9px8wk7OPM2oIGq8YgQfQh-tk200dTM763-8Y3JXCmsIffC4f20Qz1qWJahgiKt0ZVGxYJ8GAHmhAD8GpfUKaLFtu81OY5ZA8xZo4OiSrrkn4H-5oR0WWmCk?purpose=inline)
-
-[se.ewi.tudelft.nl](https://se.ewi.tudelft.nl/desosa2019/chapters/pytorch/?utm_source=chatgpt.com)
-
 | Engine                | 解决的问题     | 核心能力                         |
 | --------------------- | --------- | ---------------------------- |
 | Tensor Engine         | 如何进行数学计算？ | Tensor、Shape、Stride、MatMul   |
@@ -1201,11 +1163,11 @@ Self-Attention 让不同 Token 交换上下文信息。
 
 ## **十三、参考资料**
 
-1. Vaswani et al. (2017)：[Attention Is All You Need](https://arxiv.org/abs/1706.03762?utm_source=chatgpt.com) —— Transformer 原始论文。
-2. Harvard NLP：[The Annotated Transformer](https://nlp.seas.harvard.edu/annotated-transformer/?utm_source=chatgpt.com) —— Transformer 逐行实现与数学解析。
-3. Jay Alammar：[The Illustrated Transformer](https://jalammar.github.io/illustrated-transformer/?utm_source=chatgpt.com) —— 图解 Transformer。
-4. Stanford CS224W：[Transformer Lecture](https://snap.stanford.edu/class/cs224w-2025/slides/03-GNN1.pdf?utm_source=chatgpt.com) —— Transformer 结构与注意力机制。
-5. Dive into Deep Learning：[Transformer](https://s3-us-west-2.amazonaws.com/classic.d2l.ai/chapter_attention-mechanisms/transformer.html?utm_source=chatgpt.com) —— 深度学习中的 Transformer 实现。
+1. Vaswani et al. (2017)： —— Transformer 原始论文。
+2. Harvard NLP： —— Transformer 逐行实现与数学解析。
+3. Jay Alammar： —— 图解 Transformer。
+4. Stanford CS224W： —— Transformer 结构与注意力机制。
+5. Dive into Deep Learning： —— 深度学习中的 Transformer 实现。
 
 ## **十四、mini-llm 系列下一篇建议**
 

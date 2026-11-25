@@ -204,8 +204,6 @@ Linear 也经常被称为全连接层（Fully Connected Layer）。
 
 \\[ y=xW^T+b \\]
 
-[rcalix1.github.io](https://rcalix1.github.io/DeepLearningAlgorithms/SecondEdition/chapter4_Reg_MLP_DL/?utm_source=chatgpt.com)
-
 这里有一个重要概念：
 
 **一个 Linear 层实际上包含多个神经元，每个输出神经元都有一组独立的权重和一个偏置。**
@@ -336,15 +334,11 @@ ReLU 的导数：
 
 ### **4.2 常见激活函数**
 
-[FFN Activation Functions: ReLU, GELU, and SiLU for Transformer Models - Interactive | Michael Brenndoerfer | Michael Brenndoerfer](https://images.openai.com/static-rsc-4/Q9_-9iN4PdpYC-JpW04yBhCXo1NxVgCSnppreTaLnwNlvPr4ASa_sNGuTuvaaADqw2qJG8Vm6t77HL38n20-dbqGLvhm_U_e7iO0iZ-ZifGpdq3gdCXGXgoFW2PVgXnzkiipTy8ItbTmmAAE76cWzuqTLlo2Aeh9IEkNRpHOEMM?purpose=inline)
-
 **ReLU**
 
 \\[ f(x)=\max(0,x) \\]
 
 简单、高效，常见于传统 MLP。
-
-[FFN Activation Functions: ReLU, GELU, and SiLU for Transformer Models - Interactive | Michael Brenndoerfer | Michael Brenndoerfer](https://images.openai.com/static-rsc-4/9D2SnXG1kw5H1jEbAwXuz5XHH3eUhQfrJe2LB9YJXsLd4hXARWHhfKNcWZtETthxQVS_-D8DkKaE_OTkqQAg5TnKfRXeWn829HCX7IYVEWGV-KoDc5UqmMKp6NYN634coknXvHRVxVeT5I557bsrSRPqpwufHTREfP5frrzb7qA?purpose=inline)
 
 **GELU**
 
@@ -352,15 +346,11 @@ ReLU 的导数：
 
 平滑地控制输入，广泛用于 Transformer。
 
-[SiLU — PyTorch main documentation](https://images.openai.com/static-rsc-4/4XtCmZxOZNJHogk4c1EETjN7x0I301KuFwbd3YPDbCy2iK6R0gvP8a7QH8fm6mtmjfkpZYmmyss4hMx7XyECEPxskCEobCWmVwU4m94DrgakHE4q9_7lf5xLZn2phwbDiUDEuzlIUiCJM8R_GpgDpRp-_-PJs8vS_O5RExX9AYg?purpose=inline)
-
 **SiLU / Swish**
 
 \\[ SiLU(x)=x\sigma(x) \\]
 
 常见于现代神经网络和部分 LLM 架构。
-
-[Logistic Regression – Study Machine Learning](https://images.openai.com/static-rsc-4/SnA-TIb-5e9Vuw9ZSPBJsjSbRywpfvfBZJYaP8TZRjKS5Kfq7JO3fIhHwGXzeOS-xtfEZwcgMgKypCBpjIm8Y5r8xL5IpHOFKGyWyU_taoEpEG_fP1h5gA2LVx9_8WrmlHP59yWeA194gJrC6ItyUd-I-BpkwD_KteP5CO0CS9E?purpose=inline)
 
 **Sigmoid**
 
@@ -404,10 +394,6 @@ MLP，全称 Multi-Layer Perceptron，即多层感知机。
 例如：
 
 \\[ Input \rightarrow Linear \rightarrow ReLU \rightarrow Linear \rightarrow ReLU \rightarrow Linear \rightarrow Output \\]
-
-[When One Layer Isn’t Enough: Building Multi-Layer Perceptrons from Scratch | Deep Learning 3 | by Bit_Picker | Everyday AI | Jan, 2026 | Medium](https://images.openai.com/static-rsc-4/ph6r-Oj_Euqo97wMecK6vAa5zwJbAXbBWST0upvFlpu2g1vhIfCsXab0U1mzmlNenK61zHD72PbAwB_TAreeQYhhBr2dFKAFUL4myRSwIlGYs4mSypABvjAsVJmpE21FTnn1mibLvhu3cBHtPQxTlKKeCYauUdzlHlxLHrWIB-g?purpose=inline)
-
-[medium.com](https://medium.com/everyday-ai/when-one-layer-isnt-enough-building-multi-layer-perceptrons-from-scratch-deep-learning-3-35a8487e8954?utm_source=chatgpt.com)
 
 ### **5.1 MLP 的数学表达**
 
@@ -1177,10 +1163,6 @@ Transformer 在此基础上增加了 Attention：
 MLP 则负责对每个 Token 的隐藏状态进行特征变换。
 
 一个简化的 Transformer Block：
-
-[Transformers: Attention is all you need — Layer Normalization | by Shravan Kumar | Medium](https://images.openai.com/static-rsc-4/ucdlLSLPR43uzQ-JcfFlaneEdD9AzCwJ6Smn7m7XTFfn2b_YrIwYlNRn4cIdHeWVGLPhLOGq7KMjKA69d9iFtkltHxzlw9u94Drgx_QyLiHiIaMrMtkYC94laJN7Iqao6MFgs_yLjZgWfq8SFBTHEInk70l8LK1fjWYxKsFspo0?purpose=inline)
-
-[medium.com](https://medium.com/%40shravankoninti/transformers-attention-is-all-you-need-layer-normalization-1435248866d6?utm_source=chatgpt.com)
 
 它包含：
 

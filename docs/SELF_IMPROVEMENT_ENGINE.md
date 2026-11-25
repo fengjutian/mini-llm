@@ -1,6 +1,5 @@
 # **《mini-llm Self-Improvement Engine 深度解析：从 Experience Learning、Self-Reflection 到 Policy Optimization、Meta-Learning 与 Autonomous Improvement》**
 
-
 ![实验室中的机械臂：每一次成功或失败的抓取都会留下可回放的轨迹](assets/images/robot-arm-lab-component.jpg)
 
 _图：实验室中的机械臂：每一次成功或失败的抓取都会留下可回放的轨迹。自我改进的前提，是把这些轨迹正确归因。图片：Nenad Stojković，[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Robot_arm_works_on_a_small_component_in_a_lab_setting.jpg)，[CC BY 2.0](https://creativecommons.org/licenses/by/2.0/)。_
@@ -10,7 +9,6 @@ _图：实验室中的机械臂：每一次成功或失败的抓取都会留下�
 ![自我改进闭环：执行 → 评估 → 信用分配 → 策略更新，再回到执行](assets/diagrams/self-improvement-loop.svg)
 
 _图：自我改进闭环：执行 → 评估 → 信用分配 → 策略更新，再回到执行。没有信用分配，改进就变成“碰巧有效”的迷信。_
-
 
 前面我们已经讨论了 mini-llm 的多个核心 Engine：
 
@@ -670,7 +668,6 @@ Agent 系统也可以采用更轻量的 Meta-Learning 思路：
 ![灾难性遗忘](assets/diagrams/forgetting-curve.svg)
 
 _图：灾难性遗忘。没有回放或约束时，旧任务准确率随新任务学习持续下降；带回放/正则则能保住旧能力。_
-
 
 假设一个模型已经掌握了大量 JavaScript 知识。
 
