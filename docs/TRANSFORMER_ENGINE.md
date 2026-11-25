@@ -61,38 +61,9 @@ Transformer 并不是一个单独的神经网络算子，而是一套由多个�
 
 随后进入 Transformer：
 
-```
-文本
-  │
-  ▼
-Tokenizer
-  │
-  ▼
-Token IDs
-  │
-  ▼
-Embedding
-  │
-  ▼
-Positional Encoding
-  │
-  ▼
-Transformer Block
-  │
-  ├── Self-Attention
-  │
-  ├── Add & Norm
-  │
-  ├── Feed Forward Network
-  │
-  └── Add & Norm
-  │
-  ▼
-下一层 Transformer Block
-  │
-  ▼
-最终隐藏状态
-```
+![Transformer Engine 的完整流水线：Tokenizer → Embedding → 位置编码 → N 个 Block](assets/diagrams/transformer-engine-pipeline.svg)
+
+_图：Transformer Engine 的完整流水线：Tokenizer → Embedding → 位置编码 → N 个 Block。_
 
 注意：
 
@@ -456,17 +427,9 @@ Transformer 使用 Self-Attention，让一个 Token 能够直接计算与其他 
 
 例如：
 
-```
-小明 ─────┐
-          │
-把 ───────┤
-          │
-苹果 ─────┼── Attention
-          │
-桌子 ─────┤
-          │
-它 ───────┘
-```
+![Self-Attention 让每个 Token 都能直接看到其他 Token，而不是逐词传递](assets/diagrams/transformer-attention-links.svg)
+
+_图：Self-Attention 让每个 Token 都能直接看到其他 Token，而不是逐词传递。_
 
 每个 Token 都可以根据其他 Token 的信息更新自己的表示。
 
@@ -742,30 +705,9 @@ Multi-Head Attention 的方法是：
 
 例如：
 
-```
-                    Input X
-                       │
-          ┌────────────┼────────────┐
-          │            │            │
-          ▼            ▼            ▼
-       Head 1       Head 2       Head 3
-          │            │            │
-          ▼            ▼            ▼
-      Attention    Attention    Attention
-          │            │            │
-          ▼            ▼            ▼
-        Out 1        Out 2        Out 3
-          │            │            │
-          └────────────┼────────────┘
-                       │
-                    Concat
-                       │
-                       ▼
-                 Linear Projection
-                       │
-                       ▼
-                  Final Output
-```
+![Multi-Head 把同一份输入并行送入多个 Head，再拼接后线性投影](assets/diagrams/transformer-multi-head.svg)
+
+_图：Multi-Head 把同一份输入并行送入多个 Head，再拼接后线性投影。_
 
 每个 Head 都拥有独立的：
 
@@ -1037,21 +979,9 @@ mini-llm/
 
 例如：
 
-```
-Multi-Head Attention
-        │
-        ├── MatMul
-        ├── Transpose
-        ├── Softmax
-        ├── Reshape
-        └── Linear
-                │
-                ▼
-           Tensor Engine
-                │
-                ▼
-           Autograd Engine
-```
+![Multi-Head Attention 由 MatMul、Transpose、Softmax 等算子组成，最终落在 Tensor Engine 与 Autograd Engine 上](assets/diagrams/transformer-engine-dependencies.svg)
+
+_图：Multi-Head Attention 由 MatMul、Transpose、Softmax 等算子组成，最终落在 Tensor Engine 与 Autograd Engine 上。_
 
 这就是为什么我们前面必须先理解 Tensor、Autograd 和 Neural Network。
 

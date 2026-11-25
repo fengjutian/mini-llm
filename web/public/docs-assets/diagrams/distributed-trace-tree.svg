@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="650" viewBox="0 0 1400 650" role="img" aria-labelledby="title desc">
+  <title id="title">跨节点的 Trace 树</title><desc id="desc">mini-llm 技术机制图</desc>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="currentColor"/></marker></defs>
+  <style>:root{color-scheme:light dark}.bg{fill:#f7f4ed}.title{fill:#172126;font:700 30px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.kicker{fill:#e45d32;font:700 16px ui-monospace,Consolas,monospace;letter-spacing:2px}.box{fill:#fffdf8;stroke:#c4bdb1;stroke-width:2}.box.hot{fill:#fff0e8;stroke:#e45d32}.box.cool{fill:#eaf3f7;stroke:#3178a5}.box.good{fill:#eaf4ec;stroke:#4f8b62}.label{fill:#172126;font:650 18px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.small{fill:#69777d;font:500 15px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.tiny{fill:#69777d;font:500 13px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.edge{color:#69777d;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.accent-edge{color:#e45d32;fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.axis{fill:none;stroke:#69777d;stroke-width:2}.grid{stroke:#c4bdb1;stroke-width:1;opacity:.45}.dot{stroke:#fffdf8;stroke-width:3}.area{opacity:.14}@media(prefers-color-scheme:dark){.bg{fill:#101416}.title,.label{fill:#edf2f3}.kicker{fill:#ef855d}.box{fill:#182024;stroke:#526168}.box.hot{fill:#32211c;stroke:#e17750}.box.cool{fill:#172934;stroke:#4d91bc}.box.good{fill:#192b20;stroke:#65a779}.small{fill:#a8b4b9}.tiny{fill:#a8b4b9}.grid{stroke:#3c484e}.dot{stroke:#101416}}</style>
+  <rect class="bg" width="1400" height="650" rx="24"/>
+  <text class="kicker" x="64" y="58">MINI-LLM · MECHANISM</text>
+  <text class="title" x="64" y="105">跨节点的 Trace 树</text>
+<rect class="box hot" x="70" y="300" width="230" height="56" rx="16"/>
+<text class="label" x="185.0" y="333.95" text-anchor="middle" font-size="17">task-1001</text>
+<path class="edge" d="M300 328 L380 152" marker-end="url(#arrow)"/>
+<rect class="box cool" x="380" y="130" width="430" height="44" rx="16"/>
+<text class="label" x="595.0" y="156.55" text-anchor="middle" font-size="13">manager.run</text>
+<path class="edge" d="M300 328 L380 206" marker-end="url(#arrow)"/>
+<rect class="box cool" x="380" y="184" width="430" height="44" rx="16"/>
+<text class="label" x="595.0" y="210.55" text-anchor="middle" font-size="13">scheduler.assign</text>
+<path class="edge" d="M300 328 L500 260" marker-end="url(#arrow)"/>
+<rect class="box good" x="500" y="238" width="430" height="44" rx="16"/>
+<text class="label" x="715.0" y="264.55" text-anchor="middle" font-size="13">node-a.frontend.execute</text>
+<path class="edge" d="M300 328 L620 314" marker-end="url(#arrow)"/>
+<rect class="box" x="620" y="292" width="430" height="44" rx="16"/>
+<text class="label" x="835.0" y="318.55" text-anchor="middle" font-size="13">model.generate</text>
+<path class="edge" d="M300 328 L620 368" marker-end="url(#arrow)"/>
+<rect class="box" x="620" y="346" width="430" height="44" rx="16"/>
+<text class="label" x="835.0" y="372.55" text-anchor="middle" font-size="13">tool.write_file</text>
+<path class="edge" d="M300 328 L500 422" marker-end="url(#arrow)"/>
+<rect class="box good" x="500" y="400" width="430" height="44" rx="16"/>
+<text class="label" x="715.0" y="426.55" text-anchor="middle" font-size="13">node-b.backend.execute</text>
+<path class="edge" d="M300 328 L620 476" marker-end="url(#arrow)"/>
+<rect class="box" x="620" y="454" width="430" height="44" rx="16"/>
+<text class="label" x="835.0" y="480.55" text-anchor="middle" font-size="13">tool.run_command</text>
+<path class="edge" d="M300 328 L500 530" marker-end="url(#arrow)"/>
+<rect class="box good" x="500" y="508" width="430" height="44" rx="16"/>
+<text class="label" x="715.0" y="534.55" text-anchor="middle" font-size="13">node-c.qa.execute</text>
+<path class="edge" d="M300 328 L620 584" marker-end="url(#arrow)"/>
+<rect class="box" x="620" y="562" width="430" height="44" rx="16"/>
+<text class="label" x="835.0" y="588.55" text-anchor="middle" font-size="13">test.run</text>
+<text class="tiny" x="380" y="610" text-anchor="start">缩进 = 父子关系；同一 trace_id 下的 span 可以分布在不同的机器上。</text>
+</svg>

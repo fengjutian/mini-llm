@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="650" viewBox="0 0 1400 650" role="img" aria-labelledby="title desc">
+  <title id="title">一个 Block 里的两条残差</title><desc id="desc">mini-llm 技术机制图</desc>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="currentColor"/></marker></defs>
+  <style>:root{color-scheme:light dark}.bg{fill:#f7f4ed}.title{fill:#172126;font:700 30px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.kicker{fill:#e45d32;font:700 16px ui-monospace,Consolas,monospace;letter-spacing:2px}.box{fill:#fffdf8;stroke:#c4bdb1;stroke-width:2}.box.hot{fill:#fff0e8;stroke:#e45d32}.box.cool{fill:#eaf3f7;stroke:#3178a5}.box.good{fill:#eaf4ec;stroke:#4f8b62}.label{fill:#172126;font:650 18px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.small{fill:#69777d;font:500 15px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.tiny{fill:#69777d;font:500 13px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.edge{color:#69777d;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.accent-edge{color:#e45d32;fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.axis{fill:none;stroke:#69777d;stroke-width:2}.grid{stroke:#c4bdb1;stroke-width:1;opacity:.45}.dot{stroke:#fffdf8;stroke-width:3}.area{opacity:.14}@media(prefers-color-scheme:dark){.bg{fill:#101416}.title,.label{fill:#edf2f3}.kicker{fill:#ef855d}.box{fill:#182024;stroke:#526168}.box.hot{fill:#32211c;stroke:#e17750}.box.cool{fill:#172934;stroke:#4d91bc}.box.good{fill:#192b20;stroke:#65a779}.small{fill:#a8b4b9}.tiny{fill:#a8b4b9}.grid{stroke:#3c484e}.dot{stroke:#101416}}</style>
+  <rect class="bg" width="1400" height="650" rx="24"/>
+  <text class="kicker" x="64" y="58">MINI-LLM · MECHANISM</text>
+  <text class="title" x="64" y="105">一个 Block 里的两条残差</text>
+<rect class="box cool" x="280" y="100" width="240" height="50" rx="16"/>
+<text class="label" x="400.0" y="130.6" text-anchor="middle" font-size="16">输入 X</text>
+<rect class="box hot" x="280" y="172" width="240" height="50" rx="16"/>
+<text class="label" x="400.0" y="202.6" text-anchor="middle" font-size="16">Attention</text>
+<rect class="box good" x="280" y="264" width="240" height="50" rx="16"/>
+<text class="label" x="400.0" y="294.6" text-anchor="middle" font-size="16">Add</text>
+<rect class="box hot" x="280" y="336" width="240" height="50" rx="16"/>
+<text class="label" x="400.0" y="366.6" text-anchor="middle" font-size="16">FFN</text>
+<rect class="box good" x="280" y="428" width="240" height="50" rx="16"/>
+<text class="label" x="400.0" y="458.6" text-anchor="middle" font-size="16">Add</text>
+<rect class="box cool" x="280" y="500" width="240" height="50" rx="16"/>
+<text class="label" x="400.0" y="530.6" text-anchor="middle" font-size="16">输出 Z</text>
+<path class="edge" d="M400.0 150 L400.0 172" marker-end="url(#arrow)"/>
+<path class="edge" d="M400.0 222 L400.0 264" marker-end="url(#arrow)"/>
+<path class="edge" d="M400.0 314 L400.0 336" marker-end="url(#arrow)"/>
+<path class="edge" d="M400.0 386 L400.0 428" marker-end="url(#arrow)"/>
+<path class="edge" d="M400.0 478 L400.0 500" marker-end="url(#arrow)"/>
+<line class="accent-edge" x1="520" y1="125.0" x2="680" y2="125.0"/>
+<line class="accent-edge" x1="680" y1="125.0" x2="680" y2="289.0"/>
+<path class="accent-edge" d="M680 289.0 L520 289.0" marker-end="url(#arrow)"/>
+<line class="accent-edge" x1="520" y1="289.0" x2="740" y2="289.0"/>
+<line class="accent-edge" x1="740" y1="289.0" x2="740" y2="453.0"/>
+<path class="accent-edge" d="M740 453.0 L520 453.0" marker-end="url(#arrow)"/>
+<text class="tiny" x="700" y="202" text-anchor="start">Y = X + Attn(X)</text>
+<text class="tiny" x="760" y="366" text-anchor="start">Z = Y + FFN(Y)</text>
+<text class="tiny" x="70" y="600" text-anchor="start">两条残差分别绕过 Attention 和 FFN；每个子层都只学“增量”。</text>
+</svg>

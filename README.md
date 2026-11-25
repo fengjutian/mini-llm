@@ -608,7 +608,10 @@ and re-exports.
   `TensorValue` on `Cpu` and `Candle(Cpu)`. A 60-step **device FFN block**
   (embedding → LayerNorm → SwiGLU → residual → LayerNorm → head → cross-entropy)
   trains with `DeviceAdamW`; the test asserts the loss falls below 80% of its
-  starting value and that every parameter stays device-resident.
+  starting value and that every parameter stays device-resident. **Fused
+  attention** (`attention_forward` / `attention_backward`) supports GQA and causal
+  masking on host storage and is verified with finite differences; the Candle 4D
+  implementation is the next step (it currently returns a clear error).
 - Future backends implement `Backend` and reuse the same parity harness.
 
 Autograd and the model still operate on host `Tensor` values; making the training

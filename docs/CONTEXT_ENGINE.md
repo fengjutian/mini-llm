@@ -1225,35 +1225,9 @@ Task:
 
 Context Engine 可以根据模型执行结果调整上下文。
 
-```
-Build Context
-     │
-     ▼
-Call LLM
-     │
-     ▼
-Evaluate Result
-     │
-     ├── Information Sufficient
-     │       │
-     │       ▼
-     │    Continue
-     │
-     ├── Missing Information
-     │       │
-     │       ▼
-     │    Retrieve More
-     │
-     ├── Context Too Large
-     │       │
-     │       ▼
-     │    Compress Context
-     │
-     └── Conflicting Evidence
-             │
-             ▼
-         Verify Sources
-```
+![上下文不足时的四条分支：继续、补检索、压缩、验证来源](assets/diagrams/context-feedback-loop.svg)
+
+_图：上下文不足时的四条分支：继续、补检索、压缩、验证来源。_
 
 但要注意：
 

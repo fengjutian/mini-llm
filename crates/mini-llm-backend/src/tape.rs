@@ -446,3 +446,43 @@ impl DeviceValue {
         self.mul(&sigmoid)
     }
 }
+
+impl DeviceValue {
+    /// Scaled dot-product attention over `[batch * seq, heads * head_dim]`.
+    #[allow(clippy::too_many_arguments)]
+    pub fn attention(
+        &self,
+        key: &DeviceValue,
+        value: &DeviceValue,
+        batch: usize,
+        seq: usize,
+        heads: usize,
+        kv_heads: usize,
+        causal: bool,
+    ) -> Result<DeviceValue, BackendError> {
+        let data = self.data().attention_forward(
+            key.data(),
+            value.data(),
+            batch,
+            seq,
+            heads,
+            kv_heads,
+            causal,
+        )?;
+        if !self.requires_grad() && !key.requires_grad() && !value.requires_grad() {
+            return Ok(DeviceValue::new(data, false));
+        }
+        let q = self.data().clone();
+        let k = key.data().clone();
+        let v = value.data().clone();
+        Ok(DeviceValue::with_backward(
+            data,
+            vec![self.clone(), key.clone(), value.clone()],
+            Box::new(move |grad| {
+                let (grad_q, grad_k, grad_v) =
+                    q.attention_backward(&k, &v, grad, batch, seq, heads, kv_heads, causal)?;
+                Ok(vec![grad_q, grad_k, grad_v])
+            }),
+        ))
+    }
+}

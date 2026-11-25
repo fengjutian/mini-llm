@@ -1221,57 +1221,9 @@ Robotics Engine 需要检查：
 
 建议采用以下模块：
 
-```
-VLA Engine
-│
-├── Input
-│   ├── Camera Input
-│   ├── Language Input
-│   ├── Robot State Input
-│   └── Sensor Synchronization
-│
-├── Encoders
-│   ├── Vision Encoder
-│   ├── Language Encoder
-│   └── State Encoder
-│
-├── Multimodal
-│   ├── Tokenizer
-│   ├── Feature Projection
-│   ├── Modality Fusion
-│   └── Positional Encoding
-│
-├── Model
-│   ├── VLA Transformer
-│   ├── Action Head
-│   └── Diffusion Policy
-│
-├── Action
-│   ├── Action Representation
-│   ├── Action Chunking
-│   ├── Action Decoder
-│   └── Action Validation
-│
-├── Runtime
-│   ├── Inference Scheduler
-│   ├── Execution Coordinator
-│   ├── Feedback Handler
-│   └── Replanning
-│
-├── Safety
-│   ├── Joint Limit Checker
-│   ├── Velocity Limit Checker
-│   ├── Collision Checker
-│   ├── Workspace Checker
-│   └── Emergency Stop Interface
-│
-└── Evaluation
-    ├── Task Success Rate
-    ├── Action Quality
-    ├── Inference Latency
-    ├── Trajectory Metrics
-    └── Failure Analysis
-```
+![VLA Engine 的八个组件层：输入、编码器、多模态、模型、动作、运行时、安全与评估](assets/diagrams/vla-system-architecture.svg)
+
+_图：VLA Engine 的八个组件层：输入、编码器、多模态、模型、动作、运行时、安全与评估。_
 
 ## **2. 推荐工程目录**
 

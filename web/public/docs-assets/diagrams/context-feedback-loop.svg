@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="650" viewBox="0 0 1400 650" role="img" aria-labelledby="title desc">
+  <title id="title">上下文不足时，往哪里走</title><desc id="desc">mini-llm 技术机制图</desc>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="currentColor"/></marker></defs>
+  <style>:root{color-scheme:light dark}.bg{fill:#f7f4ed}.title{fill:#172126;font:700 30px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.kicker{fill:#e45d32;font:700 16px ui-monospace,Consolas,monospace;letter-spacing:2px}.box{fill:#fffdf8;stroke:#c4bdb1;stroke-width:2}.box.hot{fill:#fff0e8;stroke:#e45d32}.box.cool{fill:#eaf3f7;stroke:#3178a5}.box.good{fill:#eaf4ec;stroke:#4f8b62}.label{fill:#172126;font:650 18px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.small{fill:#69777d;font:500 15px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.tiny{fill:#69777d;font:500 13px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.edge{color:#69777d;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.accent-edge{color:#e45d32;fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.axis{fill:none;stroke:#69777d;stroke-width:2}.grid{stroke:#c4bdb1;stroke-width:1;opacity:.45}.dot{stroke:#fffdf8;stroke-width:3}.area{opacity:.14}@media(prefers-color-scheme:dark){.bg{fill:#101416}.title,.label{fill:#edf2f3}.kicker{fill:#ef855d}.box{fill:#182024;stroke:#526168}.box.hot{fill:#32211c;stroke:#e17750}.box.cool{fill:#172934;stroke:#4d91bc}.box.good{fill:#192b20;stroke:#65a779}.small{fill:#a8b4b9}.tiny{fill:#a8b4b9}.grid{stroke:#3c484e}.dot{stroke:#101416}}</style>
+  <rect class="bg" width="1400" height="650" rx="24"/>
+  <text class="kicker" x="64" y="58">MINI-LLM · MECHANISM</text>
+  <text class="title" x="64" y="105">上下文不足时，往哪里走</text>
+<rect class="box cool" x="560" y="120" width="260" height="56" rx="16"/>
+<text class="label" x="690.0" y="153.95" text-anchor="middle" font-size="17">Build Context</text>
+<rect class="box cool" x="560" y="206" width="260" height="56" rx="16"/>
+<text class="label" x="690.0" y="239.95" text-anchor="middle" font-size="17">Call LLM</text>
+<rect class="box hot" x="560" y="292" width="260" height="56" rx="16"/>
+<text class="label" x="690.0" y="325.95" text-anchor="middle" font-size="17">Evaluate Result</text>
+<path class="edge" d="M690 176 L690 206" marker-end="url(#arrow)"/>
+<path class="edge" d="M690 262 L690 292" marker-end="url(#arrow)"/>
+<path class="edge" d="M690 348 L60 430" marker-end="url(#arrow)"/>
+<rect class="box good" x="60" y="430" width="280" height="62" rx="16"/>
+<text class="label" x="200.0" y="465.9" text-anchor="middle" font-size="14">信息足够 → Continue</text>
+<path class="edge" d="M690 348 L400 430" marker-end="url(#arrow)"/>
+<rect class="box cool" x="400" y="430" width="280" height="62" rx="16"/>
+<text class="label" x="540.0" y="465.9" text-anchor="middle" font-size="14">缺信息 → Retrieve More</text>
+<path class="edge" d="M690 348 L740 430" marker-end="url(#arrow)"/>
+<rect class="box cool" x="740" y="430" width="280" height="62" rx="16"/>
+<text class="label" x="880.0" y="465.9" text-anchor="middle" font-size="14">上下文过大 → Compress</text>
+<path class="edge" d="M690 348 L1080 430" marker-end="url(#arrow)"/>
+<rect class="box hot" x="1080" y="430" width="280" height="62" rx="16"/>
+<text class="label" x="1220.0" y="465.9" text-anchor="middle" font-size="14">证据冲突 → Verify Sources</text>
+<text class="tiny" x="60" y="590" text-anchor="start">四类失败对应四种动作；不分类型地“再试一次”通常只是浪费预算。</text>
+</svg>

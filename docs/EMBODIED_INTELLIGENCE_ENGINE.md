@@ -640,29 +640,9 @@ Active Perception 则进一步提出：
 
 对于机器人而言，它可能包括：
 
-```
-Robot Body Schema
-│
-├── Body Structure
-│   ├── Links
-│   ├── Joints
-│   └── End Effectors
-│
-├── Body State
-│   ├── Joint Positions
-│   ├── Joint Velocities
-│   └── Orientation
-│
-├── Body Constraints
-│   ├── Joint Limits
-│   ├── Workspace
-│   └── Collision Constraints
-│
-└── Action Capabilities
-    ├── Reachability
-    ├── Grasping
-    └── Locomotion
-```
+![Body Schema 的四个部分：结构、状态、约束与可执行动作](assets/diagrams/embodied-body-schema.svg)
+
+_图：Body Schema 的四个部分：结构、状态、约束与可执行动作。_
 
 ## **2. Body Schema 与 Forward Kinematics**
 

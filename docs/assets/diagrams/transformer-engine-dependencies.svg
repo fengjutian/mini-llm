@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="650" viewBox="0 0 1400 650" role="img" aria-labelledby="title desc">
+  <title id="title">Transformer Engine 站在谁的肩膀上</title><desc id="desc">mini-llm 技术机制图</desc>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="currentColor"/></marker></defs>
+  <style>:root{color-scheme:light dark}.bg{fill:#f7f4ed}.title{fill:#172126;font:700 30px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.kicker{fill:#e45d32;font:700 16px ui-monospace,Consolas,monospace;letter-spacing:2px}.box{fill:#fffdf8;stroke:#c4bdb1;stroke-width:2}.box.hot{fill:#fff0e8;stroke:#e45d32}.box.cool{fill:#eaf3f7;stroke:#3178a5}.box.good{fill:#eaf4ec;stroke:#4f8b62}.label{fill:#172126;font:650 18px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.small{fill:#69777d;font:500 15px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.tiny{fill:#69777d;font:500 13px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.edge{color:#69777d;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.accent-edge{color:#e45d32;fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.axis{fill:none;stroke:#69777d;stroke-width:2}.grid{stroke:#c4bdb1;stroke-width:1;opacity:.45}.dot{stroke:#fffdf8;stroke-width:3}.area{opacity:.14}@media(prefers-color-scheme:dark){.bg{fill:#101416}.title,.label{fill:#edf2f3}.kicker{fill:#ef855d}.box{fill:#182024;stroke:#526168}.box.hot{fill:#32211c;stroke:#e17750}.box.cool{fill:#172934;stroke:#4d91bc}.box.good{fill:#192b20;stroke:#65a779}.small{fill:#a8b4b9}.tiny{fill:#a8b4b9}.grid{stroke:#3c484e}.dot{stroke:#101416}}</style>
+  <rect class="bg" width="1400" height="650" rx="24"/>
+  <text class="kicker" x="64" y="58">MINI-LLM · MECHANISM</text>
+  <text class="title" x="64" y="105">Transformer Engine 站在谁的肩膀上</text>
+<rect class="box hot" x="500" y="120" width="400" height="60" rx="16"/>
+<text class="label" x="700.0" y="156.65" text-anchor="middle" font-size="19">Multi-Head Attention</text>
+<rect class="box cool" x="90" y="240" width="200" height="54" rx="16"/>
+<text class="label" x="190.0" y="272.25" text-anchor="middle" font-size="15">MatMul</text>
+<line class="axis" x1="700" y1="180" x2="700" y2="210"/>
+<line class="axis" x1="190" y1="210" x2="190" y2="240"/>
+<rect class="box cool" x="340" y="240" width="200" height="54" rx="16"/>
+<text class="label" x="440.0" y="272.25" text-anchor="middle" font-size="15">Transpose</text>
+<line class="axis" x1="700" y1="180" x2="700" y2="210"/>
+<line class="axis" x1="440" y1="210" x2="440" y2="240"/>
+<rect class="box cool" x="590" y="240" width="200" height="54" rx="16"/>
+<text class="label" x="690.0" y="272.25" text-anchor="middle" font-size="15">Softmax</text>
+<line class="axis" x1="700" y1="180" x2="700" y2="210"/>
+<line class="axis" x1="690" y1="210" x2="690" y2="240"/>
+<rect class="box cool" x="840" y="240" width="200" height="54" rx="16"/>
+<text class="label" x="940.0" y="272.25" text-anchor="middle" font-size="15">Reshape</text>
+<line class="axis" x1="700" y1="180" x2="700" y2="210"/>
+<line class="axis" x1="940" y1="210" x2="940" y2="240"/>
+<rect class="box cool" x="1090" y="240" width="200" height="54" rx="16"/>
+<text class="label" x="1190.0" y="272.25" text-anchor="middle" font-size="15">Linear</text>
+<line class="axis" x1="700" y1="180" x2="700" y2="210"/>
+<line class="axis" x1="1190" y1="210" x2="1190" y2="240"/>
+<rect class="box good" x="500" y="380" width="400" height="64" rx="16"/>
+<text class="label" x="700.0" y="418.65" text-anchor="middle" font-size="19">Tensor Engine</text>
+<rect class="box good" x="500" y="500" width="400" height="64" rx="16"/>
+<text class="label" x="700.0" y="538.65" text-anchor="middle" font-size="19">Autograd Engine</text>
+<path class="edge" d="M700 444 L700 500" marker-end="url(#arrow)"/>
+<text class="tiny" x="70" y="610" text-anchor="start">没有 Tensor 就没有 MatMul 的速度，没有 Autograd 就没有可训练的注意力。</text>
+</svg>

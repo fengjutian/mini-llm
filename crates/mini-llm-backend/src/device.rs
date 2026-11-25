@@ -1022,3 +1022,263 @@ impl DeviceTensor {
         }
     }
 }
+
+impl DeviceTensor {
+    /// Scaled dot-product attention over `[batch * seq, heads * head_dim]`.
+    ///
+    /// `key`/`value` may have fewer heads than `q` (GQA); each query head reads
+    /// `kv_head = head / (heads / kv_heads)`. `causal` masks future positions.
+    #[allow(clippy::too_many_arguments)]
+    pub fn attention_forward(
+        &self,
+        key: &Self,
+        value: &Self,
+        batch: usize,
+        seq: usize,
+        heads: usize,
+        kv_heads: usize,
+        causal: bool,
+    ) -> Result<Self, BackendError> {
+        match &self.storage {
+            Storage::Host(q) => {
+                let k = key.to_host()?;
+                let v = value.to_host()?;
+                Ok(Self::from_host(attention_host(
+                    q, &k, &v, batch, seq, heads, kv_heads, causal, None,
+                )?))
+            }
+            #[cfg(feature = "candle")]
+            Storage::Candle { .. } => Err(BackendError::Backend(
+                "candle attention is not implemented yet; use the host path".to_string(),
+            )),
+        }
+    }
+
+    /// Gradients of [`DeviceTensor::attention_forward`] with respect to q, k, v.
+    #[allow(clippy::too_many_arguments)]
+    pub fn attention_backward(
+        &self,
+        key: &Self,
+        value: &Self,
+        grad_output: &Self,
+        batch: usize,
+        seq: usize,
+        heads: usize,
+        kv_heads: usize,
+        causal: bool,
+    ) -> Result<(Self, Self, Self), BackendError> {
+        match &self.storage {
+            Storage::Host(q) => {
+                let k = key.to_host()?;
+                let v = value.to_host()?;
+                let g = grad_output.to_host()?;
+                let (dq, dk, dv) =
+                    attention_host_backward(q, &k, &v, &g, batch, seq, heads, kv_heads, causal)?;
+                Ok((
+                    Self::from_host(dq),
+                    Self::from_host(dk),
+                    Self::from_host(dv),
+                ))
+            }
+            #[cfg(feature = "candle")]
+            Storage::Candle { .. } => Err(BackendError::Backend(
+                "candle attention is not implemented yet; use the host path".to_string(),
+            )),
+        }
+    }
+}
+
+fn attention_layout(
+    q: &Tensor,
+    k: &Tensor,
+    v: &Tensor,
+    batch: usize,
+    seq: usize,
+    heads: usize,
+    kv_heads: usize,
+) -> Result<usize, BackendError> {
+    let rows = batch * seq;
+    if q.shape() != [rows, heads * (q.shape()[1] / heads.max(1))]
+        && !q.shape()[1].is_multiple_of(heads)
+    {
+        return Err(BackendError::Backend(
+            "invalid attention shapes".to_string(),
+        ));
+    }
+    let head_dim = q.shape()[1] / heads;
+    if head_dim == 0
+        || k.shape() != [rows, kv_heads * head_dim]
+        || v.shape() != [rows, kv_heads * head_dim]
+        || !heads.is_multiple_of(kv_heads)
+    {
+        return Err(BackendError::Backend(format!(
+            "invalid attention shapes: q {:?}, k {:?}, v {:?}, heads {heads}, kv_heads {kv_heads}",
+            q.shape(),
+            k.shape(),
+            v.shape()
+        )));
+    }
+    Ok(head_dim)
+}
+
+#[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
+fn attention_host(
+    q: &Tensor,
+    k: &Tensor,
+    v: &Tensor,
+    batch: usize,
+    seq: usize,
+    heads: usize,
+    kv_heads: usize,
+    causal: bool,
+    grad: Option<&Tensor>,
+) -> Result<Tensor, BackendError> {
+    let head_dim = attention_layout(q, k, v, batch, seq, heads, kv_heads)?;
+    let rows = batch * seq;
+    let group = heads / kv_heads;
+    let scale = 1.0 / (head_dim as f32).sqrt();
+    let q_data = q.data();
+    let k_data = k.data();
+    let v_data = v.data();
+    let mut output = vec![0.0f32; rows * heads * head_dim];
+
+    for batch_index in 0..batch {
+        for head in 0..heads {
+            let kv_head = head / group;
+            for position in 0..seq {
+                let row = batch_index * seq + position;
+                let q_offset = row * heads * head_dim + head * head_dim;
+                let mut scores = vec![f32::NEG_INFINITY; seq];
+                for other in 0..seq {
+                    if causal && other > position {
+                        continue;
+                    }
+                    let key_row = batch_index * seq + other;
+                    let k_offset = key_row * kv_heads * head_dim + kv_head * head_dim;
+                    scores[other] = (0..head_dim)
+                        .map(|dim| q_data[q_offset + dim] * k_data[k_offset + dim])
+                        .sum::<f32>()
+                        * scale;
+                }
+                let probabilities = softmax_host(&scores);
+                for other in 0..seq {
+                    if probabilities[other] == 0.0 {
+                        continue;
+                    }
+                    let value_row = batch_index * seq + other;
+                    let v_offset = value_row * kv_heads * head_dim + kv_head * head_dim;
+                    for dim in 0..head_dim {
+                        output[q_offset + dim] += probabilities[other] * v_data[v_offset + dim];
+                    }
+                }
+                let _ = grad;
+            }
+        }
+    }
+    Ok(Tensor::new(output, vec![rows, heads * head_dim])?)
+}
+
+#[allow(clippy::too_many_arguments, clippy::needless_range_loop)]
+fn attention_host_backward(
+    q: &Tensor,
+    k: &Tensor,
+    v: &Tensor,
+    grad_output: &Tensor,
+    batch: usize,
+    seq: usize,
+    heads: usize,
+    kv_heads: usize,
+    causal: bool,
+) -> Result<(Tensor, Tensor, Tensor), BackendError> {
+    let head_dim = attention_layout(q, k, v, batch, seq, heads, kv_heads)?;
+    let rows = batch * seq;
+    let group = heads / kv_heads;
+    let scale = 1.0 / (head_dim as f32).sqrt();
+    let q_data = q.data();
+    let k_data = k.data();
+    let v_data = v.data();
+    let g_data = grad_output.data();
+
+    let mut grad_q = vec![0.0f32; rows * heads * head_dim];
+    let mut grad_k = vec![0.0f32; rows * kv_heads * head_dim];
+    let mut grad_v = vec![0.0f32; rows * kv_heads * head_dim];
+
+    for batch_index in 0..batch {
+        for head in 0..heads {
+            let kv_head = head / group;
+            for position in 0..seq {
+                let row = batch_index * seq + position;
+                let q_offset = row * heads * head_dim + head * head_dim;
+                let mut scores = vec![f32::NEG_INFINITY; seq];
+                for other in 0..=position {
+                    let key_row = batch_index * seq + other;
+                    let k_offset = key_row * kv_heads * head_dim + kv_head * head_dim;
+                    scores[other] = (0..head_dim)
+                        .map(|dim| q_data[q_offset + dim] * k_data[k_offset + dim])
+                        .sum::<f32>()
+                        * scale;
+                }
+                let probabilities = softmax_host(&scores);
+
+                let mut grad_probabilities = vec![0.0f32; seq];
+                for other in 0..seq {
+                    if causal && other > position {
+                        continue;
+                    }
+                    let value_row = batch_index * seq + other;
+                    let v_offset = value_row * kv_heads * head_dim + kv_head * head_dim;
+                    grad_probabilities[other] = (0..head_dim)
+                        .map(|dim| g_data[q_offset + dim] * v_data[v_offset + dim])
+                        .sum::<f32>();
+                }
+                let weighted = (0..seq)
+                    .map(|other| probabilities[other] * grad_probabilities[other])
+                    .sum::<f32>();
+
+                for other in 0..seq {
+                    if causal && other > position {
+                        continue;
+                    }
+                    let key_row = batch_index * seq + other;
+                    let k_offset = key_row * kv_heads * head_dim + kv_head * head_dim;
+                    let v_offset = k_offset;
+                    let grad_score = probabilities[other] * (grad_probabilities[other] - weighted);
+                    for dim in 0..head_dim {
+                        grad_q[q_offset + dim] += grad_score * k_data[k_offset + dim] * scale;
+                        grad_k[k_offset + dim] += grad_score * q_data[q_offset + dim] * scale;
+                        grad_v[v_offset + dim] += probabilities[other] * g_data[q_offset + dim];
+                    }
+                }
+            }
+        }
+    }
+
+    Ok((
+        Tensor::new(grad_q, vec![rows, heads * head_dim])?,
+        Tensor::new(grad_k, vec![rows, kv_heads * head_dim])?,
+        Tensor::new(grad_v, vec![rows, kv_heads * head_dim])?,
+    ))
+}
+
+fn softmax_host(scores: &[f32]) -> Vec<f32> {
+    let max = scores.iter().copied().fold(f32::NEG_INFINITY, f32::max);
+    let mut result: Vec<f32> = scores
+        .iter()
+        .map(|score| {
+            if score.is_finite() {
+                (score - max).exp()
+            } else {
+                0.0
+            }
+        })
+        .collect();
+    let total: f32 = result.iter().sum();
+    if total > 0.0 {
+        for value in &mut result {
+            *value /= total;
+        }
+    }
+    result
+}
+
+

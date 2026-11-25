@@ -182,39 +182,9 @@ num_layers = 12d_model = 512num_heads = 8
 
 计算过程：
 
-```
-Token IDs
-    │
-    ▼
-Embedding
-    │
-    ▼
-Position Encoding
-    │
-    ▼
-Transformer Block 1
-    │
-    ▼
-Transformer Block 2
-    │
-    ▼
-Transformer Block 3
-    │
-    ▼
-      ...
-    │
-    ▼
-Transformer Block 12
-    │
-    ▼
-Final Norm
-    │
-    ▼
-LM Head
-    │
-    ▼
-Logits
-```
+![从 Token IDs 到 Logits 的完整堆叠：Embedding、位置编码、N 个 Transformer Block、Final Norm、LM Head](assets/diagrams/decoder-transformer-stack.svg)
+
+_图：从 Token IDs 到 Logits 的完整堆叠：Embedding、位置编码、N 个 Transformer Block、Final Norm、LM Head。_
 
 每一层都会对输入隐藏状态进行更新。
 
@@ -1088,36 +1058,9 @@ class DecoderModel:    def __init__(self, config):        self.embedding = Embed
 
 ## **13.2 训练完整流程**
 
-```
-训练文本
-   │
-   ▼
-Tokenizer
-   │
-   ▼
-Input IDs
-   │
-   ▼
-Decoder Model
-   │
-   ▼
-Logits
-   │
-   ▼
-Cross Entropy Loss
-   │
-   ▼
-Backward
-   │
-   ▼
-Gradient
-   │
-   ▼
-Optimizer
-   │
-   ▼
-更新模型参数
-```
+![一条训练样本的完整路径：前向算 loss，反向算梯度，优化器更新参数](assets/diagrams/decoder-training-pipeline.svg)
+
+_图：一条训练样本的完整路径：前向算 loss，反向算梯度，优化器更新参数。_
 
 不断重复这个过程。
 

@@ -879,11 +879,9 @@ _图：租约超时与重调度。没有租约，崩溃的 Worker 会永久占�
 
 每个节点定期向 Control Plane 发送心跳。
 
-```
-Node A ─── Heartbeat ───> Cluster Manager
-Node B ─── Heartbeat ───> Cluster Manager
-Node C ─── Heartbeat ───> Cluster Manager
-```
+![心跳与租约：心跳证明节点活着，租约证明任务仍被某个节点持有](assets/diagrams/distributed-heartbeat-lease.svg)
+
+_图：心跳与租约：心跳证明节点活着，租约证明任务仍被某个节点持有。_
 
 例如：
 
@@ -1397,25 +1395,9 @@ OpenTelemetry 是分布式可观测性的重要基础。
 
 例如：
 
-```
-Trace: task-1001
+![跨节点的 Trace 树](assets/diagrams/distributed-trace-tree.svg)
 
-├── manager.run
-│
-├── scheduler.assign
-│
-├── node-a.frontend.execute
-│   ├── model.generate
-│   └── tool.write_file
-│
-├── node-b.backend.execute
-│   ├── model.generate
-│   └── tool.run_command
-│
-└── node-c.qa.execute
-    ├── test.run
-    └── result.validate
-```
+_图：跨节点的 Trace 树。缩进表示父子关系，span 可以分布在不同的机器上。_
 
 每个 Span 应包含：
 

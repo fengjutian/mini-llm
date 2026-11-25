@@ -962,3 +962,168 @@ fn device_ffn_block_trains_on_cpu() {
 fn device_ffn_block_trains_on_candle() {
     check_device_block_training(&Device::candle_cpu(), 60, 1e-6);
 }
+
+fn attention_loss(q: &Tensor, k: &Tensor, v: &Tensor, causal: bool) -> f32 {
+    DeviceTensor::from_host(q.clone())
+        .attention_forward(
+            &DeviceTensor::from_host(k.clone()),
+            &DeviceTensor::from_host(v.clone()),
+            1,
+            3,
+            2,
+            1,
+            causal,
+        )
+        .unwrap()
+        .to_host()
+        .unwrap()
+        .mean()
+        .unwrap()
+        .data()[0]
+}
+
+#[test]
+fn device_attention_forward_is_uniform_when_scores_are_equal() {
+    // With q = k = 0 every allowed score is 0, so the output at row i is the
+    // running mean of v (causal attention).
+    let q = Tensor::from_2d(3, 4, vec![0.0; 12]).unwrap();
+    let k = Tensor::from_2d(3, 2, vec![0.0; 6]).unwrap();
+    let v = Tensor::from_2d(3, 2, (0..6).map(|index| index as f32).collect()).unwrap();
+
+    let output = DeviceTensor::from_host(q)
+        .attention_forward(
+            &DeviceTensor::from_host(k),
+            &DeviceTensor::from_host(v),
+            1,
+            3,
+            2,
+            1,
+            true,
+        )
+        .unwrap()
+        .to_host()
+        .unwrap();
+
+    // Two heads share the single KV head and see the same values.
+    for head in 0..2 {
+        for row in 0..3 {
+            let expected: f32 =
+                (0..=row).map(|other| (other * 2) as f32).sum::<f32>() / (row + 1) as f32;
+            assert!((output.data()[row * 4 + head * 2] - expected).abs() < 1e-6);
+            let expected_odd: f32 =
+                (0..=row).map(|other| (other * 2 + 1) as f32).sum::<f32>() / (row + 1) as f32;
+            assert!((output.data()[row * 4 + head * 2 + 1] - expected_odd).abs() < 1e-6);
+        }
+    }
+}
+
+#[test]
+fn device_attention_gradients_match_finite_differences() {
+    let q = sample(3, 4, 1.0);
+    let k = sample(3, 2, 0.5);
+    let v = sample(3, 2, 0.75);
+    let (batch, seq, heads, kv_heads) = (1usize, 3usize, 2usize, 1usize);
+    let causal = true;
+
+    let output = DeviceTensor::from_host(q.clone())
+        .attention_forward(
+            &DeviceTensor::from_host(k.clone()),
+            &DeviceTensor::from_host(v.clone()),
+            batch,
+            seq,
+            heads,
+            kv_heads,
+            causal,
+        )
+        .unwrap()
+        .to_host()
+        .unwrap();
+    let numel = output.data().len() as f32;
+    let grad_output = Tensor::new(
+        vec![1.0 / numel; output.data().len()],
+        output.shape().to_vec(),
+    )
+    .unwrap();
+    let (grad_q, grad_k, grad_v) = DeviceTensor::from_host(q.clone())
+        .attention_backward(
+            &DeviceTensor::from_host(k.clone()),
+            &DeviceTensor::from_host(v.clone()),
+            &DeviceTensor::from_host(grad_output),
+            batch,
+            seq,
+            heads,
+            kv_heads,
+            causal,
+        )
+        .unwrap();
+    let (grad_q, grad_k, grad_v) = (
+        grad_q.to_host().unwrap(),
+        grad_k.to_host().unwrap(),
+        grad_v.to_host().unwrap(),
+    );
+
+    let epsilon = 1e-3f32;
+    let check = |original: &Tensor, analytic: &Tensor, label: &str| {
+        for index in 0..original.data().len() {
+            let mut plus = original.data().to_vec();
+            plus[index] += epsilon;
+            let mut minus = original.data().to_vec();
+            minus[index] -= epsilon;
+            let plus_loss = if label == "q" {
+                attention_loss(
+                    &Tensor::new(plus, original.shape().to_vec()).unwrap(),
+                    &k,
+                    &v,
+                    causal,
+                )
+            } else if label == "k" {
+                attention_loss(
+                    &q,
+                    &Tensor::new(plus, original.shape().to_vec()).unwrap(),
+                    &v,
+                    causal,
+                )
+            } else {
+                attention_loss(
+                    &q,
+                    &k,
+                    &Tensor::new(plus, original.shape().to_vec()).unwrap(),
+                    causal,
+                )
+            };
+            let minus_loss = if label == "q" {
+                attention_loss(
+                    &Tensor::new(minus, original.shape().to_vec()).unwrap(),
+                    &k,
+                    &v,
+                    causal,
+                )
+            } else if label == "k" {
+                attention_loss(
+                    &q,
+                    &Tensor::new(minus, original.shape().to_vec()).unwrap(),
+                    &v,
+                    causal,
+                )
+            } else {
+                attention_loss(
+                    &q,
+                    &k,
+                    &Tensor::new(minus, original.shape().to_vec()).unwrap(),
+                    causal,
+                )
+            };
+            let numeric = (plus_loss - minus_loss) / (2.0 * epsilon);
+            assert!(
+                (numeric - analytic.data()[index]).abs() < 5e-2,
+                "{label}[{index}]: numeric {numeric} vs analytic {}",
+                analytic.data()[index]
+            );
+        }
+    };
+
+    check(&q, &grad_q, "q");
+    check(&k, &grad_k, "k");
+    check(&v, &grad_v, "v");
+}
+

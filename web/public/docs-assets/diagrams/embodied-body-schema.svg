@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="650" viewBox="0 0 1400 650" role="img" aria-labelledby="title desc">
+  <title id="title">Body Schema：机器人如何理解自己的身体</title><desc id="desc">mini-llm 技术机制图</desc>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="currentColor"/></marker></defs>
+  <style>:root{color-scheme:light dark}.bg{fill:#f7f4ed}.title{fill:#172126;font:700 30px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.kicker{fill:#e45d32;font:700 16px ui-monospace,Consolas,monospace;letter-spacing:2px}.box{fill:#fffdf8;stroke:#c4bdb1;stroke-width:2}.box.hot{fill:#fff0e8;stroke:#e45d32}.box.cool{fill:#eaf3f7;stroke:#3178a5}.box.good{fill:#eaf4ec;stroke:#4f8b62}.label{fill:#172126;font:650 18px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.small{fill:#69777d;font:500 15px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.tiny{fill:#69777d;font:500 13px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.edge{color:#69777d;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.accent-edge{color:#e45d32;fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.axis{fill:none;stroke:#69777d;stroke-width:2}.grid{stroke:#c4bdb1;stroke-width:1;opacity:.45}.dot{stroke:#fffdf8;stroke-width:3}.area{opacity:.14}@media(prefers-color-scheme:dark){.bg{fill:#101416}.title,.label{fill:#edf2f3}.kicker{fill:#ef855d}.box{fill:#182024;stroke:#526168}.box.hot{fill:#32211c;stroke:#e17750}.box.cool{fill:#172934;stroke:#4d91bc}.box.good{fill:#192b20;stroke:#65a779}.small{fill:#a8b4b9}.tiny{fill:#a8b4b9}.grid{stroke:#3c484e}.dot{stroke:#101416}}</style>
+  <rect class="bg" width="1400" height="650" rx="24"/>
+  <text class="kicker" x="64" y="58">MINI-LLM · MECHANISM</text>
+  <text class="title" x="64" y="105">Body Schema：机器人如何理解自己的身体</text>
+<rect class="box" x="70" y="160" width="300" height="250" rx="16"/>
+<text class="label" x="90" y="200" text-anchor="start" font-size="17">Body Structure</text>
+<text class="small" x="90" y="250" text-anchor="start">· Links</text>
+<text class="small" x="90" y="290" text-anchor="start">· Joints</text>
+<text class="small" x="90" y="330" text-anchor="start">· End Effectors</text>
+<rect class="box" x="400" y="160" width="300" height="250" rx="16"/>
+<text class="label" x="420" y="200" text-anchor="start" font-size="17">Body State</text>
+<text class="small" x="420" y="250" text-anchor="start">· Joint Positions</text>
+<text class="small" x="420" y="290" text-anchor="start">· Joint Velocities</text>
+<text class="small" x="420" y="330" text-anchor="start">· Orientation</text>
+<rect class="box hot" x="730" y="160" width="300" height="250" rx="16"/>
+<text class="label" x="750" y="200" text-anchor="start" font-size="17">Body Constraints</text>
+<text class="small" x="750" y="250" text-anchor="start">· Joint Limits</text>
+<text class="small" x="750" y="290" text-anchor="start">· Workspace</text>
+<text class="small" x="750" y="330" text-anchor="start">· Collision</text>
+<rect class="box" x="1060" y="160" width="300" height="250" rx="16"/>
+<text class="label" x="1080" y="200" text-anchor="start" font-size="17">Action Capabilities</text>
+<text class="small" x="1080" y="250" text-anchor="start">· Reachability</text>
+<text class="small" x="1080" y="290" text-anchor="start">· Grasping</text>
+<text class="small" x="1080" y="330" text-anchor="start">· Locomotion</text>
+<text class="tiny" x="70" y="500" text-anchor="start">身体模型不是一张图，而是“我能做什么、不能做什么”的持续估计。</text>
+<text class="tiny" x="70" y="540" text-anchor="start">约束（关节限位、碰撞、工作空间）是安全层与规划层共享的输入。</text>
+</svg>

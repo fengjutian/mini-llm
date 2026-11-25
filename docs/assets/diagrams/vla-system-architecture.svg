@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="650" viewBox="0 0 1400 650" role="img" aria-labelledby="title desc">
+  <title id="title">VLA Engine 的分层组件</title><desc id="desc">mini-llm 技术机制图</desc>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="currentColor"/></marker></defs>
+  <style>:root{color-scheme:light dark}.bg{fill:#f7f4ed}.title{fill:#172126;font:700 30px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.kicker{fill:#e45d32;font:700 16px ui-monospace,Consolas,monospace;letter-spacing:2px}.box{fill:#fffdf8;stroke:#c4bdb1;stroke-width:2}.box.hot{fill:#fff0e8;stroke:#e45d32}.box.cool{fill:#eaf3f7;stroke:#3178a5}.box.good{fill:#eaf4ec;stroke:#4f8b62}.label{fill:#172126;font:650 18px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.small{fill:#69777d;font:500 15px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.tiny{fill:#69777d;font:500 13px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.edge{color:#69777d;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.accent-edge{color:#e45d32;fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.axis{fill:none;stroke:#69777d;stroke-width:2}.grid{stroke:#c4bdb1;stroke-width:1;opacity:.45}.dot{stroke:#fffdf8;stroke-width:3}.area{opacity:.14}@media(prefers-color-scheme:dark){.bg{fill:#101416}.title,.label{fill:#edf2f3}.kicker{fill:#ef855d}.box{fill:#182024;stroke:#526168}.box.hot{fill:#32211c;stroke:#e17750}.box.cool{fill:#172934;stroke:#4d91bc}.box.good{fill:#192b20;stroke:#65a779}.small{fill:#a8b4b9}.tiny{fill:#a8b4b9}.grid{stroke:#3c484e}.dot{stroke:#101416}}</style>
+  <rect class="bg" width="1400" height="650" rx="24"/>
+  <text class="kicker" x="64" y="58">MINI-LLM · MECHANISM</text>
+  <text class="title" x="64" y="105">VLA Engine 的分层组件</text>
+<rect class="box" x="70" y="130" width="300" height="210" rx="16"/>
+<text class="label" x="90" y="168" text-anchor="start" font-size="18">Input</text>
+<text class="small" x="90" y="208" text-anchor="start">· Camera</text>
+<text class="small" x="90" y="238" text-anchor="start">· Language</text>
+<text class="small" x="90" y="268" text-anchor="start">· Robot State</text>
+<text class="small" x="90" y="298" text-anchor="start">· Sync</text>
+<rect class="box" x="400" y="130" width="300" height="210" rx="16"/>
+<text class="label" x="420" y="168" text-anchor="start" font-size="18">Encoders</text>
+<text class="small" x="420" y="208" text-anchor="start">· Vision</text>
+<text class="small" x="420" y="238" text-anchor="start">· Language</text>
+<text class="small" x="420" y="268" text-anchor="start">· State</text>
+<rect class="box" x="730" y="130" width="300" height="210" rx="16"/>
+<text class="label" x="750" y="168" text-anchor="start" font-size="18">Multimodal</text>
+<text class="small" x="750" y="208" text-anchor="start">· Tokenizer</text>
+<text class="small" x="750" y="238" text-anchor="start">· Projection</text>
+<text class="small" x="750" y="268" text-anchor="start">· Fusion</text>
+<text class="small" x="750" y="298" text-anchor="start">· Position</text>
+<rect class="box hot" x="1060" y="130" width="300" height="210" rx="16"/>
+<text class="label" x="1080" y="168" text-anchor="start" font-size="18">Model</text>
+<text class="small" x="1080" y="208" text-anchor="start">· VLA Transformer</text>
+<text class="small" x="1080" y="238" text-anchor="start">· Action Head</text>
+<text class="small" x="1080" y="268" text-anchor="start">· Diffusion Policy</text>
+<rect class="box" x="70" y="380" width="300" height="210" rx="16"/>
+<text class="label" x="90" y="418" text-anchor="start" font-size="18">Action</text>
+<text class="small" x="90" y="458" text-anchor="start">· Representation</text>
+<text class="small" x="90" y="488" text-anchor="start">· Chunking</text>
+<text class="small" x="90" y="518" text-anchor="start">· Decoder</text>
+<text class="small" x="90" y="548" text-anchor="start">· Validation</text>
+<rect class="box" x="400" y="380" width="300" height="210" rx="16"/>
+<text class="label" x="420" y="418" text-anchor="start" font-size="18">Runtime</text>
+<text class="small" x="420" y="458" text-anchor="start">· Scheduler</text>
+<text class="small" x="420" y="488" text-anchor="start">· Coordinator</text>
+<text class="small" x="420" y="518" text-anchor="start">· Feedback</text>
+<text class="small" x="420" y="548" text-anchor="start">· Replanning</text>
+<rect class="box hot" x="730" y="380" width="300" height="210" rx="16"/>
+<text class="label" x="750" y="418" text-anchor="start" font-size="18">Safety</text>
+<text class="small" x="750" y="458" text-anchor="start">· Joint Limit</text>
+<text class="small" x="750" y="488" text-anchor="start">· Velocity</text>
+<text class="small" x="750" y="518" text-anchor="start">· Collision</text>
+<text class="small" x="750" y="548" text-anchor="start">· E-Stop</text>
+<rect class="box" x="1060" y="380" width="300" height="210" rx="16"/>
+<text class="label" x="1080" y="418" text-anchor="start" font-size="18">Evaluation</text>
+<text class="small" x="1080" y="458" text-anchor="start">· Success Rate</text>
+<text class="small" x="1080" y="488" text-anchor="start">· Quality</text>
+<text class="small" x="1080" y="518" text-anchor="start">· Latency</text>
+<text class="small" x="1080" y="548" text-anchor="start">· Failure</text>
+<text class="tiny" x="70" y="620" text-anchor="start">从感知到动作再到安全校验，VLA 的每一层都可以单独替换与评估。</text>
+</svg>

@@ -122,15 +122,9 @@ MVP 采用单头 scaled dot-product attention：
 
 _图：Workspace 保持从应用层到模型层、再到张量与后端的单向依赖。_
 
-```text
-mini-llm-cli
- ├── mini-llm-train ──► mini-llm-model ──► mini-llm-nn ──► mini-llm-autograd
- │                          │                  │                 │
- │                          └──────────────────┴──────► mini-llm-random
- │                                                          │
- └── mini-llm-data ──► mini-llm-random                      ▼
-                                                     mini-llm-tensor
-```
+![crate 之间的依赖方向](assets/diagrams/architecture-crate-dependencies.svg)
+
+_图：crate 之间的依赖方向。依赖只能向下，反向引用会在编译期形成循环。_
 
 具体边：
 

@@ -180,21 +180,9 @@ Agent 系统更加复杂。
 
 例如：
 
-```
-User
-  │
-  ▼
-Agent A
-  │
-  ├── Model: model-001
-  │
-  ├── Tool: github.read
-  │
-  └── Sub-Agent B
-        │
-        ├── Model: model-002
-        └── Tool: filesystem.read
-```
+![身份是分层的：User、Agent、Sub-Agent 各自持有模型与工具权限，不能简单继承](assets/diagrams/security-identity-tree.svg)
+
+_图：身份是分层的：User、Agent、Sub-Agent 各自持有模型与工具权限，不能简单继承。_
 
 需要注意：
 
@@ -344,22 +332,9 @@ RBAC（Role-Based Access Control）将权限分配给角色，再将角色分配
 
 例如：
 
-```
-Role: Reader
-  ├── file.read
-  └── repository.read
+![RBAC 把权限打包成角色：Reader、Developer、Admin 的能力边界一目了然](assets/diagrams/security-rbac-matrix.svg)
 
-Role: Developer
-  ├── file.read
-  ├── file.write
-  └── test.execute
-
-Role: Admin
-  ├── file.read
-  ├── file.write
-  ├── deployment.execute
-  └── user.manage
-```
+_图：RBAC 把权限打包成角色：Reader、Developer、Admin 的能力边界一目了然。_
 
 适合权限相对稳定的系统。
 
@@ -890,29 +865,9 @@ tools = {    "read_file": read_file,    "write_file": write_file,    "execute_sh
 
 建议在所有工具执行之前增加统一的 Tool Gateway。
 
-```
-Agent
-  │
-  ▼
-Tool Calling
-  │
-  ▼
-Tool Gateway
-  │
-  ├── Identity Check
-  ├── Permission Check
-  ├── Policy Check
-  ├── Parameter Validation
-  ├── Risk Assessment
-  ├── Approval
-  └── Audit
-  │
-  ▼
-Tool Executor
-  │
-  ▼
-External System
-```
+![Tool Gateway 的七道检查：身份、权限、策略、参数、风险、审批与审计](assets/diagrams/security-tool-gateway.svg)
+
+_图：Tool Gateway 的七道检查：身份、权限、策略、参数、风险、审批与审计。_
 
 ### **8.3 Tool Definition 增加安全元数据**
 
