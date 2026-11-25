@@ -1,5 +1,10 @@
 # **《mini-llm World Model Engine 深度解析：从 State Representation、World Dynamics 到 Future Prediction、Action Simulation 与 Counterfactual Reasoning》**
 
+![在内部把候选行动各模拟一遍，用世界模型预测结果并打分，再执行最优动作](assets/diagrams/world-model-action-simulation.svg)
+
+_图：在内部把候选行动各模拟一遍，用世界模型预测结果并打分，再执行最优动作。_
+
+
 **核心问题：AI 如何不只是理解当前世界，还能在内部模拟未来世界？**
 
 前面我们已经研究了 mini-llm 的多个核心 Engine：

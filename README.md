@@ -611,7 +611,10 @@ and re-exports.
   starting value and that every parameter stays device-resident. **Fused
   attention** (`attention_forward` / `attention_backward`) supports GQA and causal
   masking on host storage and is verified with finite differences; the Candle 4D
-  implementation is the next step (it currently returns a clear error).
+  implementation is the next step (it currently returns a clear error). A 40-step
+  **attention block** (embedding → LayerNorm → QKV → attention → out-projection →
+  residual → LayerNorm → head → cross-entropy) likewise trains end-to-end on host
+  device storage and must drop its loss below 80% of the start.
 - Future backends implement `Backend` and reuse the same parity harness.
 
 Autograd and the model still operate on host `Tensor` values; making the training

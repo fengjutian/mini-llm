@@ -193,7 +193,9 @@ SFT 语料仅用于展示掩码机制。
 - 设备 FFN 块训练：embedding → LayerNorm → SwiGLU → 残差 → head → CE，
   60 步 loss 下降、参数全程驻留设备；
 - 融合注意力算子（host）：GQA、因果掩码、前向 + 手工反向，有限差分校验；
-  Candle 4D 版本待补（当前返回明确错误）；
+  Candle 4D 版本尝试后反向未对齐，已回退为明确错误；
+- 注意力块端到端训练（host）：embedding → LN → QKV → attention → 残差 →
+  LN → head → CE，40 步 loss 下降；
 - `.github/workflows/cuda.yml`（手动触发）在 GPU runner 上跑 `--features cuda`；
 - CUDA 路径与 Candle CPU 共用代码，但本环境无 GPU，未做运行验证。
 

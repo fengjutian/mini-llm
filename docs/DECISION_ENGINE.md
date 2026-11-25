@@ -632,6 +632,11 @@ Decision Engine 应该根据任务类型选择决策规则。
 
 # **六、Risk-sensitive Decision：风险敏感决策**
 
+![两个期望相同的方案，尾部风险可能完全不同；CVaR 度量最差那一部分](assets/diagrams/decision-risk-cvar.svg)
+
+_图：两个期望相同的方案，尾部风险可能完全不同；CVaR 度量最差那一部分。_
+
+
 前面我们看到：
 
 两个方案即使期望收益相同，也可能具有完全不同的风险结构。

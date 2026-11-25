@@ -1,5 +1,10 @@
 # **mini-llm Generation Engine 深度解析：从 Autoregressive Decoding、Sampling Strategy 到 Speculative Decoding、Constrained Generation 与 Multimodal Output**
 
+![约束解码：语法状态决定允许的 Token 集合，采样前就把非法 Token 屏蔽掉](assets/diagrams/generation-constrained-decoding.svg)
+
+_图：约束解码：语法状态决定允许的 Token 集合，采样前就把非法 Token 屏蔽掉。_
+
+
 在前面的 mini-llm 系列中，我们已经研究了 Tensor Engine、Autograd Engine、Neural Network Engine、Transformer Engine、Training Engine、Representation Engine、Agent Engine 和 Multimodal Engine 等核心模块。
 
 这些 Engine 解决的是不同层面的问题：

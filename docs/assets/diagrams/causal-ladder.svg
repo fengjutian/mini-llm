@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="650" viewBox="0 0 1400 650" role="img" aria-labelledby="title desc">
+  <title id="title">因果之梯：从看到，到做到，再到如果</title><desc id="desc">mini-llm 技术机制图</desc>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="currentColor"/></marker></defs>
+  <style>:root{color-scheme:light dark}.bg{fill:#f7f4ed}.title{fill:#172126;font:700 30px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.kicker{fill:#e45d32;font:700 16px ui-monospace,Consolas,monospace;letter-spacing:2px}.box{fill:#fffdf8;stroke:#c4bdb1;stroke-width:2}.box.hot{fill:#fff0e8;stroke:#e45d32}.box.cool{fill:#eaf3f7;stroke:#3178a5}.box.good{fill:#eaf4ec;stroke:#4f8b62}.label{fill:#172126;font:650 18px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.small{fill:#69777d;font:500 15px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.tiny{fill:#69777d;font:500 13px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.edge{color:#69777d;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.accent-edge{color:#e45d32;fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.axis{fill:none;stroke:#69777d;stroke-width:2}.grid{stroke:#c4bdb1;stroke-width:1;opacity:.45}.dot{stroke:#fffdf8;stroke-width:3}.area{opacity:.14}@media(prefers-color-scheme:dark){.bg{fill:#101416}.title,.label{fill:#edf2f3}.kicker{fill:#ef855d}.box{fill:#182024;stroke:#526168}.box.hot{fill:#32211c;stroke:#e17750}.box.cool{fill:#172934;stroke:#4d91bc}.box.good{fill:#192b20;stroke:#65a779}.small{fill:#a8b4b9}.tiny{fill:#a8b4b9}.grid{stroke:#3c484e}.dot{stroke:#101416}}</style>
+  <rect class="bg" width="1400" height="650" rx="24"/>
+  <text class="kicker" x="64" y="58">MINI-LLM · MECHANISM</text>
+  <text class="title" x="64" y="105">因果之梯：从看到，到做到，再到如果</text>
+<rect class="box cool" x="120" y="300" width="380" height="76" rx="16"/>
+<text class="label" x="310.0" y="343.95" text-anchor="middle" font-size="17">关联 Association</text>
+<text class="small" x="520" y="334" text-anchor="start">P(y | x)</text>
+<text class="tiny" x="520" y="360" text-anchor="start">看到 X 时 Y 更常见</text>
+<rect class="box hot" x="210" y="430" width="380" height="76" rx="16"/>
+<text class="label" x="400.0" y="473.95" text-anchor="middle" font-size="17">干预 Intervention</text>
+<text class="small" x="610" y="464" text-anchor="start">P(y | do(x))</text>
+<text class="tiny" x="610" y="490" text-anchor="start">主动改变 X 会怎样</text>
+<rect class="box good" x="300" y="560" width="380" height="76" rx="16"/>
+<text class="label" x="490.0" y="603.95" text-anchor="middle" font-size="17">反事实 Counterfactual</text>
+<text class="small" x="700" y="594" text-anchor="start">P(y_x | x′, y′)</text>
+<text class="tiny" x="700" y="620" text-anchor="start">如果当时不这么做呢</text>
+<text class="small" x="120" y="200" text-anchor="start">回答“为什么”至少要到第二级；回答“换个选择会怎样”要到第三级。</text>
+<text class="tiny" x="120" y="262" text-anchor="start">越往上，需要的假设越强，能回答的问题也越深。</text>
+</svg>

@@ -1,5 +1,10 @@
 # **《mini-llm Meta-Controller 深度解析：从 Hierarchical Control、Task Delegation 到 Dynamic Routing、Policy Selection 与 Self-Adaptive Agent System》**
 
+![动态路由：根据任务复杂度、预算、延迟与历史成功率选择模型档位，失败时升级](assets/diagrams/meta-controller-dynamic-routing.svg)
+
+_图：动态路由：根据任务复杂度、预算、延迟与历史成功率选择模型档位，失败时升级。_
+
+
 在前面的 mini-llm 系列中，我们已经逐步构建了多个核心 Engine：
 
 - Agent Engine：让 Agent 理解目标、制定行动并调用工具。

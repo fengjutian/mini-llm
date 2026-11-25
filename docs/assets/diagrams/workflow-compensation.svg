@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="650" viewBox="0 0 1400 650" role="img" aria-labelledby="title desc">
+  <title id="title">失败之后：反向补偿</title><desc id="desc">mini-llm 技术机制图</desc>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="currentColor"/></marker></defs>
+  <style>:root{color-scheme:light dark}.bg{fill:#f7f4ed}.title{fill:#172126;font:700 30px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.kicker{fill:#e45d32;font:700 16px ui-monospace,Consolas,monospace;letter-spacing:2px}.box{fill:#fffdf8;stroke:#c4bdb1;stroke-width:2}.box.hot{fill:#fff0e8;stroke:#e45d32}.box.cool{fill:#eaf3f7;stroke:#3178a5}.box.good{fill:#eaf4ec;stroke:#4f8b62}.label{fill:#172126;font:650 18px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.small{fill:#69777d;font:500 15px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.tiny{fill:#69777d;font:500 13px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.edge{color:#69777d;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.accent-edge{color:#e45d32;fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.axis{fill:none;stroke:#69777d;stroke-width:2}.grid{stroke:#c4bdb1;stroke-width:1;opacity:.45}.dot{stroke:#fffdf8;stroke-width:3}.area{opacity:.14}@media(prefers-color-scheme:dark){.bg{fill:#101416}.title,.label{fill:#edf2f3}.kicker{fill:#ef855d}.box{fill:#182024;stroke:#526168}.box.hot{fill:#32211c;stroke:#e17750}.box.cool{fill:#172934;stroke:#4d91bc}.box.good{fill:#192b20;stroke:#65a779}.small{fill:#a8b4b9}.tiny{fill:#a8b4b9}.grid{stroke:#3c484e}.dot{stroke:#101416}}</style>
+  <rect class="bg" width="1400" height="650" rx="24"/>
+  <text class="kicker" x="64" y="58">MINI-LLM · MECHANISM</text>
+  <text class="title" x="64" y="105">失败之后：反向补偿</text>
+<rect class="box cool" x="100" y="180" width="200" height="62" rx="16"/>
+<text class="label" x="200.0" y="216.25" text-anchor="middle" font-size="15">A 创建资源</text>
+<path class="edge" d="M300 211 L340 211" marker-end="url(#arrow)"/>
+<rect class="box cool" x="340" y="180" width="200" height="62" rx="16"/>
+<text class="label" x="440.0" y="216.25" text-anchor="middle" font-size="15">B 写入数据</text>
+<path class="edge" d="M540 211 L580 211" marker-end="url(#arrow)"/>
+<rect class="box cool" x="580" y="180" width="200" height="62" rx="16"/>
+<text class="label" x="680.0" y="216.25" text-anchor="middle" font-size="15">C 调用外部</text>
+<path class="edge" d="M780 211 L820 211" marker-end="url(#arrow)"/>
+<rect class="box hot" x="820" y="180" width="200" height="62" rx="16"/>
+<text class="label" x="920.0" y="216.25" text-anchor="middle" font-size="15">D 发布失败</text>
+<path class="accent-edge" d="M920 242 L920 330 L680 330 L680 400" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
+<rect class="box good" x="580" y="400" width="200" height="62" rx="16"/>
+<text class="label" x="680.0" y="436.25" text-anchor="middle" font-size="15">C′ 撤销外部调用</text>
+<path class="edge" d="M580 431 L540 431" marker-end="url(#arrow)"/>
+<rect class="box good" x="340" y="400" width="200" height="62" rx="16"/>
+<text class="label" x="440.0" y="436.25" text-anchor="middle" font-size="15">B′ 回滚数据</text>
+<path class="edge" d="M340 431 L300 431" marker-end="url(#arrow)"/>
+<rect class="box good" x="100" y="400" width="200" height="62" rx="16"/>
+<text class="label" x="200.0" y="436.25" text-anchor="middle" font-size="15">A′ 释放资源</text>
+<text class="small" x="100" y="530" text-anchor="start">补偿动作必须幂等、可重试；顺序与正向相反。</text>
+<text class="tiny" x="100" y="570" text-anchor="start">没有补偿的工作流，只能“重跑一遍”，而副作用已经发生了。</text>
+</svg>

@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="650" viewBox="0 0 1400 650" role="img" aria-labelledby="title desc">
+  <title id="title">风险敏感：为什么均值不够</title><desc id="desc">mini-llm 技术机制图</desc>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="currentColor"/></marker></defs>
+  <style>:root{color-scheme:light dark}.bg{fill:#f7f4ed}.title{fill:#172126;font:700 30px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.kicker{fill:#e45d32;font:700 16px ui-monospace,Consolas,monospace;letter-spacing:2px}.box{fill:#fffdf8;stroke:#c4bdb1;stroke-width:2}.box.hot{fill:#fff0e8;stroke:#e45d32}.box.cool{fill:#eaf3f7;stroke:#3178a5}.box.good{fill:#eaf4ec;stroke:#4f8b62}.label{fill:#172126;font:650 18px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.small{fill:#69777d;font:500 15px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.tiny{fill:#69777d;font:500 13px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.edge{color:#69777d;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.accent-edge{color:#e45d32;fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.axis{fill:none;stroke:#69777d;stroke-width:2}.grid{stroke:#c4bdb1;stroke-width:1;opacity:.45}.dot{stroke:#fffdf8;stroke-width:3}.area{opacity:.14}@media(prefers-color-scheme:dark){.bg{fill:#101416}.title,.label{fill:#edf2f3}.kicker{fill:#ef855d}.box{fill:#182024;stroke:#526168}.box.hot{fill:#32211c;stroke:#e17750}.box.cool{fill:#172934;stroke:#4d91bc}.box.good{fill:#192b20;stroke:#65a779}.small{fill:#a8b4b9}.tiny{fill:#a8b4b9}.grid{stroke:#3c484e}.dot{stroke:#101416}}</style>
+  <rect class="bg" width="1400" height="650" rx="24"/>
+  <text class="kicker" x="64" y="58">MINI-LLM · MECHANISM</text>
+  <text class="title" x="64" y="105">风险敏感：为什么均值不够</text>
+<rect class="box hot" x="120" y="480" width="90" height="40" rx="6"/>
+<rect class="box hot" x="230" y="460" width="90" height="60" rx="6"/>
+<rect class="box cool" x="340" y="460" width="90" height="60" rx="6"/>
+<rect class="box cool" x="450" y="430" width="90" height="90" rx="6"/>
+<rect class="box cool" x="560" y="410" width="90" height="110" rx="6"/>
+<rect class="box cool" x="670" y="400" width="90" height="120" rx="6"/>
+<rect class="box cool" x="780" y="380" width="90" height="140" rx="6"/>
+<rect class="box cool" x="890" y="360" width="90" height="160" rx="6"/>
+<rect class="box cool" x="1000" y="320" width="90" height="200" rx="6"/>
+<rect class="box cool" x="1110" y="260" width="90" height="260" rx="6"/>
+<line class="axis" x1="110" y1="520" x2="1240" y2="520"/>
+<text class="tiny" x="110" y="536" text-anchor="start"></text>
+<line class="axis" x1="110" y1="396.0" x2="1240" y2="396.0" stroke-dasharray="9 7"/>
+<text class="small" x="1260" y="402.0" text-anchor="start">均值</text>
+<line class="axis" x1="110" y1="545" x2="110" y2="565"/>
+<line class="axis" x1="300" y1="545" x2="300" y2="565"/>
+<line class="axis" x1="110" y1="565" x2="300" y2="565"/>
+<text class="tiny" x="205" y="590" text-anchor="middle">最差 20% 的平均 = CVaR</text>
+<text class="tiny" x="110" y="630" text-anchor="start">只看期望效用会选到“平时小赚、偶发巨亏”的方案；CVaR 把尾部单独拎出来看。</text>
+</svg>

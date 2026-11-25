@@ -45,6 +45,11 @@ AI 发现：
 
 # **一、Correlation 与 Causation：相关性不等于因果关系**
 
+![因果之梯：关联、干预、反事实三级，对应的公式与问题都不同](assets/diagrams/causal-ladder.svg)
+
+_图：因果之梯：关联、干预、反事实三级，对应的公式与问题都不同。_
+
+
 ## **1.1 什么是 Correlation？**
 
 Correlation（相关性）描述两个变量是否存在统计关联。

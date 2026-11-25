@@ -1,5 +1,10 @@
 # **《mini-llm Simulation Engine 深度解析：从 Environment Modeling、State Transition 到 Multi-Agent Simulation、Monte Carlo 与 World Model》**
 
+![Sim2Real 差距的四个来源，以及 domain randomization 等缓解手段](assets/diagrams/simulation-sim2real-gap.svg)
+
+_图：Sim2Real 差距的四个来源，以及 domain randomization 等缓解手段。_
+
+
 ![Monte Carlo 通过多次随机 rollout 估计行动结果分布。](assets/diagrams/simulation-monte-carlo.svg)
 
 _图：Monte Carlo 通过多次随机 rollout 估计行动结果分布。_
