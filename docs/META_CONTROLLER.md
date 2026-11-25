@@ -341,6 +341,11 @@ class ModelRouter:    def __init__(self, models):        self.models = models   
 
 # **四、Model Cascading：模型级联**
 
+![模型级联：先用便宜模型，低置信再升级；收益来自“多数请求不需要大模型”](assets/diagrams/meta-controller-model-cascade.svg)
+
+_图：模型级联：先用便宜模型，低置信再升级；收益来自“多数请求不需要大模型”。_
+
+
 Dynamic Model Routing 负责选择模型。
 
 Model Cascading 则采用另一种思路：

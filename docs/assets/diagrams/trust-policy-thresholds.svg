@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="650" viewBox="0 0 1400 650" role="img" aria-labelledby="title desc">
+  <title id="title">可信度阈值决定“答不答”</title><desc id="desc">mini-llm 技术机制图</desc>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="currentColor"/></marker></defs>
+  <style>:root{color-scheme:light dark}.bg{fill:#f7f4ed}.title{fill:#172126;font:700 30px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.kicker{fill:#e45d32;font:700 16px ui-monospace,Consolas,monospace;letter-spacing:2px}.box{fill:#fffdf8;stroke:#c4bdb1;stroke-width:2}.box.hot{fill:#fff0e8;stroke:#e45d32}.box.cool{fill:#eaf3f7;stroke:#3178a5}.box.good{fill:#eaf4ec;stroke:#4f8b62}.label{fill:#172126;font:650 18px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.small{fill:#69777d;font:500 15px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.tiny{fill:#69777d;font:500 13px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.edge{color:#69777d;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.accent-edge{color:#e45d32;fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.axis{fill:none;stroke:#69777d;stroke-width:2}.grid{stroke:#c4bdb1;stroke-width:1;opacity:.45}.dot{stroke:#fffdf8;stroke-width:3}.area{opacity:.14}@media(prefers-color-scheme:dark){.bg{fill:#101416}.title,.label{fill:#edf2f3}.kicker{fill:#ef855d}.box{fill:#182024;stroke:#526168}.box.hot{fill:#32211c;stroke:#e17750}.box.cool{fill:#172934;stroke:#4d91bc}.box.good{fill:#192b20;stroke:#65a779}.small{fill:#a8b4b9}.tiny{fill:#a8b4b9}.grid{stroke:#3c484e}.dot{stroke:#101416}}</style>
+  <rect class="bg" width="1400" height="650" rx="24"/>
+  <text class="kicker" x="64" y="58">MINI-LLM · MECHANISM</text>
+  <text class="title" x="64" y="105">可信度阈值决定“答不答”</text>
+<line class="axis" x1="100" y1="330" x2="1300" y2="330"/>
+<rect class="box hot" x="100" y="260" width="288" height="70" rx="10"/>
+<text class="small" x="250.0" y="302" text-anchor="middle">≤ 0.4</text>
+<text class="tiny" x="250.0" y="390" text-anchor="middle">弃答 / 转人工</text>
+<line class="axis" x1="100" y1="330" x2="100" y2="350"/>
+<rect class="box cool" x="400" y="260" width="288" height="70" rx="10"/>
+<text class="small" x="550.0" y="302" text-anchor="middle">0.4 – 0.7</text>
+<text class="tiny" x="550.0" y="390" text-anchor="middle">回答 + 明确不确定</text>
+<line class="axis" x1="400" y1="330" x2="400" y2="350"/>
+<rect class="box good" x="700" y="260" width="288" height="70" rx="10"/>
+<text class="small" x="850.0" y="302" text-anchor="middle">0.7 – 0.9</text>
+<text class="tiny" x="850.0" y="390" text-anchor="middle">回答 + 引用证据</text>
+<line class="axis" x1="700" y1="330" x2="700" y2="350"/>
+<rect class="box good" x="1000" y="260" width="288" height="70" rx="10"/>
+<text class="small" x="1150.0" y="302" text-anchor="middle">&gt; 0.9</text>
+<text class="tiny" x="1150.0" y="390" text-anchor="middle">回答 + 可执行动作</text>
+<line class="axis" x1="1000" y1="330" x2="1000" y2="350"/>
+<text class="small" x="100" y="200" text-anchor="start">同一套阈值要按任务风险调整：医疗与金融的门槛更高。</text>
+<text class="tiny" x="100" y="470" text-anchor="start">阈值不是拍脑袋：应当用校准后的验证集，选一个可接受的错误率。</text>
+<text class="tiny" x="100" y="510" text-anchor="start">低于阈值时，“不回答”往往比“编一个”更可信。</text>
+</svg>

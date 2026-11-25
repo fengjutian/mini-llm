@@ -320,6 +320,11 @@ World Model 的核心任务之一，就是学习这种变化规律。
 
 # **四、Latent World Model：为什么需要潜在空间？**
 
+![在潜在空间里做 rollout：编码、动力学推演、再解码，省掉渲染开销](assets/diagrams/world-model-latent-rollout.svg)
+
+_图：在潜在空间里做 rollout：编码、动力学推演、再解码，省掉渲染开销。_
+
+
 ![观测经编码进入潜在状态，在潜在空间滚动后再解码预测。](assets/diagrams/world-model-latent-cycle.svg)
 
 _图：观测经编码进入潜在状态，在潜在空间滚动后再解码预测。_

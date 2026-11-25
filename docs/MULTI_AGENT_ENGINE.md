@@ -650,6 +650,11 @@ Agent B
 
 # **六、Role Specialization：如何构建专业化 Agent？**
 
+![多 Agent 的角色分工与交接：规划、编码、测试、评审、集成，共享同一块任务板](assets/diagrams/multi-agent-role-specialization.svg)
+
+_图：多 Agent 的角色分工与交接：规划、编码、测试、评审、集成，共享同一块任务板。_
+
+
 Multi-Agent 系统并不意味着所有 Agent 都具有相同能力。
 
 相反，专业化是多智能体架构的重要价值。

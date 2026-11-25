@@ -6,6 +6,11 @@ _图：Tensor 的逻辑视图与物理计算。从左到右展示本章核心概
 
 ## **从内存布局、Shape、Stride 到矩阵乘法**
 
+![Stride 用两个整数定位元素；转置只改 stride，不搬数据](assets/diagrams/tensor-stride-indexing.svg)
+
+_图：Stride 用两个整数定位元素；转置只改 stride，不搬数据。_
+
+
 mini-llm 技术文档 · 第二部分 · Tensor Engine
 
 # **一、为什么要自己实现 Tensor Engine？**

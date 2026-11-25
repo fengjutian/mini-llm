@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="650" viewBox="0 0 1400 650" role="img" aria-labelledby="title desc">
+  <title id="title">在潜在空间里想象未来</title><desc id="desc">mini-llm 技术机制图</desc>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="currentColor"/></marker></defs>
+  <style>:root{color-scheme:light dark}.bg{fill:#f7f4ed}.title{fill:#172126;font:700 30px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.kicker{fill:#e45d32;font:700 16px ui-monospace,Consolas,monospace;letter-spacing:2px}.box{fill:#fffdf8;stroke:#c4bdb1;stroke-width:2}.box.hot{fill:#fff0e8;stroke:#e45d32}.box.cool{fill:#eaf3f7;stroke:#3178a5}.box.good{fill:#eaf4ec;stroke:#4f8b62}.label{fill:#172126;font:650 18px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.small{fill:#69777d;font:500 15px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.tiny{fill:#69777d;font:500 13px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.edge{color:#69777d;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.accent-edge{color:#e45d32;fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.axis{fill:none;stroke:#69777d;stroke-width:2}.grid{stroke:#c4bdb1;stroke-width:1;opacity:.45}.dot{stroke:#fffdf8;stroke-width:3}.area{opacity:.14}@media(prefers-color-scheme:dark){.bg{fill:#101416}.title,.label{fill:#edf2f3}.kicker{fill:#ef855d}.box{fill:#182024;stroke:#526168}.box.hot{fill:#32211c;stroke:#e17750}.box.cool{fill:#172934;stroke:#4d91bc}.box.good{fill:#192b20;stroke:#65a779}.small{fill:#a8b4b9}.tiny{fill:#a8b4b9}.grid{stroke:#3c484e}.dot{stroke:#101416}}</style>
+  <rect class="bg" width="1400" height="650" rx="24"/>
+  <text class="kicker" x="64" y="58">MINI-LLM · MECHANISM</text>
+  <text class="title" x="64" y="105">在潜在空间里想象未来</text>
+<rect class="box cool" x="80" y="260" width="200" height="70" rx="16"/>
+<text class="label" x="180.0" y="300.6" text-anchor="middle" font-size="16">Observation</text>
+<rect class="box hot" x="340" y="260" width="180" height="70" rx="16"/>
+<text class="label" x="430.0" y="300.6" text-anchor="middle" font-size="16">Encoder</text>
+<rect class="box good" x="580" y="260" width="180" height="70" rx="16"/>
+<text class="label" x="670.0" y="300.6" text-anchor="middle" font-size="16">Latent z</text>
+<rect class="box hot" x="820" y="260" width="200" height="70" rx="16"/>
+<text class="label" x="920.0" y="291.0" text-anchor="middle" font-size="18">Dynamics f</text>
+<text class="small" x="920.0" y="317.0" text-anchor="middle">z_{t+1} = f(z_t, a_t)</text>
+<rect class="box cool" x="1080" y="260" width="200" height="70" rx="16"/>
+<text class="label" x="1180.0" y="300.6" text-anchor="middle" font-size="16">Decoder</text>
+<path class="edge" d="M280 295 L340 295" marker-end="url(#arrow)"/>
+<path class="edge" d="M520 295 L580 295" marker-end="url(#arrow)"/>
+<path class="edge" d="M760 295 L820 295" marker-end="url(#arrow)"/>
+<path class="edge" d="M1020 295 L1080 295" marker-end="url(#arrow)"/>
+<path class="accent-edge" d="M920 330 L920 420 L670 420 L670 330" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
+<rect class="box good" x="1080" y="420" width="200" height="60" rx="16"/>
+<text class="label" x="1180.0" y="455.25" text-anchor="middle" font-size="15">Prediction</text>
+<path class="edge" d="M1180 330 L1180 420" marker-end="url(#arrow)"/>
+<text class="tiny" x="700" y="450" text-anchor="start">rollout：不解码也能连续推演</text>
+<text class="tiny" x="80" y="540" text-anchor="start">潜在空间省掉了“渲染成像素”的开销，代价是预测更难解释。</text>
+</svg>

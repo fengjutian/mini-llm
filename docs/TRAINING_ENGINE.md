@@ -31,6 +31,11 @@ _图：大规模模型训练建立在高性能计算基础设施之上。图中�
 
 ## **LLM 训练的核心循环**
 
+![学习率调度：warmup 之后余弦衰减，兼顾早期稳定与后期收敛](assets/diagrams/training-lr-schedule.svg)
+
+_图：学习率调度：warmup 之后余弦衰减，兼顾早期稳定与后期收敛。_
+
+
 ![批次训练循环与随 Step 下降的示意 Loss 曲线。](assets/diagrams/training-loss-loop.svg)
 
 _图：批次训练循环与随 Step 下降的示意 Loss 曲线。_

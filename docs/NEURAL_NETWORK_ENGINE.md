@@ -285,6 +285,11 @@ Linear 的核心参数是：
 
 ## **四、为什么只有 Linear 不够？——非线性激活函数**
 
+![ReLU、GELU、Sigmoid 的形状差异，决定了梯度是否容易消失或死亡](assets/diagrams/neural-network-activations.svg)
+
+_图：ReLU、GELU、Sigmoid 的形状差异，决定了梯度是否容易消失或死亡。_
+
+
 现在考虑两个 Linear 层：
 
 \\[ y=W_2(W_1x+b_1)+b_2 \\]

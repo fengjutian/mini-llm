@@ -1119,6 +1119,11 @@ Model Context
 
 # **十一、Trust Policy：如何根据可信度决定是否回答？**
 
+![可信度阈值与动作的对应关系](assets/diagrams/trust-policy-thresholds.svg)
+
+_图：可信度阈值与动作的对应关系。低于阈值时，弃答往往比编造更可信。_
+
+
 这是 Trust Engine 最终需要解决的问题。
 
 验证结果不能只停留在报告上，还需要驱动系统行为。

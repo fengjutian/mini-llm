@@ -1,5 +1,10 @@
 # **mini-llm Evaluation Engine 深度解析：从 Validation Loss、Perplexity 到 Benchmark、模型泛化能力**
 
+![评测矩阵：按任务看各模型得分，均值会掩盖短板](assets/diagrams/evaluation-benchmark-matrix.svg)
+
+_图：评测矩阵：按任务看各模型得分，均值会掩盖短板。_
+
+
 ![模型评估链路](assets/diagrams/evaluation-engine.svg)
 
 _图：模型评估链路。从左到右展示本章核心概念之间的数据流与依赖关系。_

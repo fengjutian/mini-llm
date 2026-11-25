@@ -462,6 +462,11 @@ let d = c + 4.0;
 
 # **六、反向传播中的梯度累积**
 
+![梯度累积：多个 micro-batch 累加梯度后只更新一次，用小显存换大 batch](assets/diagrams/autograd-gradient-accumulation.svg)
+
+_图：梯度累积：多个 micro-batch 累加梯度后只更新一次，用小显存换大 batch。_
+
+
 这是一个非常重要但容易被忽略的问题。
 
 ## **6.1 一个节点被多个节点使用**
