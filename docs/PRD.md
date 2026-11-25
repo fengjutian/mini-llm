@@ -152,6 +152,11 @@ MVP 不承诺训练完整 LLM。它首先验证项目结构、核心数据结构
 
 ## 6. 核心用户流程
 
+![产品主流程：安装、跑通 demo、观察内部、训练小模型、导出与复现](assets/diagrams/prd-user-journey.svg)
+
+_图：产品主流程：安装、跑通 demo、观察内部、训练小模型、导出与复现。_
+
+
 ### 流程 A：学习 Attention
 
 1. 运行 `cargo run -p mini-llm-cli -- demo`。

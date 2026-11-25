@@ -1,5 +1,10 @@
 # **mini-llm Representation Engine 深度解析：从 Embedding Space、Semantic Geometry 到 Feature、Concept 与 World Representation**
 
+![静态词向量与上下文向量的区别：同一个 bank 在不同句子里得到不同表示](assets/diagrams/representation-contextual-embedding.svg)
+
+_图：静态词向量与上下文向量的区别：同一个 bank 在不同句子里得到不同表示。_
+
+
 ![语义相近概念在向量空间中形成局部簇与关系方向。](assets/diagrams/representation-semantic-space.svg)
 
 _图：语义相近概念在向量空间中形成局部簇与关系方向。_

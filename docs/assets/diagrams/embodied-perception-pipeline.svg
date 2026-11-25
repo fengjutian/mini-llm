@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="650" viewBox="0 0 1400 650" role="img" aria-labelledby="title desc">
+  <title id="title">从传感器到动作</title><desc id="desc">mini-llm 技术机制图</desc>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="currentColor"/></marker></defs>
+  <style>:root{color-scheme:light dark}.bg{fill:#f7f4ed}.title{fill:#172126;font:700 30px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.kicker{fill:#e45d32;font:700 16px ui-monospace,Consolas,monospace;letter-spacing:2px}.box{fill:#fffdf8;stroke:#c4bdb1;stroke-width:2}.box.hot{fill:#fff0e8;stroke:#e45d32}.box.cool{fill:#eaf3f7;stroke:#3178a5}.box.good{fill:#eaf4ec;stroke:#4f8b62}.label{fill:#172126;font:650 18px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.small{fill:#69777d;font:500 15px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.tiny{fill:#69777d;font:500 13px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.edge{color:#69777d;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.accent-edge{color:#e45d32;fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.axis{fill:none;stroke:#69777d;stroke-width:2}.grid{stroke:#c4bdb1;stroke-width:1;opacity:.45}.dot{stroke:#fffdf8;stroke-width:3}.area{opacity:.14}@media(prefers-color-scheme:dark){.bg{fill:#101416}.title,.label{fill:#edf2f3}.kicker{fill:#ef855d}.box{fill:#182024;stroke:#526168}.box.hot{fill:#32211c;stroke:#e17750}.box.cool{fill:#172934;stroke:#4d91bc}.box.good{fill:#192b20;stroke:#65a779}.small{fill:#a8b4b9}.tiny{fill:#a8b4b9}.grid{stroke:#3c484e}.dot{stroke:#101416}}</style>
+  <rect class="bg" width="1400" height="650" rx="24"/>
+  <text class="kicker" x="64" y="58">MINI-LLM · MECHANISM</text>
+  <text class="title" x="64" y="105">从传感器到动作</text>
+<rect class="box cool" x="90" y="140" width="200" height="60" rx="16"/>
+<text class="label" x="190.0" y="175.25" text-anchor="middle" font-size="15">Camera</text>
+<path class="edge" d="M290 170 L420 300" marker-end="url(#arrow)"/>
+<rect class="box cool" x="90" y="240" width="200" height="60" rx="16"/>
+<text class="label" x="190.0" y="275.25" text-anchor="middle" font-size="15">LiDAR</text>
+<path class="edge" d="M290 270 L420 300" marker-end="url(#arrow)"/>
+<rect class="box cool" x="90" y="340" width="200" height="60" rx="16"/>
+<text class="label" x="190.0" y="375.25" text-anchor="middle" font-size="15">IMU</text>
+<path class="edge" d="M290 370 L420 300" marker-end="url(#arrow)"/>
+<rect class="box cool" x="90" y="440" width="200" height="60" rx="16"/>
+<text class="label" x="190.0" y="475.25" text-anchor="middle" font-size="15">Force</text>
+<path class="edge" d="M290 470 L420 300" marker-end="url(#arrow)"/>
+<rect class="box hot" x="420" y="260" width="220" height="80" rx="16"/>
+<text class="label" x="530.0" y="296.0" text-anchor="middle" font-size="18">Sensor Fusion</text>
+<text class="small" x="530.0" y="322.0" text-anchor="middle">时间与空间对齐</text>
+<rect class="box cool" x="720" y="260" width="220" height="80" rx="16"/>
+<text class="label" x="830.0" y="296.0" text-anchor="middle" font-size="18">State Estimate</text>
+<text class="small" x="830.0" y="322.0" text-anchor="middle">位姿 / 速度 / 接触</text>
+<rect class="box good" x="1020" y="260" width="220" height="80" rx="16"/>
+<text class="label" x="1130.0" y="296.0" text-anchor="middle" font-size="18">Policy</text>
+<text class="small" x="1130.0" y="322.0" text-anchor="middle">动作输出</text>
+<path class="edge" d="M640 300 L720 300" marker-end="url(#arrow)"/>
+<path class="edge" d="M940 300 L1020 300" marker-end="url(#arrow)"/>
+<path class="accent-edge" d="M1130 340 L1130 430 L190 430 L190 400" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
+<text class="tiny" x="560" y="470" text-anchor="start">执行结果回到传感器</text>
+<text class="tiny" x="80" y="560" text-anchor="start">融合的关键不是“加更多传感器”，而是对齐时间戳和坐标系。</text>
+</svg>

@@ -763,6 +763,11 @@ KL 散度常用于：
 
 ## **4.2 梯度下降（Gradient Descent）**
 
+![梯度下降沿负梯度方向迭代；步长决定收敛速度与稳定性](assets/diagrams/math-gradient-descent.svg)
+
+_图：梯度下降沿负梯度方向迭代；步长决定收敛速度与稳定性。_
+
+
 基本公式：
 
 \\[ \theta\_{t+1} = \theta_t-\eta\nabla L(\theta_t) \\]

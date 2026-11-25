@@ -1,5 +1,10 @@
 # **《mini-llm Embodied AI Engine 深度解析：从 Perception、Sensor Fusion 到 Motor Control、Action Execution 与 Physical Interaction》**
 
+![多传感器融合到状态估计，再到策略输出的完整链路](assets/diagrams/embodied-perception-pipeline.svg)
+
+_图：多传感器融合到状态估计，再到策略输出的完整链路。_
+
+
 ![具身智能感知行动闭环](assets/diagrams/embodied-ai-engine.svg)
 
 _图：具身智能感知行动闭环。从左到右展示本章核心概念之间的数据流与依赖关系。_

@@ -1,5 +1,10 @@
 # **《mini-llm Multi-Agent Engine 深度解析：从 Agent Collaboration、Task Delegation 到 Consensus、Negotiation 与 Collective Intelligence》**
 
+![多 Agent 的四种表决方式，以及各自的通过条件](assets/diagrams/collective-voting-methods.svg)
+
+_图：多 Agent 的四种表决方式，以及各自的通过条件。_
+
+
 ![共享场地中协同执行任务的多台移动机器人：它们必须就任务分配与路径让行达成一致，否则会互相阻塞](assets/images/multi-agent-robot-fleet.png)
 
 _图：共享场地中协同执行任务的多台移动机器人：它们必须就任务分配与路径让行达成一致，否则会互相阻塞。图片：本仓库 AI 生成图。_

@@ -335,6 +335,11 @@ mini-llm 的 Spatial Intelligence Engine 应当采用多表示架构，而不是
 
 ## **四、Coordinate System：机器人如何理解不同坐标系？**
 
+![World → Base → Camera → Object 的坐标链，每个 T 都是 4×4 齐次变换](assets/diagrams/spatial-coordinate-frames.svg)
+
+_图：World → Base → Camera → Object 的坐标链，每个 T 都是 4×4 齐次变换。_
+
+
 这是空间智能最重要的工程基础之一。
 
 机器人并不是生活在一个单一坐标系中。

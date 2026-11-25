@@ -10,6 +10,11 @@ _图：里程碑原本就是路边的石头：刻着到下一站的距离，提�
 
 ## Milestone 0 — 可运行骨架（已完成）
 
+![路线图的七个里程碑，每一级都建立在上一级之上](assets/diagrams/roadmap-capability-stages.svg)
+
+_图：路线图的七个里程碑，每一级都建立在上一级之上。_
+
+
 - [x] Cargo workspace
 - [x] CPU Tensor
 - [x] Add / MatMul / ReLU / Softmax

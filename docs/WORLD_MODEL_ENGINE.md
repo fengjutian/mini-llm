@@ -1,5 +1,10 @@
 # **mini-llm World Model Engine 深度解析：从 State Representation、State Transition 到 Prediction、Planning 与 Action**
 
+![真实状态不可直接观测，策略只能基于信念 b_t = P(s_t | o_{1:t}) 做决策](assets/diagrams/world-model-state-observation.svg)
+
+_图：真实状态不可直接观测，策略只能基于信念 b_t = P(s_t | o_{1:t}) 做决策。_
+
+
 ![世界模型的预测与行动](assets/diagrams/world-model-engine.svg)
 
 _图：世界模型的预测与行动。从左到右展示本章核心概念之间的数据流与依赖关系。_

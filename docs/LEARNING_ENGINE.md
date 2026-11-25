@@ -1,5 +1,10 @@
 # **mini-llm Learning Engine 深度解析：从 Feedback、Experience Replay 到 Online Learning、Reinforcement Learning 与 Self-Improvement**
 
+![Experience Replay：从缓冲区采样并用旧经验更新策略，避免只学最新数据](assets/diagrams/learning-experience-replay.svg)
+
+_图：Experience Replay：从缓冲区采样并用旧经验更新策略，避免只学最新数据。_
+
+
 ![持续学习闭环](assets/diagrams/learning-engine.svg)
 
 _图：持续学习闭环。从左到右展示本章核心概念之间的数据流与依赖关系。_

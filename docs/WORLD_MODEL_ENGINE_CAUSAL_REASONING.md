@@ -779,6 +779,11 @@ def mpc_plan(state, model, action_candidates, horizon):    best_actions = None  
 
 # **八、Counterfactual Reasoning：如果当时采取另一种行动，会怎样？**
 
+![观察 P(Y|X) 与干预 P(Y|do(X)) 的区别：干预会切断进入 X 的混杂边](assets/diagrams/world-model-intervention.svg)
+
+_图：观察 P(Y|X) 与干预 P(Y|do(X)) 的区别：干预会切断进入 X 的混杂边。_
+
+
 这是世界模型非常重要的能力。
 
 Counterfactual Reasoning，反事实推理。

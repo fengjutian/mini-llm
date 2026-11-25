@@ -1,5 +1,10 @@
 # **mini-llm Cognitive Architecture 深度解析：从 Working Memory、Belief System 到 Metacognition、Executive Function 与 Cognitive Loop**
 
+![贝叶斯信念更新：先验乘以似然并归一化，得到后验](assets/diagrams/cognitive-belief-update.svg)
+
+_图：贝叶斯信念更新：先验乘以似然并归一化，得到后验。_
+
+
 ![认知循环](assets/diagrams/cognitive-architecture.svg)
 
 _图：认知循环。从左到右展示本章核心概念之间的数据流与依赖关系。_

@@ -414,6 +414,11 @@ Agent 需要选择一组行动序列：
 
 ## **5.2 ReAct：推理与行动交替**
 
+![ReAct 循环：推理 → 行动 → 观察 → 判断是否停止](assets/diagrams/agent-react-loop.svg)
+
+_图：ReAct 循环：推理 → 行动 → 观察 → 判断是否停止。_
+
+
 一种经典的 Agent 设计模式是 ReAct，即 Reasoning + Acting。
 
 它让模型交替进行推理与行动。

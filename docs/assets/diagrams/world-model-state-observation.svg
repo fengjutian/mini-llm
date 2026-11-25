@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="650" viewBox="0 0 1400 650" role="img" aria-labelledby="title desc">
+  <title id="title">状态 vs 观测</title><desc id="desc">mini-llm 技术机制图</desc>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="currentColor"/></marker></defs>
+  <style>:root{color-scheme:light dark}.bg{fill:#f7f4ed}.title{fill:#172126;font:700 30px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.kicker{fill:#e45d32;font:700 16px ui-monospace,Consolas,monospace;letter-spacing:2px}.box{fill:#fffdf8;stroke:#c4bdb1;stroke-width:2}.box.hot{fill:#fff0e8;stroke:#e45d32}.box.cool{fill:#eaf3f7;stroke:#3178a5}.box.good{fill:#eaf4ec;stroke:#4f8b62}.label{fill:#172126;font:650 18px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.small{fill:#69777d;font:500 15px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.tiny{fill:#69777d;font:500 13px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.edge{color:#69777d;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.accent-edge{color:#e45d32;fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.axis{fill:none;stroke:#69777d;stroke-width:2}.grid{stroke:#c4bdb1;stroke-width:1;opacity:.45}.dot{stroke:#fffdf8;stroke-width:3}.area{opacity:.14}@media(prefers-color-scheme:dark){.bg{fill:#101416}.title,.label{fill:#edf2f3}.kicker{fill:#ef855d}.box{fill:#182024;stroke:#526168}.box.hot{fill:#32211c;stroke:#e17750}.box.cool{fill:#172934;stroke:#4d91bc}.box.good{fill:#192b20;stroke:#65a779}.small{fill:#a8b4b9}.tiny{fill:#a8b4b9}.grid{stroke:#3c484e}.dot{stroke:#101416}}</style>
+  <rect class="bg" width="1400" height="650" rx="24"/>
+  <text class="kicker" x="64" y="58">MINI-LLM · MECHANISM</text>
+  <text class="title" x="64" y="105">状态 vs 观测</text>
+<rect class="box hot" x="200" y="170" width="380" height="80" rx="16"/>
+<text class="label" x="390.0" y="206.0" text-anchor="middle" font-size="18">真实状态 s_t</text>
+<text class="small" x="390.0" y="232.0" text-anchor="middle">位置、速度、意图……</text>
+<rect class="box cool" x="760" y="170" width="380" height="80" rx="16"/>
+<text class="label" x="950.0" y="206.0" text-anchor="middle" font-size="18">观测 o_t</text>
+<text class="small" x="950.0" y="232.0" text-anchor="middle">图像、日志、返回值</text>
+<path class="edge" d="M580 210 L760 210" marker-end="url(#arrow)"/>
+<text class="tiny" x="670" y="190" text-anchor="middle">部分可观测</text>
+<rect class="box good" x="200" y="340" width="380" height="80" rx="16"/>
+<text class="label" x="390.0" y="386.3" text-anchor="middle" font-size="18">信念 b_t = P(s_t | o_{1:t})</text>
+<rect class="box good" x="760" y="340" width="380" height="80" rx="16"/>
+<text class="label" x="950.0" y="386.3" text-anchor="middle" font-size="18">策略 π(a_t | b_t)</text>
+<path class="edge" d="M760 250 L580 340" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
+<path class="edge" d="M580 380 L760 380" marker-end="url(#arrow)"/>
+<rect class="box hot" x="480" y="490" width="380" height="70" rx="16"/>
+<text class="label" x="670.0" y="530.25" text-anchor="middle" font-size="15">行动 a_t 改变真实状态</text>
+<path class="edge" d="M950 420 L950 470 L860 490" marker-end="url(#arrow)"/>
+<path class="accent-edge" d="M480 525 L190 525 L190 250" marker-end="url(#arrow)"/>
+<text class="tiny" x="80" y="610" text-anchor="start">Agent 看不到状态，只能维护信念；世界模型的价值就是把观测变成对状态的估计。</text>
+</svg>
