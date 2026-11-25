@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="650" viewBox="0 0 1400 650" role="img" aria-labelledby="title desc">
+  <title id="title">ReAct：想一步，做一步，看一步</title><desc id="desc">mini-llm 技术机制图</desc>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="currentColor"/></marker></defs>
+  <style>:root{color-scheme:light dark}.bg{fill:#f7f4ed}.title{fill:#172126;font:700 30px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.kicker{fill:#e45d32;font:700 16px ui-monospace,Consolas,monospace;letter-spacing:2px}.box{fill:#fffdf8;stroke:#c4bdb1;stroke-width:2}.box.hot{fill:#fff0e8;stroke:#e45d32}.box.cool{fill:#eaf3f7;stroke:#3178a5}.box.good{fill:#eaf4ec;stroke:#4f8b62}.label{fill:#172126;font:650 18px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.small{fill:#69777d;font:500 15px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.tiny{fill:#69777d;font:500 13px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.edge{color:#69777d;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.accent-edge{color:#e45d32;fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.axis{fill:none;stroke:#69777d;stroke-width:2}.grid{stroke:#c4bdb1;stroke-width:1;opacity:.45}.dot{stroke:#fffdf8;stroke-width:3}.area{opacity:.14}@media(prefers-color-scheme:dark){.bg{fill:#101416}.title,.label{fill:#edf2f3}.kicker{fill:#ef855d}.box{fill:#182024;stroke:#526168}.box.hot{fill:#32211c;stroke:#e17750}.box.cool{fill:#172934;stroke:#4d91bc}.box.good{fill:#192b20;stroke:#65a779}.small{fill:#a8b4b9}.tiny{fill:#a8b4b9}.grid{stroke:#3c484e}.dot{stroke:#101416}}</style>
+  <rect class="bg" width="1400" height="650" rx="24"/>
+  <text class="kicker" x="64" y="58">MINI-LLM · MECHANISM</text>
+  <text class="title" x="64" y="105">ReAct：想一步，做一步，看一步</text>
+<rect class="box hot" x="120" y="170" width="300" height="70" rx="16"/>
+<text class="label" x="270.0" y="201.0" text-anchor="middle" font-size="18">Thought 推理</text>
+<text class="small" x="270.0" y="227.0" text-anchor="middle">我现在该做什么</text>
+<rect class="box cool" x="620" y="170" width="300" height="70" rx="16"/>
+<text class="label" x="770.0" y="201.0" text-anchor="middle" font-size="18">Action 工具调用</text>
+<text class="small" x="770.0" y="227.0" text-anchor="middle">执行一个动作</text>
+<rect class="box" x="620" y="380" width="300" height="70" rx="16"/>
+<text class="label" x="770.0" y="411.0" text-anchor="middle" font-size="18">Observation 结果</text>
+<text class="small" x="770.0" y="437.0" text-anchor="middle">工具返回什么</text>
+<rect class="box good" x="120" y="380" width="300" height="70" rx="16"/>
+<text class="label" x="270.0" y="411.0" text-anchor="middle" font-size="18">Stop?</text>
+<text class="small" x="270.0" y="437.0" text-anchor="middle">目标是否达成</text>
+<path class="edge" d="M420 205 L620 205" marker-end="url(#arrow)"/>
+<path class="edge" d="M770 240 L770 380" marker-end="url(#arrow)"/>
+<path class="edge" d="M620 415 L420 415" marker-end="url(#arrow)"/>
+<path class="accent-edge" d="M270 380 L270 240" marker-end="url(#arrow)"/>
+<text class="tiny" x="290" y="320" text-anchor="start">继续下一轮</text>
+<path class="edge" d="M120 450 L60 450" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
+<text class="tiny" x="45" y="480" text-anchor="start">结束</text>
+<text class="tiny" x="80" y="540" text-anchor="start">ReAct 的价值在于把“推理”和“环境反馈”交替起来，而不是一次想完。</text>
+</svg>

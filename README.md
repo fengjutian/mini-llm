@@ -615,9 +615,10 @@ and re-exports.
   **attention block** (embedding → LayerNorm → QKV → attention → out-projection →
   residual → LayerNorm → head → cross-entropy) likewise trains end-to-end on host
   device storage and must drop its loss below 80% of the start. Run
-  `cargo run -p mini-llm-backend --example device_attention_block` to watch the
-  same block go from loss 3.31 to roughly 0.001 on a 28-character vocabulary
-  in 150 steps.
+  `cargo run -p mini-llm-backend --example device_attention_block` for a
+  held-out demonstration: 27 windows are split 21/6, training loss falls
+  3.30 → 0.11 while held-out loss bottoms near 3.03 at step 20 and climbs back
+  to 6.65 by step 150 — a compact overfitting example.
 - Future backends implement `Backend` and reuse the same parity harness.
 
 Autograd and the model still operate on host `Tensor` values; making the training

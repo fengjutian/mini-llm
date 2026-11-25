@@ -202,7 +202,8 @@ SFT 语料仅用于展示掩码机制。
 - 注意力块端到端训练（host）：embedding → LN → QKV → attention → 残差 →
   LN → head → CE，40 步 loss 下降；
 - 可运行示例：`cargo run -p mini-llm-backend --example device_attention_block`，
-  150 步 loss 3.31 → 0.001；
+  27 个窗口按 21/6 切分；train 3.30 → 0.11，held-out 在 step 20 最低
+  约 3.03 后回升到 6.65，展示过拟合；
 - `.github/workflows/cuda.yml`（手动触发）在 GPU runner 上跑 `--features cuda`；
 - CUDA 路径与 Candle CPU 共用代码，但本环境无 GPU，未做运行验证。
 

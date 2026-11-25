@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="650" viewBox="0 0 1400 650" role="img" aria-labelledby="title desc">
+  <title id="title">路线图：能力逐级叠加</title><desc id="desc">mini-llm 技术机制图</desc>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="currentColor"/></marker></defs>
+  <style>:root{color-scheme:light dark}.bg{fill:#f7f4ed}.title{fill:#172126;font:700 30px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.kicker{fill:#e45d32;font:700 16px ui-monospace,Consolas,monospace;letter-spacing:2px}.box{fill:#fffdf8;stroke:#c4bdb1;stroke-width:2}.box.hot{fill:#fff0e8;stroke:#e45d32}.box.cool{fill:#eaf3f7;stroke:#3178a5}.box.good{fill:#eaf4ec;stroke:#4f8b62}.label{fill:#172126;font:650 18px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.small{fill:#69777d;font:500 15px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.tiny{fill:#69777d;font:500 13px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.edge{color:#69777d;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.accent-edge{color:#e45d32;fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.axis{fill:none;stroke:#69777d;stroke-width:2}.grid{stroke:#c4bdb1;stroke-width:1;opacity:.45}.dot{stroke:#fffdf8;stroke-width:3}.area{opacity:.14}@media(prefers-color-scheme:dark){.bg{fill:#101416}.title,.label{fill:#edf2f3}.kicker{fill:#ef855d}.box{fill:#182024;stroke:#526168}.box.hot{fill:#32211c;stroke:#e17750}.box.cool{fill:#172934;stroke:#4d91bc}.box.good{fill:#192b20;stroke:#65a779}.small{fill:#a8b4b9}.tiny{fill:#a8b4b9}.grid{stroke:#3c484e}.dot{stroke:#101416}}</style>
+  <rect class="bg" width="1400" height="650" rx="24"/>
+  <text class="kicker" x="64" y="58">MINI-LLM · MECHANISM</text>
+  <text class="title" x="64" y="105">路线图：能力逐级叠加</text>
+<rect class="box cool" x="70" y="420" width="160" height="64" rx="16"/>
+<text class="label" x="150.0" y="456.55" text-anchor="middle" font-size="13">M0 骨架</text>
+<path class="edge" d="M150 410 L250 365" marker-end="url(#arrow)"/>
+<rect class="box cool" x="250" y="375" width="160" height="64" rx="16"/>
+<text class="label" x="330.0" y="411.55" text-anchor="middle" font-size="13">M1 Autograd</text>
+<path class="edge" d="M330 365 L430 320" marker-end="url(#arrow)"/>
+<rect class="box cool" x="430" y="330" width="160" height="64" rx="16"/>
+<text class="label" x="510.0" y="366.55" text-anchor="middle" font-size="13">M2 NN 基础</text>
+<path class="edge" d="M510 320 L610 275" marker-end="url(#arrow)"/>
+<rect class="box cool" x="610" y="285" width="160" height="64" rx="16"/>
+<text class="label" x="690.0" y="321.55" text-anchor="middle" font-size="13">M3 Tiny GPT</text>
+<path class="edge" d="M690 275 L790 230" marker-end="url(#arrow)"/>
+<rect class="box good" x="790" y="240" width="160" height="64" rx="16"/>
+<text class="label" x="870.0" y="276.55" text-anchor="middle" font-size="13">M4 Modern LLM</text>
+<path class="edge" d="M870 230 L970 185" marker-end="url(#arrow)"/>
+<rect class="box good" x="970" y="195" width="160" height="64" rx="16"/>
+<text class="label" x="1050.0" y="231.55" text-anchor="middle" font-size="13">M5 训练配方</text>
+<path class="edge" d="M1050 185 L1150 140" marker-end="url(#arrow)"/>
+<rect class="box hot" x="1150" y="150" width="160" height="64" rx="16"/>
+<text class="label" x="1230.0" y="186.55" text-anchor="middle" font-size="13">M6 加速与可观测</text>
+<text class="tiny" x="70" y="560" text-anchor="start">每一级都建立在上一级之上：跳过 Autograd 直接做 Tiny GPT，只会得到不可调试的模型。</text>
+</svg>

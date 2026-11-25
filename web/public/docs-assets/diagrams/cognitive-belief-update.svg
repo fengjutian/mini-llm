@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="650" viewBox="0 0 1400 650" role="img" aria-labelledby="title desc">
+  <title id="title">贝叶斯更新：证据改变信念</title><desc id="desc">mini-llm 技术机制图</desc>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="currentColor"/></marker></defs>
+  <style>:root{color-scheme:light dark}.bg{fill:#f7f4ed}.title{fill:#172126;font:700 30px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.kicker{fill:#e45d32;font:700 16px ui-monospace,Consolas,monospace;letter-spacing:2px}.box{fill:#fffdf8;stroke:#c4bdb1;stroke-width:2}.box.hot{fill:#fff0e8;stroke:#e45d32}.box.cool{fill:#eaf3f7;stroke:#3178a5}.box.good{fill:#eaf4ec;stroke:#4f8b62}.label{fill:#172126;font:650 18px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.small{fill:#69777d;font:500 15px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.tiny{fill:#69777d;font:500 13px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.edge{color:#69777d;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.accent-edge{color:#e45d32;fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.axis{fill:none;stroke:#69777d;stroke-width:2}.grid{stroke:#c4bdb1;stroke-width:1;opacity:.45}.dot{stroke:#fffdf8;stroke-width:3}.area{opacity:.14}@media(prefers-color-scheme:dark){.bg{fill:#101416}.title,.label{fill:#edf2f3}.kicker{fill:#ef855d}.box{fill:#182024;stroke:#526168}.box.hot{fill:#32211c;stroke:#e17750}.box.cool{fill:#172934;stroke:#4d91bc}.box.good{fill:#192b20;stroke:#65a779}.small{fill:#a8b4b9}.tiny{fill:#a8b4b9}.grid{stroke:#3c484e}.dot{stroke:#101416}}</style>
+  <rect class="bg" width="1400" height="650" rx="24"/>
+  <text class="kicker" x="64" y="58">MINI-LLM · MECHANISM</text>
+  <text class="title" x="64" y="105">贝叶斯更新：证据改变信念</text>
+<rect class="box cool" x="200" y="150" width="380" height="80" rx="16"/>
+<text class="label" x="390.0" y="186.0" text-anchor="middle" font-size="18">先验 P(H)</text>
+<text class="small" x="390.0" y="212.0" text-anchor="middle">看到证据之前</text>
+<rect class="box hot" x="720" y="150" width="380" height="80" rx="16"/>
+<text class="label" x="910.0" y="186.0" text-anchor="middle" font-size="18">似然 P(E | H)</text>
+<text class="small" x="910.0" y="212.0" text-anchor="middle">证据出现的可能性</text>
+<rect class="box good" x="460" y="320" width="380" height="90" rx="16"/>
+<text class="label" x="650.0" y="361.0" text-anchor="middle" font-size="18">后验 P(H | E)</text>
+<text class="small" x="650.0" y="387.0" text-anchor="middle">归一化后的新信念</text>
+<path class="edge" d="M390 230 L460 320" marker-end="url(#arrow)"/>
+<path class="edge" d="M720 230 L700 320" marker-end="url(#arrow)"/>
+<rect class="box cool" x="110" y="240" width="150.0" height="46" rx="8"/>
+<text class="tiny" x="110" y="228" text-anchor="start">P(H) = 0.30</text>
+<text class="small" x="270.0" y="270" text-anchor="start">0.30</text>
+<rect class="box hot" x="110" y="440" width="360.0" height="46" rx="8"/>
+<text class="tiny" x="110" y="428" text-anchor="start">P(H|E) = 0.72</text>
+<text class="small" x="480.0" y="470" text-anchor="start">0.72</text>
+<text class="tiny" x="80" y="560" text-anchor="start">同一份证据，对不同先验的人产生不同幅度的信念修正。</text>
+</svg>

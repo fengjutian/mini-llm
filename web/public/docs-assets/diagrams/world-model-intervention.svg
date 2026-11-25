@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="650" viewBox="0 0 1400 650" role="img" aria-labelledby="title desc">
+  <title id="title">观察 vs 干预：切断进入 X 的边</title><desc id="desc">mini-llm 技术机制图</desc>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="currentColor"/></marker></defs>
+  <style>:root{color-scheme:light dark}.bg{fill:#f7f4ed}.title{fill:#172126;font:700 30px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.kicker{fill:#e45d32;font:700 16px ui-monospace,Consolas,monospace;letter-spacing:2px}.box{fill:#fffdf8;stroke:#c4bdb1;stroke-width:2}.box.hot{fill:#fff0e8;stroke:#e45d32}.box.cool{fill:#eaf3f7;stroke:#3178a5}.box.good{fill:#eaf4ec;stroke:#4f8b62}.label{fill:#172126;font:650 18px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.small{fill:#69777d;font:500 15px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.tiny{fill:#69777d;font:500 13px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.edge{color:#69777d;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.accent-edge{color:#e45d32;fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.axis{fill:none;stroke:#69777d;stroke-width:2}.grid{stroke:#c4bdb1;stroke-width:1;opacity:.45}.dot{stroke:#fffdf8;stroke-width:3}.area{opacity:.14}@media(prefers-color-scheme:dark){.bg{fill:#101416}.title,.label{fill:#edf2f3}.kicker{fill:#ef855d}.box{fill:#182024;stroke:#526168}.box.hot{fill:#32211c;stroke:#e17750}.box.cool{fill:#172934;stroke:#4d91bc}.box.good{fill:#192b20;stroke:#65a779}.small{fill:#a8b4b9}.tiny{fill:#a8b4b9}.grid{stroke:#3c484e}.dot{stroke:#101416}}</style>
+  <rect class="bg" width="1400" height="650" rx="24"/>
+  <text class="kicker" x="64" y="58">MINI-LLM · MECHANISM</text>
+  <text class="title" x="64" y="105">观察 vs 干预：切断进入 X 的边</text>
+<rect class="box" x="80" y="140" width="560" height="380" rx="16"/>
+<text class="label" x="110" y="180" text-anchor="start" font-size="17">观察 P(Y | X)</text>
+<rect class="box hot" x="180" y="220" width="160" height="56" rx="16"/>
+<text class="label" x="260.0" y="253.25" text-anchor="middle" font-size="15">Z 混杂</text>
+<rect class="box cool" x="180" y="380" width="160" height="56" rx="16"/>
+<text class="label" x="260.0" y="413.6" text-anchor="middle" font-size="16">X</text>
+<rect class="box good" x="380" y="300" width="160" height="56" rx="16"/>
+<text class="label" x="460.0" y="333.6" text-anchor="middle" font-size="16">Y</text>
+<path class="edge" d="M260 276 L260 380" marker-end="url(#arrow)"/>
+<path class="edge" d="M260 276 L380 330" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
+<path class="edge" d="M340 408 L380 330" marker-end="url(#arrow)"/>
+<rect class="box" x="700" y="140" width="560" height="380" rx="16"/>
+<text class="label" x="730" y="180" text-anchor="start" font-size="17">干预 P(Y | do(X))</text>
+<rect class="box hot" x="800" y="220" width="160" height="56" rx="16"/>
+<text class="label" x="880.0" y="253.25" text-anchor="middle" font-size="15">Z 混杂</text>
+<rect class="box cool" x="800" y="380" width="160" height="56" rx="16"/>
+<text class="label" x="880.0" y="413.6" text-anchor="middle" font-size="16">X</text>
+<rect class="box good" x="1000" y="300" width="160" height="56" rx="16"/>
+<text class="label" x="1080.0" y="333.6" text-anchor="middle" font-size="16">Y</text>
+<path class="edge" d="M880 408 L1000 330" marker-end="url(#arrow)"/>
+<line class="edge" x1="880" y1="276" x2="880" y2="340" stroke-dasharray="9 7"/>
+<path d="M860 300 L900 340 M900 300 L860 340" stroke="#e45d32" stroke-width="5"/>
+<text class="tiny" x="950" y="460" text-anchor="start">进入 X 的边被切断</text>
+<text class="tiny" x="80" y="580" text-anchor="start">不切断混杂边，观察到的是相关；切断之后才是因果效应。</text>
+</svg>
