@@ -429,21 +429,9 @@ World Frame
 
 包括：
 
-**内参标定：**
-
-确定焦距、主点和畸变参数。
-
-**外参标定：**
-
-确定相机相对于其他坐标系的位置和方向。
-
-**手眼标定：**
-
-确定机器人运动坐标系与相机坐标系之间的变换关系。
-
-例如，Eye-in-Hand 系统中，相机安装在机械臂末端。
-
-相机和机械臂运动时，必须正确更新它们之间的空间关系。
+- **内参标定：**：确定焦距、主点和畸变参数。
+- **外参标定：**：确定相机相对于其他坐标系的位置和方向。
+- **手眼标定：**：确定机器人运动坐标系与相机坐标系之间的变换关系。
 
 ## **五、Point Cloud Engine：如何理解三维点云？**
 
@@ -840,25 +828,10 @@ Spatial Intelligence 最终需要形成一个结构化的世界模型。
 
 ## **3D World Model**
 
-**Geometry Representation**
-
-Point Cloud / Voxel / Mesh / SDF
-
-**Object State**
-
-Position / Rotation / Velocity / Size
-
-**Scene Graph**
-
-Spatial Relations / Semantic Relations
-
-**Physical Properties**
-
-Mass / Friction / Support / Collision
-
-**Uncertainty & Time**
-
-Confidence / Timestamp / Sensor Provenance
+- **Geometry Representation**：Point Cloud / Voxel / Mesh / SDF
+- **Object State**：Position / Rotation / Velocity / Size
+- **Scene Graph**：Spatial Relations / Semantic Relations
+- **Physical Properties**：Mass / Friction / Support / Collision
 
 ### **9.2 世界模型需要动态更新**
 
@@ -1207,29 +1180,11 @@ False
 
 目前至少存在六个重要问题。
 
-**1. 不完整观察**
-
-相机只能看到部分物体，遮挡区域需要推断。
-
-**2. 空间不确定性**
-
-传感器存在测量误差，物体位置不可能永远精确。
-
-**3. 动态空间**
-
-物体和机器人都可能移动，空间关系需要持续更新。
-
-**4. 多模态对齐**
-
-语言、图像、深度、点云和机器人坐标必须对应同一个世界。
-
-**5. 几何与语义结合**
-
-几何算法知道距离，视觉模型知道类别，语言模型理解指令，需要建立统一表示。
-
-**6. 真实世界验证**
-
-模型认为杯子可抓取，不代表机械臂真的可以抓取。必须经过运动学、碰撞和执行条件验证。
+- **1. 不完整观察**：相机只能看到部分物体，遮挡区域需要推断。
+- **2. 空间不确定性**：传感器存在测量误差，物体位置不可能永远精确。
+- **3. 动态空间**：物体和机器人都可能移动，空间关系需要持续更新。
+- **4. 多模态对齐**：语言、图像、深度、点云和机器人坐标必须对应同一个世界。
+- **5. 几何与语义结合**：几何算法知道距离，视觉模型知道类别，语言模型理解指令，需要建立统一表示。
 
 特别需要建立独立安全边界：
 
@@ -1302,25 +1257,10 @@ AI 不仅知道杯子在哪里，还能预测和执行：
 
 ## **从语言智能到物理智能**
 
-**Language Intelligence**
-
-理解概念、语言和指令
-
-**Spatial Intelligence**
-
-理解几何、位置、关系和空间约束
-
-**Embodied Intelligence**
-
-通过身体感知、行动和学习
-
-**Autonomous Intelligence**
-
-自主设定目标、规划、行动和适应
-
-这并不是说智能一定按照这条线性路径发展，而是说明：当 AI 从数字信息处理走向真实世界交互时，空间表示和空间推理会变得越来越重要。
-
-**空间智能让 AI 不再只是描述世界，而是开始具备对世界进行几何建模、关系推理和行动规划的基础能力。**
+- **Language Intelligence**：理解概念、语言和指令
+- **Spatial Intelligence**：理解几何、位置、关系和空间约束
+- **Embodied Intelligence**：通过身体感知、行动和学习
+- **Autonomous Intelligence**：自主设定目标、规划、行动和适应
 
 ## **十六、总结**
 

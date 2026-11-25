@@ -125,25 +125,10 @@ _图：地球仪是现实世界的一种表示：它保留了位置、距离和�
 
 ## **这只猫正在睡觉**
 
-**Tokenizer**
-
-文本转换为 Token ID
-
-**Embedding**
-
-离散 Token 转换为连续向量
-
-**Transformer Layers**
-
-融合上下文，形成动态表征
-
-**Contextual Representation**
-
-包含上下文相关信息的隐藏状态
-
-这个过程说明：
-
-模型不是直接理解原始文字，而是将语言转换为一系列可以进行数学运算的内部表征。
+- **Tokenizer**：文本转换为 Token ID
+- **Embedding**：离散 Token 转换为连续向量
+- **Transformer Layers**：融合上下文，形成动态表征
+- **Contextual Representation**：包含上下文相关信息的隐藏状态
 
 # **二、Embedding Space：为什么需要向量空间？**
 
@@ -396,21 +381,9 @@ Context B
 
 ## **语义几何的三个层次**
 
-**第一层：点（Point）**
-
-一个向量代表一个 Token 或一个上下文状态。
-
-**第二层：方向（Direction）**
-
-向量变化可能表达某些关系或特征。
-
-**第三层：结构（Structure）**
-
-多个点、方向与关系共同形成复杂的表征结构。
-
-这为理解模型内部概念提供了一个几何视角。
-
-但我们不能直接把低维可视化中的簇或方向当作真实语义结构的完整证明。PCA、t-SNE 和 UMAP 都会改变高维空间的可视化结构。
+- **第一层：点（Point）**：一个向量代表一个 Token 或一个上下文状态。
+- **第二层：方向（Direction）**：向量变化可能表达某些关系或特征。
+- **第三层：结构（Structure）**：多个点、方向与关系共同形成复杂的表征结构。
 
 # **五、Feature：模型内部的特征是什么？**
 
@@ -1283,33 +1256,12 @@ labels = [    1, 1, 1, 1, 0, 0]
 
 ## **从 Token 到 World Representation**
 
-**Token**
-
-离散语言符号
-
-**Embedding**
-
-连续向量表示
-
-**Contextual Representation**
-
-上下文相关的隐藏状态
-
-**Features**
-
-可识别的内部信息模式
-
-**Concepts & Relations**
-
-概念、属性与关系信息
-
-**World Representation**
-
-对对象、状态、关系与变化的内部表征假设
-
-这里的箭头不是已经被证明的固定心理或计算阶段，而是一种研究框架：帮助我们从不同抽象层次分析模型内部信息。
-
-我们现在可以提出一个更深刻的问题：
+- **Token**：离散语言符号
+- **Embedding**：连续向量表示
+- **Contextual Representation**：上下文相关的隐藏状态
+- **Features**：可识别的内部信息模式
+- **Concepts & Relations**：概念、属性与关系信息
+- **World Representation**：对对象、状态、关系与变化的内部表征假设
 
 **如果模型内部形成了特征、概念和关系，那么它是否还能够预测这些关系在未来如何变化？**
 

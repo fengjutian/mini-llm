@@ -1366,45 +1366,15 @@ New Simulation
 
 将上面的模块整合起来。
 
-**Simulation API**
-
-创建模拟任务、场景和运行配置
-
-**Simulation Manager**
-
-模拟生命周期、任务和状态管理
-
-**Environment**
-
-环境定义
-
-**State Manager**
-
-状态管理
-
-**Action Engine**
-
-行动执行
-
-**Transition Engine**
-
-状态转移
-
-**Scenario Engine**
-
-情景生成
-
-**Observation Engine**
-
-观察生成
-
-**Simulation Algorithms**
-
-Monte Carlo
-
-Multi-Agent Simulation
-
-Counterfactual
+- **Simulation API**：创建模拟任务、场景和运行配置
+- **Simulation Manager**：模拟生命周期、任务和状态管理
+- **Environment**：环境定义
+- **State Manager**：状态管理
+- **Action Engine**：行动执行
+- **Transition Engine**：状态转移
+- **Scenario Engine**：情景生成
+- **Observation Engine**：观察生成
+- **Simulation Algorithms**：Monte Carlo
 
 Discrete Event Simulation
 

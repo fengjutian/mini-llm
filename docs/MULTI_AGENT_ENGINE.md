@@ -67,61 +67,19 @@ Final Report
 
 这种架构看起来简单，但会遇到几个问题。
 
-**第一，专业能力混杂。**
+- **第一，专业能力混杂。**：同一个 Agent 需要在不同领域之间切换。
+- **第二，执行过程串行。**：架构分析、安全分析和依赖分析可能没有必要完全串行。
+- **第三，上下文膨胀。**：随着任务不断推进，模型上下文中会积累大量无关信息。
+- **第四，错误难以隔离。**：如果 Agent 在早期形成了错误判断，后续分析可能继续建立在错误前提上。
+- **第五，难以独立验证。**：一个 Agent 自己生成结论，再由自己判断结论是否正确，容易出现自我验证偏差。
 
-同一个 Agent 需要在不同领域之间切换。
-
-**第二，执行过程串行。**
-
-架构分析、安全分析和依赖分析可能没有必要完全串行。
-
-**第三，上下文膨胀。**
-
-随着任务不断推进，模型上下文中会积累大量无关信息。
-
-**第四，错误难以隔离。**
-
-如果 Agent 在早期形成了错误判断，后续分析可能继续建立在错误前提上。
-
-**第五，难以独立验证。**
-
-一个 Agent 自己生成结论，再由自己判断结论是否正确，容易出现自我验证偏差。
-
-## **1.2 Multi-Agent 架构**
-
-我们可以将任务拆分给不同的 Agent：
-
-**User Task**
-
-开源项目技术评估
-
-**Coordinator Agent**
-
-任务拆解、分配、协调和结果汇总
-
-**Architecture Agent**
-
-架构分析
-
-**Code Agent**
-
-代码质量
-
-**Security Agent**
-
-安全分析
-
-**Dependency Agent**
-
-依赖分析
-
-**Report Agent**
-
-综合分析、交叉检查和报告生成
-
-每个 Agent 负责不同的工作。
-
-它们可以：
+- **User Task**：开源项目技术评估
+- **Coordinator Agent**：任务拆解、分配、协调和结果汇总
+- **Architecture Agent**：架构分析
+- **Code Agent**：代码质量
+- **Security Agent**：安全分析
+- **Dependency Agent**：依赖分析
+- **Report Agent**：综合分析、交叉检查和报告生成
 
 - 独立执行任务。
 - 并行处理子任务。
@@ -602,25 +560,10 @@ Report Agent 是否可以直接获取前两个 Agent 的分析结果？
 
 建议将共享信息分为四种。
 
-**1. Shared Working Memory**
-
-当前任务共享状态、执行进度、临时结果
-
-**2. Shared Knowledge Memory**
-
-经过整理的事实、项目资料、知识和证据
-
-**3. Shared Artifact Store**
-
-报告、代码、文件、分析结果和数据集
-
-**4. Shared Event Store**
-
-任务事件、消息历史、执行过程和状态变化
-
-四层承担不同职责。
-
-特别是 Shared Artifact Store，不应该把大型文件全部塞进 Agent Prompt。
+- **1. Shared Working Memory**：当前任务共享状态、执行进度、临时结果
+- **2. Shared Knowledge Memory**：经过整理的事实、项目资料、知识和证据
+- **3. Shared Artifact Store**：报告、代码、文件、分析结果和数据集
+- **4. Shared Event Store**：任务事件、消息历史、执行过程和状态变化
 
 应该通过 Artifact ID 引用文件，并按需读取。
 
@@ -1061,29 +1004,11 @@ Multi-Agent 的一个重要优势是并行执行。
 
 ## **9.2 并行调度需要解决的问题**
 
-**Concurrency Control**
-
-防止多个 Agent 同时修改同一个文件或共享状态。
-
-**Resource Scheduling**
-
-控制模型并发、Token 预算和计算资源。
-
-**Task Dependencies**
-
-确保依赖任务完成后才能执行后续任务。
-
-**Failure Isolation**
-
-某个 Agent 失败时，不应该无条件导致所有 Agent 失败。
-
-**Cancellation**
-
-用户取消任务时，需要传播取消信号，并处理正在执行的工具调用。
-
-## **9.3 一个简单的并行执行示例**
-
-```
+- **Concurrency Control**：防止多个 Agent 同时修改同一个文件或共享状态。
+- **Resource Scheduling**：控制模型并发、Token 预算和计算资源。
+- **Task Dependencies**：确保依赖任务完成后才能执行后续任务。
+- **Failure Isolation**：某个 Agent 失败时，不应该无条件导致所有 Agent 失败。
+- **Cancellation**：用户取消任务时，需要传播取消信号，并处理正在执行的工具调用。
 import asyncioasync def run_agent(agent, task):    return await agent.execute(task)async def execute_parallel(    agents,    tasks):    results = await asyncio.gather(        *[            run_agent(agent, task)            for agent, task in zip(agents, tasks)        ],        return_exceptions=True    )    return results
 ```
 

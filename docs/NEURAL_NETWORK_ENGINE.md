@@ -835,25 +835,10 @@ pub struct Parameter {
 
 ## **MLP 网络结构**
 
-**Input**
-
-2 个特征
-
-**Linear(2, 4) + ReLU**
-
-2 → 4
-
-**Linear(4, 1)**
-
-4 → 1
-
-**MSE Loss**
-
-计算预测误差
-
-### **9.1 前向传播**
-
-输入：
+- **Input**：2 个特征
+- **Linear(2, 4) + ReLU**：2 → 4
+- **Linear(4, 1)**：4 → 1
+- **MSE Loss**：计算预测误差
 
 \\[ x=[x_1,x_2] \\]
 

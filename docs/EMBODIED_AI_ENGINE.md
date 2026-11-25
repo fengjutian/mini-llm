@@ -125,45 +125,15 @@ AI：杯子位于桌子的右侧。
 
 ## **mini-llm Embodied AI Architecture**
 
-**Physical Environment**
-
-房间、物体、地面、人类和其他机器人
-
-**Perception Engine**
-
-视觉、听觉、触觉和传感器感知
-
-**Spatial Engine**
-
-空间、位置、姿态
-
-**Sensor Fusion**
-
-多传感器信息融合
-
-**World Model Engine**
-
-环境表示、动态预测和不确定性
-
-**Planning Engine**
-
-任务规划、路径规划和动作规划
-
-**Motor Control Engine**
-
-运动控制、轨迹跟踪和反馈控制
-
-**Actuator Execution**
-
-电机、机械臂、底盘和夹爪
-
-**Physical Feedback**
-
-执行结果返回传感器，重新进入感知流程
-
-这里可以看到，具身智能不是一个单独的模型，而是多个 Engine 协同工作的系统。
-
-# **三、Perception Engine：AI 如何感知真实世界？**
+- **Physical Environment**：房间、物体、地面、人类和其他机器人
+- **Perception Engine**：视觉、听觉、触觉和传感器感知
+- **Spatial Engine**：空间、位置、姿态
+- **Sensor Fusion**：多传感器信息融合
+- **World Model Engine**：环境表示、动态预测和不确定性
+- **Planning Engine**：任务规划、路径规划和动作规划
+- **Motor Control Engine**：运动控制、轨迹跟踪和反馈控制
+- **Actuator Execution**：电机、机械臂、底盘和夹爪
+- **Physical Feedback**：执行结果返回传感器，重新进入感知流程
 
 具身智能的第一步是感知。
 
@@ -303,29 +273,11 @@ Sensor Fusion（传感器融合）是指：
 
 ## **Sensor Fusion Architecture**
 
-**Camera**
-
-视觉
-
-**IMU**
-
-惯性
-
-**LiDAR**
-
-距离
-
-**Sensor Fusion**
-
-时间同步、坐标转换、状态估计
-
-**Fused State**
-
-统一的位置、姿态和环境状态估计
-
-## **4.3 时间同步**
-
-不同传感器可能以不同频率运行。
+- **Camera**：视觉
+- **IMU**：惯性
+- **LiDAR**：距离
+- **Sensor Fusion**：时间同步、坐标转换、状态估计
+- **Fused State**：统一的位置、姿态和环境状态估计
 
 例如：
 
@@ -611,29 +563,11 @@ World Model 还需要进一步处理：
 
 ## **Motor Control Hierarchy**
 
-**Task Level**
-
-抓取杯子、移动到目标位置
-
-**Motion Planning**
-
-规划机械臂运动轨迹
-
-**Trajectory Generation**
-
-生成位置、速度和加速度曲线
-
-**Joint Controller**
-
-关节位置、速度和力矩控制
-
-**Motor Driver**
-
-向实际电机发送控制信号
-
-这意味着：
-
-LLM 不应该直接生成未经验证的电机电流或高频控制信号。
+- **Task Level**：抓取杯子、移动到目标位置
+- **Motion Planning**：规划机械臂运动轨迹
+- **Trajectory Generation**：生成位置、速度和加速度曲线
+- **Joint Controller**：关节位置、速度和力矩控制
+- **Motor Driver**：向实际电机发送控制信号
 
 更合理的架构是：
 
@@ -895,29 +829,11 @@ import randomdef randomize_environment():    return {        "friction": random.
 
 ## **Sim-to-Real Pipeline**
 
-**Simulation Environment**
-
-构建可控训练环境
-
-**Policy / Model Training**
-
-训练感知、控制和决策模型
-
-**Domain Randomization**
-
-增强环境变化适应能力
-
-**Real Robot Deployment**
-
-经过验证后部署到真实设备
-
-**Real-world Evaluation**
-
-比较预测与实际执行结果
-
-Sim-to-Real 并不是简单地把模拟器中的模型复制到机器人上。
-
-真实部署需要重新进行硬件校准、系统辨识、安全验证和分阶段测试。
+- **Simulation Environment**：构建可控训练环境
+- **Policy / Model Training**：训练感知、控制和决策模型
+- **Domain Randomization**：增强环境变化适应能力
+- **Real Robot Deployment**：经过验证后部署到真实设备
+- **Real-world Evaluation**：比较预测与实际执行结果
 
 # **十一、具身智能中的安全机制**
 
@@ -1171,33 +1087,12 @@ V1 基础
 
 可以基于成熟的机器人软件生态构建。
 
-**ROS 2**
-
-机器人通信、节点管理、传感器数据和控制接口。
-
-**MoveIt 2**
-
-机械臂运动规划、碰撞检测和抓取任务。
-
-**NVIDIA Isaac Sim**
-
-机器人仿真、传感器模拟和 Sim-to-Real 研究。
-
-**MuJoCo**
-
-物理仿真、机器人控制和强化学习。
-
-**OpenCV**
-
-图像处理、相机标定、视觉算法。
-
-**Open3D**
-
-点云、三维重建和空间数据处理。
-
-这些项目不是互相替代的关系：
-
-- ROS 2 解决机器人系统通信与集成。
+- **ROS 2**：机器人通信、节点管理、传感器数据和控制接口。
+- **MoveIt 2**：机械臂运动规划、碰撞检测和抓取任务。
+- **NVIDIA Isaac Sim**：机器人仿真、传感器模拟和 Sim-to-Real 研究。
+- **MuJoCo**：物理仿真、机器人控制和强化学习。
+- **OpenCV**：图像处理、相机标定、视觉算法。
+- **Open3D**：点云、三维重建和空间数据处理。
 - MoveIt 2 解决机械臂运动规划。
 - Isaac Sim 和 MuJoCo 提供不同侧重点的仿真环境。
 - OpenCV 和 Open3D 分别提供视觉与三维数据处理能力。

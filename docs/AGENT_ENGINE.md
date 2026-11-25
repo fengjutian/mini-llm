@@ -244,29 +244,11 @@ Task 是为了达到目标而需要执行的具体任务。
 
 **Goal：完成开源项目技术研究文章**
 
-**Task 1**
-
-获取项目资料
-
-**Task 2**
-
-分析项目架构
-
-**Task 3**
-
-分析核心代码
-
-**Task 4**
-
-评估技术优缺点
-
-**Output：生成并检查技术文章**
-
-一个 Goal 通常需要多个 Task。
-
-一个 Task 也可能包含多个更小的 Subtask。
-
-这就引出了 Task Decomposition。
+- **Task 1**：获取项目资料
+- **Task 2**：分析项目架构
+- **Task 3**：分析核心代码
+- **Task 4**：评估技术优缺点
+- **Output：生成并检查技术文章**：一个 Goal 通常需要多个 Task。
 
 # **四、Task Decomposition：智能体如何拆解任务？**
 
@@ -1216,29 +1198,11 @@ multi_agent/
 
 这几个模块可以形成一个更完整的智能系统框架：
 
-**1. Representation**
-
-理解和表示世界。
-
-**2. World Model**
-
-预测世界可能发生的变化。
-
-**3. Goal & Planning**
-
-理解目标并制定行动策略。
-
-**4. Agent Execution**
-
-使用工具和环境执行行动。
-
-**5. Learning & Evaluation**
-
-根据反馈评估结果、修正模型和策略。
-
-但是，还有一个更深层的问题：
-
-**如果一个智能体能够理解世界、预测未来、制定目标、执行行动，它是否就拥有了智能？**
+- **1. Representation**：理解和表示世界。
+- **2. World Model**：预测世界可能发生的变化。
+- **3. Goal & Planning**：理解目标并制定行动策略。
+- **4. Agent Execution**：使用工具和环境执行行动。
+- **5. Learning & Evaluation**：根据反馈评估结果、修正模型和策略。
 
 还不一定。
 

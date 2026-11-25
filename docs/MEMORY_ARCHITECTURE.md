@@ -1045,25 +1045,10 @@ Search      Search      Search      Filter
 
 ## **10.1 记忆压缩的层次**
 
-**Level 1：原始记忆**
-
-保存完整对话、日志、工具调用和结果。
-
-**Level 2：事件摘要**
-
-将一个任务的经历整理成事件摘要。
-
-**Level 3：知识摘要**
-
-提取稳定知识、决策和技术原则。
-
-**Level 4：用户与项目画像**
-
-保存跨任务有效的长期信息。
-
-例如：
-
-原始记录：
+- **Level 1：原始记忆**：保存完整对话、日志、工具调用和结果。
+- **Level 2：事件摘要**：将一个任务的经历整理成事件摘要。
+- **Level 3：知识摘要**：提取稳定知识、决策和技术原则。
+- **Level 4：用户与项目画像**：保存跨任务有效的长期信息。
 
 ```
 讨论了很多次容器引擎架构，
@@ -1449,33 +1434,12 @@ AI 可以通过外部记忆在下一次任务中使用新信息，而不需要�
 
 到这里，我们可以把整个 mini-llm 项目的架构进一步扩展。
 
-**Cognitive Architecture**
-
-组织认知过程
-
-**Memory Engine**
-
-管理过去
-
-**World Model Engine**
-
-表示与预测世界
-
-**Agent Engine**
-
-管理目标与行动
-
-**Learning Engine**
-
-从经验中改进
-
-**Representation Engine**
-
-形成内部信息表示
-
-**Transformer / Neural Network Engine**
-
-提供底层计算和语言建模能力
+- **Cognitive Architecture**：组织认知过程
+- **Memory Engine**：管理过去
+- **World Model Engine**：表示与预测世界
+- **Agent Engine**：管理目标与行动
+- **Learning Engine**：从经验中改进
+- **Representation Engine**：形成内部信息表示
 
 可以用一句话总结这些模块：
 

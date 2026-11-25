@@ -163,25 +163,10 @@ Agent Collaboration 是多智能体系统最核心的能力之一。
 
 **Sequential Collaboration**
 
-**Requirement Agent**
-
-分析用户需求
-
-**Architect Agent**
-
-设计系统架构
-
-**Developer Agent**
-
-实现功能
-
-**QA Agent**
-
-测试和验证
-
-适合：
-
-- 文档生成。
+- **Requirement Agent**：分析用户需求
+- **Architect Agent**：设计系统架构
+- **Developer Agent**：实现功能
+- **QA Agent**：测试和验证
 - 软件开发流程。
 - 数据处理 Pipeline。
 - 代码审查与发布。
@@ -239,33 +224,12 @@ Agent Collaboration 是多智能体系统最核心的能力之一。
 
 **Hierarchical Multi-Agent**
 
-**Executive Agent**
-
-负责总体目标与全局决策
-
-**Planning Agent**
-
-任务拆解
-
-**Review Agent**
-
-结果审查
-
-**Frontend**
-
-开发
-
-**Backend**
-
-开发
-
-**Testing**
-
-测试
-
-适合大型任务和多层级组织。
-
-优点是容易控制整体流程。
+- **Executive Agent**：负责总体目标与全局决策
+- **Planning Agent**：任务拆解
+- **Review Agent**：结果审查
+- **Frontend**：开发
+- **Backend**：开发
+- **Testing**：测试
 
 缺点是容易形成过度中心化，顶层 Agent 可能成为性能瓶颈。
 
@@ -315,33 +279,12 @@ MySQL：
 
 **Blackboard Architecture**
 
-**Agent A**
-
-需求分析
-
-**Agent B**
-
-技术分析
-
-**Agent C**
-
-数据分析
-
-**Agent D**
-
-风险分析
-
-**Shared Blackboard**
-
-公共任务状态、事实、证据、决策和产物
-
-**Coordinator**
-
-判断信息是否完整，决定下一步工作
-
-Blackboard 的优势是多个 Agent 不需要彼此直接建立复杂通信关系。
-
-但必须设计：
+- **Agent A**：需求分析
+- **Agent B**：技术分析
+- **Agent C**：数据分析
+- **Agent D**：风险分析
+- **Shared Blackboard**：公共任务状态、事实、证据、决策和产物
+- **Coordinator**：判断信息是否完整，决定下一步工作
 
 - 数据版本。
 - 写入权限。
@@ -1140,41 +1083,14 @@ def execute_task(task):    if already_completed(task.idempotency_key):        re
 
 **mini-llm Multi-Agent Engine**
 
-**Agent Orchestrator**
-
-整体任务协调与生命周期管理
-
-**Task Planner**
-
-任务拆解与 DAG
-
-**Agent Registry**
-
-Agent 注册与发现
-
-**Agent Selector**
-
-能力匹配与分配
-
-**Message Router**
-
-消息路由与通信
-
-**Consensus Engine**
-
-意见整合与证据审查
-
-**Negotiation Engine**
-
-冲突处理与多目标协商
-
-**Coordination & State Manager**
-
-任务状态、并发控制、超时、重试、恢复
-
-**Agent Pool**
-
-**Agent A**
+- **Agent Orchestrator**：整体任务协调与生命周期管理
+- **Task Planner**：任务拆解与 DAG
+- **Agent Registry**：Agent 注册与发现
+- **Agent Selector**：能力匹配与分配
+- **Message Router**：消息路由与通信
+- **Consensus Engine**：意见整合与证据审查
+- **Negotiation Engine**：冲突处理与多目标协商
+- **Coordination & State Manager**：任务状态、并发控制、超时、重试、恢复
 
 **Agent B**
 
@@ -1306,25 +1222,10 @@ class SpecializedAgent:    def __init__(        self,        name,        model,
 
 **四个核心 Agent**
 
-**1. Architect Agent**
-
-分析需求、设计架构、定义接口契约。
-
-**2. Developer Agent**
-
-实现代码、修改文件、调用开发工具。
-
-**3. QA Agent**
-
-运行测试、检查结果、定位问题。
-
-**4. Reviewer Agent**
-
-检查代码质量、架构一致性和安全问题。
-
-### **V1 执行流程**
-
-```
+- **1. Architect Agent**：分析需求、设计架构、定义接口契约。
+- **2. Developer Agent**：实现代码、修改文件、调用开发工具。
+- **3. QA Agent**：运行测试、检查结果、定位问题。
+- **4. Reviewer Agent**：检查代码质量、架构一致性和安全问题。
 User Requirement
        |
        v

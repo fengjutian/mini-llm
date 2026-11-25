@@ -253,25 +253,10 @@ _图：各模态先由独立编码器转成向量，再经投影层对齐到语�
 
 ## **Multimodal Encoder Architecture**
 
-**Text Encoder**
-
-Token → Embedding
-
-**Image Encoder**
-
-Pixels → Visual Tokens
-
-**Audio Encoder**
-
-Waveform → Audio Tokens
-
-**Video Encoder**
-
-Frames → Temporal Tokens
-
-**Projection / Alignment Layer**
-
-Dimension Mapping / Modality Embedding / Temporal Information
+- **Text Encoder**：Token → Embedding
+- **Image Encoder**：Pixels → Visual Tokens
+- **Audio Encoder**：Waveform → Audio Tokens
+- **Video Encoder**：Frames → Temporal Tokens
 
 **Multimodal Transformer**
 
@@ -611,29 +596,11 @@ Visual Tokens:
 
 ## **Multimodal Transformer**
 
-**Text**
-
-Text Encoder
-
-**Image**
-
-Vision Encoder
-
-**Audio**
-
-Audio Encoder
-
-**Video**
-
-Video Encoder
-
-**Modality Projection**
-
-Common Hidden Dimension
-
-**Multimodal Transformer Blocks**
-
-Self-Attention / Cross-Attention / FFN
+- **Text**：Text Encoder
+- **Image**：Vision Encoder
+- **Audio**：Audio Encoder
+- **Video**：Video Encoder
+- **Modality Projection**：Common Hidden Dimension
 
 **Unified Representation**
 
@@ -959,21 +926,9 @@ audio_event = {    "start_time": 2.1,    "end_time": 2.8}video_event = {    "sta
 
 ### **10.1 统一表示的三种层次**
 
-**第一层：统一维度**
-
-不同 Encoder 的输出映射到共同隐藏维度。
-
-**第二层：语义对齐**
-
-不同模态中表达相同对象或事件的信息建立关联。
-
-**第三层：联合上下文表示**
-
-不同模态在同一个上下文中相互影响，参与共同推理。
-
-这三个层次不能混为一谈。
-
-### **10.2 从模态表示到世界表示**
+- **第一层：统一维度**：不同 Encoder 的输出映射到共同隐藏维度。
+- **第二层：语义对齐**：不同模态中表达相同对象或事件的信息建立关联。
+- **第三层：联合上下文表示**：不同模态在同一个上下文中相互影响，参与共同推理。
 
 可以构建：
 
@@ -1090,25 +1045,10 @@ Output:
 
 ## **mini-llm Multimodal Intelligence Engine**
 
-**Text Pipeline**
-
-Tokenizer / Text Encoder
-
-**Vision Pipeline**
-
-Image Encoder / Patch
-
-**Audio Pipeline**
-
-Audio Encoder / Features
-
-**Video Pipeline**
-
-Frame / Temporal Encoder
-
-**Modality Adapter Layer**
-
-Projection / Normalization / Position & Time Encoding
+- **Text Pipeline**：Tokenizer / Text Encoder
+- **Vision Pipeline**：Image Encoder / Patch
+- **Audio Pipeline**：Audio Encoder / Features
+- **Video Pipeline**：Frame / Temporal Encoder
 
 **Cross-Modal Alignment**
 

@@ -691,25 +691,10 @@ Hierarchical Planning 将高层目标逐步转换为低层行动。
 
 **分层规划结构**
 
-**L0：业务目标**
-
-开发一个 SaaS 系统
-
-**L1：子系统规划**
-
-用户、订单、支付、运营
-
-**L2：技术任务**
-
-数据库、API、前端、测试
-
-**L3：具体行动**
-
-创建文件、修改代码、运行测试
-
-高层规划负责组织目标和子系统，低层规划负责具体行动。
-
-## **8.2 HTN：Hierarchical Task Network**
+- **L0：业务目标**：开发一个 SaaS 系统
+- **L1：子系统规划**：用户、订单、支付、运营
+- **L2：技术任务**：数据库、API、前端、测试
+- **L3：具体行动**：创建文件、修改代码、运行测试
 
 HTN 是一种经典的分层任务规划方法。
 
@@ -1273,29 +1258,11 @@ Decision Engine 根据候选计划的成本、收益、风险和约束，帮助�
 
 ## **13.1 核心模块**
 
-**Goal Manager**
-
-目标解析、目标约束、完成条件
-
-**Task Decomposer**
-
-目标拆解、HTN、任务层级
-
-**Planning Core**
-
-BFS、UCS、A\*、MCTS、DAG
-
-**Plan Validator**
-
-依赖、权限、资源、约束验证
-
-**Plan Executor Interface**
-
-将计划交给 Agent Engine 执行
-
-执行反馈 → 状态更新 → 重新规划
-
-## **13.2 工程目录**
+- **Goal Manager**：目标解析、目标约束、完成条件
+- **Task Decomposer**：目标拆解、HTN、任务层级
+- **Planning Core**：BFS、UCS、A\*、MCTS、DAG
+- **Plan Validator**：依赖、权限、资源、约束验证
+- **Plan Executor Interface**：将计划交给 Agent Engine 执行
 
 ```
 mini-llm/
@@ -1492,41 +1459,14 @@ class PlanningEngine:    def __init__(        self,        goal_manager,        
 
 回顾整个过程：
 
-**1. Goal Representation**
-
-明确系统要实现什么目标。
-
-**2. Goal Decomposition**
-
-将复杂目标拆解为子目标。
-
-**3. Task Planning**
-
-确定任务依赖、顺序与并行关系。
-
-**4. State-space Search**
-
-在可能的状态与行动路径中寻找方案。
-
-**5. Hierarchical Planning**
-
-从高层目标逐步细化到可执行行动。
-
-**6. MCTS**
-
-通过模拟探索不确定的行动路径。
-
-**7. MPC**
-
-根据真实反馈不断更新计划。
-
-**8. Plan Validation**
-
-检查计划是否满足依赖、资源和安全约束。
-
-我们可以得到一个重要认识：
-
-**智能体不仅需要知道世界是什么样的，还需要知道自己希望世界变成什么样，以及如何通过一系列行动让世界发生变化。**
+- **1. Goal Representation**：明确系统要实现什么目标。
+- **2. Goal Decomposition**：将复杂目标拆解为子目标。
+- **3. Task Planning**：确定任务依赖、顺序与并行关系。
+- **4. State-space Search**：在可能的状态与行动路径中寻找方案。
+- **5. Hierarchical Planning**：从高层目标逐步细化到可执行行动。
+- **6. MCTS**：通过模拟探索不确定的行动路径。
+- **7. MPC**：根据真实反馈不断更新计划。
+- **8. Plan Validation**：检查计划是否满足依赖、资源和安全约束。
 
 这意味着智能系统需要同时具备：
 
@@ -1547,41 +1487,14 @@ class PlanningEngine:    def __init__(        self,        goal_manager,        
 
 ## **mini-llm Cognitive & Agent Architecture**
 
-**Representation Engine**
-
-表示与理解
-
-**Memory Engine**
-
-记忆
-
-**Knowledge Engine**
-
-知识
-
-**World Model**
-
-世界预测
-
-**Causal Engine**
-
-因果推理
-
-**Decision Engine**
-
-行动决策
-
-**Planning Engine**
-
-行动规划
-
-**Agent Engine**
-
-统一调度、工具调用、执行和反馈
-
-这里还存在一个值得深入研究的问题：
-
-这些 Engine 如何协同工作？
+- **Representation Engine**：表示与理解
+- **Memory Engine**：记忆
+- **Knowledge Engine**：知识
+- **World Model**：世界预测
+- **Causal Engine**：因果推理
+- **Decision Engine**：行动决策
+- **Planning Engine**：行动规划
+- **Agent Engine**：统一调度、工具调用、执行和反馈
 
 例如：
 

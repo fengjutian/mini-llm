@@ -116,29 +116,9 @@ Agent Cluster 则是由多个能够运行 Agent 或 Agent Worker 的计算节点
 
 例如：
 
-```
-Agent Cluster
-│
-├── Node 01
-│   ├── Agent Worker
-│   ├── CPU Runtime
-│   └── Tool Executor
-│
-├── Node 02
-│   ├── Agent Worker
-│   ├── GPU Runtime
-│   └── Model Client
-│
-├── Node 03
-│   ├── Agent Worker
-│   ├── Browser Runtime
-│   └── Sandbox
-│
-└── Node 04
-    ├── Agent Worker
-    ├── Test Runtime
-    └── Code Executor
-```
+![集群的层次结构](assets/diagrams/distributed-cluster-tree.svg)
+
+_图：一个 Agent 集群的层次结构：每个节点都跑着 Agent Worker，但挂载的运行时不同（CPU、GPU、浏览器、代码执行），因此能承接的任务类型也不同。_
 
 这些节点可以运行：
 
@@ -197,43 +177,16 @@ class AgentNode:    node_id: str    hostname: str    status: str    cpu_capacity
 
 **Control Plane：控制平面**
 
-**Cluster Manager**
-
-节点管理
-
-**Scheduler**
-
-任务调度
-
-**State Manager**
-
-状态协调
-
-**Resource Manager**
-
-资源分配
-
-**Data Plane：数据平面**
-
-**Worker Runtime**
+- **Cluster Manager**：节点管理
+- **Scheduler**：任务调度
+- **State Manager**：状态协调
+- **Resource Manager**：资源分配
 
 任务执行
 
-**Model Runtime**
-
-模型推理
-
-**Tool Runtime**
-
-工具调用
-
-**Sandbox Runtime**
-
-隔离执行
-
-Control Plane 负责决定任务在哪里执行。
-
-Data Plane 负责真正执行任务。
+- **Model Runtime**：模型推理
+- **Tool Runtime**：工具调用
+- **Sandbox Runtime**：隔离执行
 
 两者分离后，可以独立扩展：
 
@@ -542,21 +495,9 @@ Worker
 
 **Hybrid Worker**
 
-**Stateless Execution Layer**
-
-任务接收、参数验证、任务执行、结果提交
-
-**Local Stateful Runtime**
-
-模型缓存、浏览器 Session、工具进程、临时文件
-
-**External Durable State**
-
-任务状态、Checkpoint、Session 元数据、执行事件
-
-核心原则：
-
-**任务状态必须能够从外部恢复，Worker 本地状态尽可能作为可重建缓存。**
+- **Stateless Execution Layer**：任务接收、参数验证、任务执行、结果提交
+- **Local Stateful Runtime**：模型缓存、浏览器 Session、工具进程、临时文件
+- **External Durable State**：任务状态、Checkpoint、Session 元数据、执行事件
 
 例如：
 
@@ -841,29 +782,11 @@ Agent C
 
 Agent D
 
-**Memory Gateway**
-
-权限检查、检索、写入、版本管理
-
-**Episodic Memory**
-
-任务经历
-
-**Semantic Memory**
-
-事实与知识
-
-**Procedural Memory**
-
-工作流程与技能
-
-**Vector Index**
-
-语义检索索引
-
-## **6.3 记忆类型**
-
-| 记忆类型              | 示例               |
+- **Memory Gateway**：权限检查、检索、写入、版本管理
+- **Episodic Memory**：任务经历
+- **Semantic Memory**：事实与知识
+- **Procedural Memory**：工作流程与技能
+- **Vector Index**：语义检索索引
 | ----------------- | ---------------- |
 | Episodic Memory   | 上一次部署失败的经历       |
 | Semantic Memory   | 项目使用 PostgreSQL  |
@@ -1202,33 +1125,12 @@ Agent 任务可能同时消耗：
 
 **Model Gateway**
 
-**Agent Requests**
-
-不同 Agent 的模型请求
-
-**Model Router**
-
-模型选择、负载均衡、成本控制、限流
-
-**Model A**
-
-本地 GPU
-
-**Model B**
-
-云端 API
-
-**Model C**
-
-高性能推理节点
-
-**Model D**
-
-轻量模型节点
-
-Model Gateway 不直接等同于 Agent Scheduler。
-
-两者的区别：
+- **Agent Requests**：不同 Agent 的模型请求
+- **Model Router**：模型选择、负载均衡、成本控制、限流
+- **Model A**：本地 GPU
+- **Model B**：云端 API
+- **Model C**：高性能推理节点
+- **Model D**：轻量模型节点
 
 - Agent Scheduler 决定任务在哪个 Worker 执行。
 - Model Gateway 决定模型请求发送到哪个模型服务。
@@ -1586,21 +1488,9 @@ Distributed Trace 不等于模型完整的内部思维过程。
 
 **mini-llm Distributed Agent Platform**
 
-**Client Layer**
-
-Web UI · API · CLI · SDK
-
-**API Gateway**
-
-认证、限流、租户隔离、请求路由
-
-**Control Plane**
-
-Cluster Manager
-
-Task Scheduler
-
-Resource Manager
+- **Client Layer**：Web UI · API · CLI · SDK
+- **API Gateway**：认证、限流、租户隔离、请求路由
+- **Control Plane**：Cluster Manager
 
 State Manager
 
@@ -2162,21 +2052,9 @@ Worker 崩溃后，任务可以在其他合适节点上安全恢复。
 
 特别要明确三个 Engine 的区别：
 
-**Runtime Engine：**
-
-解决任务如何在一个执行环境中运行。
-
-**Multi-Agent Engine：**
-
-解决多个 Agent 如何协作完成任务。
-
-**Distributed Agent Engine：**
-
-解决这些 Agent 如何跨机器部署、调度、同步和恢复。
-
-三者是不同抽象层次，不应该简单合并成一个庞大的 Runtime 模块。
-
-# **十八、进一步思考：分布式 Agent 会不会成为一种新的计算基础设施？**
+- **Runtime Engine：**：解决任务如何在一个执行环境中运行。
+- **Multi-Agent Engine：**：解决多个 Agent 如何协作完成任务。
+- **Distributed Agent Engine：**：解决这些 Agent 如何跨机器部署、调度、同步和恢复。
 
 传统分布式计算平台主要调度：
 

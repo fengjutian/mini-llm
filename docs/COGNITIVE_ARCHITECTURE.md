@@ -278,21 +278,9 @@ Transformer 的 Attention：
 
 ## **3.2 注意力控制的三个层次**
 
-**第一层：Token Attention**
-
-模型内部的注意力计算，决定不同 Token 表示如何交互。
-
-**第二层：Context Attention**
-
-从历史对话、文档、数据库中选择当前任务相关的信息。
-
-**第三层：Task Attention**
-
-决定当前应该执行哪个子任务、调用哪个工具、优先解决哪个问题。
-
-## **3.3 Attention Control 的工程实现**
-
-```
+- **第一层：Token Attention**：模型内部的注意力计算，决定不同 Token 表示如何交互。
+- **第二层：Context Attention**：从历史对话、文档、数据库中选择当前任务相关的信息。
+- **第三层：Task Attention**：决定当前应该执行哪个子任务、调用哪个工具、优先解决哪个问题。
 class AttentionController:    def select(self, candidates, current_goal):        scored = []        for item in candidates:            relevance = semantic_similarity(                item.content,                current_goal            )            importance = item.importance            urgency = item.urgency            score = (                0.5 * relevance +                0.3 * importance +                0.2 * urgency            )            scored.append((score, item))        scored.sort(            key=lambda x: x[0],            reverse=True        )        return [            item for score, item in scored[:5]        ]
 ```
 

@@ -849,29 +849,11 @@ REQUIRE_APPROVAL
 
 ## **Prompt Injection Defense**
 
-**Untrusted Input**
-
-Web · PDF · Email · Tool Output · Memory
-
-**Input Classification**
-
-来源标记 · 信任级别 · 内容分类
-
-**Agent Reasoning**
-
-将外部内容作为待分析数据，而非权限指令
-
-**Security Enforcement**
-
-独立身份校验 · 权限检查 · 参数验证 · 审批
-
-**Controlled Execution**
-
-Sandbox · Tool Executor · Audit
-
-核心原则：
-
-**不要试图只通过 Prompt 解决 Prompt Injection，而要让系统即使在模型被诱导的情况下，也无法越过真正的权限边界。**
+- **Untrusted Input**：Web · PDF · Email · Tool Output · Memory
+- **Input Classification**：来源标记 · 信任级别 · 内容分类
+- **Agent Reasoning**：将外部内容作为待分析数据，而非权限指令
+- **Security Enforcement**：独立身份校验 · 权限检查 · 参数验证 · 审批
+- **Controlled Execution**：Sandbox · Tool Executor · Audit
 
 ## **八、Tool Security：如何限制工具调用的权限和副作用？**
 
@@ -1343,25 +1325,10 @@ RBAC · ABAC · Capability · Default Deny
 
 PDP · Policy Evaluation · Risk Assessment · Approval
 
-**Tool Security**
-
-Tool Gateway · Validation
-
-**Sandbox Manager**
-
-Container · MicroVM · WASM
-
-**Trust Manager**
-
-Source · Trust · Taint
-
-**Secrets Manager**
-
-Credential · Rotation
-
-**Security Audit**
-
-Decision Log · Access Log · Policy Change · Incident
+- **Tool Security**：Tool Gateway · Validation
+- **Sandbox Manager**：Container · MicroVM · WASM
+- **Trust Manager**：Source · Trust · Taint
+- **Secrets Manager**：Credential · Rotation
 
 ### **13.1 推荐项目目录**
 

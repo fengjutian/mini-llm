@@ -598,7 +598,11 @@ and re-exports.
   device `add`/`scale` after each backward; tests compare every step's loss and
   the final parameters with host autograd. `DeviceAdamW` keeps the first/second
   moments on the device, applies bias correction and decoupled weight decay there,
-  and matches the host reference formula over eight synthetic steps.
+  and matches the host reference formula over eight synthetic steps. Device
+  kernels now include `softmax_rows`, `mean_rows_keepdim`/`sum_rows_keepdim`,
+  `powf`, `gather_rows` and `scatter_add_rows`; the tape builds `softmax_rows`,
+  `layer_norm(gamma, beta, eps)` and embedding `gather_rows` from them, and all
+  three match host autograd on `Cpu` and `Candle(Cpu)`.
 - Future backends implement `Backend` and reuse the same parity harness.
 
 Autograd and the model still operate on host `Tensor` values; making the training

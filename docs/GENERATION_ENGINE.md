@@ -112,29 +112,11 @@ Transformer
 
 **Generation Engine 的基本工作流程**
 
-**Transformer Model**
-
-计算隐藏状态
-
-**LM Head**
-
-Hidden State → Logits
-
-**Logits Processor**
-
-Temperature、Top-K、Top-P、约束处理
-
-**Sampler / Decoder**
-
-选择下一个 Token
-
-**Token Stream**
-
-输出、追加上下文、继续生成或停止
-
-模型推理与生成策略共同构成完整的文本生成过程
-
-## **1.3 Generation Engine 与 Inference Engine 的区别**
+- **Transformer Model**：计算隐藏状态
+- **LM Head**：Hidden State → Logits
+- **Logits Processor**：Temperature、Top-K、Top-P、约束处理
+- **Sampler / Decoder**：选择下一个 Token
+- **Token Stream**：输出、追加上下文、继续生成或停止
 
 两者容易混淆。
 

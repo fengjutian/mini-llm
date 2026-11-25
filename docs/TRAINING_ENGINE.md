@@ -35,37 +35,13 @@ _图：大规模模型训练建立在高性能计算基础设施之上。图中�
 
 _图：批次训练循环与随 Step 下降的示意 Loss 曲线。_
 
-**Dataset**
-
-准备训练文本
-
-**Tokenizer + Batch**
-
-文本转换为 Token 序列和训练样本
-
-**Forward**
-
-Transformer 预测下一个 Token
-
-**Cross Entropy Loss**
-
-计算预测结果与真实答案的差距
-
-**Backward**
-
-计算模型参数的梯度
-
-**AdamW Optimizer**
-
-根据梯度更新模型参数
-
-**进入下一轮训练**
-
-这篇文章，我们开始构建 mini-llm 的 Training Engine。
-
-## **一、训练究竟在改变什么？**
-
-先理解一个最重要的问题：
+- **Dataset**：准备训练文本
+- **Tokenizer + Batch**：文本转换为 Token 序列和训练样本
+- **Forward**：Transformer 预测下一个 Token
+- **Cross Entropy Loss**：计算预测结果与真实答案的差距
+- **Backward**：计算模型参数的梯度
+- **AdamW Optimizer**：根据梯度更新模型参数
+- **进入下一轮训练**：这篇文章，我们开始构建 mini-llm 的 Training Engine。
 
 **训练大模型，本质上是在改变什么？**
 
@@ -994,33 +970,12 @@ Warmup + Cosine Decay 是一种常见组合，但并非所有训练任务都必�
 
 **Gradient Accumulation**
 
-**Micro Batch 1**
-
-8 条序列
-
-**Micro Batch 2**
-
-8 条序列
-
-**Micro Batch 3**
-
-8 条序列
-
-**Micro Batch 4**
-
-8 条序列
-
-**Gradient Accumulation**
-
-累计 4 次梯度
-
-**Optimizer Step**
-
-更新一次参数
-
-有效 Batch Size：
-
-\\[ B\_{effective}=B\_{micro}\times K \\]
+- **Micro Batch 1**：8 条序列
+- **Micro Batch 2**：8 条序列
+- **Micro Batch 3**：8 条序列
+- **Micro Batch 4**：8 条序列
+- **Gradient Accumulation**：累计 4 次梯度
+- **Optimizer Step**：更新一次参数
 
 例如：
 

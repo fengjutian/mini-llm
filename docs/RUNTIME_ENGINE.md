@@ -75,41 +75,14 @@ Runtime 负责：
 
 ## **Runtime Engine 基本结构**
 
-**Execution Runtime**
-
-统一管理任务生命周期
-
-**Task Manager**
-
-任务生命周期
-
-**Task Scheduler**
-
-任务调度
-
-**Executor**
-
-任务执行
-
-**Resource Manager**
-
-资源分配
-
-**State Store**
-
-状态持久化
-
-**Recovery Manager**
-
-错误恢复
-
-**Event System**
-
-事件通信、日志、状态变化通知
-
-## **1.3 Runtime 执行循环**
-
-Runtime 可以抽象为：
+- **Execution Runtime**：统一管理任务生命周期
+- **Task Manager**：任务生命周期
+- **Task Scheduler**：任务调度
+- **Executor**：任务执行
+- **Resource Manager**：资源分配
+- **State Store**：状态持久化
+- **Recovery Manager**：错误恢复
+- **Event System**：事件通信、日志、状态变化通知
 
 ```
 接收任务
@@ -203,33 +176,12 @@ Execution Graph 是一个有向图：
 - C 完成后，E 才能执行。
 - D 和 E 都完成后，F 才能执行。
 
-**A**
-
-获取仓库
-
-**B**
-
-目录结构
-
-**D**
-
-性能分析
-
-**C**
-
-依赖关系
-
-**E**
-
-安全分析
-
-**F**
-
-综合生成报告
-
-这个图称为 DAG（Directed Acyclic Graph，有向无环图）。
-
-## **2.3 为什么使用 DAG？**
+- **A**：获取仓库
+- **B**：目录结构
+- **D**：性能分析
+- **C**：依赖关系
+- **E**：安全分析
+- **F**：综合生成报告
 
 DAG 有三个重要特点：
 
@@ -328,21 +280,9 @@ Task Scheduler 负责：
 
 可以定义以下状态：
 
-**PENDING**
-
-等待执行
-
-**READY**
-
-依赖满足，可以调度
-
-**RUNNING**
-
-正在执行
-
-SUCCEEDED
-
-FAILED
+- **PENDING**：等待执行
+- **READY**：依赖满足，可以调度
+- **RUNNING**：正在执行
 
 CANCELLED
 
@@ -966,21 +906,9 @@ Circuit Breaker 可以在故障达到阈值后暂时停止调用。
 
 典型状态：
 
-**CLOSED**
-
-正常调用，监控失败率
-
-**OPEN**
-
-暂时拒绝请求，快速失败
-
-**HALF-OPEN**
-
-允许少量探测请求
-
-探测成功回到 CLOSED，失败则重新进入 OPEN。
-
-## **8.4 Idempotency：幂等性**
+- **CLOSED**：正常调用，监控失败率
+- **OPEN**：暂时拒绝请求，快速失败
+- **HALF-OPEN**：允许少量探测请求
 
 这是 Runtime 设计中非常重要的概念。
 

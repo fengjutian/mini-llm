@@ -121,37 +121,13 @@ _图：从消息传输到 MCP、A2A 与 Tool Schema 的协议分层。_
 
 ## **mini-llm Protocol Engine**
 
-**Protocol Gateway**
-
-统一通信入口、协议识别、消息路由
-
-**Tool Calling**
-
-模型工具调用
-
-**Function Schema**
-
-接口契约
-
-**Structured Output**
-
-结构化输出
-
-**MCP Adapter**
-
-外部工具协议
-
-**A2A Adapter**
-
-Agent 间通信
-
-**Message Bus**
-
-内部消息通信
-
-**Protocol Security & Versioning**
-
-权限、认证、验证、兼容性、审计
+- **Protocol Gateway**：统一通信入口、协议识别、消息路由
+- **Tool Calling**：模型工具调用
+- **Function Schema**：接口契约
+- **Structured Output**：结构化输出
+- **MCP Adapter**：外部工具协议
+- **A2A Adapter**：Agent 间通信
+- **Message Bus**：内部消息通信
 
 **Runtime / Agent / Model / Tools**
 
@@ -212,33 +188,12 @@ get_weather(city: str)
 
 随后发生：
 
-**User**
-
-查询南京今天的天气
-
-**LLM**
-
-决定调用 get_weather
-
-**Protocol Engine**
-
-解析调用请求、校验 Schema、检查权限
-
-**Runtime Executor**
-
-执行天气工具
-
-**Tool Result**
-
-返回天气数据
-
-**LLM**
-
-根据工具结果生成回答
-
-关键是：
-
-**模型产生调用意图，但真正执行工具的是外部 Runtime，而不是模型自己。**
+- **User**：查询南京今天的天气
+- **LLM**：决定调用 get_weather
+- **Protocol Engine**：解析调用请求、校验 Schema、检查权限
+- **Runtime Executor**：执行天气工具
+- **Tool Result**：返回天气数据
+- **LLM**：根据工具结果生成回答
 
 ## **3.3 Tool Calling 的数据结构**
 
@@ -1801,21 +1756,9 @@ class ToolRegistry:    def __init__(self):        self.tools = {}    def registe
 
 Memory · Knowledge · World Model · Causal · Decision · Planning · Agent · Learning
 
-**Meta-Controller**
-
-模型路由 · 推理预算 · 工具选择 · 策略控制
-
-**Runtime Engine**
-
-任务执行 · 调度 · 恢复
-
-**Protocol Engine**
-
-通信 · 消息 · 协议转换
-
-**External Ecosystem**
-
-LLM Providers · MCP Servers · A2A Agents · Databases · APIs · Tools
+- **Meta-Controller**：模型路由 · 推理预算 · 工具选择 · 策略控制
+- **Runtime Engine**：任务执行 · 调度 · 恢复
+- **Protocol Engine**：通信 · 消息 · 协议转换
 
 **Model Computation Layer**
 

@@ -782,3 +782,84 @@ fn device_layer_norm_matches_host_autograd_on_cpu() {
 fn device_layer_norm_matches_host_autograd_on_candle() {
     check_layer_norm_parity(&Device::candle_cpu(), 1e-4);
 }
+
+fn check_cross_entropy_parity(device: &Device, tolerance: f32) {
+    let logits = sample(4, 5, 1.5);
+    let targets = [0usize, 2, 4, 1];
+
+    let host_logits = TensorValue::parameter(logits.data().to_vec(), logits.shape().to_vec()).unwrap();
+    let host_loss = host_logits.cross_entropy(&targets).unwrap();
+    host_loss.backward().unwrap();
+
+    let device_logits = DeviceValue::new(
+        DeviceTensor::from_host(logits.clone()).to(device).unwrap(),
+        true,
+    );
+    let loss = device_logits.cross_entropy(&targets).unwrap();
+    loss.backward().unwrap();
+
+    let host_value = host_loss.data()[0];
+    let device_value = loss.data().to_host().unwrap().data()[0];
+    assert!(
+        (host_value - device_value).abs() <= tolerance,
+        "cross entropy {device_value} vs {host_value}"
+    );
+    assert_close(
+        device_logits.grad().unwrap().to_host().unwrap().data(),
+        &host_logits.grad().unwrap().data(),
+        tolerance,
+        "cross entropy gradient",
+    );
+}
+
+#[test]
+fn device_cross_entropy_matches_host_autograd_on_cpu() {
+    check_cross_entropy_parity(&Device::Cpu, 1e-5);
+}
+
+#[cfg(feature = "candle")]
+#[test]
+fn device_cross_entropy_matches_host_autograd_on_candle() {
+    check_cross_entropy_parity(&Device::candle_cpu(), 1e-4);
+}
+
+fn check_rope_parity(device: &Device, tolerance: f32) {
+    let x = sample(3, 4, 1.5);
+    let positions = [0i64, 1, 3];
+    let (head_dim, base) = (2usize, 10_000.0f32);
+
+    let host_x = TensorValue::parameter(x.data().to_vec(), x.shape().to_vec()).unwrap();
+    let host_out = host_x.rope(head_dim, &positions, base).unwrap();
+    host_out.mean().unwrap().backward().unwrap();
+
+    let device_x = DeviceValue::new(
+        DeviceTensor::from_host(x.clone()).to(device).unwrap(),
+        true,
+    );
+    let out = device_x.rope_rotate(head_dim, &positions, base).unwrap();
+    out.mean().unwrap().backward().unwrap();
+
+    assert_close(
+        out.data().to_host().unwrap().data(),
+        &host_out.data(),
+        tolerance,
+        "rope values",
+    );
+    assert_close(
+        device_x.grad().unwrap().to_host().unwrap().data(),
+        &host_x.grad().unwrap().data(),
+        tolerance,
+        "rope gradient",
+    );
+}
+
+#[test]
+fn device_rope_matches_host_autograd_on_cpu() {
+    check_rope_parity(&Device::Cpu, 1e-5);
+}
+
+#[cfg(feature = "candle")]
+#[test]
+fn device_rope_matches_host_autograd_on_candle() {
+    check_rope_parity(&Device::candle_cpu(), 1e-4);
+}

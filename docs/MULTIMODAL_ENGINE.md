@@ -1522,21 +1522,9 @@ Motion Features
 
 Projection、Embedding、Temporal Alignment
 
-**Multimodal Fusion Layer**
-
-Cross-Attention、Joint Transformer、Fusion
-
-**Multimodal Reasoning**
-
-理解、问答、推理、生成
-
-**Output Adapter**
-
-Text、Audio、Image、Video、Action
-
-这套架构将输入处理、模态编码、表示对齐、信息融合和任务输出分离。
-
-## **12.2 核心模块设计**
+- **Multimodal Fusion Layer**：Cross-Attention、Joint Transformer、Fusion
+- **Multimodal Reasoning**：理解、问答、推理、生成
+- **Output Adapter**：Text、Audio、Image、Video、Action
 
 | 模块                   | 核心职责          |
 | -------------------- | ------------- |

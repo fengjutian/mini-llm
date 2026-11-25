@@ -251,25 +251,10 @@ _图：Orchestrator → Planner → Executor 三层结构。分层的意义不�
 
 ## **3.2 三层 Agent 架构**
 
-**Level 1：Meta Agent**
-
-全局协调、目标分解、Agent 选择
-
-**Research**
-
-研究 Agent
-
-**Development**
-
-开发 Agent
-
-**Operations**
-
-运维 Agent
-
-Search Worker
-
-Coding Worker
+- **Level 1：Meta Agent**：全局协调、目标分解、Agent 选择
+- **Research**：研究 Agent
+- **Development**：开发 Agent
+- **Operations**：运维 Agent
 
 Testing Worker
 
@@ -936,25 +921,10 @@ Meta-Controller 可以形成以下闭环：
 
 **Meta-Control Feedback Loop**
 
-**Observe**
-
-执行状态、成本、质量、异常
-
-**Evaluate**
-
-目标差距、风险、资源、执行质量
-
-**Decide**
-
-继续、重试、重新规划、切换策略
-
-**Act**
-
-调度 Agent、Workflow、模型和工具
-
-新结果进入下一轮观察
-
-## **8.3 什么时候需要重新规划？**
+- **Observe**：执行状态、成本、质量、异常
+- **Evaluate**：目标差距、风险、资源、执行质量
+- **Decide**：继续、重试、重新规划、切换策略
+- **Act**：调度 Agent、Workflow、模型和工具
 
 不是每一次工具调用失败都应该重新规划。
 
@@ -1240,29 +1210,11 @@ Self-Adaptive System 是能够根据环境变化调整自身行为的系统。
 
 ## **MAPE-K 自适应控制模型**
 
-**Monitor**
-
-收集运行指标
-
-**Analyze**
-
-识别变化和异常
-
-**Plan**
-
-制定调整策略
-
-**Execute**
-
-执行策略变更
-
-**Knowledge Base**
-
-历史表现、策略、规则、模型能力和运行经验
-
-Knowledge 为 MAPE 各阶段提供共享知识和上下文。
-
-例如：
+- **Monitor**：收集运行指标
+- **Analyze**：识别变化和异常
+- **Plan**：制定调整策略
+- **Execute**：执行策略变更
+- **Knowledge Base**：历史表现、策略、规则、模型能力和运行经验
 
 **场景：模型服务负载突然升高。**
 

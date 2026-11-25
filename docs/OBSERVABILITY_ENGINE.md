@@ -76,21 +76,9 @@ Observability 的中文通常翻译为可观测性。
 _图：可观测性的三大支柱不是三个系统，而是同一件事的三个视角：日志给出事件，指标给出趋势，链路给出因果顺序。_
 
 
-**Logging**
-
-记录发生了什么
-
-**Metrics**
-
-衡量运行状态
-
-**Tracing**
-
-追踪执行路径
-
-**AI 系统还需要扩展四种能力**
-
-- Agent Evaluation：任务完成质量评估。
+- **Logging**：记录发生了什么
+- **Metrics**：衡量运行状态
+- **Tracing**：追踪执行路径
 - Cost Tracking：模型和工具的成本追踪。
 - Execution Replay：历史执行过程重放。
 - Audit Trail：决策、权限和代码变更审计。

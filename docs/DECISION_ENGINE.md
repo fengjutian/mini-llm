@@ -134,33 +134,12 @@ _图：棋类是决策理论最古老的试验场：每个局面都有多个可�
 
 ## **1.3 决策理论的基本流程**
 
-**1. State**
-
-理解当前状态
-
-**2. Action Space**
-
-生成候选行动
-
-**3. Outcome Prediction**
-
-预测不同行动的可能结果
-
-**4. Utility Evaluation**
-
-评估每种结果的价值
-
-**5. Decision**
-
-选择行动
-
-**6. Feedback**
-
-观察真实结果并更新决策模型
-
-这就是 Decision Engine 的基本工作闭环。
-
-# **二、Utility Function：如何衡量一个结果的价值？**
+- **1. State**：理解当前状态
+- **2. Action Space**：生成候选行动
+- **3. Outcome Prediction**：预测不同行动的可能结果
+- **4. Utility Evaluation**：评估每种结果的价值
+- **5. Decision**：选择行动
+- **6. Feedback**：观察真实结果并更新决策模型
 
 ## **2.1 什么是 Utility？**
 
@@ -1290,33 +1269,12 @@ Bellman 方程描述价值函数的递归关系：
 
 ## **多智能体软件开发系统**
 
-**Orchestrator Agent**
-
-目标管理、任务分配、冲突协调
-
-**Developer Agent**
-
-代码实现
-
-**Test Agent**
-
-测试验证
-
-**Security Agent**
-
-安全检查
-
-**Review Agent**
-
-代码审查
-
-**Shared Workspace**
-
-任务状态、代码变更、测试结果、审计记录
-
-## **10.2 Cooperative Game：合作博弈**
-
-多个 Agent 具有共同目标。
+- **Orchestrator Agent**：目标管理、任务分配、冲突协调
+- **Developer Agent**：代码实现
+- **Test Agent**：测试验证
+- **Security Agent**：安全检查
+- **Review Agent**：代码审查
+- **Shared Workspace**：任务状态、代码变更、测试结果、审计记录
 
 例如：
 
@@ -1455,33 +1413,12 @@ Agent B 负责最大化安全性。
 
 ## **mini-llm Decision Architecture**
 
-**LLM / Reasoning Engine**
-
-理解目标、分析任务、提出候选方案
-
-**World Model**
-
-状态预测、未来模拟
-
-**Causal Engine**
-
-因果效应、干预分析
-
-**Decision Engine**
-
-效用、概率、风险、多目标、信息价值
-
-**Agent Engine**
-
-执行、协调、工具调用、反馈
-
-**Environment**
-
-真实软件系统、物理世界、用户
-
-这几个模块形成一个重要的闭环：
-
-```
+- **LLM / Reasoning Engine**：理解目标、分析任务、提出候选方案
+- **World Model**：状态预测、未来模拟
+- **Causal Engine**：因果效应、干预分析
+- **Decision Engine**：效用、概率、风险、多目标、信息价值
+- **Agent Engine**：执行、协调、工具调用、反馈
+- **Environment**：真实软件系统、物理世界、用户
 理解目标
    ↓
 生成候选行动

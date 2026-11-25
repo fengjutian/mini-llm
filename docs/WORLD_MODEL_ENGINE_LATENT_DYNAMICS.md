@@ -386,21 +386,9 @@ observation = camera.capture()latent_state = encoder(observation)next_latent_sta
 
 主要有三个方面。
 
-**第一，降低计算复杂度。**
-
-原始输入可能非常庞大，潜在表示可以压缩与任务有关的信息。
-
-**第二，提取有用特征。**
-
-模型可能从图像中提取物体位置、运动趋势和空间结构等信息。
-
-**第三，便于预测和规划。**
-
-在潜在空间中预测未来，可能比直接生成原始像素更高效。
-
-## **4.3 潜在空间的局限**
-
-需要注意：
+- **第一，降低计算复杂度。**：原始输入可能非常庞大，潜在表示可以压缩与任务有关的信息。
+- **第二，提取有用特征。**：模型可能从图像中提取物体位置、运动趋势和空间结构等信息。
+- **第三，便于预测和规划。**：在潜在空间中预测未来，可能比直接生成原始像素更高效。
 
 潜在表示并不天然等于真实世界状态。
 
@@ -1019,29 +1007,11 @@ Frame 5：杯子接触地面。
 
 ## **Video World Model Pipeline**
 
-**Video Input**
-
-连续视频帧 / 传感器数据
-
-**Visual Encoder**
-
-视觉特征提取
-
-**Temporal Representation**
-
-时间序列与动态信息
-
-**Dynamics Model**
-
-学习状态转移规律
-
-**Future Prediction**
-
-预测未来状态或视频帧
-
-## **10.3 视频预测与物理理解的区别**
-
-一个视频生成模型能够生成视觉上合理的未来画面。
+- **Video Input**：连续视频帧 / 传感器数据
+- **Visual Encoder**：视觉特征提取
+- **Temporal Representation**：时间序列与动态信息
+- **Dynamics Model**：学习状态转移规律
+- **Future Prediction**：预测未来状态或视频帧
 
 但这不一定意味着它准确掌握了物理规律。
 
@@ -1145,41 +1115,14 @@ C：伸手拉门。
 
 Text / Image / Video / Sensor / Agent Observation
 
-**World Encoder**
-
-将外部观测转换为内部表示
-
-**World Representation**
-
-Objects / Relations / State
-
-**Latent Representation**
-
-Latent State / Embedding
-
-**Dynamics Model**
-
-Action-conditioned State Transition
-
-**Predictive Model**
-
-Future State / Event Prediction
-
-**Uncertainty Model**
-
-Confidence / Model Disagreement
-
-**Imagination & Rollout**
-
-多路径未来推演
-
-**Planning Interface**
-
-向 Planning Engine 提供预测结果
-
-**Environment Feedback → Model Evaluation / Learning**
-
-整体示意：世界表示、动态预测、未来推演和环境反馈构成闭环。
+- **World Encoder**：将外部观测转换为内部表示
+- **World Representation**：Objects / Relations / State
+- **Latent Representation**：Latent State / Embedding
+- **Dynamics Model**：Action-conditioned State Transition
+- **Predictive Model**：Future State / Event Prediction
+- **Uncertainty Model**：Confidence / Model Disagreement
+- **Imagination & Rollout**：多路径未来推演
+- **Planning Interface**：向 Planning Engine 提供预测结果
 
 ## **12.2 各模块职责**
 
@@ -1313,21 +1256,9 @@ World Model 不应该独立工作，它需要与 mini-llm 的其他 Engine 协�
 
 尤其需要明确三个模块的职责：
 
-**World Model**
-
-世界是什么？世界可能如何变化？
-
-**Simulation Engine**
-
-给定模型和行动，如何运行模拟？
-
-**Planning Engine**
-
-为了实现目标，应该采取什么行动？
-
-三者形成一个重要的协作关系：
-
-\\[ World\ Model \rightarrow Simulation \rightarrow Planning \\]
+- **World Model**：世界是什么？世界可能如何变化？
+- **Simulation Engine**：给定模型和行动，如何运行模拟？
+- **Planning Engine**：为了实现目标，应该采取什么行动？
 
 但这并不意味着所有系统都必须采用三个独立模块。有些小型系统可以将部分功能合并实现。
 

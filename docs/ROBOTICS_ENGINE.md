@@ -1272,21 +1272,9 @@ _图：实验室自动化中的机械臂抓取检测板；感知、规划、轨�
 
 Robot Description / Links / Joints / Limits
 
-**Kinematics**
-
-FK / IK / Jacobian
-
-**Dynamics**
-
-Mass / Gravity / Torque
-
-**Motion Planning**
-
-Collision Checking / Path Search
-
-**Trajectory Optimization**
-
-Position / Velocity / Acceleration / Jerk
+- **Kinematics**：FK / IK / Jacobian
+- **Dynamics**：Mass / Gravity / Torque
+- **Motion Planning**：Collision Checking / Path Search
 
 **Control & Manipulation**
 
@@ -1423,33 +1411,12 @@ _图：Gazebo 教程中的移动操作机器人模型包含移动底盘、传感
 
 Robotics Engine 涉及大量成熟的数学算法和机器人软件基础设施。建议不要全部从零开发。
 
-**MoveIt 2**
-
-机械臂运动规划、逆运动学插件、碰撞检测和操作任务。
-
-**Pinocchio**
-
-高性能刚体运动学和动力学计算，适合构建底层数学模块。
-
-**Drake**
-
-机器人建模、动力学、优化和操作规划。
-
-**Tesseract Robotics**
-
-机器人环境建模、碰撞检查和轨迹规划。
-
-**Ruckig**
-
-支持速度、加速度和 Jerk 限制的在线轨迹生成。
-
-**MoveIt Servo**
-
-将末端速度或姿态增量转换为机器人关节运动命令。
-
-这些工具可以组合使用：
-
-| 需求      | 推荐技术               |
+- **MoveIt 2**：机械臂运动规划、逆运动学插件、碰撞检测和操作任务。
+- **Pinocchio**：高性能刚体运动学和动力学计算，适合构建底层数学模块。
+- **Drake**：机器人建模、动力学、优化和操作规划。
+- **Tesseract Robotics**：机器人环境建模、碰撞检查和轨迹规划。
+- **Ruckig**：支持速度、加速度和 Jerk 限制的在线轨迹生成。
+- **MoveIt Servo**：将末端速度或姿态增量转换为机器人关节运动命令。
 | ------- | ------------------ |
 | 机器人模型   | URDF / SDF         |
 | 运动学与动力学 | Pinocchio          |

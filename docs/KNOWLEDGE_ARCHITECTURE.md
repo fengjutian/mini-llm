@@ -1547,21 +1547,9 @@ Prevent access to future positions
 - `uses` 是否为允许的关系。
 - 目标实体类型是否符合关系定义。
 
-**第五步：证据验证**
-
-确认原始文本中存在相应表达。
-
-**第六步：存储**
-
-保存实体、关系、来源和时间信息。
-
-**第七步：推理**
-
-未来用户问：
-
-> Decoder 为什么不能访问未来 Token？
-
-系统可以检索这条知识，并结合 Autoregressive Generation 的定义进行推理。
+- **第五步：证据验证**：确认原始文本中存在相应表达。
+- **第六步：存储**：保存实体、关系、来源和时间信息。
+- **第七步：推理**：未来用户问：
 
 # **十二、Knowledge Engine 的评估体系**
 
@@ -1675,41 +1663,14 @@ Prevent access to future positions
 
 可以把目前的技术体系整理为：
 
-**Cognitive Architecture**
-
-认知组织与控制
-
-**Memory Engine**
-
-经历与记忆
-
-**Knowledge Engine**
-
-知识与关系
-
-**World Model Engine**
-
-状态与预测
-
-**Agent Engine**
-
-目标与行动
-
-**Learning Engine**
-
-经验与改进
-
-**Evaluation Engine**
-
-评估与验证
-
-**Representation Engine**
-
-内部表示
-
-**Transformer / Neural Network Engine**
-
-底层神经网络计算
+- **Cognitive Architecture**：认知组织与控制
+- **Memory Engine**：经历与记忆
+- **Knowledge Engine**：知识与关系
+- **World Model Engine**：状态与预测
+- **Agent Engine**：目标与行动
+- **Learning Engine**：经验与改进
+- **Evaluation Engine**：评估与验证
+- **Representation Engine**：内部表示
 
 可以这样理解：
 

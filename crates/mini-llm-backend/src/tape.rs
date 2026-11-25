@@ -387,3 +387,40 @@ impl DeviceValue {
         normalized.mul(gamma)?.add(beta)
     }
 }
+
+impl DeviceValue {
+    /// Mean cross-entropy against class targets, with the fused device backward.
+    pub fn cross_entropy(&self, targets: &[usize]) -> Result<DeviceValue, BackendError> {
+        let (loss, gradient) = self.data().cross_entropy(targets)?;
+        if !self.requires_grad() {
+            return Ok(DeviceValue::new(loss, false));
+        }
+        Ok(DeviceValue::with_backward(
+            loss,
+            vec![self.clone()],
+            Box::new(move |upstream| {
+                let scale = upstream.scalar()?;
+                Ok(vec![gradient.scale(scale)?])
+            }),
+        ))
+    }
+
+    /// Rotary position embedding; the backward pass rotates by `-position`.
+    pub fn rope_rotate(
+        &self,
+        head_dim: usize,
+        positions: &[i64],
+        base: f32,
+    ) -> Result<DeviceValue, BackendError> {
+        let data = self.data().rope_rotate(head_dim, positions, base)?;
+        if !self.requires_grad() {
+            return Ok(DeviceValue::new(data, false));
+        }
+        let inverse: Vec<i64> = positions.iter().map(|position| -position).collect();
+        Ok(DeviceValue::with_backward(
+            data,
+            vec![self.clone()],
+            Box::new(move |grad| Ok(vec![grad.rope_rotate(head_dim, &inverse, base)?])),
+        ))
+    }
+}

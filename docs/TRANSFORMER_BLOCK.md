@@ -962,25 +962,10 @@ FFN 对融合后的特征进行非线性计算。
 
 ## **Transformer Block 的四种能力**
 
-**Attention：信息交互**
-
-让不同 Token 交换上下文信息。
-
-**FFN：非线性变换**
-
-对每个 Token 的特征进行进一步加工。
-
-**Residual：信息与梯度通路**
-
-保留原始表示，改善深层优化。
-
-**Normalization：数值稳定**
-
-控制特征尺度，改善训练过程。
-
-因此，Transformer 并不是简单地重复 Attention。
-
-它实际上是一个反复执行：
+- **Attention：信息交互**：让不同 Token 交换上下文信息。
+- **FFN：非线性变换**：对每个 Token 的特征进行进一步加工。
+- **Residual：信息与梯度通路**：保留原始表示，改善深层优化。
+- **Normalization：数值稳定**：控制特征尺度，改善训练过程。
 
 \\[ \text{信息交互} \rightarrow \text{非线性变换} \rightarrow \text{表示更新} \\]
 

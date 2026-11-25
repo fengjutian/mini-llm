@@ -55,29 +55,11 @@ _图：自我改进闭环：执行 → 评估 → 信用分配 → 策略更新�
 
 **Self-Improvement 的核心闭环**
 
-**Experience**
-
-执行任务，产生经验
-
-**Evaluation**
-
-评估结果，识别问题
-
-**Reflection & Learning**
-
-分析原因，提取经验
-
-**Policy Optimization**
-
-优化策略和行为
-
-**Improved Agent**
-
-在下一次任务中验证改进
-
-持续迭代
-
-需要注意：
+- **Experience**：执行任务，产生经验
+- **Evaluation**：评估结果，识别问题
+- **Reflection & Learning**：分析原因，提取经验
+- **Policy Optimization**：优化策略和行为
+- **Improved Agent**：在下一次任务中验证改进
 
 Self-Improvement 不等于 AI 自动修改自己的模型权重。
 
@@ -207,25 +189,10 @@ Agent 自己声称成功，不等于任务真的成功。
 
 **Experience Store**
 
-**Successful Experiences**
-
-成功执行记录
-
-**Failed Experiences**
-
-失败与错误记录
-
-**Strategy Experiences**
-
-策略效果记录
-
-**Tool Experiences**
-
-工具使用经验
-
-**Experience Retrieval**
-
-- 按任务类型检索
+- **Successful Experiences**：成功执行记录
+- **Failed Experiences**：失败与错误记录
+- **Strategy Experiences**：策略效果记录
+- **Tool Experiences**：工具使用经验
 - 按错误类型检索
 - 按项目技术栈检索
 - 按工具和策略检索
@@ -526,29 +493,11 @@ Agent 的策略可以存在不同层次：
 
 **Agent Policy 的五种形式**
 
-**1. Rule Policy**
-
-规则：遇到测试失败，先分析错误，不立即重写模块。
-
-**2. Workflow Policy**
-
-流程：分析 → 计划 → 修改 → 测试 → 验证。
-
-**3. Tool Selection Policy**
-
-根据任务类型选择搜索、终端、代码分析或测试工具。
-
-**4. Prompt Policy**
-
-优化模型的任务说明、上下文和约束。
-
-**5. Model Policy**
-
-通过训练或微调改变模型参数。
-
-这意味着：
-
-**不修改模型权重，也可以让 Agent 的行为变得更好。**
+- **1. Rule Policy**：规则：遇到测试失败，先分析错误，不立即重写模块。
+- **2. Workflow Policy**：流程：分析 → 计划 → 修改 → 测试 → 验证。
+- **3. Tool Selection Policy**：根据任务类型选择搜索、终端、代码分析或测试工具。
+- **4. Prompt Policy**：优化模型的任务说明、上下文和约束。
+- **5. Model Policy**：通过训练或微调改变模型参数。
 
 对于 mini-llm 的第一个 Self-Improvement Engine，我更建议优先优化：
 
@@ -767,29 +716,11 @@ Task 6：新的技术框架
 
 分析任务成功、失败和成本。
 
-**3. Improvement Proposal**
-
-生成策略修改建议。
-
-**4. Candidate Policy**
-
-创建候选策略版本，不直接覆盖生产策略。
-
-**5. Evaluation & Regression**
-
-在独立测试集和历史任务上验证。
-
-**6. Approval & Deployment**
-
-根据风险等级审批并逐步发布。
-
-**7. Monitoring & Rollback**
-
-监测线上效果，发现退化时回滚。
-
-### **8.2 Candidate Policy 与 Production Policy**
-
-应该明确区分：
+- **3. Improvement Proposal**：生成策略修改建议。
+- **4. Candidate Policy**：创建候选策略版本，不直接覆盖生产策略。
+- **5. Evaluation & Regression**：在独立测试集和历史任务上验证。
+- **6. Approval & Deployment**：根据风险等级审批并逐步发布。
+- **7. Monitoring & Rollback**：监测线上效果，发现退化时回滚。
 
 | 策略                | 职责       |
 | ----------------- | -------- |
@@ -852,37 +783,13 @@ Candidate Policy v1.3
 
 **Self-Improvement Engine**
 
-**Experience Collector**
-
-收集 Agent、Tool、Model 执行轨迹
-
-**Experience Store**
-
-存储成功、失败和策略经验
-
-**Credit Assigner**
-
-贡献归因
-
-**Reflection Engine**
-
-经验反思
-
-**Policy Optimizer**
-
-策略优化
-
-**Meta Learner**
-
-学习方法优化
-
-**Evaluation Engine**
-
-独立评估、回归测试、风险检查
-
-**Policy Registry & Version Manager**
-
-策略版本、发布、审批、回滚
+- **Experience Collector**：收集 Agent、Tool、Model 执行轨迹
+- **Experience Store**：存储成功、失败和策略经验
+- **Credit Assigner**：贡献归因
+- **Reflection Engine**：经验反思
+- **Policy Optimizer**：策略优化
+- **Meta Learner**：学习方法优化
+- **Evaluation Engine**：独立评估、回归测试、风险检查
 
 与 Agent Runtime、Memory、Observability 协同
 

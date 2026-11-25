@@ -805,3 +805,210 @@ impl DeviceTensor {
         }
     }
 }
+
+impl DeviceTensor {
+    /// Element-wise natural logarithm.
+    pub fn log(&self) -> Result<Self, BackendError> {
+        match &self.storage {
+            Storage::Host(tensor) => {
+                let data = tensor.data().iter().map(|value| value.ln()).collect();
+                Ok(Self::from_host(Tensor::new(data, tensor.shape().to_vec())?))
+            }
+            #[cfg(feature = "candle")]
+            Storage::Candle { tensor, .. } => {
+                let result = tensor
+                    .log()
+                    .map_err(|error| BackendError::Backend(error.to_string()))?;
+                Ok(Self::from_candle(result))
+            }
+        }
+    }
+
+    /// Sum of every element as a `[1]` tensor.
+    pub fn sum_all(&self) -> Result<Self, BackendError> {
+        match &self.storage {
+            Storage::Host(tensor) => Ok(Self::from_host(tensor.sum()?)),
+            #[cfg(feature = "candle")]
+            Storage::Candle { tensor, .. } => {
+                let result = tensor
+                    .sum_all()
+                    .and_then(|sum| sum.reshape((1usize,)))
+                    .map_err(|error| BackendError::Backend(error.to_string()))?;
+                Ok(Self::from_candle(result))
+            }
+        }
+    }
+
+    /// Reads a scalar value back to the host.
+    pub fn scalar(&self) -> Result<f32, BackendError> {
+        let host = self.to_host()?;
+        if host.data().len() != 1 {
+            return Err(BackendError::Backend(format!(
+                "expected a scalar, got shape {:?}",
+                host.shape()
+            )));
+        }
+        Ok(host.data()[0])
+    }
+
+    /// One-hot rows for `targets`, uploaded to the same device.
+    fn one_hot(&self, targets: &[usize], rows: usize, cols: usize) -> Result<Self, BackendError> {
+        let mut data = vec![0.0f32; rows * cols];
+        for (row, &target) in targets.iter().enumerate() {
+            if target >= cols {
+                return Err(BackendError::Backend(format!(
+                    "target {target} outside {cols} classes"
+                )));
+            }
+            data[row * cols + target] = 1.0;
+        }
+        let host = Tensor::new(data, vec![rows, cols])?;
+        DeviceTensor::from_host(host).to(&self.device())
+    }
+
+    /// Mean cross-entropy of logits against class targets, plus its gradient.
+    pub fn cross_entropy(
+        &self,
+        targets: &[usize],
+    ) -> Result<(Self, Self), BackendError> {
+        let (rows, cols) = (self.shape()[0], self.shape()[1]);
+        if targets.len() != rows {
+            return Err(BackendError::Backend(format!(
+                "{} targets for {rows} rows",
+                targets.len()
+            )));
+        }
+
+        match &self.storage {
+            Storage::Host(tensor) => {
+                let data = tensor.data();
+                let mut grad = vec![0.0f32; rows * cols];
+                let mut loss = 0.0f32;
+                for row in 0..rows {
+                    let offset = row * cols;
+                    let max = data[offset..offset + cols]
+                        .iter()
+                        .copied()
+                        .fold(f32::NEG_INFINITY, f32::max);
+                    let mut sum = 0.0f32;
+                    for col in 0..cols {
+                        sum += (data[offset + col] - max).exp();
+                    }
+                    let target = targets[row];
+                    if target >= cols {
+                        return Err(BackendError::Backend(format!(
+                            "target {target} outside {cols} classes"
+                        )));
+                    }
+                    loss += max + sum.ln() - data[offset + target];
+                    for col in 0..cols {
+                        grad[offset + col] = (data[offset + col] - max).exp() / sum;
+                    }
+                    grad[offset + target] -= 1.0;
+                }
+                let scale = 1.0 / rows as f32;
+                for value in &mut grad {
+                    *value *= scale;
+                }
+                Ok((
+                    Self::from_host(Tensor::new(vec![loss * scale], vec![1])?),
+                    Self::from_host(Tensor::new(grad, vec![rows, cols])?),
+                ))
+            }
+            #[cfg(feature = "candle")]
+            Storage::Candle { .. } => {
+                let softmax = self.softmax_rows()?;
+                let log_prob = softmax.log()?;
+                let one_hot = self.one_hot(targets, rows, cols)?;
+                let loss = log_prob.mul(&one_hot)?.sum_all()?.scale(-1.0 / rows as f32)?;
+                let grad = softmax
+                    .add(&one_hot.scale(-1.0)?)?
+                    .scale(1.0 / rows as f32)?;
+                Ok((loss, grad))
+            }
+        }
+    }
+
+    /// Rotary position embedding over `[rows, heads * head_dim]`.
+    pub fn rope_rotate(
+        &self,
+        head_dim: usize,
+        positions: &[i64],
+        base: f32,
+    ) -> Result<Self, BackendError> {
+        let (rows, cols) = (self.shape()[0], self.shape()[1]);
+        if head_dim == 0 || !head_dim.is_multiple_of(2) {
+            return Err(BackendError::Backend(format!(
+                "invalid rope head_dim {head_dim}"
+            )));
+        }
+        if !cols.is_multiple_of(head_dim) {
+            return Err(BackendError::Backend(format!(
+                "width {cols} is not a multiple of head_dim {head_dim}"
+            )));
+        }
+        if positions.len() != rows {
+            return Err(BackendError::Backend(format!(
+                "{} positions for {rows} rows",
+                positions.len()
+            )));
+        }
+        let heads = cols / head_dim;
+        let half = head_dim / 2;
+        let frequencies: Vec<f32> = (0..half)
+            .map(|index| 1.0 / base.powf(2.0 * index as f32 / head_dim as f32))
+            .collect();
+
+        match &self.storage {
+            Storage::Host(tensor) => {
+                Ok(Self::from_host(tensor.rope_rotate(head_dim, positions, base)?))
+            }
+            #[cfg(feature = "candle")]
+            Storage::Candle { tensor, device } => {
+                let mut cos_data = Vec::with_capacity(rows * half);
+                let mut sin_data = Vec::with_capacity(rows * half);
+                for &position in positions {
+                    for frequency in &frequencies {
+                        let angle = position as f32 * frequency;
+                        cos_data.push(angle.cos());
+                        sin_data.push(angle.sin());
+                    }
+                }
+                let cos = candle_core::Tensor::from_vec(
+                    cos_data,
+                    (rows, 1, half, 1),
+                    device,
+                )
+                .map_err(|error| BackendError::Backend(error.to_string()))?;
+                let sin = candle_core::Tensor::from_vec(
+                    sin_data,
+                    (rows, 1, half, 1),
+                    device,
+                )
+                .map_err(|error| BackendError::Backend(error.to_string()))?;
+
+                let shaped = tensor
+                    .reshape((rows, heads, half, 2))
+                    .map_err(|error| BackendError::Backend(error.to_string()))?;
+                let even = shaped
+                    .narrow(3, 0, 1)
+                    .map_err(|error| BackendError::Backend(error.to_string()))?;
+                let odd = shaped
+                    .narrow(3, 1, 1)
+                    .map_err(|error| BackendError::Backend(error.to_string()))?;
+                let rotated_even = even
+                    .broadcast_mul(&cos)
+                    .and_then(|value| value.broadcast_sub(&odd.broadcast_mul(&sin)?))
+                    .map_err(|error| BackendError::Backend(error.to_string()))?;
+                let rotated_odd = even
+                    .broadcast_mul(&sin)
+                    .and_then(|value| value.broadcast_add(&odd.broadcast_mul(&cos)?))
+                    .map_err(|error| BackendError::Backend(error.to_string()))?;
+                let stacked = candle_core::Tensor::cat(&[&rotated_even, &rotated_odd], 3)
+                    .and_then(|value| value.reshape((rows, cols)))
+                    .map_err(|error| BackendError::Backend(error.to_string()))?;
+                Ok(Self::from_candle(stacked))
+            }
+        }
+    }
+}

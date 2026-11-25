@@ -912,43 +912,16 @@ vocab_size = 10000seq_len = 3d_model = 128num_heads = 4head_dim = 32
 
 **Multi-Head Self-Attention**
 
-**Head 1**
-
-32维
-
-**Head 2**
-
-32维
-
-**Head 3**
-
-32维
-
-**Head 4**
-
-32维
-
-Q、K、V → Attention → Concat → Linear
-
-**Add & Norm**
+- **Head 1**：32维
+- **Head 2**：32维
+- **Head 3**：32维
+- **Head 4**：32维
 
 残差连接 + 归一化
 
-**Feed Forward Network**
-
-逐 Token 的非线性变换
-
-**Add & Norm**
-
-输出 [3, 128]
-
-**Next Transformer Block**
-
-重复 N 层
-
-这里的 Add & Norm 和 Feed Forward 将在后续的 Transformer Block 深度解析中展开。
-
-# **九、mini-llm 应该如何实现 Transformer Engine？**
+- **Feed Forward Network**：逐 Token 的非线性变换
+- **Add & Norm**：输出 [3, 128]
+- **Next Transformer Block**：重复 N 层
 
 理解原理之后，我们需要将这些数学运算变成真正的软件模块。
 

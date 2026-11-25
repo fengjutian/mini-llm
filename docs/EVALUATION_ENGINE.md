@@ -396,29 +396,11 @@ Benchmark 是一套标准化评估任务和测试数据。
 
 常见评估领域包括：
 
-**数学能力**
-
-计算、数学问题、逻辑推导、证明。
-
-**代码能力**
-
-代码生成、代码理解、调试、测试通过率。
-
-**知识能力**
-
-科学、历史、自然语言知识、事实问答。
-
-**推理能力**
-
-多步骤问题、条件推理、复杂任务规划。
-
-**指令遵循能力**
-
-格式控制、多轮对话、约束条件执行。
-
-### **6.1 常见 Benchmark**
-
-| Benchmark | 主要评估方向      |
+- **数学能力**：计算、数学问题、逻辑推导、证明。
+- **代码能力**：代码生成、代码理解、调试、测试通过率。
+- **知识能力**：科学、历史、自然语言知识、事实问答。
+- **推理能力**：多步骤问题、条件推理、复杂任务规划。
+- **指令遵循能力**：格式控制、多轮对话、约束条件执行。
 | --------- | ----------- |
 | MMLU      | 多学科知识与理解    |
 | GSM8K     | 数学文字题       |
@@ -696,37 +678,13 @@ Evaluation Engine 不应该只是一个计算 PPL 的函数。
 
 ## **Evaluation Engine 架构**
 
-**Evaluation Dataset**
-
-独立测试集、验证集、Benchmark
-
-**Evaluation Runner**
-
-统一加载模型、执行评估任务
-
-**Language Metrics**
-
-Loss、PPL
-
-**Task Metrics**
-
-Accuracy、Pass\@k
-
-**Generation Metrics**
-
-生成质量、重复率
-
-**Robustness Metrics**
-
-稳定性、鲁棒性
-
-**Evaluation Report**
-
-指标、对比、趋势、失败样本
-
-### **10.1 建议的项目目录**
-
-```
+- **Evaluation Dataset**：独立测试集、验证集、Benchmark
+- **Evaluation Runner**：统一加载模型、执行评估任务
+- **Language Metrics**：Loss、PPL
+- **Task Metrics**：Accuracy、Pass\@k
+- **Generation Metrics**：生成质量、重复率
+- **Robustness Metrics**：稳定性、鲁棒性
+- **Evaluation Report**：指标、对比、趋势、失败样本
 mini-llm/
 │
 ├── evaluation/

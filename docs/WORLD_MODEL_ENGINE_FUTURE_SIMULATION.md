@@ -705,33 +705,12 @@ World Model 可以预测高层任务结果，也可以在具备足够精度的�
 
 ## **Action Simulation Loop**
 
-**Current World State**
-
-当前世界状态 \\(s_t\\)
-
-**Candidate Actions**
-
-候选行动 \\(a_1,a_2,\ldots,a_n\\)
-
-**World Model**
-
-模拟不同动作的状态转移
-
-**Predicted Future States**
-
-未来状态、风险和不确定性
-
-**Action Evaluation**
-
-比较收益、成本和风险
-
-**Select Action**
-
-选择通过约束验证的行动
-
-## **5.4 Model Predictive Control：模型预测控制**
-
-Model Predictive Control（MPC）是将预测模型用于行动决策的重要方法。
+- **Current World State**：当前世界状态 \\(s_t\\)
+- **Candidate Actions**：候选行动 \\(a_1,a_2,\ldots,a_n\\)
+- **World Model**：模拟不同动作的状态转移
+- **Predicted Future States**：未来状态、风险和不确定性
+- **Action Evaluation**：比较收益、成本和风险
+- **Select Action**：选择通过约束验证的行动
 
 核心思想：
 
@@ -811,21 +790,9 @@ Counterfactual Reasoning，反事实推理，研究的是：
 
 例如：
 
-**Prediction：**
-
-如果现在推动杯子，它可能向右移动。
-
-**Action Simulation：**
-
-模拟推动杯子和抓取杯子两种行动的结果。
-
-**Counterfactual：**
-
-杯子已经被推动并掉落。如果当时没有推动，杯子是否会保持在桌面上？
-
-这三个问题相关，但并不相同。
-
-## **6.2 结构因果模型（SCM）**
+- **Prediction：**：如果现在推动杯子，它可能向右移动。
+- **Action Simulation：**：模拟推动杯子和抓取杯子两种行动的结果。
+- **Counterfactual：**：杯子已经被推动并掉落。如果当时没有推动，杯子是否会保持在桌面上？
 
 反事实推理通常需要结构因果模型（Structural Causal Model）。
 
@@ -902,21 +869,9 @@ Counterfactual Reasoning，反事实推理，研究的是：
 
 ## **Counterfactual Inference**
 
-**Step 1：Abduction**
-
-根据实际观察推断外生变量或背景条件。
-
-**Step 2：Action**
-
-修改模型中的某个变量或结构方程输入。
-
-**Step 3：Prediction**
-
-使用修改后的模型重新计算结果。
-
-例如：
-
-现实：
+- **Step 1：Abduction**：根据实际观察推断外生变量或背景条件。
+- **Step 2：Action**：修改模型中的某个变量或结构方程输入。
+- **Step 3：Prediction**：使用修改后的模型重新计算结果。
 
 ```
 推动力度：较大
@@ -1949,33 +1904,12 @@ World Model 并不是孤立模块，而是连接感知、知识、推理、决�
 
 感知文字、图像、音频、视频
 
-**Spatial Intelligence Engine**
-
-三维空间、对象和关系
-
-**World Model Engine**
-
-世界状态、动态模型、未来预测
-
-**Causal Engine**
-
-因果关系与反事实
-
-**Simulation Engine**
-
-环境模拟和实验
-
-**Planning Engine**
-
-行动序列规划
-
-**Decision Engine**
-
-收益、风险和行动选择
-
-**Agent / VLA / Robotics Engine**
-
-执行行动并获得新的观察
+- **Spatial Intelligence Engine**：三维空间、对象和关系
+- **World Model Engine**：世界状态、动态模型、未来预测
+- **Causal Engine**：因果关系与反事实
+- **Simulation Engine**：环境模拟和实验
+- **Planning Engine**：行动序列规划
+- **Decision Engine**：收益、风险和行动选择
 
 新观察反馈到 World Model，更新状态并继续预测
 

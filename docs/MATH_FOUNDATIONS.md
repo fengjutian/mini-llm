@@ -1025,33 +1025,12 @@ MLP 负责对每个 Token 的特征进行进一步的非线性变换。
 
 ## **6.1 mini-llm 的数学计算链**
 
-**输入数据**
-
-Token IDs / Tensor
-
-**Tensor Engine**
-
-加法、乘法、矩阵运算
-
-**Neural Network**
-
-Linear、Activation、MLP、Transformer
-
-**Loss**
-
-交叉熵、预测误差
-
-**Autograd**
-
-链式法则、梯度计算
-
-**Optimizer**
-
-SGD、Adam、AdamW
-
-更新参数，进入下一轮训练
-
-## **6.2 本章必须真正理解的十个问题**
+- **输入数据**：Token IDs / Tensor
+- **Tensor Engine**：加法、乘法、矩阵运算
+- **Neural Network**：Linear、Activation、MLP、Transformer
+- **Loss**：交叉熵、预测误差
+- **Autograd**：链式法则、梯度计算
+- **Optimizer**：SGD、Adam、AdamW
 
 不要急着进入 Transformer。先尝试回答以下问题。
 
@@ -1066,42 +1045,30 @@ SGD、Adam、AdamW
 **2. 为什么 Attention 使用 QKᵀ？**
 
 查看答案
-
 **3. 导数和梯度有什么区别？**
 
 查看答案
-
 **4. 为什么反向传播需要链式法则？**
 
 查看答案
-
 **5. 为什么梯度下降使用负梯度？**
 
 查看答案
-
 **6. Softmax 和交叉熵分别解决什么问题？**
 
 查看答案
-
 **7. 为什么神经网络需要非线性激活函数？**
 
 查看答案
-
 **8. Adam 为什么同时维护一阶矩和二阶矩？**
 
 查看答案
-
 **9. Loss 降低是否一定代表模型真正理解了知识？**
 
 查看答案
-
 **10. 大语言模型训练究竟在优化什么？**
 
 查看答案
-
-展开全部答案
-
-# **第七章：mini-llm 下一阶段学习路线**
 
 数学基础建立之后，下一步应该深入研究 Tensor 和 Autograd 的内部机制。
 

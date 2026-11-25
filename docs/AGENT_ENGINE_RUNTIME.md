@@ -264,29 +264,11 @@ Agent 最核心的机制是 Agent Loop。
 
 \\[ Observe\rightarrow Think\rightarrow Plan \rightarrow Act\rightarrow Observe \\]
 
-**Observe**
-
-观察环境，获取当前状态
-
-**Think**
-
-理解问题，分析当前情况
-
-**Plan**
-
-生成或调整执行计划
-
-**Act**
-
-调用工具，执行行动
-
-**Evaluate**
-
-检查结果，判断是否完成
-
-未完成：更新状态并进入下一轮
-
-## **3.2 Observe：观察**
+- **Observe**：观察环境，获取当前状态
+- **Think**：理解问题，分析当前情况
+- **Plan**：生成或调整执行计划
+- **Act**：调用工具，执行行动
+- **Evaluate**：检查结果，判断是否完成
 
 Agent 首先需要获取环境信息。
 
@@ -492,21 +474,9 @@ LLM 再根据结果生成回答。
 
 **User Message**
 
-**LLM**
-
-判断需要读取文件
-
-**Tool Call**
-
-read_file(path="package.json")
-
-**Tool Executor**
-
-检查权限并执行文件读取
-
-**Tool Result**
-
-**LLM Final Response**
+- **LLM**：判断需要读取文件
+- **Tool Call**：read_file(path="package.json")
+- **Tool Executor**：检查权限并执行文件读取
 
 注意：模型产生的是工具调用请求，不是已经执行的行动。
 
@@ -1069,29 +1039,11 @@ Reflection 是 Agent 对自身行动、结果和计划进行检查的过程。
 
 不同 Agent 可以拥有不同的工具、上下文和任务权限。
 
-**Coordinator Agent**
-
-目标分解、任务分配、结果整合
-
-**Frontend Agent**
-
-前端开发
-
-**Backend Agent**
-
-后端开发
-
-**Database Agent**
-
-数据库设计
-
-**Testing Agent**
-
-测试验证
-
-**Shared Task State / Integration**
-
-共享任务状态、接口契约与集成结果
+- **Coordinator Agent**：目标分解、任务分配、结果整合
+- **Frontend Agent**：前端开发
+- **Backend Agent**：后端开发
+- **Database Agent**：数据库设计
+- **Testing Agent**：测试验证
 
 ## **11.2 Multi-agent 的基本模式**
 
@@ -1485,45 +1437,15 @@ Agent 的评价不能只看回答质量。
 
 Representation · Reasoning · Metacognition
 
-**Memory Engine**
-
-记忆检索与更新
-
-**Knowledge Engine**
-
-知识组织与推理
-
-**World Model**
-
-未来状态预测
-
-**Causal Engine**
-
-行动效果分析
-
-**Decision Engine**
-
-选择行动
-
-**Planning Engine**
-
-组织行动路径
-
-**Agent Engine**
-
-任务循环 · 工具调用 · 运行时 · 执行反馈
-
-**Runtime / Sandbox / Tools**
-
-安全执行与环境交互
-
-**Environment**
-
-文件、数据库、API、操作系统、外部服务
-
-观察行动结果，更新记忆与世界状态，继续循环
-
-我们可以将整个系统总结为：
+- **Memory Engine**：记忆检索与更新
+- **Knowledge Engine**：知识组织与推理
+- **World Model**：未来状态预测
+- **Causal Engine**：行动效果分析
+- **Decision Engine**：选择行动
+- **Planning Engine**：组织行动路径
+- **Agent Engine**：任务循环 · 工具调用 · 运行时 · 执行反馈
+- **Runtime / Sandbox / Tools**：安全执行与环境交互
+- **Environment**：文件、数据库、API、操作系统、外部服务
 
 \\[ \boxed{ Intelligence = Representation+ Prediction+ Reasoning+ Decision+ Planning+ Action+ Learning } \\]
 

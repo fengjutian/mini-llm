@@ -72,25 +72,10 @@ mini-llm 技术文档 · 第二部分 · Tensor Engine
 
 ## **1.1 Tensor Engine 在 mini-llm 中的位置**
 
-**LLM Application**
-
-文本生成、推理、训练
-
-**Transformer Engine**
-
-Attention、MLP、LayerNorm、Embedding
-
-**Tensor Engine**
-
-Tensor、Shape、Stride、Memory、MatMul
-
-**Hardware Backend**
-
-CPU、SIMD、GPU、CUDA、Metal
-
-Tensor Engine 位于神经网络和底层硬件之间。
-
-它负责将数学运算转化成计算机能够执行的内存访问与数值计算。
+- **LLM Application**：文本生成、推理、训练
+- **Transformer Engine**：Attention、MLP、LayerNorm、Embedding
+- **Tensor Engine**：Tensor、Shape、Stride、Memory、MatMul
+- **Hardware Backend**：CPU、SIMD、GPU、CUDA、Metal
 
 # **二、Tensor 到底是什么？**
 
@@ -1207,21 +1192,9 @@ pub enum TensorError {
 
 # **十二、学习检查：你是否真正理解 Tensor？**
 
-**Tensor Engine 理解测试**
-
-0/8
-
-**1. Shape 和 Stride 有什么区别？**
-
-显示解释
-
-**2. 为什么 Tensor 转置不一定需要复制数据？**
-
-显示解释
-
-**3. Shape=[2,3]、Stride=[3,1] 时，元素 [1,2] 的 Offset 是多少？**
-
-显示解释
+- **Tensor Engine 理解测试**：0/8
+- **1. Shape 和 Stride 有什么区别？**：显示解释
+- **2. 为什么 Tensor 转置不一定需要复制数据？**：显示解释
 
 **4. 为什么非连续 Tensor 可能影响矩阵乘法性能？**
 

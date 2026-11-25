@@ -1251,29 +1251,11 @@ Agent 学会分析 NestJS 项目时，优先检查模块、Controller 和 Provid
 
 完成上下文建模和 Token 生成。
 
-**3. Representation Engine**
-
-形成特征、概念和内部表示。
-
-**4. World Model Engine**
-
-表示世界状态并预测动态变化。
-
-**5. Agent Engine**
-
-理解目标、规划任务、调用工具并执行。
-
-**6. Learning Engine**
-
-从反馈和经验中更新记忆、策略与模型。
-
-**形成持续反馈与学习闭环**
-
-我们可以将这个系统抽象为：
-
-\\[ Intelligence= Representation+ Prediction+ Planning+ Action+ Learning \\]
-
-这是一种用于研究和设计智能系统的概念框架，不是一个已经被证明的智能充分条件。
+- **3. Representation Engine**：形成特征、概念和内部表示。
+- **4. World Model Engine**：表示世界状态并预测动态变化。
+- **5. Agent Engine**：理解目标、规划任务、调用工具并执行。
+- **6. Learning Engine**：从反馈和经验中更新记忆、策略与模型。
+- **形成持续反馈与学习闭环**：我们可以将这个系统抽象为：
 
 真正重要的是这些模块之间能否形成有效的闭环。
 

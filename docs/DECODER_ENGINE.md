@@ -1155,21 +1155,9 @@ Attention + FFN + Residual + Norm
 
 **Final Norm**
 
-**LM Head**
-
-隐藏向量 → 词表 Logits
-
-**Softmax + Sampling**
-
-概率分布 → 下一个 Token
-
-**Autoregressive Generation**
-
-追加 Token → 继续预测
-
-底层由此前设计的几个 Engine 提供支撑：
-
-| Engine                | 职责       |
+- **LM Head**：隐藏向量 → 词表 Logits
+- **Softmax + Sampling**：概率分布 → 下一个 Token
+- **Autoregressive Generation**：追加 Token → 继续预测
 | --------------------- | -------- |
 | Tensor Engine         | 数学计算     |
 | Autograd Engine       | 自动求导     |

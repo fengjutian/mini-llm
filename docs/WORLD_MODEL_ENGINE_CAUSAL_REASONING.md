@@ -1043,21 +1043,9 @@ World Model 是 Agent 对环境建立的可预测模型。
 
 二者的关系：
 
-**Agent**
-
-目标理解 · 任务拆解 · 决策 · 工具调用
-
-**World Model**
-
-状态表示、动力学、未来预测、反事实模拟
-
-**Memory & Knowledge**
-
-历史经验、事实、关系、规则和证据
-
-与真实环境交互
-
-**Environment**
+- **Agent**：目标理解 · 任务拆解 · 决策 · 工具调用
+- **World Model**：状态表示、动力学、未来预测、反事实模拟
+- **Memory & Knowledge**：历史经验、事实、关系、规则和证据
 
 物理世界、软件系统、网络、数据库、用户
 
@@ -1203,37 +1191,13 @@ class WorldModel:    def __init__(        self,        state_estimator,        d
 
 ## **mini-llm Cognitive Architecture**
 
-**Perception / Observation**
-
-感知环境，获取观测
-
-**Representation Engine**
-
-构建内部表征
-
-**Memory Engine**
-
-保存经验
-
-**Knowledge Engine**
-
-组织知识
-
-**World Model Engine**
-
-理解状态、模拟变化、预测未来、评估行动后果
-
-**Agent / Planning Engine**
-
-目标管理、决策、规划与执行
-
-**Real Environment**
-
-真实世界反馈
-
-可以将智能系统的发展理解为一个逐步扩展的过程：
-
-1. **感知（Perception）**：知道环境中发生了什么。
+- **Perception / Observation**：感知环境，获取观测
+- **Representation Engine**：构建内部表征
+- **Memory Engine**：保存经验
+- **Knowledge Engine**：组织知识
+- **World Model Engine**：理解状态、模拟变化、预测未来、评估行动后果
+- **Agent / Planning Engine**：目标管理、决策、规划与执行
+- **Real Environment**：真实世界反馈
 2. **表征（Representation）**：把信息转化为内部结构。
 3. **记忆（Memory）**：保存过去的经验。
 4. **知识（Knowledge）**：建立事实、概念和关系。

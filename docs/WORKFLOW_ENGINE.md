@@ -81,25 +81,10 @@ Workflow 也可以调用多个 Agent。
 
 **Agent Engine 与 Workflow Engine 的协作关系**
 
-**Workflow Engine**
-
-流程编排、状态管理、依赖控制、异常恢复
-
-**Agent Engine**
-
-理解任务、推理、决策
-
-**Tool Executor**
-
-调用工具、执行操作
-
-**External Systems**
-
-Git、数据库、文件系统、API、CI/CD
-
-可以把它们理解为：
-
-- Agent Engine 是一个能够自主判断的执行者。
+- **Workflow Engine**：流程编排、状态管理、依赖控制、异常恢复
+- **Agent Engine**：理解任务、推理、决策
+- **Tool Executor**：调用工具、执行操作
+- **External Systems**：Git、数据库、文件系统、API、CI/CD
 - Workflow Engine 是一个能够管理整个执行过程的协调者。
 
 # **二、DAG：如何表示复杂任务依赖？**
@@ -370,33 +355,12 @@ interface WorkflowNode {
 
 ## **3.2 六种常见节点**
 
-**Agent Node**
-
-调用 Agent 完成需要推理和决策的任务。
-
-**Tool Node**
-
-调用 API、数据库、文件系统或其他工具。
-
-**Condition Node**
-
-根据条件判断选择不同执行路径。
-
-**Parallel Node**
-
-同时启动多个可以独立执行的任务。
-
-**Human Node**
-
-等待人工审批、补充信息或执行决策。
-
-**Delay Node**
-
-等待指定时间或外部事件。
-
-这六类节点基本可以构成一个通用 Workflow Engine 的基础执行模型。
-
-但生产系统通常还需要 Subworkflow、Event Wait、Map/ForEach、Compensation 等能力。
+- **Agent Node**：调用 Agent 完成需要推理和决策的任务。
+- **Tool Node**：调用 API、数据库、文件系统或其他工具。
+- **Condition Node**：根据条件判断选择不同执行路径。
+- **Parallel Node**：同时启动多个可以独立执行的任务。
+- **Human Node**：等待人工审批、补充信息或执行决策。
+- **Delay Node**：等待指定时间或外部事件。
 
 ## **3.3 为什么 Agent Node 和 Tool Node 必须分开？**
 
@@ -440,29 +404,11 @@ Workflow Orchestration 就是由一个协调系统控制多个任务的启动、
 
 ## **4.1 Orchestrator 架构**
 
-**Workflow Orchestrator**
-
-工作流调度中心
-
-**DAG Scheduler**
-
-依赖与就绪节点
-
-**State Manager**
-
-状态持久化
-
-**Event Dispatcher**
-
-事件分发
-
-**Failure Handler**
-
-异常恢复
-
-**Agent**
-
-**Tool**
+- **Workflow Orchestrator**：工作流调度中心
+- **DAG Scheduler**：依赖与就绪节点
+- **State Manager**：状态持久化
+- **Event Dispatcher**：事件分发
+- **Failure Handler**：异常恢复
 
 **Human**
 
@@ -581,33 +527,12 @@ State Machine，即有限状态机（Finite State Machine，FSM）。
 
 ## **Workflow 生命周期**
 
-**PENDING**
-
-等待启动
-
-**RUNNING**
-
-正在执行
-
-**WAITING**
-
-等待事件或审批
-
-**FAILED**
-
-执行失败
-
-**COMPLETED**
-
-成功完成
-
-**CANCELLED**
-
-主动取消
-
-示意图省略了从 WAITING 恢复到 RUNNING、FAILED 重试以及暂停等状态转换。
-
-还可以增加：
+- **PENDING**：等待启动
+- **RUNNING**：正在执行
+- **WAITING**：等待事件或审批
+- **FAILED**：执行失败
+- **COMPLETED**：成功完成
+- **CANCELLED**：主动取消
 
 - PAUSED：主动暂停。
 - COMPENSATING：正在执行补偿操作。
@@ -1741,25 +1666,10 @@ Failure Handler
 
 **Human Node**
 
-**Runtime Engine**
-
-任务执行、异步调度、资源管理、隔离
-
-**Workflow Database**
-
-定义、实例、状态、事件
-
-**Artifact Store**
-
-大文件、执行结果、快照
-
-**Observability / Audit**
-
-Logs、Metrics、Traces、Replay、审批记录
-
-## **14.1 各模块职责**
-
-| 模块                   | 主要职责       |
+- **Runtime Engine**：任务执行、异步调度、资源管理、隔离
+- **Workflow Database**：定义、实例、状态、事件
+- **Artifact Store**：大文件、执行结果、快照
+- **Observability / Audit**：Logs、Metrics、Traces、Replay、审批记录
 | -------------------- | ---------- |
 | Workflow API         | 管理工作流      |
 | Definition Manager   | 保存和验证工作流定义 |

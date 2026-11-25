@@ -112,33 +112,12 @@ Trust Engine 不应该只输出一个简单的可信度分数。
 
 ## **Trust & Verification Pipeline**
 
-**Model Output**
-
-模型生成的原始内容
-
-**Claim Extraction**
-
-提取可验证的事实声明
-
-**Evidence Retrieval**
-
-检索文档、数据库、搜索结果和其他证据
-
-**Verification Engine**
-
-验证声明与证据之间的关系
-
-**Uncertainty & Confidence**
-
-评估不确定性和模型置信度
-
-**Trust Policy**
-
-回答、附带限定、进一步验证或拒绝回答
-
-这里有一个重要原则：
-
-**Trust Engine 不负责证明模型永远正确，而是负责建立一套能够发现错误、追踪证据和管理不确定性的工程机制。**
+- **Model Output**：模型生成的原始内容
+- **Claim Extraction**：提取可验证的事实声明
+- **Evidence Retrieval**：检索文档、数据库、搜索结果和其他证据
+- **Verification Engine**：验证声明与证据之间的关系
+- **Uncertainty & Confidence**：评估不确定性和模型置信度
+- **Trust Policy**：回答、附带限定、进一步验证或拒绝回答
 
 # **二、Hallucination Detection：大模型为什么会产生幻觉？**
 
@@ -428,29 +407,11 @@ Redis 并没有出现在证据中。
 
 **User Query**
 
-**Retriever**
-
-检索文档、网页、数据库和代码
-
-**Evidence Store**
-
-保存原始证据、来源、时间和定位信息
-
-**Grounded Generator**
-
-只根据证据生成有依据的声明
-
-**Claim-Evidence Alignment**
-
-检查每个声明是否有证据支持
-
-**Verified Answer**
-
-答案 + 引用 + 未确定事项
-
-## **4.3 Evidence 的数据结构**
-
-建议：
+- **Retriever**：检索文档、网页、数据库和代码
+- **Evidence Store**：保存原始证据、来源、时间和定位信息
+- **Grounded Generator**：只根据证据生成有依据的声明
+- **Claim-Evidence Alignment**：检查每个声明是否有证据支持
+- **Verified Answer**：答案 + 引用 + 未确定事项
 
 ```
 from dataclasses import dataclassfrom typing import Optional@dataclassclass Evidence:    evidence_id: str    source_id: str    source_type: str    content: str    locator: Optional[str]    published_at: Optional[str]    retrieved_at: str    content_hash: str

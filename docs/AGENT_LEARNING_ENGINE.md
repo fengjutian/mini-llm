@@ -1090,33 +1090,12 @@ Reflection：
 
 ## **10.3 Self-improvement Loop**
 
-**Experience Collection**
-
-收集任务经验
-
-**Performance Analysis**
-
-分析能力缺陷
-
-**Improvement Proposal**
-
-提出改进方案
-
-**Controlled Update**
-
-在隔离环境中实施更新
-
-**Evaluation**
-
-使用独立测试集验证
-
-**Deployment / Rollback**
-
-通过验证则发布，否则回滚
-
-## **10.4 一个重要问题：如何避免自我欺骗？**
-
-假设 Agent 修改了自己的代码。
+- **Experience Collection**：收集任务经验
+- **Performance Analysis**：分析能力缺陷
+- **Improvement Proposal**：提出改进方案
+- **Controlled Update**：在隔离环境中实施更新
+- **Evaluation**：使用独立测试集验证
+- **Deployment / Rollback**：通过验证则发布，否则回滚
 
 修改后，它使用自己设计的测试证明修改成功。
 
@@ -1158,21 +1137,9 @@ Memory 负责保存和检索信息。
 
 Learning 负责利用经验改变未来行为。
 
-**Memory Engine**
-
-保存经验、知识、事件和技能
-
-**Learning Engine**
-
-分析经验、评价策略、更新能力
-
-**Agent Engine**
-
-应用改进后的能力执行任务
-
-举个例子：
-
-Memory 保存：
+- **Memory Engine**：保存经验、知识、事件和技能
+- **Learning Engine**：分析经验、评价策略、更新能力
+- **Agent Engine**：应用改进后的能力执行任务
 
 ```
 过去 20 次任务中，
@@ -1383,29 +1350,11 @@ Agent Learning Curve（示意）
 
 ## **mini-llm Agent Learning Architecture**
 
-**Agent Engine**
-
-理解目标、规划任务、调用工具、执行行动
-
-**Environment Interaction**
-
-获取观察、行动结果和环境反馈
-
-**Experience Collection**
-
-Experience、Trajectory、Execution Trace
-
-**Memory**
-
-保存与检索经验
-
-**Evaluation**
-
-评价行动质量
-
-**Learning Engine**
-
-Replay、Credit Assignment、Policy Optimization、Continual Learning
+- **Agent Engine**：理解目标、规划任务、调用工具、执行行动
+- **Environment Interaction**：获取观察、行动结果和环境反馈
+- **Experience Collection**：Experience、Trajectory、Execution Trace
+- **Memory**：保存与检索经验
+- **Evaluation**：评价行动质量
 
 **Improvement Validation**
 

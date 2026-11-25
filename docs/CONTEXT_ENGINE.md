@@ -144,49 +144,16 @@ Context 通常翻译为上下文。
 
 ## **Context Engine**
 
-**Context Assembly**
-
-收集和组装上下文
-
-**Context Selection**
-
-信息选择
-
-**Context Compression**
-
-上下文压缩
-
-**Context Window Manager**
-
-窗口预算管理
-
-**Context Router**
-
-上下文路由
-
-**Context Isolation**
-
-上下文隔离
-
-**Context Persistence**
-
-状态持久化
-
-**Context Injection**
-
-安全注入
-
-**Context Optimizer**
-
-动态优化
-
-**Model Input Context**
-
-最终提交给模型的上下文
-
-它与 Memory Engine 的关系尤其重要：
-
-- Memory Engine 负责保存和检索信息。
+- **Context Assembly**：收集和组装上下文
+- **Context Selection**：信息选择
+- **Context Compression**：上下文压缩
+- **Context Window Manager**：窗口预算管理
+- **Context Router**：上下文路由
+- **Context Isolation**：上下文隔离
+- **Context Persistence**：状态持久化
+- **Context Injection**：安全注入
+- **Context Optimizer**：动态优化
+- **Model Input Context**：最终提交给模型的上下文
 - Context Engine 负责判断哪些信息应该进入当前模型输入。
 
 **Memory 是信息存储系统，Context 是当前推理的信息工作集。**
@@ -262,25 +229,10 @@ Context Sources
 
 识别当前任务需要的信息
 
-**3. Retrieve Context**
-
-从 Memory、Knowledge、Runtime 检索
-
-**4. Validate and Normalize**
-
-校验来源、权限、时间和数据格式
-
-**5. Rank and Select**
-
-按相关性、可信度和时效性选择
-
-**6. Build Model Context**
-
-生成最终模型输入
-
-## **2.3 上下文优先级**
-
-不同上下文的地位并不相同。
+- **3. Retrieve Context**：从 Memory、Knowledge、Runtime 检索
+- **4. Validate and Normalize**：校验来源、权限、时间和数据格式
+- **5. Rank and Select**：按相关性、可信度和时效性选择
+- **6. Build Model Context**：生成最终模型输入
 
 例如：
 
@@ -1861,33 +1813,12 @@ Context Engine 是一种工程上的信息管理机制，不能仅凭这个类�
 
 ## **Dynamic Context Loop**
 
-**Perception**
-
-获取新的输入与环境信息
-
-**Context Assembly**
-
-整合当前需要的信息
-
-**Reasoning**
-
-模型基于上下文进行推理
-
-**Action**
-
-调用工具或执行任务
-
-**Observation**
-
-获取执行反馈
-
-**Context Update**
-
-更新、压缩、持久化上下文
-
-进入下一轮执行
-
-这个循环说明：
+- **Perception**：获取新的输入与环境信息
+- **Context Assembly**：整合当前需要的信息
+- **Reasoning**：模型基于上下文进行推理
+- **Action**：调用工具或执行任务
+- **Observation**：获取执行反馈
+- **Context Update**：更新、压缩、持久化上下文
 
 Context 不是一份静态 Prompt，而是随着任务执行不断变化的信息状态。
 
