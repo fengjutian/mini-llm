@@ -625,25 +625,24 @@ and re-exports.
   attention → residual, then LayerNorm → SwiGLU → residual) over the repository
   README plus every crate's `//!`/`///` doc comments (89.3k chars, vocab 118,
   11.1k windows, 80/20 split), with warmup + cosine by default
-  (`--constant-lr` opt-out, `--batch`, `--seq`, `--min-ratio`, `--warmup` tunable).
-  Best results after 4,000 steps:
+  (`--constant-lr` opt-out, `--batch`, `--seq`, `--lr`, `--min-ratio`, `--warmup`
+  tunable). Test sources and the site's TS/Astro sources are appended (ASCII only,
+  to keep the vocabulary small), which grows the corpus to 452.9k chars, vocab 126
+  and 56,609 windows. Results with 2 layers, seq 64, warmup + cosine:
 
   | configuration | final held-out | best held-out |
   | --- | --- | --- |
-  | 2 layers, seq 16 | 2.93 | 2.83 |
-  | 2 layers, seq 32 | 2.79 | 2.79 |
-  | 2 layers, seq 64 | 2.76 | 2.74 |
-  | **2 layers, seq 64, batch 8** | **2.67** | **2.67** |
-  | 3 layers, seq 16 | 3.25 | 3.18 |
-  | 2 layers, seq 16, constant lr | 3.40 | 3.17 |
-  | seq 32, min-ratio 0.0 / 0.2 | 2.84 / 2.81 | 2.83 / 2.81 |
-  | seq 32, warmup 400 | 2.82 | 2.82 |
+  | batch 16, 3,000 steps | 2.65 | 2.26 |
+  | batch 16, 3,000 steps, lr 0.01 | 2.56 | 2.25 |
+  | batch 32, 3,000 steps | 2.18 | 2.18 |
+  | **batch 16, 6,000 steps** | **2.10** | **2.10** |
 
-  Warmup + cosine beats a constant rate by a wide margin (2.93 vs 3.40 at
-  seq 16); longer context and a larger batch both help, while the default
-  `min-ratio 0.1` and automatic warmup beat 0.0/0.2 and a 400-step warmup.
-  Training loss is printed as an exponential moving average; `--sweep` compares
-  weight decay 0.1 with dropout 0.3.
+  Larger batches reach a lower loss in the same number of steps, and 6,000 steps
+  is still improving at the end; halving the learning rate for the bigger batch
+  only helps marginally. Earlier sweeps (smaller corpora) also showed warmup +
+  cosine beating a constant rate and two layers beating three. Training loss is
+  printed as an exponential moving average; `--sweep` compares weight decay 0.1
+  with dropout 0.3.
 - Future backends implement `Backend` and reuse the same parity harness.
 
 Autograd and the model still operate on host `Tensor` values; making the training

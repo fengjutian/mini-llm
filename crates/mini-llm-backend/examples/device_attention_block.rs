@@ -61,6 +61,7 @@ struct Config {
     layers: usize,
     seq: usize,
     batch: usize,
+    learning_rate: f32,
     min_ratio: f32,
     warmup: usize,
     constant_lr: bool,
@@ -93,6 +94,7 @@ fn main() {
         layers: parse_count(&arguments, "--layers").unwrap_or(1).max(1),
         seq: parse_count(&arguments, "--seq").unwrap_or(8),
         batch: parse_count(&arguments, "--batch").unwrap_or(4),
+        learning_rate: parse_flag(&arguments, "--lr").unwrap_or(LEARNING_RATE),
         min_ratio: parse_flag(&arguments, "--min-ratio").unwrap_or(0.1),
         warmup: parse_count(&arguments, "--warmup").unwrap_or(0),
         constant_lr: arguments.iter().any(|argument| argument == "--constant-lr"),
@@ -119,6 +121,7 @@ fn sweep_regularization() {
                 layers: 1,
                 seq: 8,
                 batch: 4,
+                learning_rate: LEARNING_RATE,
                 min_ratio: 0.1,
                 warmup: 0,
                 constant_lr: false,
@@ -152,6 +155,7 @@ fn sweep_layers(arguments: &[String]) {
             layers,
             seq: parse_count(arguments, "--seq").unwrap_or(8),
             batch: parse_count(arguments, "--batch").unwrap_or(4),
+            learning_rate: parse_flag(arguments, "--lr").unwrap_or(LEARNING_RATE),
             min_ratio: parse_flag(arguments, "--min-ratio").unwrap_or(0.1),
             warmup: parse_count(arguments, "--warmup").unwrap_or(0),
             constant_lr: arguments.iter().any(|argument| argument == "--constant-lr"),
@@ -172,7 +176,7 @@ fn sweep_layers(arguments: &[String]) {
 /// Warmup + cosine decay, or a constant rate with --constant-lr.
 fn learning_rate(step: usize, config: &Config) -> f32 {
     if config.constant_lr {
-        return LEARNING_RATE;
+        return config.learning_rate;
     }
     let warmup = if config.warmup > 0 {
         config.warmup
@@ -180,11 +184,12 @@ fn learning_rate(step: usize, config: &Config) -> f32 {
         (config.steps / 10).clamp(1, 200)
     };
     if step <= warmup {
-        return LEARNING_RATE * step as f32 / warmup as f32;
+        return config.learning_rate * step as f32 / warmup as f32;
     }
     let progress = (step - warmup) as f32 / (config.steps.saturating_sub(warmup)).max(1) as f32;
-    let minimum = LEARNING_RATE * config.min_ratio;
-    minimum + 0.5 * (LEARNING_RATE - minimum) * (1.0 + (std::f32::consts::PI * progress).cos())
+    let minimum = config.learning_rate * config.min_ratio;
+    minimum
+        + 0.5 * (config.learning_rate - minimum) * (1.0 + (std::f32::consts::PI * progress).cos())
 }
 
 fn parse_flag(arguments: &[String], name: &str) -> Option<f32> {
@@ -532,6 +537,7 @@ fn evaluate(
         layers: config.layers,
         seq: config.seq,
         batch: config.batch,
+        learning_rate: config.learning_rate,
         min_ratio: config.min_ratio,
         warmup: config.warmup,
         constant_lr: config.constant_lr,
@@ -596,10 +602,42 @@ fn corpus() -> String {
             }
         }
     }
+    let web_root = root.join("web/src");
+    let mut web_files = Vec::new();
+    collect_files_with_extensions(&web_root, &["ts", "tsx", "astro"], &mut web_files);
+    web_files.sort();
+    for file in web_files {
+        if let Ok(contents) = std::fs::read_to_string(&file) {
+            // Keep the corpus ASCII: the site mixes in CJK prose, which would
+            // otherwise explode the character vocabulary.
+            text.extend(contents.chars().filter(char::is_ascii));
+            text.push('\n');
+        }
+    }
     if let Some((index, _)) = text.char_indices().nth(600_000) {
         text.truncate(index);
     }
     text
+}
+
+fn collect_files_with_extensions(
+    directory: &std::path::Path,
+    extensions: &[&str],
+    files: &mut Vec<std::path::PathBuf>,
+) {
+    let Ok(entries) = std::fs::read_dir(directory) else {
+        return;
+    };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_dir() {
+            collect_files_with_extensions(&path, extensions, files);
+        } else if let Some(extension) = path.extension().and_then(|value| value.to_str()) {
+            if extensions.contains(&extension) {
+                files.push(path);
+            }
+        }
+    }
 }
 
 fn collect_rust_files(directory: &std::path::Path, files: &mut Vec<std::path::PathBuf>) {
