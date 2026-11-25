@@ -5,31 +5,33 @@
   <rect class="bg" width="1400" height="650" rx="24"/>
   <text class="kicker" x="64" y="58">MINI-LLM · MECHANISM</text>
   <text class="title" x="64" y="105">Context 的事件日志</text>
-<rect class="box hot" x="90" y="280" width="220" height="76" rx="16"/>
-<text class="label" x="200.0" y="324.3" text-anchor="middle" font-size="18">Context Events</text>
-<rect class="box" x="400" y="150" width="420" height="56" rx="16"/>
-<text class="label" x="610.0" y="182.55" text-anchor="middle" font-size="13">ContextCreated</text>
-<path class="edge" d="M310 318 L400 178" marker-end="url(#arrow)"/>
-<rect class="box" x="400" y="250" width="420" height="56" rx="16"/>
-<text class="label" x="610.0" y="282.55" text-anchor="middle" font-size="13">MessageAdded</text>
-<path class="edge" d="M310 318 L400 278" marker-end="url(#arrow)"/>
-<rect class="box" x="400" y="350" width="420" height="56" rx="16"/>
-<text class="label" x="610.0" y="382.55" text-anchor="middle" font-size="13">MemoryRetrieved</text>
-<path class="edge" d="M310 318 L400 378" marker-end="url(#arrow)"/>
-<rect class="box" x="400" y="450" width="420" height="56" rx="16"/>
-<text class="label" x="610.0" y="482.55" text-anchor="middle" font-size="13">DocumentRetrieved</text>
-<path class="edge" d="M310 318 L400 478" marker-end="url(#arrow)"/>
-<rect class="box" x="880" y="150" width="420" height="56" rx="16"/>
-<text class="label" x="1090.0" y="182.55" text-anchor="middle" font-size="13">ContextCompressed</text>
-<path class="edge" d="M310 318 L880 178" marker-end="url(#arrow)"/>
-<rect class="box" x="880" y="250" width="420" height="56" rx="16"/>
-<text class="label" x="1090.0" y="282.55" text-anchor="middle" font-size="13">ContextItemRemoved</text>
-<path class="edge" d="M310 318 L880 278" marker-end="url(#arrow)"/>
-<rect class="box" x="880" y="350" width="420" height="56" rx="16"/>
-<text class="label" x="1090.0" y="382.55" text-anchor="middle" font-size="13">ContextVersionCreated</text>
-<path class="edge" d="M310 318 L880 378" marker-end="url(#arrow)"/>
-<rect class="box" x="880" y="450" width="420" height="56" rx="16"/>
-<text class="label" x="1090.0" y="482.55" text-anchor="middle" font-size="13">ContextSnapshotSaved</text>
-<path class="edge" d="M310 318 L880 478" marker-end="url(#arrow)"/>
-<text class="tiny" x="90" y="600" text-anchor="start">事件日志是追加写的：快照负责快，事件负责还原“为什么变成这样”。</text>
+<rect class="box hot" x="80" y="290" width="220" height="76" rx="16"/>
+<text class="label" x="190.0" y="334.3" text-anchor="middle" font-size="18">Context Events</text>
+<line class="axis" x1="360" y1="140" x2="360" y2="570"/>
+<line class="axis" x1="300" y1="328" x2="360" y2="328"/>
+<line class="axis" x1="360" y1="144" x2="400" y2="144"/>
+<rect class="box" x="400" y="120" width="420" height="48" rx="16"/>
+<text class="label" x="610.0" y="148.55" text-anchor="middle" font-size="13">ContextCreated</text>
+<line class="axis" x1="360" y1="202" x2="400" y2="202"/>
+<rect class="box" x="400" y="178" width="420" height="48" rx="16"/>
+<text class="label" x="610.0" y="206.55" text-anchor="middle" font-size="13">MessageAdded</text>
+<line class="axis" x1="360" y1="260" x2="400" y2="260"/>
+<rect class="box" x="400" y="236" width="420" height="48" rx="16"/>
+<text class="label" x="610.0" y="264.55" text-anchor="middle" font-size="13">MemoryRetrieved</text>
+<line class="axis" x1="360" y1="318" x2="400" y2="318"/>
+<rect class="box" x="400" y="294" width="420" height="48" rx="16"/>
+<text class="label" x="610.0" y="322.55" text-anchor="middle" font-size="13">DocumentRetrieved</text>
+<line class="axis" x1="360" y1="376" x2="400" y2="376"/>
+<rect class="box" x="400" y="352" width="420" height="48" rx="16"/>
+<text class="label" x="610.0" y="380.55" text-anchor="middle" font-size="13">ContextCompressed</text>
+<line class="axis" x1="360" y1="434" x2="400" y2="434"/>
+<rect class="box" x="400" y="410" width="420" height="48" rx="16"/>
+<text class="label" x="610.0" y="438.55" text-anchor="middle" font-size="13">ContextItemRemoved</text>
+<line class="axis" x1="360" y1="492" x2="400" y2="492"/>
+<rect class="box" x="400" y="468" width="420" height="48" rx="16"/>
+<text class="label" x="610.0" y="496.55" text-anchor="middle" font-size="13">ContextVersionCreated</text>
+<line class="axis" x1="360" y1="550" x2="400" y2="550"/>
+<rect class="box" x="400" y="526" width="420" height="48" rx="16"/>
+<text class="label" x="610.0" y="554.55" text-anchor="middle" font-size="13">ContextSnapshotSaved</text>
+<text class="tiny" x="80" y="610" text-anchor="start">事件日志是追加写的：快照负责快，事件负责还原“为什么变成这样”。</text>
 </svg>

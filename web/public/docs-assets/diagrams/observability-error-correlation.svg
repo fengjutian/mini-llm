@@ -5,29 +5,30 @@
   <rect class="bg" width="1400" height="650" rx="24"/>
   <text class="kicker" x="64" y="58">MINI-LLM · MECHANISM</text>
   <text class="title" x="64" y="105">错误关联的七个维度</text>
-<rect class="box hot" x="570" y="130" width="220" height="60" rx="16"/>
-<text class="label" x="680.0" y="167.0" text-anchor="middle" font-size="20">Error</text>
-<rect class="box cool" x="80" y="300" width="260" height="60" rx="16"/>
-<text class="label" x="210.0" y="336.3" text-anchor="middle" font-size="18">Trace</text>
-<path class="edge" d="M680 190 L210 300" marker-end="url(#arrow)"/>
-<rect class="box cool" x="400" y="300" width="260" height="60" rx="16"/>
-<text class="label" x="530.0" y="336.3" text-anchor="middle" font-size="18">Span</text>
-<path class="edge" d="M680 190 L530 300" marker-end="url(#arrow)"/>
-<rect class="box cool" x="720" y="300" width="260" height="60" rx="16"/>
-<text class="label" x="850.0" y="336.3" text-anchor="middle" font-size="18">Task</text>
-<path class="edge" d="M680 190 L850 300" marker-end="url(#arrow)"/>
-<rect class="box cool" x="1040" y="300" width="260" height="60" rx="16"/>
-<text class="label" x="1170.0" y="336.3" text-anchor="middle" font-size="18">Agent</text>
-<path class="edge" d="M680 190 L1170 300" marker-end="url(#arrow)"/>
-<rect class="box" x="80" y="400" width="260" height="60" rx="16"/>
-<text class="label" x="210.0" y="436.3" text-anchor="middle" font-size="18">Model</text>
-<path class="edge" d="M680 190 L210 400" marker-end="url(#arrow)"/>
-<rect class="box" x="400" y="400" width="260" height="60" rx="16"/>
-<text class="label" x="530.0" y="436.3" text-anchor="middle" font-size="18">Tool</text>
-<path class="edge" d="M680 190 L530 400" marker-end="url(#arrow)"/>
-<rect class="box" x="720" y="400" width="260" height="60" rx="16"/>
-<text class="label" x="850.0" y="436.3" text-anchor="middle" font-size="18">Runtime</text>
-<path class="edge" d="M680 190 L850 400" marker-end="url(#arrow)"/>
-<text class="tiny" x="70" y="560" text-anchor="start">错误必须能回答：哪个 trace、哪个 span、哪个工具、哪个模型版本。</text>
-<text class="tiny" x="70" y="600" text-anchor="start">缺一个维度，排查就会退化成“重启试试”。</text>
+<rect class="box hot" x="280" y="110" width="240" height="58" rx="16"/>
+<text class="label" x="400.0" y="146.0" text-anchor="middle" font-size="20">Error</text>
+<line class="axis" x1="400" y1="168" x2="400" y2="590"/>
+<line class="axis" x1="400" y1="218" x2="440" y2="218"/>
+<rect class="box cool" x="440" y="196" width="280" height="44" rx="16"/>
+<text class="label" x="580.0" y="223.25" text-anchor="middle" font-size="15">Trace</text>
+<line class="axis" x1="400" y1="274" x2="440" y2="274"/>
+<rect class="box cool" x="440" y="252" width="280" height="44" rx="16"/>
+<text class="label" x="580.0" y="279.25" text-anchor="middle" font-size="15">Span</text>
+<line class="axis" x1="400" y1="330" x2="440" y2="330"/>
+<rect class="box cool" x="440" y="308" width="280" height="44" rx="16"/>
+<text class="label" x="580.0" y="335.25" text-anchor="middle" font-size="15">Task</text>
+<line class="axis" x1="400" y1="386" x2="440" y2="386"/>
+<rect class="box cool" x="440" y="364" width="280" height="44" rx="16"/>
+<text class="label" x="580.0" y="391.25" text-anchor="middle" font-size="15">Agent</text>
+<line class="axis" x1="400" y1="442" x2="440" y2="442"/>
+<rect class="box" x="440" y="420" width="280" height="44" rx="16"/>
+<text class="label" x="580.0" y="447.25" text-anchor="middle" font-size="15">Model</text>
+<line class="axis" x1="400" y1="498" x2="440" y2="498"/>
+<rect class="box" x="440" y="476" width="280" height="44" rx="16"/>
+<text class="label" x="580.0" y="503.25" text-anchor="middle" font-size="15">Tool</text>
+<line class="axis" x1="400" y1="554" x2="440" y2="554"/>
+<rect class="box" x="440" y="532" width="280" height="44" rx="16"/>
+<text class="label" x="580.0" y="559.25" text-anchor="middle" font-size="15">Runtime</text>
+<text class="tiny" x="70" y="600" text-anchor="start">错误必须能回答：哪个 trace、哪个 span、哪个工具、哪个模型版本。</text>
+<text class="tiny" x="70" y="636" text-anchor="start">缺一个维度，排查就会退化成“重启试试”。</text>
 </svg>
