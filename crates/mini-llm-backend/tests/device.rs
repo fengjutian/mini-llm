@@ -1126,3 +1126,79 @@ fn device_attention_gradients_match_finite_differences() {
     check(&k, &grad_k, "k");
     check(&v, &grad_v, "v");
 }
+
+#[test]
+fn device_attention_block_trains_on_host_device() {
+    let (vocab, hidden, heads, kv_heads, head_dim) = (4usize, 8usize, 2usize, 1usize, 4usize);
+    let (batch, seq, steps) = (2usize, 6usize, 40usize);
+    let device = Device::Cpu;
+    let upload = |tensor: Tensor| DeviceTensor::from_host(tensor).to(&device).unwrap();
+
+    let mut parameters = vec![
+        upload(sample(vocab, hidden, 0.5)),               // embedding
+        upload(sample(1, hidden, 0.1)),                   // ln1 gamma
+        upload(sample(1, hidden, 0.1)),                   // ln1 beta
+        upload(sample(hidden, heads * head_dim, 0.5)),    // Wq
+        upload(sample(1, heads * head_dim, 0.1)),         // bq
+        upload(sample(hidden, kv_heads * head_dim, 0.5)), // Wk
+        upload(sample(1, kv_heads * head_dim, 0.1)),      // bk
+        upload(sample(hidden, kv_heads * head_dim, 0.5)), // Wv
+        upload(sample(1, kv_heads * head_dim, 0.1)),      // bv
+        upload(sample(heads * head_dim, hidden, 0.5)),    // Wo
+        upload(sample(1, hidden, 0.1)),                   // bo
+        upload(sample(1, hidden, 0.1)),                   // ln2 gamma
+        upload(sample(1, hidden, 0.1)),                   // ln2 beta
+        upload(sample(hidden, vocab, 0.5)),               // head
+        upload(sample(1, vocab, 0.1)),                    // head bias
+    ];
+
+    let rows = batch * seq;
+    let mut inputs = Vec::with_capacity(rows);
+    let mut targets = Vec::with_capacity(rows);
+    for position in 0..rows {
+        inputs.push(position % vocab);
+        targets.push((position + 1) % vocab);
+    }
+
+    let mut optimizer = DeviceAdamW::new(0.05);
+    let mut losses = Vec::with_capacity(steps);
+
+    for _ in 0..steps {
+        let nodes: Vec<DeviceValue> = parameters
+            .iter()
+            .map(|parameter| DeviceValue::new(parameter.clone(), true))
+            .collect();
+
+        let embedded = nodes[0].gather_rows(&inputs).unwrap();
+        let normed = embedded.layer_norm(&nodes[1], &nodes[2], 1e-5).unwrap();
+        let queries = normed.matmul(&nodes[3]).unwrap().add(&nodes[4]).unwrap();
+        let keys = normed.matmul(&nodes[5]).unwrap().add(&nodes[6]).unwrap();
+        let values = normed.matmul(&nodes[7]).unwrap().add(&nodes[8]).unwrap();
+        let attended = queries
+            .attention(&keys, &values, batch, seq, heads, kv_heads, true)
+            .unwrap();
+        let projected = attended.matmul(&nodes[9]).unwrap().add(&nodes[10]).unwrap();
+        let residual = embedded.add(&projected).unwrap();
+        let normed2 = residual.layer_norm(&nodes[11], &nodes[12], 1e-5).unwrap();
+        let logits = normed2.matmul(&nodes[13]).unwrap().add(&nodes[14]).unwrap();
+        let loss = logits.cross_entropy(&targets).unwrap();
+        loss.backward().unwrap();
+
+        losses.push(loss.data().to_host().unwrap().data()[0]);
+        let gradients: Vec<DeviceTensor> = nodes
+            .iter()
+            .map(|node| node.grad().expect("parameter gradient"))
+            .collect();
+        optimizer.step(&mut parameters, &gradients).unwrap();
+    }
+
+    let first = losses[0];
+    let last = *losses.last().unwrap();
+    assert!(
+        last < first * 0.8,
+        "attention block loss should fall: {first} -> {last}"
+    );
+    assert!(parameters
+        .iter()
+        .all(|parameter| parameter.device() == Device::Cpu));
+}

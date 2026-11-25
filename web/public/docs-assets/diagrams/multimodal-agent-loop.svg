@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="650" viewBox="0 0 1400 650" role="img" aria-labelledby="title desc">
+  <title id="title">多模态 Agent 的闭环</title><desc id="desc">mini-llm 技术机制图</desc>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="currentColor"/></marker></defs>
+  <style>:root{color-scheme:light dark}.bg{fill:#f7f4ed}.title{fill:#172126;font:700 30px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.kicker{fill:#e45d32;font:700 16px ui-monospace,Consolas,monospace;letter-spacing:2px}.box{fill:#fffdf8;stroke:#c4bdb1;stroke-width:2}.box.hot{fill:#fff0e8;stroke:#e45d32}.box.cool{fill:#eaf3f7;stroke:#3178a5}.box.good{fill:#eaf4ec;stroke:#4f8b62}.label{fill:#172126;font:650 18px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.small{fill:#69777d;font:500 15px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.tiny{fill:#69777d;font:500 13px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.edge{color:#69777d;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.accent-edge{color:#e45d32;fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.axis{fill:none;stroke:#69777d;stroke-width:2}.grid{stroke:#c4bdb1;stroke-width:1;opacity:.45}.dot{stroke:#fffdf8;stroke-width:3}.area{opacity:.14}@media(prefers-color-scheme:dark){.bg{fill:#101416}.title,.label{fill:#edf2f3}.kicker{fill:#ef855d}.box{fill:#182024;stroke:#526168}.box.hot{fill:#32211c;stroke:#e17750}.box.cool{fill:#172934;stroke:#4d91bc}.box.good{fill:#192b20;stroke:#65a779}.small{fill:#a8b4b9}.tiny{fill:#a8b4b9}.grid{stroke:#3c484e}.dot{stroke:#101416}}</style>
+  <rect class="bg" width="1400" height="650" rx="24"/>
+  <text class="kicker" x="64" y="58">MINI-LLM · MECHANISM</text>
+  <text class="title" x="64" y="105">多模态 Agent 的闭环</text>
+<rect class="box cool" x="80" y="160" width="280" height="66" rx="16"/>
+<text class="label" x="220.0" y="197.9" text-anchor="middle" font-size="14">Image / Audio / Video</text>
+<path class="edge" d="M360 193 L400 193" marker-end="url(#arrow)"/>
+<rect class="box hot" x="400" y="160" width="280" height="66" rx="16"/>
+<text class="label" x="540.0" y="197.9" text-anchor="middle" font-size="14">Multimodal Perception</text>
+<path class="edge" d="M680 193 L720 193" marker-end="url(#arrow)"/>
+<rect class="box cool" x="720" y="160" width="280" height="66" rx="16"/>
+<text class="label" x="860.0" y="197.9" text-anchor="middle" font-size="14">Context Construction</text>
+<path class="edge" d="M1000 193 L1040 193" marker-end="url(#arrow)"/>
+<rect class="box hot" x="1040" y="160" width="280" height="66" rx="16"/>
+<text class="label" x="1180.0" y="197.9" text-anchor="middle" font-size="14">Reasoning</text>
+<line class="axis" x1="1320" y1="226" x2="1340" y2="270"/>
+<line class="axis" x1="1340" y1="270" x2="60" y2="270"/>
+<path class="edge" d="M60 270 L60 370" marker-end="url(#arrow)"/>
+<rect class="box cool" x="80" y="370" width="280" height="66" rx="16"/>
+<text class="label" x="220.0" y="407.9" text-anchor="middle" font-size="14">Decision</text>
+<path class="edge" d="M360 403 L400 403" marker-end="url(#arrow)"/>
+<rect class="box cool" x="400" y="370" width="280" height="66" rx="16"/>
+<text class="label" x="540.0" y="407.9" text-anchor="middle" font-size="14">Action Planning</text>
+<path class="edge" d="M680 403 L720 403" marker-end="url(#arrow)"/>
+<rect class="box cool" x="720" y="370" width="280" height="66" rx="16"/>
+<text class="label" x="860.0" y="407.9" text-anchor="middle" font-size="14">Runtime / Tools</text>
+<path class="edge" d="M1000 403 L1040 403" marker-end="url(#arrow)"/>
+<rect class="box cool" x="1040" y="370" width="280" height="66" rx="16"/>
+<text class="label" x="1180.0" y="407.9" text-anchor="middle" font-size="14">Observation</text>
+<path class="accent-edge" d="M220 436 L220 370" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
+<text class="tiny" x="240" y="460" text-anchor="start">观察更新上下文</text>
+<text class="tiny" x="80" y="550" text-anchor="start">与纯文本 Agent 的区别只在入口：感知结果要先变成可推理的上下文。</text>
+</svg>

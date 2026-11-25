@@ -5,52 +5,52 @@
   <rect class="bg" width="1400" height="650" rx="24"/>
   <text class="kicker" x="64" y="58">MINI-LLM · MECHANISM</text>
   <text class="title" x="64" y="105">具身智能的九个组件层</text>
-<rect class="box" x="65" y="115" width="400" height="150" rx="16"/>
+<rect class="box" x="65" y="115" width="400" height="160" rx="16"/>
 <text class="label" x="83" y="151" text-anchor="start" font-size="16">Body</text>
-<text class="tiny" x="83" y="187" text-anchor="start">· Body Schema</text>
-<text class="tiny" x="83" y="213" text-anchor="start">· Kinematics</text>
-<text class="tiny" x="83" y="239" text-anchor="start">· Capabilities</text>
-<text class="tiny" x="83" y="265" text-anchor="start">· Constraints</text>
-<rect class="box" x="495" y="115" width="400" height="150" rx="16"/>
+<text class="tiny" x="83" y="183" text-anchor="start">· Body Schema</text>
+<text class="tiny" x="83" y="205" text-anchor="start">· Kinematics</text>
+<text class="tiny" x="83" y="227" text-anchor="start">· Capabilities</text>
+<text class="tiny" x="83" y="249" text-anchor="start">· Constraints</text>
+<rect class="box" x="495" y="115" width="400" height="160" rx="16"/>
 <text class="label" x="513" y="151" text-anchor="start" font-size="16">Perception</text>
-<text class="tiny" x="513" y="187" text-anchor="start">· Vision</text>
-<text class="tiny" x="513" y="213" text-anchor="start">· Audio</text>
-<text class="tiny" x="513" y="239" text-anchor="start">· Touch</text>
-<text class="tiny" x="513" y="265" text-anchor="start">· Sensor Fusion</text>
-<rect class="box" x="925" y="115" width="400" height="150" rx="16"/>
+<text class="tiny" x="513" y="183" text-anchor="start">· Vision</text>
+<text class="tiny" x="513" y="205" text-anchor="start">· Audio</text>
+<text class="tiny" x="513" y="227" text-anchor="start">· Touch</text>
+<text class="tiny" x="513" y="249" text-anchor="start">· Sensor Fusion</text>
+<rect class="box" x="925" y="115" width="400" height="160" rx="16"/>
 <text class="label" x="943" y="151" text-anchor="start" font-size="16">State Estimation</text>
-<text class="tiny" x="943" y="187" text-anchor="start">· World State</text>
-<text class="tiny" x="943" y="213" text-anchor="start">· Robot State</text>
-<text class="tiny" x="943" y="239" text-anchor="start">· Belief State</text>
-<rect class="box" x="65" y="281" width="400" height="150" rx="16"/>
-<text class="label" x="83" y="317" text-anchor="start" font-size="16">Cognition</text>
-<text class="tiny" x="83" y="353" text-anchor="start">· Representation</text>
+<text class="tiny" x="943" y="183" text-anchor="start">· World State</text>
+<text class="tiny" x="943" y="205" text-anchor="start">· Robot State</text>
+<text class="tiny" x="943" y="227" text-anchor="start">· Belief State</text>
+<rect class="box" x="65" y="289" width="400" height="160" rx="16"/>
+<text class="label" x="83" y="325" text-anchor="start" font-size="16">Cognition</text>
+<text class="tiny" x="83" y="357" text-anchor="start">· Representation</text>
 <text class="tiny" x="83" y="379" text-anchor="start">· World Model</text>
-<text class="tiny" x="83" y="405" text-anchor="start">· Memory</text>
-<rect class="box" x="495" y="281" width="400" height="150" rx="16"/>
-<text class="label" x="513" y="317" text-anchor="start" font-size="16">Interaction</text>
-<text class="tiny" x="513" y="353" text-anchor="start">· Perception-Action</text>
+<text class="tiny" x="83" y="401" text-anchor="start">· Memory</text>
+<rect class="box" x="495" y="289" width="400" height="160" rx="16"/>
+<text class="label" x="513" y="325" text-anchor="start" font-size="16">Interaction</text>
+<text class="tiny" x="513" y="357" text-anchor="start">· Perception-Action</text>
 <text class="tiny" x="513" y="379" text-anchor="start">· Active Perception</text>
-<text class="tiny" x="513" y="405" text-anchor="start">· Feedback</text>
-<rect class="box" x="925" y="281" width="400" height="150" rx="16"/>
-<text class="label" x="943" y="317" text-anchor="start" font-size="16">Intelligence</text>
-<text class="tiny" x="943" y="353" text-anchor="start">· Agent</text>
+<text class="tiny" x="513" y="401" text-anchor="start">· Feedback</text>
+<rect class="box" x="925" y="289" width="400" height="160" rx="16"/>
+<text class="label" x="943" y="325" text-anchor="start" font-size="16">Intelligence</text>
+<text class="tiny" x="943" y="357" text-anchor="start">· Agent</text>
 <text class="tiny" x="943" y="379" text-anchor="start">· Planning</text>
-<text class="tiny" x="943" y="405" text-anchor="start">· Decision</text>
-<text class="tiny" x="943" y="431" text-anchor="start">· Learning</text>
-<rect class="box" x="65" y="447" width="400" height="150" rx="16"/>
-<text class="label" x="83" y="483" text-anchor="start" font-size="16">Action</text>
-<text class="tiny" x="83" y="519" text-anchor="start">· VLA</text>
-<text class="tiny" x="83" y="545" text-anchor="start">· Robotics</text>
-<text class="tiny" x="83" y="571" text-anchor="start">· Motion Control</text>
-<rect class="box" x="495" y="447" width="400" height="150" rx="16"/>
-<text class="label" x="513" y="483" text-anchor="start" font-size="16">Runtime</text>
-<text class="tiny" x="513" y="519" text-anchor="start">· Scheduler</text>
-<text class="tiny" x="513" y="545" text-anchor="start">· Coordinator</text>
-<text class="tiny" x="513" y="571" text-anchor="start">· State Manager</text>
-<rect class="box" x="925" y="447" width="400" height="150" rx="16"/>
-<text class="label" x="943" y="483" text-anchor="start" font-size="16">Safety &amp; Evaluation</text>
-<text class="tiny" x="943" y="519" text-anchor="start">· Safety Monitor</text>
-<text class="tiny" x="943" y="545" text-anchor="start">· Task Evaluation</text>
-<text class="tiny" x="943" y="571" text-anchor="start">· Experience</text>
+<text class="tiny" x="943" y="401" text-anchor="start">· Decision</text>
+<text class="tiny" x="943" y="423" text-anchor="start">· Learning</text>
+<rect class="box" x="65" y="463" width="400" height="160" rx="16"/>
+<text class="label" x="83" y="499" text-anchor="start" font-size="16">Action</text>
+<text class="tiny" x="83" y="531" text-anchor="start">· VLA</text>
+<text class="tiny" x="83" y="553" text-anchor="start">· Robotics</text>
+<text class="tiny" x="83" y="575" text-anchor="start">· Motion Control</text>
+<rect class="box" x="495" y="463" width="400" height="160" rx="16"/>
+<text class="label" x="513" y="499" text-anchor="start" font-size="16">Runtime</text>
+<text class="tiny" x="513" y="531" text-anchor="start">· Scheduler</text>
+<text class="tiny" x="513" y="553" text-anchor="start">· Coordinator</text>
+<text class="tiny" x="513" y="575" text-anchor="start">· State Manager</text>
+<rect class="box" x="925" y="463" width="400" height="160" rx="16"/>
+<text class="label" x="943" y="499" text-anchor="start" font-size="16">Safety &amp; Evaluation</text>
+<text class="tiny" x="943" y="531" text-anchor="start">· Safety Monitor</text>
+<text class="tiny" x="943" y="553" text-anchor="start">· Task Evaluation</text>
+<text class="tiny" x="943" y="575" text-anchor="start">· Experience</text>
 </svg>

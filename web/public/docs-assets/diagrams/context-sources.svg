@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="650" viewBox="0 0 1400 650" role="img" aria-labelledby="title desc">
+  <title id="title">Context 的八类来源</title><desc id="desc">mini-llm 技术机制图</desc>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="currentColor"/></marker></defs>
+  <style>:root{color-scheme:light dark}.bg{fill:#f7f4ed}.title{fill:#172126;font:700 30px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.kicker{fill:#e45d32;font:700 16px ui-monospace,Consolas,monospace;letter-spacing:2px}.box{fill:#fffdf8;stroke:#c4bdb1;stroke-width:2}.box.hot{fill:#fff0e8;stroke:#e45d32}.box.cool{fill:#eaf3f7;stroke:#3178a5}.box.good{fill:#eaf4ec;stroke:#4f8b62}.label{fill:#172126;font:650 18px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.small{fill:#69777d;font:500 15px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.tiny{fill:#69777d;font:500 13px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.edge{color:#69777d;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.accent-edge{color:#e45d32;fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.axis{fill:none;stroke:#69777d;stroke-width:2}.grid{stroke:#c4bdb1;stroke-width:1;opacity:.45}.dot{stroke:#fffdf8;stroke-width:3}.area{opacity:.14}@media(prefers-color-scheme:dark){.bg{fill:#101416}.title,.label{fill:#edf2f3}.kicker{fill:#ef855d}.box{fill:#182024;stroke:#526168}.box.hot{fill:#32211c;stroke:#e17750}.box.cool{fill:#172934;stroke:#4d91bc}.box.good{fill:#192b20;stroke:#65a779}.small{fill:#a8b4b9}.tiny{fill:#a8b4b9}.grid{stroke:#3c484e}.dot{stroke:#101416}}</style>
+  <rect class="bg" width="1400" height="650" rx="24"/>
+  <text class="kicker" x="64" y="58">MINI-LLM · MECHANISM</text>
+  <text class="title" x="64" y="105">Context 的八类来源</text>
+<rect class="box" x="55" y="130" width="300" height="155" rx="16"/>
+<text class="label" x="73" y="166" text-anchor="start" font-size="16">System</text>
+<text class="tiny" x="73" y="202" text-anchor="start">· System Prompt</text>
+<text class="tiny" x="73" y="228" text-anchor="start">· Agent Role</text>
+<text class="tiny" x="73" y="254" text-anchor="start">· Global Rules</text>
+<rect class="box" x="385" y="130" width="300" height="155" rx="16"/>
+<text class="label" x="403" y="166" text-anchor="start" font-size="16">User</text>
+<text class="tiny" x="403" y="202" text-anchor="start">· Current Query</text>
+<text class="tiny" x="403" y="228" text-anchor="start">· Preferences</text>
+<text class="tiny" x="403" y="254" text-anchor="start">· Profile</text>
+<rect class="box" x="715" y="130" width="300" height="155" rx="16"/>
+<text class="label" x="733" y="166" text-anchor="start" font-size="16">Conversation</text>
+<text class="tiny" x="733" y="202" text-anchor="start">· Recent Messages</text>
+<text class="tiny" x="733" y="228" text-anchor="start">· Summary</text>
+<rect class="box" x="1045" y="130" width="300" height="155" rx="16"/>
+<text class="label" x="1063" y="166" text-anchor="start" font-size="16">Memory</text>
+<text class="tiny" x="1063" y="202" text-anchor="start">· Episodic</text>
+<text class="tiny" x="1063" y="228" text-anchor="start">· Semantic</text>
+<text class="tiny" x="1063" y="254" text-anchor="start">· Procedural</text>
+<rect class="box" x="55" y="309" width="300" height="155" rx="16"/>
+<text class="label" x="73" y="345" text-anchor="start" font-size="16">Knowledge</text>
+<text class="tiny" x="73" y="381" text-anchor="start">· Documents</text>
+<text class="tiny" x="73" y="407" text-anchor="start">· Vector Search</text>
+<text class="tiny" x="73" y="433" text-anchor="start">· Knowledge Graph</text>
+<rect class="box" x="385" y="309" width="300" height="155" rx="16"/>
+<text class="label" x="403" y="345" text-anchor="start" font-size="16">Task</text>
+<text class="tiny" x="403" y="381" text-anchor="start">· Task Goal</text>
+<text class="tiny" x="403" y="407" text-anchor="start">· Task Plan</text>
+<text class="tiny" x="403" y="433" text-anchor="start">· Task Status</text>
+<rect class="box" x="715" y="309" width="300" height="155" rx="16"/>
+<text class="label" x="733" y="345" text-anchor="start" font-size="16">Runtime</text>
+<text class="tiny" x="733" y="381" text-anchor="start">· Tool Results</text>
+<text class="tiny" x="733" y="407" text-anchor="start">· Execution State</text>
+<text class="tiny" x="733" y="433" text-anchor="start">· Environment</text>
+<rect class="box" x="1045" y="309" width="300" height="155" rx="16"/>
+<text class="label" x="1063" y="345" text-anchor="start" font-size="16">Policy</text>
+<text class="tiny" x="1063" y="381" text-anchor="start">· Permissions</text>
+<text class="tiny" x="1063" y="407" text-anchor="start">· Constraints</text>
+<text class="tiny" x="1063" y="433" text-anchor="start">· Safety Rules</text>
+<text class="tiny" x="55" y="580" text-anchor="start">八类来源竞争同一个窗口；Context Engine 的工作就是按任务决定谁进来、谁被裁掉。</text>
+</svg>
