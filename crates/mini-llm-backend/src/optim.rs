@@ -50,6 +50,15 @@ impl DeviceAdamW {
         self.step_count
     }
 
+    /// Updates the learning rate, e.g. from a warmup/cosine schedule.
+    pub fn set_learning_rate(&mut self, learning_rate: f32) {
+        self.learning_rate = learning_rate;
+    }
+
+    pub fn learning_rate(&self) -> f32 {
+        self.learning_rate
+    }
+
     /// Applies one update; `gradients` must match the parameters in count and shape.
     pub fn step(
         &mut self,
