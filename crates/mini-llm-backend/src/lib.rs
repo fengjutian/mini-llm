@@ -26,6 +26,10 @@ use std::fmt::{Display, Formatter};
 
 use mini_llm_tensor::{Tensor, TensorError};
 
+mod device;
+
+pub use device::{Device, DeviceTensor};
+
 /// Kernels a backend must agree on.
 pub trait Backend {
     /// `[m, k] x [k, n] -> [m, n]`.

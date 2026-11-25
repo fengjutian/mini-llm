@@ -581,7 +581,17 @@ and re-exports.
 - `cpu-edu`: first-principles CPU implementation for learning and correctness.
 - `candle` (feature-gated): the accelerated seam in `mini-llm-backend`; parity
   with the reference kernel is checked in `crates/mini-llm-backend/tests/parity.rs`.
+- **Device tensors**: `mini_llm_backend::DeviceTensor` keeps storage on a `Device`
+  (`Cpu`, or `Candle(Device)` with the feature). `to(&device)` / `to_host()` make
+  every transfer explicit, and `matmul` runs on the device the operands already
+  live on; mixing devices returns an error instead of silently copying. With
+  `--features candle`, `Device::candle_cpu()` is testable here and
+  `Device::candle_cuda(id)` uses the same path on a GPU build.
 - Future backends implement `Backend` and reuse the same parity harness.
+
+Autograd and the model still operate on host `Tensor` values; making the training
+graph device-aware is the next architectural step (device-resident parameters,
+device-side backward, and transfers only at the run boundary).
 
 ## Continuous integration
 
