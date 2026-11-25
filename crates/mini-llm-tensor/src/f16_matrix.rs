@@ -12,6 +12,8 @@
 //!         for i: out[i, :] += left[i, k] * b_row
 //! ```
 
+use rayon::prelude::*;
+
 use crate::{f16_to_f32, f32_to_f16, Tensor, TensorError};
 
 /// A rank-2 matrix stored as half-precision bit patterns.
@@ -34,7 +36,11 @@ impl F16Matrix {
         Ok(Self {
             rows: tensor.shape()[0],
             cols: tensor.shape()[1],
-            data: tensor.data().iter().map(|value| f32_to_f16(*value)).collect(),
+            data: tensor
+                .data()
+                .iter()
+                .map(|value| f32_to_f16(*value))
+                .collect(),
         })
     }
 
@@ -84,6 +90,35 @@ impl F16Matrix {
             }
         }
 
+        Tensor::new(output, vec![m, n])
+    }
+
+    /// Row-parallel variant of [F16Matrix::matmul].
+    ///
+    /// Rows are independent, so each output row converts its own right-hand
+    /// values. That repeats the conversions but lets the kernel use every core.
+    pub fn matmul_parallel(&self, other: &Self) -> Result<Tensor, TensorError> {
+        if self.cols != other.rows {
+            return Err(TensorError::MatMulShapeMismatch {
+                left: vec![self.rows, self.cols],
+                right: vec![other.rows, other.cols],
+            });
+        }
+        let (m, k, n) = (self.rows, self.cols, other.cols);
+        let mut output = vec![0.0f32; m * n];
+        output
+            .par_chunks_mut(n)
+            .enumerate()
+            .for_each(|(row, out_row)| {
+                let left_row = &self.data[row * k..(row + 1) * k];
+                for (inner, &left_bits) in left_row.iter().enumerate() {
+                    let a = f16_to_f32(left_bits);
+                    let right_row = &other.data[inner * n..(inner + 1) * n];
+                    for (out, &bits) in out_row.iter_mut().zip(right_row) {
+                        *out += a * f16_to_f32(bits);
+                    }
+                }
+            });
         Tensor::new(output, vec![m, n])
     }
 }

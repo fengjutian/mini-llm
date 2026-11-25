@@ -276,6 +276,9 @@ fn benchmark_f16_matmul(size: usize) {
     let (seconds, _) = measure(ITERATIONS, || {
         let _ = left.matmul(&right).expect("f16 matmul");
     });
+    let (parallel_seconds, _) = measure(ITERATIONS, || {
+        let _ = left.matmul_parallel(&right).expect("f16 matmul");
+    });
     let flops = 2.0 * (size * size * size) as f64;
     println!(
         "  f16 matmul {:>3}x{:<3}x{:<3}: {:>8.2} ms  {:>7.1} MFLOP/s  (quantize {:.2} ms)",
@@ -285,6 +288,12 @@ fn benchmark_f16_matmul(size: usize) {
         seconds * 1_000.0,
         flops / seconds / 1e6,
         quantize_seconds * 1_000.0
+    );
+    println!(
+        "  f16 matmul {:>3} rows parallel:   {:>8.2} ms  {:>7.1} MFLOP/s",
+        size,
+        parallel_seconds * 1_000.0,
+        flops / parallel_seconds / 1e6
     );
 
     let reference = left_f32.matmul(&right_f32).expect("f32 matmul");

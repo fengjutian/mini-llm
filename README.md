@@ -468,6 +468,12 @@ Design choices behind those numbers:
   `Arc::make_mut`. The allocation counter in `bench` shows the effect
   (18.7 → 16.7 MB per step at hidden 128); wall-clock time at this scale is
   compute-bound, so the gain is not visible there.
+- **f16 storage prototype.** `F16Matrix` keeps weights as half-precision and
+  accumulates in f32; the bench reports `f16 matmul 256³` with a max absolute
+  error around 5e-4. On this CPU the scalar dequantization makes it slower than
+  the parallel f32 kernel (about 9–17 vs 35–68 GFLOP/s), so the model does not use
+  it; only the checkpoint writer stores f16. A real speedup needs F16C /
+  AVX512-FP16 conversion or device kernels.
 - **matmul keeps i-k-j ordering.** A transposed dot-product variant was measured
   ~4× slower (3.7 vs 15.8 GFLOP/s) at these sizes because the inner loop stops
   vectorizing, so it is deliberately not used. The comment in
