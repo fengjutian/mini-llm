@@ -623,21 +623,23 @@ and re-exports.
   `cargo run -p mini-llm-backend --example device_attention_block` for a
   held-out demonstration. The example stacks N layers (LayerNorm → QKV → fused
   attention → residual, then LayerNorm → SwiGLU → residual) over the repository
-  README plus every crate's `//!`/`///` doc comments (88.8k chars, vocab 118,
-  11,103 windows split 8,882/2,221). `--layer-sweep` at 1,600 steps gives:
+  README plus every crate's `//!`/`///` doc comments (89.3k chars, vocab 118,
+  11.1k windows, 80/20 split), with warmup + cosine by default
+  (`--constant-lr` opt-out). Best results after 4,000 steps:
 
-  | layers | params | train (EMA) | held-out | best held-out |
-  | --- | --- | --- | --- | --- |
-  | 1 | 17,334 | 2.88 | 3.65 | **3.25** |
-  | 2 | 26,934 | 2.88 | **3.55** | 3.30 |
-  | 3 | 36,534 | 3.03 | 3.67 | 3.43 |
+  | configuration | final held-out | best held-out |
+  | --- | --- | --- |
+  | 2 layers, seq 8 | 3.11 | 2.98 |
+  | 2 layers, seq 16 | 2.93 | 2.83 |
+  | 2 layers, seq 32 | **2.79** | **2.79** |
+  | 3 layers, seq 16 | 3.25 | 3.18 |
+  | 2 layers, seq 16, constant lr | 3.40 | 3.17 |
 
-  Two layers give the best final held-out loss, but the best-ever checkpoint is
-  still the single layer; three layers need a larger step budget. `--hidden 64`
-  does not help either (3.64–3.75 at one layer), so this corpus is the current
-  bottleneck rather than width or depth. Training loss is printed as an
-  exponential moving average, and `--sweep` compares weight decay 0.1 with
-  dropout 0.3.
+  Warmup + cosine beats a constant rate by a wide margin (2.93 vs 3.40 at
+  seq 16), longer context helps monotonically, and two layers beat three at this
+  budget. Pushing seq 32 to 8,000 steps does not improve on 4,000 (2.83/2.78).
+  Training loss is printed as an exponential moving average; `--sweep` compares
+  weight decay 0.1 with dropout 0.3.
 - Future backends implement `Backend` and reuse the same parity harness.
 
 Autograd and the model still operate on host `Tensor` values; making the training

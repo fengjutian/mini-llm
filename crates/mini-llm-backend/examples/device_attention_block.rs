@@ -59,6 +59,8 @@ struct Config {
     steps: usize,
     hidden: usize,
     layers: usize,
+    seq: usize,
+    constant_lr: bool,
 }
 
 impl Config {
@@ -86,6 +88,8 @@ fn main() {
         steps: parse_count(&arguments, "--steps").unwrap_or(STEPS),
         hidden: parse_count(&arguments, "--hidden").unwrap_or(32),
         layers: parse_count(&arguments, "--layers").unwrap_or(1).max(1),
+        seq: parse_count(&arguments, "--seq").unwrap_or(8),
+        constant_lr: arguments.iter().any(|argument| argument == "--constant-lr"),
     };
     let (train_loss, held_out_loss, best_held_out) = train_with_best(&config, true);
     println!("final train loss: {train_loss:.4}");
@@ -107,6 +111,8 @@ fn sweep_regularization() {
                 steps: STEPS,
                 hidden: 32,
                 layers: 1,
+                seq: 8,
+                constant_lr: false,
             };
             let (train_loss, held_out_loss, best_held_out) = train_with_best(&config, false);
             println!(
@@ -137,6 +143,8 @@ fn sweep_layers(arguments: &[String]) {
             steps,
             hidden,
             layers,
+            seq: parse_count(arguments, "--seq").unwrap_or(8),
+            constant_lr: arguments.iter().any(|argument| argument == "--constant-lr"),
         };
         let (train_loss, held_out_loss, best_held_out, parameters) =
             train_with_parameters(&config, false);
@@ -149,6 +157,20 @@ fn sweep_layers(arguments: &[String]) {
             best_held_out
         );
     }
+}
+
+/// Warmup + cosine decay, or a constant rate with --constant-lr.
+fn learning_rate(step: usize, config: &Config) -> f32 {
+    if config.constant_lr {
+        return LEARNING_RATE;
+    }
+    let warmup = (config.steps / 10).clamp(1, 200);
+    if step <= warmup {
+        return LEARNING_RATE * step as f32 / warmup as f32;
+    }
+    let progress = (step - warmup) as f32 / (config.steps.saturating_sub(warmup)).max(1) as f32;
+    let minimum = LEARNING_RATE * 0.1;
+    minimum + 0.5 * (LEARNING_RATE - minimum) * (1.0 + (std::f32::consts::PI * progress).cos())
 }
 
 fn parse_flag(arguments: &[String], name: &str) -> Option<f32> {
@@ -196,7 +218,8 @@ fn train_with_parameters(
     let hidden = (config.hidden / heads).max(1) * heads;
     let head_dim = hidden / heads;
     let ffn = hidden * 2;
-    let (batch, seq) = (4usize, 8usize);
+    let batch = 4usize;
+    let seq = config.seq.max(2);
 
     let windows = (stream.len() - 1) / seq;
     let train_windows = (((windows as f32) * (1.0 - VALIDATION_FRACTION)) as usize)
@@ -277,6 +300,7 @@ fn train_with_parameters(
             .iter()
             .map(|node| node.grad().expect("parameter gradient"))
             .collect();
+        optimizer.set_learning_rate(learning_rate(step, config));
         optimizer.step(&mut parameters, &gradients).expect("adamw");
 
         if step == 1 || step % PRINT_EVERY == 0 {
@@ -298,7 +322,8 @@ fn train_with_parameters(
             });
             if verbose {
                 println!(
-                    "  step {step:>4}  train(ema) {:.4}  held-out {measured:.4}",
+                    "  step {step:>5}  lr {:.5}  train(ema) {:.4}  held-out {measured:.4}",
+                    optimizer.learning_rate(),
                     train_ema.unwrap_or(train_loss)
                 );
             }
@@ -508,6 +533,8 @@ fn evaluate(
         steps: config.steps,
         hidden: config.hidden,
         layers: config.layers,
+        seq: config.seq,
+        constant_lr: config.constant_lr,
     };
     let mut total = 0.0f32;
     for index in 0..batches {
