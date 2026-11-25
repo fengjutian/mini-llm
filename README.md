@@ -51,6 +51,7 @@ cargo run -p mini-llm-cli -- moe         # mixture-of-experts routing
 cargo run -p mini-llm-cli -- train       # modern Tiny GPT (RMSNorm/RoPE/SwiGLU/GQA)
 cargo run -p mini-llm-cli -- train 200 --corpus examples/corpus.txt   # train on a text file
 cargo run -p mini-llm-cli -- train 200 --dropout 0.1   # residual dropout
+cargo run -p mini-llm-cli -- train 200 --early-stop 3  # keep the best checkpoint
 cargo run -p mini-llm-cli -- train 200 --bpe --vocab 300 --corpus examples/corpus.txt
 cargo run -p mini-llm-cli -- train 200 --resume   # continue from the saved step
 cargo run -p mini-llm-cli -- eval        # validation loss of the saved checkpoint
@@ -85,6 +86,10 @@ The training loop includes what a real run needs:
   micro-batches before one optimizer update, trading time for a larger effective
   batch (`batch_size × N`); a test checks that accumulating two identical batches
   matches a plain single-batch step.
+- **Best checkpoint and early stopping** — validation loss is evaluated every
+  50 steps; with `--early-stop N` the checkpoint is rewritten on every
+  improvement and training stops after `N` evaluations without one, leaving the
+  best model on disk instead of the last one.
 - **Any UTF-8 text corpus** — `--corpus PATH` builds the vocabulary from that
   file instead of the built-in paragraph; the checkpoint records the vocabulary,
   so `generate` works from it and `eval --corpus PATH` reproduces the held-out

@@ -185,9 +185,7 @@ pub fn run(arguments: &[String]) {
         persist(trainer.model(), &tokenizer, &trainer.state());
     } else {
         println!();
-        println!(
-            "best checkpoint kept: step {best_step}, validation {best_validation:.4}"
-        );
+        println!("best checkpoint kept: step {best_step}, validation {best_validation:.4}");
     }
 }
 

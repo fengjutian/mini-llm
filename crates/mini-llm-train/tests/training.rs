@@ -8,7 +8,7 @@ use mini_llm_nn::Rng;
 use mini_llm_trace::{Event, MemorySink};
 use mini_llm_train::{
     load_checkpoint, load_training_checkpoint, save_checkpoint, save_training_checkpoint,
-    LrSchedule, TrainConfig, TrainError, Trainer,
+    EarlyStopping, LrSchedule, TrainConfig, TrainError, Trainer,
 };
 
 fn tokenizer() -> CharTokenizer {
@@ -300,4 +300,23 @@ fn gradient_accumulation_matches_a_single_step() {
             assert!((a - b).abs() < 1e-6, "parameter diverged: {a} vs {b}");
         }
     }
+}
+
+#[test]
+fn early_stopping_tracks_best_and_patience() {
+    let mut stopper = EarlyStopping::new(2);
+    assert!(stopper.observe(3.0));
+    assert!(stopper.observe(2.5));
+    assert!(!stopper.observe(2.6));
+    assert!(!stopper.should_stop());
+    assert!(!stopper.observe(2.7));
+    assert!(stopper.should_stop());
+    assert!((stopper.best() - 2.5).abs() < 1e-6);
+    assert_eq!(stopper.stale_evaluations(), 2);
+
+    let mut disabled = EarlyStopping::new(0);
+    disabled.observe(1.0);
+    disabled.observe(2.0);
+    disabled.observe(3.0);
+    assert!(!disabled.should_stop());
 }

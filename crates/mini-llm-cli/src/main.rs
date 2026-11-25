@@ -121,9 +121,8 @@ fn usage() {
     println!("  train-line           fit y = 2x - 1 with manual SGD");
     println!("  xor                  train a small MLP on XOR (Linear + Tanh + AdamW)");
     println!("  classify             train a 2D two-blob classifier with softmax + cross-entropy");
-    println!(
-        "  train [steps]        train Tiny GPT (--resume, --accum N, --dropout P, --corpus PATH)"
-    );
+    println!("  train [steps]        train Tiny GPT (--resume, --accum N, --dropout P,");
+    println!("                       --early-stop N, --corpus PATH)");
     println!("                       `--corpus` accepts several paths or a directory");
     println!("  generate [prompt] [tokens] [temp] [--top-k N] [--top-p P] [--batch N]");
     println!("                       sample text from the saved checkpoint (KV cache)");
