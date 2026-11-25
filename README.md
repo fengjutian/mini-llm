@@ -55,6 +55,7 @@ cargo run -p mini-llm-cli -- train 200 --early-stop 3  # keep the best checkpoin
 cargo run -p mini-llm-cli -- train 200 --hidden 64 --layers 3 --block 64
 cargo run -p mini-llm-cli -- train 200 --f16        # half-precision checkpoint
 cargo run -p mini-llm-cli -- generate "The" 20 0.8 --seed 7
+cargo run -p mini-llm-cli -- generate "User: hello" 16 0.2 --checkpoint checkpoints/sft.bin
 cargo run -p mini-llm-cli -- train 200 --bpe --vocab 300 --corpus examples/corpus.txt
 cargo run -p mini-llm-cli -- train 200 --resume   # continue from the saved step
 cargo run -p mini-llm-cli -- eval        # validation loss of the saved checkpoint

@@ -3,7 +3,7 @@
 use mini_llm_data::TextDataset;
 use mini_llm_train::{load_checkpoint, load_training_checkpoint, TrainConfig, Trainer};
 
-use super::{corpus_text, CHECKPOINT_PATH};
+use super::{checkpoint_path, corpus_text};
 
 const BLOCK_SIZE: usize = 48;
 const VALIDATION_FRACTION: f32 = 0.1;
@@ -16,16 +16,17 @@ pub fn run(arguments: &[String]) {
         .unwrap_or(EVAL_BATCHES);
 
     let (text, corpus_label) = corpus_text(arguments);
+    let checkpoint = checkpoint_path(arguments);
 
-    let (model, tokenizer) = match load_training_checkpoint(CHECKPOINT_PATH) {
+    let (model, tokenizer) = match load_training_checkpoint(&checkpoint) {
         Ok((model, tokenizer, state)) => {
             println!("  checkpoint step: {}", state.step);
             (model, tokenizer)
         }
-        Err(_) => match load_checkpoint(CHECKPOINT_PATH) {
+        Err(_) => match load_checkpoint(&checkpoint) {
             Ok((model, tokenizer)) => (model, tokenizer),
             Err(error) => {
-                eprintln!("cannot load {CHECKPOINT_PATH}: {error}");
+                eprintln!("cannot load {checkpoint}: {error}");
                 eprintln!("run `train` first to produce a checkpoint");
                 return;
             }

@@ -15,7 +15,7 @@ use mini_llm_train::{
     EarlyStopping, LrSchedule, TrainConfig, Trainer,
 };
 
-use super::{corpus_text, parse_accumulation, CHECKPOINT_PATH};
+use super::{corpus_text, parse_accumulation, parse_early_stop, CHECKPOINT_PATH};
 
 const BATCH_SIZE: usize = 2;
 const DEFAULT_STEPS: usize = 800;
@@ -236,19 +236,6 @@ fn parse_shape(arguments: &[String]) -> ModelShape {
         block: parse_usize(arguments, "--block").unwrap_or(48),
         seed: parse_u64(arguments, "--seed").unwrap_or(7),
     }
-}
-
-/// Reads `--early-stop N` (evaluations without improvement); 0 disables it.
-fn parse_early_stop(arguments: &[String]) -> usize {
-    let mut value = None;
-    for (index, argument) in arguments.iter().enumerate() {
-        if argument == "--early-stop" {
-            value = arguments.get(index + 1).and_then(|next| next.parse().ok());
-        } else if let Some(rest) = argument.strip_prefix("--early-stop=") {
-            value = rest.parse().ok();
-        }
-    }
-    value.unwrap_or(0)
 }
 
 /// Reads `--dropout P`; defaults to 0.0 (disabled).

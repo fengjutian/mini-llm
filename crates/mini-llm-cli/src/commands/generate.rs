@@ -4,7 +4,7 @@ use mini_llm_model::Sampling;
 use mini_llm_nn::Rng;
 use mini_llm_train::load_checkpoint;
 
-use super::CHECKPOINT_PATH;
+use super::checkpoint_path;
 
 const DEFAULT_PROMPT: &str = "The little language model learns ";
 const DEFAULT_TOKENS: usize = 14;
@@ -53,6 +53,10 @@ pub fn run(arguments: &[String]) {
         } else if let Some(value) = argument.strip_prefix("--top-p=") {
             top_p = value.parse().ok();
             index += 1;
+        } else if argument == "--checkpoint" {
+            index += 2;
+        } else if argument.starts_with("--checkpoint=") {
+            index += 1;
         } else {
             positional.push(argument.clone());
             index += 1;
@@ -77,11 +81,12 @@ pub fn run(arguments: &[String]) {
         top_p,
     };
 
-    let (model, tokenizer) = match load_checkpoint(CHECKPOINT_PATH) {
+    let checkpoint = checkpoint_path(arguments);
+    let (model, tokenizer) = match load_checkpoint(&checkpoint) {
         Ok(loaded) => loaded,
         Err(err) => {
-            eprintln!("cannot load {CHECKPOINT_PATH}: {err}");
-            eprintln!("run `cargo run -p mini-llm-cli -- train` first");
+            eprintln!("cannot load {checkpoint}: {err}");
+            eprintln!("run `cargo run -p mini-llm-cli -- train` first, or pass --checkpoint PATH");
             std::process::exit(1);
         }
     };

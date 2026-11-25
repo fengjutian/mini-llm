@@ -19,6 +19,9 @@ pub mod xor;
 /// Where `train` writes and `generate` reads the Tiny GPT checkpoint.
 pub(crate) const CHECKPOINT_PATH: &str = "checkpoints/tiny-gpt.bin";
 
+/// Where `sft` writes its fine-tuned checkpoint.
+pub(crate) const SFT_CHECKPOINT_PATH: &str = "checkpoints/sft.bin";
+
 /// Reads every `--corpus <path>` / `--corpus=<path>`, falling back to the
 /// built-in text. A directory contributes its `.txt` and `.md` files in sorted
 /// order, so a corpus can be split across many files.
@@ -101,6 +104,19 @@ pub(crate) fn corpus_text(arguments: &[String]) -> (String, String) {
     (text, labels.join(", "))
 }
 
+/// Reads `--checkpoint PATH` / `--checkpoint=PATH`, defaulting to the trainer's.
+pub(crate) fn checkpoint_path(arguments: &[String]) -> String {
+    let mut value = None;
+    for (index, argument) in arguments.iter().enumerate() {
+        if argument == "--checkpoint" {
+            value = arguments.get(index + 1).cloned();
+        } else if let Some(rest) = argument.strip_prefix("--checkpoint=") {
+            value = Some(rest.to_string());
+        }
+    }
+    value.unwrap_or_else(|| CHECKPOINT_PATH.to_string())
+}
+
 /// Reads `--accum N` / `--accum=N`; defaults to one micro-batch.
 pub(crate) fn parse_accumulation(arguments: &[String]) -> usize {
     let mut value = None;
@@ -112,6 +128,19 @@ pub(crate) fn parse_accumulation(arguments: &[String]) -> usize {
         }
     }
     value.unwrap_or(1).max(1)
+}
+
+/// Reads `--early-stop N` (evaluations without improvement); 0 disables it.
+pub(crate) fn parse_early_stop(arguments: &[String]) -> usize {
+    let mut value = None;
+    for (index, argument) in arguments.iter().enumerate() {
+        if argument == "--early-stop" {
+            value = arguments.get(index + 1).and_then(|next| next.parse().ok());
+        } else if let Some(rest) = argument.strip_prefix("--early-stop=") {
+            value = rest.parse().ok();
+        }
+    }
+    value.unwrap_or(0)
 }
 
 /// A short public-domain-style paragraph used for the character-level demo.

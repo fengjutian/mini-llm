@@ -125,11 +125,14 @@ fn usage() {
     println!("                       --kv-heads N --block N; training: --seed N --dropout P");
     println!("                       --accum N --early-stop N --resume --corpus PATH[,PATH]");
     println!("                       `--corpus` accepts several paths or a directory");
-    println!("  generate [prompt] [tokens] [temp] [--top-k N] [--top-p P] [--batch N] [--seed N]");
+    println!("  generate [prompt] [tokens] [temp] [--top-k N] [--top-p P] [--batch N]");
+    println!("                       [--seed N] [--checkpoint PATH]");
     println!("                       sample text from the saved checkpoint (KV cache)");
     println!("  moe                  mixture-of-experts routing demo");
-    println!("  eval [batches]       validation loss (flag: --corpus PATH)");
-    println!("  sft [steps]          supervised fine-tuning (--bpe, --accum N, --jsonl PATH)");
+    println!("  eval [batches]       validation loss (flags: --corpus PATH, --checkpoint PATH)");
+    println!(
+        "  sft [steps]          supervised fine-tuning (--bpe, --accum N, --early-stop N, --jsonl PATH)"
+    );
     println!("  lora                  fine-tune a frozen classifier with LoRA adapters");
     println!("  dpo                   preference optimization on a toy policy");
     println!("  grpo                  group relative policy optimization on a bandit");

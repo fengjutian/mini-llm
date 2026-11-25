@@ -1,4 +1,8 @@
 {"prompt": "User: hello\nBot:", "response": " hi there\n"}
-{"prompt": "User: how are you?\nBot:", "response": " doing well, thanks\n"}
-{"prompt": "User: what is a tensor?\nBot:", "response": " a dense array of numbers\n"}
-{"prompt": "User: bye\nBot:", "response": " see you\n"}
+{"prompt": "User: how are you?\nBot:", "response": " doing well, thanks for asking\n"}
+{"prompt": "User: what is a tensor?\nBot:", "response": " a dense array of numbers with a shape\n"}
+{"prompt": "User: what is a gradient?\nBot:", "response": " a vector of partial derivatives pointing uphill\n"}
+{"prompt": "User: what is attention?\nBot:", "response": " a weighted average of values chosen by query-key scores\n"}
+{"prompt": "User: what is dropout?\nBot:", "response": " randomly zeroing activations during training to regularize\n"}
+{"prompt": "User: what is a KV cache?\nBot:", "response": " stored keys and values that avoid recomputing past tokens\n"}
+{"prompt": "User: bye\nBot:", "response": " see you next time, and keep the experiments reproducible\n"}

@@ -10,7 +10,7 @@ use std::time::Instant;
 use mini_llm_data::{BpeTokenizer, CharTokenizer, TextDataset};
 use mini_llm_model::{ModelConfig, TinyGpt};
 use mini_llm_nn::Rng;
-use mini_llm_tensor::Tensor;
+use mini_llm_tensor::{F16Matrix, Tensor};
 use mini_llm_train::{TrainConfig, Trainer};
 
 use super::TINY_CORPUS;
@@ -55,6 +55,7 @@ pub fn run() {
     for size in [64usize, 128, 256] {
         benchmark_matmul(size);
     }
+    benchmark_f16_matmul(256);
 
     for (hidden, block, batch) in [
         (32usize, 16usize, 4usize),
@@ -260,4 +261,39 @@ fn benchmark_batch_generation() {
         "  batch generate 8x16 (uncached):{:>8.2} ms",
         uncached * 1_000.0
     );
+}
+
+/// f16 storage with f32 accumulation, compared against the f32 kernel.
+fn benchmark_f16_matmul(size: usize) {
+    let left_f32 = patterned(size, size, 1.0);
+    let right_f32 = patterned(size, size, 0.5);
+    let left = F16Matrix::from_tensor(&left_f32).expect("valid f16 matrix");
+    let right = F16Matrix::from_tensor(&right_f32).expect("valid f16 matrix");
+
+    let (quantize_seconds, _) = measure(5, || {
+        let _ = F16Matrix::from_tensor(&left_f32).expect("quantize");
+    });
+    let (seconds, _) = measure(ITERATIONS, || {
+        let _ = left.matmul(&right).expect("f16 matmul");
+    });
+    let flops = 2.0 * (size * size * size) as f64;
+    println!(
+        "  f16 matmul {:>3}x{:<3}x{:<3}: {:>8.2} ms  {:>7.1} MFLOP/s  (quantize {:.2} ms)",
+        size,
+        size,
+        size,
+        seconds * 1_000.0,
+        flops / seconds / 1e6,
+        quantize_seconds * 1_000.0
+    );
+
+    let reference = left_f32.matmul(&right_f32).expect("f32 matmul");
+    let quantized = left.matmul(&right).expect("f16 matmul");
+    let max_error = reference
+        .data()
+        .iter()
+        .zip(quantized.data())
+        .map(|(expected, actual)| (expected - actual).abs())
+        .fold(0.0f32, f32::max);
+    println!("    max abs error vs f32: {max_error:.5}");
 }
