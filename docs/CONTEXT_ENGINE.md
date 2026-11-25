@@ -172,48 +172,9 @@ Context Assembly 是上下文组装模块。
 
 一个成熟的 AI 系统可能有以下信息来源：
 
-```
-Context Sources
-│
-├── System
-│   ├── System Prompt
-│   ├── Agent Role
-│   └── Global Rules
-│
-├── User
-│   ├── Current Query
-│   ├── User Preferences
-│   └── User Profile
-│
-├── Conversation
-│   ├── Recent Messages
-│   └── Conversation Summary
-│
-├── Memory
-│   ├── Episodic Memory
-│   ├── Semantic Memory
-│   └── Procedural Memory
-│
-├── Knowledge
-│   ├── Documents
-│   ├── Vector Search
-│   └── Knowledge Graph
-│
-├── Task
-│   ├── Task Goal
-│   ├── Task Plan
-│   └── Task Status
-│
-├── Runtime
-│   ├── Tool Results
-│   ├── Execution State
-│   └── Environment State
-│
-└── Policy
-    ├── Permissions
-    ├── Constraints
-    └── Safety Rules
-```
+![Context 的八类来源，它们竞争同一个上下文窗口](assets/diagrams/context-sources.svg)
+
+_图：Context 的八类来源，它们竞争同一个上下文窗口。_
 
 注意：不是所有来源都应该直接交给模型。例如，内部授权凭据不应进入 Prompt；权限检查应由可信的策略执行组件完成。
 

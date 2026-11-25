@@ -1118,63 +1118,9 @@ Observability、Security、Runtime、Evaluation 和 Safety 等横向能力贯穿
 
 ## **1. 核心架构**
 
-```
-mini-llm Embodied Intelligence
-│
-├── Body
-│   ├── Body Schema
-│   ├── Kinematics
-│   ├── Capabilities
-│   └── Constraints
-│
-├── Perception
-│   ├── Vision
-│   ├── Audio
-│   ├── Touch
-│   ├── Depth
-│   └── Sensor Fusion
-│
-├── State Estimation
-│   ├── World State
-│   ├── Robot State
-│   ├── Belief State
-│   └── Uncertainty
-│
-├── Cognition
-│   ├── Representation
-│   ├── World Model
-│   ├── Memory
-│   └── Knowledge
-│
-├── Interaction
-│   ├── Perception Action Loop
-│   ├── Active Perception
-│   ├── World Interaction
-│   └── Feedback Handler
-│
-├── Intelligence
-│   ├── Agent
-│   ├── Planning
-│   ├── Decision
-│   └── Learning
-│
-├── Action
-│   ├── VLA
-│   ├── Robotics
-│   ├── Motion Control
-│   └── Skill Execution
-│
-├── Runtime
-│   ├── Task Scheduler
-│   ├── Execution Coordinator
-│   └── State Manager
-│
-└── Safety & Evaluation
-    ├── Safety Monitor
-    ├── Action Validator
-    ├── Task Evaluation
-    └── Experience Logger
-```
+![具身智能的九个组件层，从身体模型、感知、状态估计到安全与评估](assets/diagrams/embodied-component-layers.svg)
+
+_图：具身智能的九个组件层，从身体模型、感知、状态估计到安全与评估。_
 
 ## **2. 推荐目录结构**
 

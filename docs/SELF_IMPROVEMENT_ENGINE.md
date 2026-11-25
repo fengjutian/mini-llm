@@ -313,17 +313,9 @@ Step 5：最终放弃
 
 例如：
 
-```
-Task
- ├── Requirement Analysis
- ├── Architecture Decision
- ├── Code Modification
- │    ├── File A
- │    ├── File B
- │    └── File C
- ├── Testing
- └── Delivery
-```
+![信用分配：把最终成败归因到具体步骤与具体文件](assets/diagrams/credit-assignment-tree.svg)
+
+_图：信用分配：把最终成败归因到具体步骤与具体文件。_
 
 如果测试发现 File B 中的类型错误，就可以向前追溯：
 

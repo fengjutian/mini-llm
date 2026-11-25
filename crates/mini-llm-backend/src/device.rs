@@ -1280,5 +1280,3 @@ fn softmax_host(scores: &[f32]) -> Vec<f32> {
     }
     result
 }
-
-

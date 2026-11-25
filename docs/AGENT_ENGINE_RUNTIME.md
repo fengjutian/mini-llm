@@ -688,24 +688,9 @@ Runtime 是 Agent 的运行环境和生命周期管理系统。
 
 例如：
 
-```
-Agent
-  │
-  ▼
-Runtime
-  │
-  ├── Model Gateway
-  │
-  ├── Tool Registry
-  │
-  ├── Executor
-  │
-  ├── Sandbox
-  │
-  ├── State Manager
-  │
-  └── Scheduler
-```
+![Runtime 的组成：模型网关、工具注册表、执行器、沙箱、状态管理与调度器](assets/diagrams/agent-runtime-composition.svg)
+
+_图：Runtime 的组成：模型网关、工具注册表、执行器、沙箱、状态管理与调度器。_
 
 ## **7.3 Runtime 为什么不能只是一个 while 循环？**
 
@@ -730,23 +715,9 @@ while not done:    response = llm.call()    execute_tool(response)
 
 例如：
 
-```
-CREATED
-   │
-   ▼
-RUNNING
-   │
-   ├── WAITING_TOOL
-   │
-   ├── WAITING_APPROVAL
-   │
-   ├── PAUSED
-   │
-   ├── FAILED
-   │
-   ▼
-COMPLETED
-```
+![Agent 任务状态机](assets/diagrams/agent-runtime-state-machine.svg)
+
+_图：Agent 任务状态机。所有状态都要可持久化，进程重启后从最后提交的状态继续。_
 
 这比简单的 `done=True/False` 更适合复杂 Agent。
 

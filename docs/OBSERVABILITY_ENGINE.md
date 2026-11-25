@@ -131,35 +131,9 @@ Observability 帮助我们定位问题。
 
 它负责观察其他 Engine 的运行情况。
 
-```
-                 mini-llm
-                    │
-       ┌────────────┴────────────┐
-       │                         │
-   Agent Engine             Meta-Controller
-       │                         │
-       └────────────┬────────────┘
-                    │
-              Runtime Engine
-                    │
-       ┌────────────┼────────────┐
-       │            │            │
-   Model Engine  Tool Engine  Memory Engine
-       │            │            │
-       └────────────┼────────────┘
-                    │
-             Observability Engine
-                    │
-       ┌────────────┼────────────┐
-       │            │            │
-     Logging     Metrics      Tracing
-       │            │            │
-       ├────────────┼────────────┤
-       │            │            │
-   Evaluation  Cost Tracking  Replay
-                    │
-                Audit Trail
-```
+![Observability 在系统中的位置：采集三类信号，服务评估、成本、重放与审计](assets/diagrams/observability-positioning.svg)
+
+_图：Observability 在系统中的位置：采集三类信号，服务评估、成本、重放与审计。_
 
 注意：Observability Engine 是横向基础设施，应该通过统一的采集接口覆盖其他 Engine，而不是让所有 Engine 直接依赖某一个具体日志数据库。
 
@@ -1774,36 +1748,9 @@ V1 必须实现
 
 例如：
 
-```
-             User Task
-                 │
-                 ▼
-             Agent Engine
-                 │
-                 ▼
-           Meta-Controller
-                 │
-                 ▼
-             Runtime
-                 │
-       ┌─────────┼─────────┐
-       ▼         ▼         ▼
-     Model     Memory     Tools
-       │         │         │
-       └─────────┼─────────┘
-                 │
-                 ▼
-           Observability
-                 │
-       ┌─────────┼─────────┐
-       ▼         ▼         ▼
-   Evaluation   Cost     Replay
-       │         │         │
-       └─────────┼─────────┘
-                 │
-                 ▼
-           Learning Engine
-```
+![Observability 与各 Engine 的关系：每个 Engine 既是数据源，也是使用者](assets/diagrams/observability-engine-relations.svg)
+
+_图：Observability 与各 Engine 的关系：每个 Engine 既是数据源，也是使用者。_
 
 这张图表达的是数据反馈关系，不意味着 Observability Engine 应直接控制 Learning Engine。
 

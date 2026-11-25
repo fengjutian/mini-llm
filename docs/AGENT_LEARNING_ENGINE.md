@@ -722,16 +722,9 @@ PPO 并不是保证策略永远不会退化，而是通过裁剪目标限制部�
 
 Agent 的策略可以由多个部分组成：
 
-```
-Agent Policy
-   │
-   ├── Tool Selection Policy
-   ├── Task Decomposition Policy
-   ├── Planning Policy
-   ├── Retry Policy
-   ├── Memory Retrieval Policy
-   └── Model Generation Policy
-```
+![Agent Policy 的六个可优化层：工具选择、任务拆解、规划、重试、记忆检索与生成策略](assets/diagrams/agent-policy-layers.svg)
+
+_图：Agent Policy 的六个可优化层：工具选择、任务拆解、规划、重试、记忆检索与生成策略。_
 
 其中：
 
@@ -1017,16 +1010,9 @@ Combined Training
 
 还可以是：
 
-```
-Agent Continual Learning
-   │
-   ├── Memory Update
-   ├── Knowledge Update
-   ├── Tool Experience Update
-   ├── Planning Strategy Update
-   ├── Reward Model Update
-   └── Model Parameter Update
-```
+![持续学习的六个目标](assets/diagrams/agent-continual-learning-targets.svg)
+
+_图：持续学习的六个目标。越往下越贵：更新记忆只需写入，更新参数需要训练。_
 
 这意味着 Agent 可以在不修改基础 LLM 权重的情况下，逐步提高系统能力。
 

@@ -514,16 +514,9 @@ Transformer
 
 不同模态分别编码，再在高层融合。
 
-```
-Image ──> Image Encoder ──┐
-                          |
-Text ───> Text Encoder ───┼──> Fusion
-                          |
-Audio ──> Audio Encoder ──┘
-                              |
-                              v
-                         Prediction
-```
+![Late Fusion：每个模态先独立编码，最后一层才合并](assets/diagrams/multimodal-intelligence-late-fusion.svg)
+
+_图：Late Fusion：每个模态先独立编码，最后一层才合并。_
 
 例如：
 
@@ -707,13 +700,9 @@ Frame Tokens
 
 先处理每帧，再通过时序模块整合：
 
-```
-Frame 1 ──> Image Encoder ──┐
-Frame 2 ──> Image Encoder ──┤
-Frame 3 ──> Image Encoder ──┼──> Temporal Encoder
-Frame 4 ──> Image Encoder ──┤
-Frame 5 ──> Image Encoder ──┘
-```
+![视频 Tokenization：逐帧编码之后再接入 Temporal Encoder](assets/diagrams/video-tokenization.svg)
+
+_图：视频 Tokenization：逐帧编码之后再接入 Temporal Encoder。_
 
 不同方案在计算效率、时间精度和空间细节方面各有取舍。
 

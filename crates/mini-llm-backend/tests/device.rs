@@ -1126,4 +1126,3 @@ fn device_attention_gradients_match_finite_differences() {
     check(&k, &grad_k, "k");
     check(&v, &grad_v, "v");
 }
-

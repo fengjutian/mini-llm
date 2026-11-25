@@ -1361,32 +1361,9 @@ Response
 
 多模态 Agent：
 
-```
-Image / Audio / Video
-          │
-          ▼
-   Multimodal Perception
-          │
-          ▼
-   Context Construction
-          │
-          ▼
-      Reasoning
-          │
-          ▼
-    Decision Engine
-          │
-          ▼
-     Action Planning
-          │
-          ▼
-    Runtime / Tools
-          │
-          ▼
-      Observation
-          │
-          └────► Update Context
-```
+![多模态 Agent 的闭环：感知 → 上下文 → 推理 → 决策 → 行动 → 观察](assets/diagrams/multimodal-agent-loop.svg)
+
+_图：多模态 Agent 的闭环：感知 → 上下文 → 推理 → 决策 → 行动 → 观察。_
 
 ## **11.2 示例：多模态桌面 Agent**
 
