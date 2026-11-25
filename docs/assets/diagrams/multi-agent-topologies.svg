@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="650" viewBox="0 0 1400 650" role="img" aria-labelledby="title desc">
+  <title id="title">多 Agent 的四种协作拓扑</title><desc id="desc">mini-llm 技术机制图</desc>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="currentColor"/></marker></defs>
+  <style>:root{color-scheme:light dark}.bg{fill:#f7f4ed}.title{fill:#172126;font:700 30px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.kicker{fill:#e45d32;font:700 16px ui-monospace,Consolas,monospace;letter-spacing:2px}.box{fill:#fffdf8;stroke:#c4bdb1;stroke-width:2}.box.hot{fill:#fff0e8;stroke:#e45d32}.box.cool{fill:#eaf3f7;stroke:#3178a5}.box.good{fill:#eaf4ec;stroke:#4f8b62}.label{fill:#172126;font:650 18px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.small{fill:#69777d;font:500 15px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.tiny{fill:#69777d;font:500 13px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.edge{color:#69777d;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.accent-edge{color:#e45d32;fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.axis{fill:none;stroke:#69777d;stroke-width:2}.grid{stroke:#c4bdb1;stroke-width:1;opacity:.45}.dot{stroke:#fffdf8;stroke-width:3}.area{opacity:.14}@media(prefers-color-scheme:dark){.bg{fill:#101416}.title,.label{fill:#edf2f3}.kicker{fill:#ef855d}.box{fill:#182024;stroke:#526168}.box.hot{fill:#32211c;stroke:#e17750}.box.cool{fill:#172934;stroke:#4d91bc}.box.good{fill:#192b20;stroke:#65a779}.small{fill:#a8b4b9}.tiny{fill:#a8b4b9}.grid{stroke:#3c484e}.dot{stroke:#101416}}</style>
+  <rect class="bg" width="1400" height="650" rx="24"/>
+  <text class="kicker" x="64" y="58">MINI-LLM · MECHANISM</text>
+  <text class="title" x="64" y="105">多 Agent 的四种协作拓扑</text>
+<rect class="box" x="70" y="150" width="610" height="220" rx="18"/>
+<text class="label" x="92" y="188" text-anchor="start" font-size="18">Star 星型</text>
+<rect class="box" x="720" y="150" width="610" height="220" rx="18"/>
+<text class="label" x="742" y="188" text-anchor="start" font-size="18">Pipeline 流水线</text>
+<rect class="box" x="70" y="400" width="610" height="220" rx="18"/>
+<text class="label" x="92" y="438" text-anchor="start" font-size="18">Hierarchy 层级</text>
+<rect class="box" x="720" y="400" width="610" height="220" rx="18"/>
+<text class="label" x="742" y="438" text-anchor="start" font-size="18">Blackboard 黑板</text>
+<line class="edge" x1="375" y1="270" x2="250" y2="220"/>
+<line class="edge" x1="375" y1="270" x2="500" y2="220"/>
+<line class="edge" x1="375" y1="270" x2="250" y2="330"/>
+<line class="edge" x1="375" y1="270" x2="500" y2="330"/>
+<circle cx="250" cy="220" r="18" class="box cool"/>
+<circle cx="500" cy="220" r="18" class="box cool"/>
+<circle cx="250" cy="330" r="18" class="box cool"/>
+<circle cx="500" cy="330" r="18" class="box cool"/>
+<circle cx="375" cy="270" r="30" class="box hot"/>
+<text class="tiny" x="375" y="330" text-anchor="middle">Coordinator</text>
+<rect class="box cool" x="755" y="250" width="110" height="56" rx="16"/>
+<text class="label" x="810.0" y="282.9" text-anchor="middle" font-size="14">A1</text>
+<path class="edge" d="M865 278 L885 278" marker-end="url(#arrow)"/>
+<rect class="box cool" x="885" y="250" width="110" height="56" rx="16"/>
+<text class="label" x="940.0" y="282.9" text-anchor="middle" font-size="14">A2</text>
+<path class="edge" d="M995 278 L1015 278" marker-end="url(#arrow)"/>
+<rect class="box cool" x="1015" y="250" width="110" height="56" rx="16"/>
+<text class="label" x="1070.0" y="282.9" text-anchor="middle" font-size="14">A3</text>
+<path class="edge" d="M1125 278 L1145 278" marker-end="url(#arrow)"/>
+<rect class="box cool" x="1145" y="250" width="110" height="56" rx="16"/>
+<text class="label" x="1200.0" y="282.9" text-anchor="middle" font-size="14">A4</text>
+<rect class="box hot" x="340" y="440" width="120" height="50" rx="16"/>
+<text class="label" x="400.0" y="469.9" text-anchor="middle" font-size="14">Lead</text>
+<rect class="box cool" x="180" y="530" width="110" height="50" rx="16"/>
+<text class="label" x="235.0" y="559.9" text-anchor="middle" font-size="14">W1</text>
+<path class="edge" d="M400 490 L235 530" marker-end="url(#arrow)"/>
+<rect class="box cool" x="330" y="530" width="110" height="50" rx="16"/>
+<text class="label" x="385.0" y="559.9" text-anchor="middle" font-size="14">W2</text>
+<path class="edge" d="M400 490 L385 530" marker-end="url(#arrow)"/>
+<rect class="box cool" x="480" y="530" width="110" height="50" rx="16"/>
+<text class="label" x="535.0" y="559.9" text-anchor="middle" font-size="14">W3</text>
+<path class="edge" d="M400 490 L535 530" marker-end="url(#arrow)"/>
+<rect class="box good" x="930" y="470" width="260" height="100" rx="12"/>
+<text class="label" x="1060" y="525" text-anchor="middle" font-size="16">Shared Board</text>
+<circle cx="830" cy="460" r="16" class="box cool"/>
+<line class="edge" x1="830" y1="460" x2="930" y2="520"/>
+<circle cx="830" cy="520" r="16" class="box cool"/>
+<line class="edge" x1="830" y1="520" x2="930" y2="520"/>
+<circle cx="830" cy="580" r="16" class="box cool"/>
+<line class="edge" x1="830" y1="580" x2="930" y2="520"/>
+<text class="tiny" x="70" y="640" text-anchor="start">拓扑决定信息流向：星型适合调度，流水线适合处理，层级适合大规模，黑板适合共享证据。</text>
+</svg>

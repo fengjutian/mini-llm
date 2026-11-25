@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="650" viewBox="0 0 1400 650" role="img" aria-labelledby="title desc">
+  <title id="title">可信验证流水线</title><desc id="desc">mini-llm 技术机制图</desc>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="currentColor"/></marker></defs>
+  <style>:root{color-scheme:light dark}.bg{fill:#f7f4ed}.title{fill:#172126;font:700 30px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.kicker{fill:#e45d32;font:700 16px ui-monospace,Consolas,monospace;letter-spacing:2px}.box{fill:#fffdf8;stroke:#c4bdb1;stroke-width:2}.box.hot{fill:#fff0e8;stroke:#e45d32}.box.cool{fill:#eaf3f7;stroke:#3178a5}.box.good{fill:#eaf4ec;stroke:#4f8b62}.label{fill:#172126;font:650 18px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.small{fill:#69777d;font:500 15px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.tiny{fill:#69777d;font:500 13px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.edge{color:#69777d;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.accent-edge{color:#e45d32;fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.axis{fill:none;stroke:#69777d;stroke-width:2}.grid{stroke:#c4bdb1;stroke-width:1;opacity:.45}.dot{stroke:#fffdf8;stroke-width:3}.area{opacity:.14}@media(prefers-color-scheme:dark){.bg{fill:#101416}.title,.label{fill:#edf2f3}.kicker{fill:#ef855d}.box{fill:#182024;stroke:#526168}.box.hot{fill:#32211c;stroke:#e17750}.box.cool{fill:#172934;stroke:#4d91bc}.box.good{fill:#192b20;stroke:#65a779}.small{fill:#a8b4b9}.tiny{fill:#a8b4b9}.grid{stroke:#3c484e}.dot{stroke:#101416}}</style>
+  <rect class="bg" width="1400" height="650" rx="24"/>
+  <text class="kicker" x="64" y="58">MINI-LLM · MECHANISM</text>
+  <text class="title" x="64" y="105">可信验证流水线</text>
+<rect class="box" x="60" y="250" width="170" height="80" rx="16"/>
+<text class="label" x="145.0" y="296.3" text-anchor="middle" font-size="18">Answer</text>
+<rect class="box" x="280" y="250" width="200" height="80" rx="16"/>
+<text class="label" x="380.0" y="296.3" text-anchor="middle" font-size="18">Claim 抽取</text>
+<rect class="box" x="530" y="250" width="220" height="80" rx="16"/>
+<text class="label" x="640.0" y="296.3" text-anchor="middle" font-size="18">证据检索</text>
+<rect class="box" x="800" y="250" width="180" height="80" rx="16"/>
+<text class="label" x="890.0" y="296.3" text-anchor="middle" font-size="18">NLI 判定</text>
+<rect class="box hot" x="1030" y="250" width="210" height="80" rx="16"/>
+<text class="label" x="1135.0" y="296.3" text-anchor="middle" font-size="18">置信度校准</text>
+<path class="edge" d="M230 290 L280 290" marker-end="url(#arrow)"/>
+<path class="edge" d="M480 290 L530 290" marker-end="url(#arrow)"/>
+<path class="edge" d="M750 290 L800 290" marker-end="url(#arrow)"/>
+<path class="edge" d="M980 290 L1030 290" marker-end="url(#arrow)"/>
+<rect class="box good" x="800" y="400" width="180" height="70" rx="16"/>
+<text class="label" x="890.0" y="441.3" text-anchor="middle" font-size="18">引用 + 回答</text>
+<rect class="box hot" x="1030" y="400" width="210" height="70" rx="16"/>
+<text class="label" x="1135.0" y="441.3" text-anchor="middle" font-size="18">弃答 / 转人工</text>
+<path class="edge" d="M890 330 L890 400" marker-end="url(#arrow)"/>
+<path class="edge" d="M1130 330 L1130 400" marker-end="url(#arrow)"/>
+<path class="accent-edge" d="M890 250 L890 165 L145 165 L145 250" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
+<text class="tiny" x="520" y="150" text-anchor="middle">证据不足 → 重写或补检索</text>
+<text class="tiny" x="60" y="560" text-anchor="start">可信不是一个概率分数，而是“claim → 证据 → 判定 → 校准”的可追溯链路。</text>
+</svg>

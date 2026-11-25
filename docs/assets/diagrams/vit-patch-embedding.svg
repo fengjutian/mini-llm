@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="650" viewBox="0 0 1400 650" role="img" aria-labelledby="title desc">
+  <title id="title">ViT：图像切分为 Patch</title><desc id="desc">mini-llm 技术机制图</desc>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="currentColor"/></marker></defs>
+  <style>:root{color-scheme:light dark}.bg{fill:#f7f4ed}.title{fill:#172126;font:700 30px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.kicker{fill:#e45d32;font:700 16px ui-monospace,Consolas,monospace;letter-spacing:2px}.box{fill:#fffdf8;stroke:#c4bdb1;stroke-width:2}.box.hot{fill:#fff0e8;stroke:#e45d32}.box.cool{fill:#eaf3f7;stroke:#3178a5}.box.good{fill:#eaf4ec;stroke:#4f8b62}.label{fill:#172126;font:650 18px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.small{fill:#69777d;font:500 15px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.tiny{fill:#69777d;font:500 13px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.edge{color:#69777d;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.accent-edge{color:#e45d32;fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.axis{fill:none;stroke:#69777d;stroke-width:2}.grid{stroke:#c4bdb1;stroke-width:1;opacity:.45}.dot{stroke:#fffdf8;stroke-width:3}.area{opacity:.14}@media(prefers-color-scheme:dark){.bg{fill:#101416}.title,.label{fill:#edf2f3}.kicker{fill:#ef855d}.box{fill:#182024;stroke:#526168}.box.hot{fill:#32211c;stroke:#e17750}.box.cool{fill:#172934;stroke:#4d91bc}.box.good{fill:#192b20;stroke:#65a779}.small{fill:#a8b4b9}.tiny{fill:#a8b4b9}.grid{stroke:#3c484e}.dot{stroke:#101416}}</style>
+  <rect class="bg" width="1400" height="650" rx="24"/>
+  <text class="kicker" x="64" y="58">MINI-LLM · MECHANISM</text>
+  <text class="title" x="64" y="105">ViT：图像切分为 Patch</text>
+<text class="tiny" x="90" y="160" text-anchor="start">输入图像 224×224</text>
+<rect class="box cool" x="90" y="180" width="40" height="40" rx="3"/>
+<rect class="box cool" x="132" y="180" width="40" height="40" rx="3"/>
+<rect class="box cool" x="174" y="180" width="40" height="40" rx="3"/>
+<rect class="box cool" x="216" y="180" width="40" height="40" rx="3"/>
+<rect class="box cool" x="90" y="222" width="40" height="40" rx="3"/>
+<rect class="box cool" x="132" y="222" width="40" height="40" rx="3"/>
+<rect class="box cool" x="174" y="222" width="40" height="40" rx="3"/>
+<rect class="box cool" x="216" y="222" width="40" height="40" rx="3"/>
+<rect class="box cool" x="90" y="264" width="40" height="40" rx="3"/>
+<rect class="box cool" x="132" y="264" width="40" height="40" rx="3"/>
+<rect class="box cool" x="174" y="264" width="40" height="40" rx="3"/>
+<rect class="box cool" x="216" y="264" width="40" height="40" rx="3"/>
+<rect class="box cool" x="90" y="306" width="40" height="40" rx="3"/>
+<rect class="box cool" x="132" y="306" width="40" height="40" rx="3"/>
+<rect class="box cool" x="174" y="306" width="40" height="40" rx="3"/>
+<rect class="box cool" x="216" y="306" width="40" height="40" rx="3"/>
+<text class="tiny" x="90" y="390" text-anchor="start">切成 16×16 的 Patch</text>
+<path class="accent-edge" d="M270 260 L340 260" marker-end="url(#arrow)"/>
+<text class="tiny" x="305" y="240" text-anchor="middle">flatten + 线性投影</text>
+<rect class="box hot" x="350" y="230" width="64" height="64" rx="10"/>
+<text class="small" x="382" y="268" text-anchor="middle">x1</text>
+<rect class="box" x="432" y="230" width="64" height="64" rx="10"/>
+<text class="small" x="464" y="268" text-anchor="middle">x2</text>
+<rect class="box" x="514" y="230" width="64" height="64" rx="10"/>
+<text class="small" x="546" y="268" text-anchor="middle">x3</text>
+<rect class="box" x="596" y="230" width="64" height="64" rx="10"/>
+<text class="small" x="628" y="268" text-anchor="middle">x4</text>
+<rect class="box" x="678" y="230" width="64" height="64" rx="10"/>
+<text class="small" x="710" y="268" text-anchor="middle">x5</text>
+<rect class="box" x="760" y="230" width="64" height="64" rx="10"/>
+<text class="small" x="792" y="268" text-anchor="middle">x6</text>
+<text class="tiny" x="350" y="320" text-anchor="start">Token 序列</text>
+<path class="edge" d="M860 262 L940 262" marker-end="url(#arrow)"/>
+<rect class="box good" x="940" y="200" width="180" height="124" rx="16"/>
+<text class="label" x="1030.0" y="268.3" text-anchor="middle" font-size="18">+ Position Embedding</text>
+<path class="accent-edge" d="M1120 262 L1190 262" marker-end="url(#arrow)"/>
+<rect class="box hot" x="1190" y="200" width="140" height="124" rx="16"/>
+<text class="label" x="1260.0" y="268.3" text-anchor="middle" font-size="18">Transformer</text>
+<text class="tiny" x="90" y="560" text-anchor="start">Patch 是图像的“Token”：切得越细，序列越长，计算量按平方增长。</text>
+</svg>

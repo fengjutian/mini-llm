@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="650" viewBox="0 0 1400 650" role="img" aria-labelledby="title desc">
+  <title id="title">投机解码：提议—并行验证—接受</title><desc id="desc">mini-llm 技术机制图</desc>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="currentColor"/></marker></defs>
+  <style>:root{color-scheme:light dark}.bg{fill:#f7f4ed}.title{fill:#172126;font:700 30px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.kicker{fill:#e45d32;font:700 16px ui-monospace,Consolas,monospace;letter-spacing:2px}.box{fill:#fffdf8;stroke:#c4bdb1;stroke-width:2}.box.hot{fill:#fff0e8;stroke:#e45d32}.box.cool{fill:#eaf3f7;stroke:#3178a5}.box.good{fill:#eaf4ec;stroke:#4f8b62}.label{fill:#172126;font:650 18px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.small{fill:#69777d;font:500 15px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.tiny{fill:#69777d;font:500 13px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.edge{color:#69777d;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.accent-edge{color:#e45d32;fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.axis{fill:none;stroke:#69777d;stroke-width:2}.grid{stroke:#c4bdb1;stroke-width:1;opacity:.45}.dot{stroke:#fffdf8;stroke-width:3}.area{opacity:.14}@media(prefers-color-scheme:dark){.bg{fill:#101416}.title,.label{fill:#edf2f3}.kicker{fill:#ef855d}.box{fill:#182024;stroke:#526168}.box.hot{fill:#32211c;stroke:#e17750}.box.cool{fill:#172934;stroke:#4d91bc}.box.good{fill:#192b20;stroke:#65a779}.small{fill:#a8b4b9}.tiny{fill:#a8b4b9}.grid{stroke:#3c484e}.dot{stroke:#101416}}</style>
+  <rect class="bg" width="1400" height="650" rx="24"/>
+  <text class="kicker" x="64" y="58">MINI-LLM · MECHANISM</text>
+  <text class="title" x="64" y="105">投机解码：提议—并行验证—接受</text>
+<rect class="box cool" x="80" y="300" width="190" height="90" rx="16"/>
+<text class="label" x="175.0" y="341.0" text-anchor="middle" font-size="18">Draft Model</text>
+<text class="small" x="175.0" y="367.0" text-anchor="middle">小模型，快速猜</text>
+<rect class="box cool" x="330" y="320" width="84" height="60" rx="16"/>
+<text class="label" x="372.0" y="356.3" text-anchor="middle" font-size="18">t₁</text>
+<path class="edge" d="M270 345 L330 345" marker-end="url(#arrow)"/>
+<rect class="box cool" x="430" y="320" width="84" height="60" rx="16"/>
+<text class="label" x="472.0" y="356.3" text-anchor="middle" font-size="18">t₂</text>
+<path class="edge" d="M270 345 L330 345" marker-end="url(#arrow)"/>
+<rect class="box cool" x="530" y="320" width="84" height="60" rx="16"/>
+<text class="label" x="572.0" y="356.3" text-anchor="middle" font-size="18">t₃</text>
+<path class="edge" d="M270 345 L330 345" marker-end="url(#arrow)"/>
+<rect class="box cool" x="630" y="320" width="84" height="60" rx="16"/>
+<text class="label" x="672.0" y="356.3" text-anchor="middle" font-size="18">t₄</text>
+<path class="edge" d="M270 345 L330 345" marker-end="url(#arrow)"/>
+<rect class="box hot" x="330" y="170" width="580" height="100" rx="16"/>
+<text class="label" x="620.0" y="226.3" text-anchor="middle" font-size="18">Target Model：一次前向，并行验证 4 个位置</text>
+<path class="edge" d="M372 320 L372 270" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
+<path class="edge" d="M472 320 L472 270" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
+<path class="edge" d="M572 320 L572 270" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
+<path class="edge" d="M672 320 L672 270" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
+<rect class="box good" x="960" y="300" width="340" height="90" rx="16"/>
+<text class="label" x="1130.0" y="351.3" text-anchor="middle" font-size="18">接受 t₁–t₃ + 用第 4 个位置重采样</text>
+<path class="accent-edge" d="M910 220 L960 300" marker-end="url(#arrow)"/>
+<text class="tiny" x="80" y="480" text-anchor="start">Draft 猜 K 个 Token，Target 只做一次前向；猜对的越多，加速越明显。</text>
+<text class="tiny" x="80" y="520" text-anchor="start">关键指标：acceptance rate（接受率）与 draft 的额外开销。</text>
+</svg>

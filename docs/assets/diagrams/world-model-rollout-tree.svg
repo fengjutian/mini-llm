@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="650" viewBox="0 0 1400 650" role="img" aria-labelledby="title desc">
+  <title id="title">未来预测：从一条轨迹到一棵树</title><desc id="desc">mini-llm 技术机制图</desc>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="currentColor"/></marker></defs>
+  <style>:root{color-scheme:light dark}.bg{fill:#f7f4ed}.title{fill:#172126;font:700 30px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.kicker{fill:#e45d32;font:700 16px ui-monospace,Consolas,monospace;letter-spacing:2px}.box{fill:#fffdf8;stroke:#c4bdb1;stroke-width:2}.box.hot{fill:#fff0e8;stroke:#e45d32}.box.cool{fill:#eaf3f7;stroke:#3178a5}.box.good{fill:#eaf4ec;stroke:#4f8b62}.label{fill:#172126;font:650 18px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.small{fill:#69777d;font:500 15px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.tiny{fill:#69777d;font:500 13px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.edge{color:#69777d;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.accent-edge{color:#e45d32;fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.axis{fill:none;stroke:#69777d;stroke-width:2}.grid{stroke:#c4bdb1;stroke-width:1;opacity:.45}.dot{stroke:#fffdf8;stroke-width:3}.area{opacity:.14}@media(prefers-color-scheme:dark){.bg{fill:#101416}.title,.label{fill:#edf2f3}.kicker{fill:#ef855d}.box{fill:#182024;stroke:#526168}.box.hot{fill:#32211c;stroke:#e17750}.box.cool{fill:#172934;stroke:#4d91bc}.box.good{fill:#192b20;stroke:#65a779}.small{fill:#a8b4b9}.tiny{fill:#a8b4b9}.grid{stroke:#3c484e}.dot{stroke:#101416}}</style>
+  <rect class="bg" width="1400" height="650" rx="24"/>
+  <text class="kicker" x="64" y="58">MINI-LLM · MECHANISM</text>
+  <text class="title" x="64" y="105">未来预测：从一条轨迹到一棵树</text>
+<rect class="box hot" x="620" y="140" width="170" height="64" rx="16"/>
+<text class="label" x="705.0" y="178.3" text-anchor="middle" font-size="18">s₀ 当前状态</text>
+<path class="edge" d="M700 204 L285 280" marker-end="url(#arrow)"/>
+<text class="tiny" x="470" y="232" text-anchor="middle">a₁</text>
+<rect class="box cool" x="200" y="280" width="170" height="60" rx="16"/>
+<text class="label" x="285.0" y="316.3" text-anchor="middle" font-size="18">s₁ · a₁</text>
+<path class="edge" d="M700 204 L705 280" marker-end="url(#arrow)"/>
+<text class="tiny" x="714" y="250" text-anchor="middle">a₂</text>
+<rect class="box good" x="620" y="280" width="170" height="60" rx="16"/>
+<text class="label" x="705.0" y="316.3" text-anchor="middle" font-size="18">s₁ · a₂</text>
+<path class="edge" d="M700 204 L1125 280" marker-end="url(#arrow)"/>
+<text class="tiny" x="908" y="232" text-anchor="middle">a₃</text>
+<rect class="box cool" x="1040" y="280" width="170" height="60" rx="16"/>
+<text class="label" x="1125.0" y="316.3" text-anchor="middle" font-size="18">s₁ · a₃</text>
+<rect class="box" x="110" y="420" width="150" height="56" rx="16"/>
+<text class="label" x="185.0" y="454.3" text-anchor="middle" font-size="18">s₂</text>
+<path class="edge" d="M285 340 L185 420" marker-end="url(#arrow)"/>
+<rect class="box" x="290" y="420" width="150" height="56" rx="16"/>
+<text class="label" x="365.0" y="454.3" text-anchor="middle" font-size="18">s₂</text>
+<path class="edge" d="M285 340 L365 420" marker-end="url(#arrow)"/>
+<rect class="box" x="510" y="420" width="150" height="56" rx="16"/>
+<text class="label" x="585.0" y="454.3" text-anchor="middle" font-size="18">s₂</text>
+<path class="edge" d="M705 340 L585 420" marker-end="url(#arrow)"/>
+<rect class="box" x="690" y="420" width="150" height="56" rx="16"/>
+<text class="label" x="765.0" y="454.3" text-anchor="middle" font-size="18">s₂</text>
+<path class="edge" d="M705 340 L765 420" marker-end="url(#arrow)"/>
+<rect class="box" x="910" y="420" width="150" height="56" rx="16"/>
+<text class="label" x="985.0" y="454.3" text-anchor="middle" font-size="18">s₂</text>
+<path class="edge" d="M1125 340 L985 420" marker-end="url(#arrow)"/>
+<rect class="box" x="1090" y="420" width="150" height="56" rx="16"/>
+<text class="label" x="1165.0" y="454.3" text-anchor="middle" font-size="18">s₂</text>
+<path class="edge" d="M1125 340 L1165 420" marker-end="url(#arrow)"/>
+<path class="accent-edge" d="M620 172 L60 172 L60 530 L70 530" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
+<rect class="box hot" x="70" y="500" width="220" height="60" rx="16"/>
+<text class="label" x="180.0" y="535.6" text-anchor="middle" font-size="16">a₄（未发生）</text>
+<text class="tiny" x="70" y="600" text-anchor="start">反事实分支：同一个 s₀，换一个行动会走向哪里？</text>
+<text class="tiny" x="90" y="632" text-anchor="start">树的宽度是行动的个数，深度是预测的步数；成本随两者组合增长。</text>
+</svg>

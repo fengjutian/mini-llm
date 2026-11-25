@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="650" viewBox="0 0 1400 650" role="img" aria-labelledby="title desc">
+  <title id="title">置信度校准曲线</title><desc id="desc">mini-llm 技术机制图</desc>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="currentColor"/></marker></defs>
+  <style>:root{color-scheme:light dark}.bg{fill:#f7f4ed}.title{fill:#172126;font:700 30px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.kicker{fill:#e45d32;font:700 16px ui-monospace,Consolas,monospace;letter-spacing:2px}.box{fill:#fffdf8;stroke:#c4bdb1;stroke-width:2}.box.hot{fill:#fff0e8;stroke:#e45d32}.box.cool{fill:#eaf3f7;stroke:#3178a5}.box.good{fill:#eaf4ec;stroke:#4f8b62}.label{fill:#172126;font:650 18px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.small{fill:#69777d;font:500 15px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.tiny{fill:#69777d;font:500 13px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.edge{color:#69777d;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.accent-edge{color:#e45d32;fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.axis{fill:none;stroke:#69777d;stroke-width:2}.grid{stroke:#c4bdb1;stroke-width:1;opacity:.45}.dot{stroke:#fffdf8;stroke-width:3}.area{opacity:.14}@media(prefers-color-scheme:dark){.bg{fill:#101416}.title,.label{fill:#edf2f3}.kicker{fill:#ef855d}.box{fill:#182024;stroke:#526168}.box.hot{fill:#32211c;stroke:#e17750}.box.cool{fill:#172934;stroke:#4d91bc}.box.good{fill:#192b20;stroke:#65a779}.small{fill:#a8b4b9}.tiny{fill:#a8b4b9}.grid{stroke:#3c484e}.dot{stroke:#101416}}</style>
+  <rect class="bg" width="1400" height="650" rx="24"/>
+  <text class="kicker" x="64" y="58">MINI-LLM · MECHANISM</text>
+  <text class="title" x="64" y="105">置信度校准曲线</text>
+<line class="axis" x1="120" y1="540" x2="740" y2="540"/>
+<line class="axis" x1="120" y1="540" x2="120" y2="160"/>
+<line class="axis" x1="120" y1="540" x2="740" y2="160" stroke-dasharray="9 7"/>
+<text class="small" x="430.0" y="590" text-anchor="middle">模型置信度</text>
+<text class="small" x="60" y="350.0" text-anchor="middle">准确率</text>
+<text class="tiny" x="720" y="180" text-anchor="end">完美校准</text>
+<circle cx="182.0" cy="521.0" r="9" class="box hot"/>
+<circle cx="306.0" cy="471.6" r="9" class="box hot"/>
+<circle cx="430.0" cy="380.4" r="9" class="box hot"/>
+<circle cx="554.0" cy="331.0" r="9" class="box hot"/>
+<circle cx="678.0" cy="228.40000000000003" r="9" class="box hot"/>
+<line class="accent-edge" x1="182.0" y1="521.0" x2="678.0" y2="228.40000000000003" stroke-width="3"/>
+<text class="small" x="950" y="220" text-anchor="start">ECE = Σ (n_b / N) · |acc_b − conf_b|</text>
+<text class="tiny" x="950" y="280" text-anchor="start">曲线在虚线下方 = 过度自信</text>
+<text class="tiny" x="950" y="320" text-anchor="start">曲线在虚线上方 = 过度保守</text>
+<text class="tiny" x="950" y="400" text-anchor="start">校准之后，0.8 的置信度应该对应约 80% 的正确率。</text>
+<text class="tiny" x="120" y="610" text-anchor="start">只有把置信度映射回真实频率，才敢用阈值决定“回答”还是“弃答”。</text>
+</svg>

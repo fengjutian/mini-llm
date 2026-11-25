@@ -27,8 +27,10 @@ use std::fmt::{Display, Formatter};
 use mini_llm_tensor::{Tensor, TensorError};
 
 mod device;
+mod tape;
 
-pub use device::{Device, DeviceTensor};
+pub use device::{Device, DeviceLinear, DeviceMlp, DeviceTensor, LayerGradients, MlpGradients};
+pub use tape::DeviceValue;
 
 /// Kernels a backend must agree on.
 pub trait Backend {

@@ -1,0 +1,21 @@
+name: CUDA
+
+# Manual workflow: needs a self-hosted runner with an NVIDIA GPU and the CUDA
+# toolkit (nvcc) installed. It is not part of push/PR CI because standard
+# GitHub-hosted runners have no GPU.
+on:
+  workflow_dispatch:
+
+jobs:
+  cuda:
+    name: device tensors on CUDA
+    runs-on: [self-hosted, linux, gpu, cuda]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Show CUDA environment
+        run: |
+          nvidia-smi
+          nvcc --version
+      - name: Device tensor and tape tests on CUDA
+        run: cargo test -p mini-llm-backend --features cuda -- --nocapture

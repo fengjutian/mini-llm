@@ -48,7 +48,7 @@ export const LESSONS: Lesson[] = [
     summary:
       '一句话在模型里就是一个 [B, S, D] 张量。改一改 shape，看元素在一条线性内存里到底落在哪。',
     visual: 'tensor',
-    time: '6 分钟',
+    time: '10 分钟',
   },
   {
     href: '/learn/softmax',

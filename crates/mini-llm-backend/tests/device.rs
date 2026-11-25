@@ -1,6 +1,8 @@
-//! Device-resident tensor transfers and device-side matmul.
+//! Device-resident tensor transfers, device-side matmul and the `DeviceLinear`
+//! forward/backward skeleton, checked against host autograd.
 
-use mini_llm_backend::{Device, DeviceTensor};
+use mini_llm_autograd::TensorValue;
+use mini_llm_backend::{Device, DeviceLinear, DeviceMlp, DeviceTensor};
 use mini_llm_tensor::Tensor;
 
 fn sample(rows: usize, cols: usize, scale: f32) -> Tensor {
@@ -8,6 +10,13 @@ fn sample(rows: usize, cols: usize, scale: f32) -> Tensor {
         .map(|index| ((index % 7) as f32 - 3.0) * 0.25 * scale)
         .collect();
     Tensor::from_2d(rows, cols, data).unwrap()
+}
+
+fn assert_close(left: &[f32], right: &[f32], tolerance: f32, label: &str) {
+    assert_eq!(left.len(), right.len(), "{label}: length");
+    for (a, b) in left.iter().zip(right) {
+        assert!((a - b).abs() <= tolerance, "{label}: {a} vs {b}");
+    }
 }
 
 #[test]
@@ -60,4 +69,281 @@ fn candle_device_roundtrips_and_multiplies() {
     // Moving back to the CPU device drops the device copy.
     let back = device_left.to(&Device::Cpu).unwrap();
     assert!(!back.is_on_device());
+}
+
+/// Host autograd reference for `y = x W + b`, `loss = mean(y)`.
+fn host_reference(x: &Tensor, w: &Tensor, b: &Tensor) -> (f32, Vec<f32>, Vec<f32>) {
+    let xv = TensorValue::constant(x.data().to_vec(), x.shape().to_vec()).unwrap();
+    let wv = TensorValue::parameter(w.data().to_vec(), w.shape().to_vec()).unwrap();
+    let bv = TensorValue::parameter(b.data().to_vec(), b.shape().to_vec()).unwrap();
+    let output = xv.matmul(&wv).unwrap().add(&bv).unwrap();
+    let loss = output.mean().unwrap();
+    loss.backward().unwrap();
+    (
+        loss.data()[0],
+        wv.grad().unwrap().data().to_vec(),
+        bv.grad().unwrap().data().to_vec(),
+    )
+}
+
+fn check_device_linear_backward(device: &Device, tolerance: f32) {
+    let x = sample(3, 4, 1.0);
+    let w = sample(4, 2, 0.5);
+    let b = sample(1, 2, 0.25);
+    let (expected_loss, expected_grad_w, expected_grad_b) = host_reference(&x, &w, &b);
+
+    // d(mean)/dy = 1 / numel, so the upstream gradient is a scaled ones matrix.
+    let numel = (3 * 2) as f32;
+    let grad_output_host = Tensor::from_2d(3, 2, vec![1.0 / numel; 6]).unwrap();
+
+    let x_device = DeviceTensor::from_host(x.clone()).to(device).unwrap();
+    let w_device = DeviceTensor::from_host(w.clone()).to(device).unwrap();
+    let b_device = DeviceTensor::from_host(b.clone()).to(device).unwrap();
+    let grad_output = DeviceTensor::from_host(grad_output_host.clone())
+        .to(device)
+        .unwrap();
+
+    let layer = DeviceLinear::new(w_device, Some(b_device));
+    let output = layer.forward(&x_device).unwrap();
+    let loss = output.mean_all_value().unwrap();
+    assert!(
+        (loss - expected_loss).abs() < tolerance,
+        "loss {loss} vs {expected_loss}"
+    );
+
+    let (grad_x, grad_w, grad_b) = layer.backward(&x_device, &grad_output).unwrap();
+
+    // dx = G Wᵀ
+    let expected_grad_x = grad_output_host.matmul(&w.transpose_2d().unwrap()).unwrap();
+
+    assert_close(
+        grad_x.to_host().unwrap().data(),
+        expected_grad_x.data(),
+        tolerance,
+        "dx",
+    );
+    assert_close(
+        grad_w.to_host().unwrap().data(),
+        &expected_grad_w,
+        tolerance,
+        "dW",
+    );
+    assert_close(
+        grad_b.unwrap().to_host().unwrap().data(),
+        &expected_grad_b,
+        tolerance,
+        "db",
+    );
+}
+
+#[test]
+fn device_linear_backward_matches_host_autograd_on_cpu() {
+    check_device_linear_backward(&Device::Cpu, 1e-5);
+}
+
+#[cfg(feature = "candle")]
+#[test]
+fn device_linear_backward_matches_host_autograd_on_candle() {
+    check_device_linear_backward(&Device::candle_cpu(), 1e-4);
+}
+
+/// Host autograd reference for a two-layer ReLU MLP: `mean(relu(xW1+b1)W2+b2)`.
+#[allow(clippy::type_complexity)]
+fn host_mlp(
+    x: &Tensor,
+    w1: &Tensor,
+    b1: &Tensor,
+    w2: &Tensor,
+    b2: &Tensor,
+) -> (f32, Vec<f32>, Vec<f32>, Vec<f32>, Vec<f32>, Vec<f32>) {
+    let xv = TensorValue::parameter(x.data().to_vec(), x.shape().to_vec()).unwrap();
+    let w1v = TensorValue::parameter(w1.data().to_vec(), w1.shape().to_vec()).unwrap();
+    let b1v = TensorValue::parameter(b1.data().to_vec(), b1.shape().to_vec()).unwrap();
+    let w2v = TensorValue::parameter(w2.data().to_vec(), w2.shape().to_vec()).unwrap();
+    let b2v = TensorValue::parameter(b2.data().to_vec(), b2.shape().to_vec()).unwrap();
+    let hidden = xv.matmul(&w1v).unwrap().add(&b1v).unwrap().relu().unwrap();
+    let output = hidden.matmul(&w2v).unwrap().add(&b2v).unwrap();
+    let loss = output.mean().unwrap();
+    loss.backward().unwrap();
+    (
+        loss.data()[0],
+        xv.grad().unwrap().data().to_vec(),
+        w1v.grad().unwrap().data().to_vec(),
+        b1v.grad().unwrap().data().to_vec(),
+        w2v.grad().unwrap().data().to_vec(),
+        b2v.grad().unwrap().data().to_vec(),
+    )
+}
+
+fn check_device_mlp_backward(device: &Device, tolerance: f32) {
+    let x = sample(3, 4, 1.0);
+    let w1 = sample(4, 5, 0.5);
+    let b1 = sample(1, 5, 0.25);
+    let w2 = sample(5, 2, 0.5);
+    let b2 = sample(1, 2, 0.25);
+
+    let (expected_loss, expected_dx, expected_dw1, expected_db1, expected_dw2, expected_db2) =
+        host_mlp(&x, &w1, &b1, &w2, &b2);
+
+    let upload = |tensor: &Tensor| DeviceTensor::from_host(tensor.clone()).to(device).unwrap();
+    let x_device = upload(&x);
+    let layer1 = DeviceLinear::new(upload(&w1), Some(upload(&b1)));
+    let layer2 = DeviceLinear::new(upload(&w2), Some(upload(&b2)));
+    let mlp = DeviceMlp::new(vec![layer1, layer2]);
+
+    let (output, inputs) = mlp.forward_with_cache(&x_device).unwrap();
+    let loss = output.mean_all_value().unwrap();
+    assert!(
+        (loss - expected_loss).abs() < tolerance,
+        "loss {loss} vs {expected_loss}"
+    );
+
+    let numel = (3 * 2) as f32;
+    let grad_output = upload(&Tensor::from_2d(3, 2, vec![1.0 / numel; 6]).unwrap());
+    let (grad_x, gradients) = mlp.backward(&inputs, &grad_output).unwrap();
+    assert_eq!(gradients.len(), 2);
+
+    assert_close(
+        grad_x.to_host().unwrap().data(),
+        &expected_dx,
+        tolerance,
+        "mlp dx",
+    );
+    assert_close(
+        gradients[0].0.to_host().unwrap().data(),
+        &expected_dw1,
+        tolerance,
+        "mlp dW1",
+    );
+    assert_close(
+        gradients[0].1.as_ref().unwrap().to_host().unwrap().data(),
+        &expected_db1,
+        tolerance,
+        "mlp db1",
+    );
+    assert_close(
+        gradients[1].0.to_host().unwrap().data(),
+        &expected_dw2,
+        tolerance,
+        "mlp dW2",
+    );
+    assert_close(
+        gradients[1].1.as_ref().unwrap().to_host().unwrap().data(),
+        &expected_db2,
+        tolerance,
+        "mlp db2",
+    );
+}
+
+#[test]
+fn device_mlp_backward_matches_host_autograd_on_cpu() {
+    check_device_mlp_backward(&Device::Cpu, 1e-5);
+}
+
+#[cfg(feature = "candle")]
+#[test]
+fn device_mlp_backward_matches_host_autograd_on_candle() {
+    check_device_mlp_backward(&Device::candle_cpu(), 1e-4);
+}
+
+use mini_llm_backend::DeviceValue;
+
+fn check_device_tape(device: &Device, tolerance: f32) {
+    let x = sample(3, 4, 1.0);
+    let w1 = sample(4, 5, 0.5);
+    let b1 = sample(1, 5, 0.25);
+    let w2 = sample(5, 2, 0.5);
+    let b2 = sample(1, 2, 0.25);
+    let (expected_loss, expected_dx, expected_dw1, expected_db1, expected_dw2, expected_db2) =
+        host_mlp(&x, &w1, &b1, &w2, &b2);
+
+    let upload = |tensor: &Tensor| DeviceTensor::from_host(tensor.clone()).to(device).unwrap();
+    let xv = DeviceValue::new(upload(&x), true);
+    let w1v = DeviceValue::new(upload(&w1), true);
+    let b1v = DeviceValue::new(upload(&b1), true);
+    let w2v = DeviceValue::new(upload(&w2), true);
+    let b2v = DeviceValue::new(upload(&b2), true);
+
+    let hidden = xv.matmul(&w1v).unwrap().add(&b1v).unwrap().relu().unwrap();
+    let output = hidden.matmul(&w2v).unwrap().add(&b2v).unwrap();
+    let loss = output.mean().unwrap();
+
+    let loss_value = loss.data().to_host().unwrap().data()[0];
+    assert!(
+        (loss_value - expected_loss).abs() < tolerance,
+        "tape loss {loss_value} vs {expected_loss}"
+    );
+
+    loss.backward().unwrap();
+
+    let grad = |value: &DeviceValue| value.grad().unwrap().to_host().unwrap().data().to_vec();
+    assert_close(&grad(&xv), &expected_dx, tolerance, "tape dx");
+    assert_close(&grad(&w1v), &expected_dw1, tolerance, "tape dW1");
+    assert_close(&grad(&b1v), &expected_db1, tolerance, "tape db1");
+    assert_close(&grad(&w2v), &expected_dw2, tolerance, "tape dW2");
+    assert_close(&grad(&b2v), &expected_db2, tolerance, "tape db2");
+}
+
+#[test]
+fn device_tape_matches_host_autograd_on_cpu() {
+    check_device_tape(&Device::Cpu, 1e-5);
+}
+
+#[cfg(feature = "candle")]
+#[test]
+fn device_tape_matches_host_autograd_on_candle() {
+    check_device_tape(&Device::candle_cpu(), 1e-4);
+}
+
+#[cfg(feature = "candle")]
+#[test]
+fn device_tape_matches_host_autograd_on_cuda_when_available() {
+    let Ok(device) = Device::candle_cuda(0) else {
+        eprintln!("no CUDA device available; skipping");
+        return;
+    };
+    check_device_tape(&device, 2e-3);
+}
+
+#[test]
+fn device_tape_accumulates_reused_gradients() {
+    // loss = mean(y) + mean(y) must double dW and dx.
+    let x = sample(3, 4, 1.0);
+    let w = sample(4, 2, 0.5);
+
+    let xv = TensorValue::parameter(x.data().to_vec(), x.shape().to_vec()).unwrap();
+    let wv = TensorValue::parameter(w.data().to_vec(), w.shape().to_vec()).unwrap();
+    let y = xv.matmul(&wv).unwrap();
+    let loss = y.mean().unwrap().add(&y.mean().unwrap()).unwrap();
+    loss.backward().unwrap();
+    let expected_dx = xv.grad().unwrap().data().to_vec();
+    let expected_dw = wv.grad().unwrap().data().to_vec();
+
+    let upload = |tensor: &Tensor| {
+        DeviceTensor::from_host(tensor.clone())
+            .to(&Device::Cpu)
+            .unwrap()
+    };
+    let device_x = DeviceValue::new(upload(&x), true);
+    let device_w = DeviceValue::new(upload(&w), true);
+    let device_y = device_x.matmul(&device_w).unwrap();
+    let device_loss = device_y
+        .mean()
+        .unwrap()
+        .add(&device_y.mean().unwrap())
+        .unwrap();
+    device_loss.backward().unwrap();
+
+    assert_close(
+        device_x.grad().unwrap().to_host().unwrap().data(),
+        &expected_dx,
+        1e-5,
+        "accumulated dx",
+    );
+    assert_close(
+        device_w.grad().unwrap().to_host().unwrap().data(),
+        &expected_dw,
+        1e-5,
+        "accumulated dW",
+    );
 }

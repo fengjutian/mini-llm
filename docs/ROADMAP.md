@@ -173,6 +173,18 @@ SFT 语料仅用于展示掩码机制。
 - Studio 是纯静态页面（`pnpm build` 时把示例轨迹内联），不训练模型；拖入
   新的轨迹即可查看自己的 run。
 
+设备抽象（Milestone 8）：
+
+- `DeviceTensor`：数据可驻留 `Cpu` 或 `Candle(Device)`，`to()` / `to_host()`
+  显式跨越边界，混合设备运算直接报错；
+- `DeviceLinear` / `DeviceMlp`：权重常驻设备，`forward` 与手写 `backward`
+  都在设备上执行，梯度与 host autograd 对照通过；
+- `DeviceValue`：设备 tape，`matmul/add/relu/mean/scale` 拓扑反向、梯度累加，
+  与 host autograd 逐梯度对照；
+- `DeviceLinear`/`DeviceMlp` 是手工反向版本，保留作为对照；
+- `.github/workflows/cuda.yml`（手动触发）在 GPU runner 上跑 `--features cuda`；
+- CUDA 路径与 Candle CPU 共用代码，但本环境无 GPU，未做运行验证。
+
 ## Milestone 7 — Training Loop Hardening（已完成）
 
 - [x] Warmup + cosine learning-rate schedule

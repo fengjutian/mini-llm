@@ -66,11 +66,13 @@ impl Device {
 }
 
 /// A tensor whose storage may live on a device.
+#[derive(Clone)]
 pub struct DeviceTensor {
     shape: Vec<usize>,
     storage: Storage,
 }
 
+#[derive(Clone)]
 enum Storage {
     Host(Tensor),
     #[cfg(feature = "candle")]
@@ -211,5 +213,368 @@ impl std::fmt::Debug for DeviceTensor {
             .field("shape", &self.shape)
             .field("device", &self.device())
             .finish()
+    }
+}
+
+impl DeviceTensor {
+    #[cfg(feature = "candle")]
+    fn from_candle(tensor: candle_core::Tensor) -> Self {
+        let shape = tensor.shape().dims().to_vec();
+        let device = tensor.device().clone();
+        Self {
+            shape,
+            storage: Storage::Candle { tensor, device },
+        }
+    }
+
+    /// Element-wise addition with broadcasting on the same device.
+    pub fn add(&self, other: &Self) -> Result<Self, BackendError> {
+        match (&self.storage, &other.storage) {
+            (Storage::Host(left), Storage::Host(right)) => Ok(Self::from_host(left.add(right)?)),
+            #[cfg(feature = "candle")]
+            (
+                Storage::Candle {
+                    tensor: left,
+                    device: left_device,
+                },
+                Storage::Candle {
+                    tensor: right,
+                    device: right_device,
+                },
+            ) => {
+                if !left_device.same_device(right_device) {
+                    return Err(mixed_device_error());
+                }
+                let sum = left
+                    .broadcast_add(right)
+                    .map_err(|error| BackendError::Backend(error.to_string()))?;
+                Ok(Self::from_candle(sum))
+            }
+            #[cfg(feature = "candle")]
+            _ => Err(mixed_device_error()),
+        }
+    }
+
+    /// Multiplies every element by `factor` on the device.
+    pub fn scale(&self, factor: f32) -> Result<Self, BackendError> {
+        match &self.storage {
+            Storage::Host(tensor) => Ok(Self::from_host(tensor.scale(factor)?)),
+            #[cfg(feature = "candle")]
+            Storage::Candle { tensor, .. } => {
+                let scaled = tensor
+                    .affine(f64::from(factor), 0.0)
+                    .map_err(|error| BackendError::Backend(error.to_string()))?;
+                Ok(Self::from_candle(scaled))
+            }
+        }
+    }
+
+    /// Transposes a rank-2 tensor on the device.
+    pub fn transpose_2d(&self) -> Result<Self, BackendError> {
+        match &self.storage {
+            Storage::Host(tensor) => Ok(Self::from_host(tensor.transpose_2d()?)),
+            #[cfg(feature = "candle")]
+            Storage::Candle { tensor, .. } => {
+                let transposed = tensor
+                    .transpose(0, 1)
+                    .map_err(|error| BackendError::Backend(error.to_string()))?;
+                Ok(Self::from_candle(transposed))
+            }
+        }
+    }
+
+    /// Sums rows into a `[1, cols]` tensor on the device.
+    pub fn sum_rows(&self) -> Result<Self, BackendError> {
+        match &self.storage {
+            Storage::Host(tensor) => {
+                let (rows, cols) = (tensor.shape()[0], tensor.shape()[1]);
+                let mut data = vec![0.0f32; cols];
+                for row in 0..rows {
+                    let start = row * cols;
+                    for (slot, value) in data.iter_mut().zip(&tensor.data()[start..start + cols]) {
+                        *slot += value;
+                    }
+                }
+                Ok(Self::from_host(Tensor::new(data, vec![1, cols])?))
+            }
+            #[cfg(feature = "candle")]
+            Storage::Candle { tensor, .. } => {
+                let summed = tensor
+                    .sum_keepdim(0)
+                    .map_err(|error| BackendError::Backend(error.to_string()))?;
+                Ok(Self::from_candle(summed))
+            }
+        }
+    }
+
+    /// Mean of every element, read back as a host scalar.
+    pub fn mean_all_value(&self) -> Result<f32, BackendError> {
+        match &self.storage {
+            Storage::Host(tensor) => Ok(tensor.mean()?.data()[0]),
+            #[cfg(feature = "candle")]
+            Storage::Candle { tensor, .. } => tensor
+                .mean_all()
+                .and_then(|mean| mean.to_scalar::<f32>())
+                .map_err(|error| BackendError::Backend(error.to_string())),
+        }
+    }
+}
+
+#[cfg(feature = "candle")]
+fn mixed_device_error() -> BackendError {
+    BackendError::Backend("operands live on different devices".to_string())
+}
+
+/// A linear layer whose parameters stay on the device.
+///
+/// This is the device-side forward/backward skeleton: weights are uploaded once
+/// with [`DeviceTensor::to`], every forward and gradient runs on the device, and
+/// only the result is copied back for inspection.
+pub struct DeviceLinear {
+    weight: DeviceTensor,
+    bias: Option<DeviceTensor>,
+}
+
+impl DeviceLinear {
+    pub fn new(weight: DeviceTensor, bias: Option<DeviceTensor>) -> Self {
+        Self { weight, bias }
+    }
+
+    pub fn weight(&self) -> &DeviceTensor {
+        &self.weight
+    }
+
+    pub fn bias(&self) -> Option<&DeviceTensor> {
+        self.bias.as_ref()
+    }
+
+    /// `y = x W + b`, computed on the device.
+    pub fn forward(&self, input: &DeviceTensor) -> Result<DeviceTensor, BackendError> {
+        let projected = input.matmul(&self.weight)?;
+        match &self.bias {
+            Some(bias) => projected.add(bias),
+            None => Ok(projected),
+        }
+    }
+
+    /// Device-side gradients for `x`, `W` and `b`.
+    ///
+    /// `grad_output` is the upstream gradient of the layer output.
+    pub fn backward(
+        &self,
+        input: &DeviceTensor,
+        grad_output: &DeviceTensor,
+    ) -> Result<(DeviceTensor, DeviceTensor, Option<DeviceTensor>), BackendError> {
+        let grad_input = grad_output.matmul(&self.weight.transpose_2d()?)?;
+        let grad_weight = input.transpose_2d()?.matmul(grad_output)?;
+        let grad_bias = match &self.bias {
+            Some(_) => Some(grad_output.sum_rows()?),
+            None => None,
+        };
+        Ok((grad_input, grad_weight, grad_bias))
+    }
+}
+
+impl DeviceTensor {
+    /// Element-wise ReLU on the device.
+    pub fn relu(&self) -> Result<Self, BackendError> {
+        match &self.storage {
+            Storage::Host(tensor) => Ok(Self::from_host(tensor.relu()?)),
+            #[cfg(feature = "candle")]
+            Storage::Candle { tensor, .. } => {
+                let activated = tensor
+                    .relu()
+                    .map_err(|error| BackendError::Backend(error.to_string()))?;
+                Ok(Self::from_candle(activated))
+            }
+        }
+    }
+
+    /// Element-wise multiplication with broadcasting on the same device.
+    pub fn mul(&self, other: &Self) -> Result<Self, BackendError> {
+        match (&self.storage, &other.storage) {
+            (Storage::Host(left), Storage::Host(right)) => Ok(Self::from_host(left.mul(right)?)),
+            #[cfg(feature = "candle")]
+            (
+                Storage::Candle {
+                    tensor: left,
+                    device: left_device,
+                },
+                Storage::Candle {
+                    tensor: right,
+                    device: right_device,
+                },
+            ) => {
+                if !left_device.same_device(right_device) {
+                    return Err(mixed_device_error());
+                }
+                let product = left
+                    .broadcast_mul(right)
+                    .map_err(|error| BackendError::Backend(error.to_string()))?;
+                Ok(Self::from_candle(product))
+            }
+            #[cfg(feature = "candle")]
+            _ => Err(mixed_device_error()),
+        }
+    }
+
+    /// `1.0` where the element is positive, `0.0` elsewhere (the ReLU gradient).
+    pub fn positive_mask(&self) -> Result<Self, BackendError> {
+        match &self.storage {
+            Storage::Host(tensor) => {
+                let data = tensor
+                    .data()
+                    .iter()
+                    .map(|value| if *value > 0.0 { 1.0 } else { 0.0 })
+                    .collect();
+                Ok(Self::from_host(Tensor::new(data, tensor.shape().to_vec())?))
+            }
+            #[cfg(feature = "candle")]
+            Storage::Candle { tensor, .. } => {
+                let mask = tensor
+                    .gt(0f32)
+                    .and_then(|mask| mask.to_dtype(candle_core::DType::F32))
+                    .map_err(|error| BackendError::Backend(error.to_string()))?;
+                Ok(Self::from_candle(mask))
+            }
+        }
+    }
+}
+
+/// Gradients of one layer: `(dW, db)`; `db` is `None` when the layer has no bias.
+pub type LayerGradients = (DeviceTensor, Option<DeviceTensor>);
+
+/// Result of a device backward pass: `(dx, per-layer gradients)`.
+pub type MlpGradients = (DeviceTensor, Vec<LayerGradients>);
+
+/// A stack of [`DeviceLinear`] layers with ReLU between them.
+///
+/// This extends the device-side backward skeleton to more than one layer: the
+/// forward pass caches each layer input, and the backward pass walks the layers
+/// in reverse, applying the ReLU mask from the cached activation.
+pub struct DeviceMlp {
+    layers: Vec<DeviceLinear>,
+}
+
+impl DeviceMlp {
+    pub fn new(layers: Vec<DeviceLinear>) -> Self {
+        Self { layers }
+    }
+
+    pub fn layers(&self) -> &[DeviceLinear] {
+        &self.layers
+    }
+
+    /// Runs the stack; ReLU is applied after every layer except the last.
+    pub fn forward(&self, input: &DeviceTensor) -> Result<DeviceTensor, BackendError> {
+        Ok(self.forward_with_cache(input)?.0)
+    }
+
+    /// Forward pass that also returns the input of every layer.
+    pub fn forward_with_cache(
+        &self,
+        input: &DeviceTensor,
+    ) -> Result<(DeviceTensor, Vec<DeviceTensor>), BackendError> {
+        let mut inputs = Vec::with_capacity(self.layers.len());
+        let mut current = input.clone();
+        for (index, layer) in self.layers.iter().enumerate() {
+            inputs.push(current.clone());
+            let output = layer.forward(&inputs[index])?;
+            current = if index + 1 == self.layers.len() {
+                output
+            } else {
+                output.relu()?
+            };
+        }
+        Ok((current, inputs))
+    }
+
+    /// Backward pass over the cached layer inputs.
+    ///
+    /// Returns `(dx, [(dW, db), ...])` in layer order.
+    pub fn backward(
+        &self,
+        inputs: &[DeviceTensor],
+        grad_output: &DeviceTensor,
+    ) -> Result<MlpGradients, BackendError> {
+        assert_eq!(
+            inputs.len(),
+            self.layers.len(),
+            "one cached input per layer"
+        );
+        let mut gradients = vec![None; self.layers.len()];
+        let mut upstream = grad_output.clone();
+        let mut grad_input = None;
+
+        for index in (0..self.layers.len()).rev() {
+            let (grad_x, grad_w, grad_b) =
+                self.layers[index].backward(&inputs[index], &upstream)?;
+            gradients[index] = Some((grad_w, grad_b));
+            if index == 0 {
+                grad_input = Some(grad_x);
+            } else {
+                upstream = grad_x.mul(&inputs[index].positive_mask()?)?;
+            }
+        }
+
+        Ok((
+            grad_input.expect("at least one layer"),
+            gradients
+                .into_iter()
+                .map(|pair| pair.expect("gradient"))
+                .collect(),
+        ))
+    }
+}
+
+impl DeviceTensor {
+    /// Mean of every element as a `[1]` tensor, without leaving the device.
+    pub fn mean_scalar(&self) -> Result<Self, BackendError> {
+        match &self.storage {
+            Storage::Host(tensor) => Ok(Self::from_host(tensor.mean()?)),
+            #[cfg(feature = "candle")]
+            Storage::Candle { tensor, .. } => {
+                let mean = tensor
+                    .mean_all()
+                    .and_then(|mean| mean.reshape((1usize,)))
+                    .map_err(|error| BackendError::Backend(error.to_string()))?;
+                Ok(Self::from_candle(mean))
+            }
+        }
+    }
+}
+impl DeviceTensor {
+    /// Broadcasts a `[1]` or `[1, cols]` tensor to `[rows, cols]`.
+    pub fn broadcast_to_2d(&self, rows: usize, cols: usize) -> Result<Self, BackendError> {
+        match &self.storage {
+            Storage::Host(tensor) => {
+                let source = tensor.data();
+                let mut data = Vec::with_capacity(rows * cols);
+                match tensor.shape() {
+                    [1] => data.resize(rows * cols, source[0]),
+                    [1, source_cols] if *source_cols == cols => {
+                        for _ in 0..rows {
+                            data.extend_from_slice(source);
+                        }
+                    }
+                    [source_rows, source_cols] if *source_rows == rows && *source_cols == cols => {
+                        data.extend_from_slice(source);
+                    }
+                    shape => {
+                        return Err(BackendError::Backend(format!(
+                            "cannot broadcast shape {shape:?} to [{rows}, {cols}]"
+                        )));
+                    }
+                }
+                Ok(Self::from_host(Tensor::new(data, vec![rows, cols])?))
+            }
+            #[cfg(feature = "candle")]
+            Storage::Candle { tensor, .. } => {
+                let broadcast = tensor
+                    .broadcast_as((rows, cols))
+                    .map_err(|error| BackendError::Backend(error.to_string()))?;
+                Ok(Self::from_candle(broadcast))
+            }
+        }
     }
 }

@@ -587,6 +587,13 @@ and re-exports.
   live on; mixing devices returns an error instead of silently copying. With
   `--features candle`, `Device::candle_cpu()` is testable here and
   `Device::candle_cuda(id)` uses the same path on a GPU build.
+- **Device-side backward skeleton**: `DeviceLinear` keeps `W`/`b` on the device,
+  runs `y = xW + b` there, and `backward` computes `dx = G Wᵀ`, `dW = xᵀ G` and
+  `db = ΣG` on the same device. `DeviceMlp` stacks those layers with ReLU
+  (`forward_with_cache` + `backward`), and tests compare `dx`, `dW` and `db` for
+  both layers with host autograd on `Cpu` and `Candle(Cpu)`. `DeviceValue` is the
+  device tape proper: `matmul`/`add`/`relu`/`mean`/`scale` build a graph with
+  topological backward, gradient accumulation and host-autograd parity tests.
 - Future backends implement `Backend` and reuse the same parity harness.
 
 Autograd and the model still operate on host `Tensor` values; making the training

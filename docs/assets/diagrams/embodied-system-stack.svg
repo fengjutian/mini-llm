@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="650" viewBox="0 0 1400 650" role="img" aria-labelledby="title desc">
+  <title id="title">具身智能的分层结构</title><desc id="desc">mini-llm 技术机制图</desc>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="currentColor"/></marker></defs>
+  <style>:root{color-scheme:light dark}.bg{fill:#f7f4ed}.title{fill:#172126;font:700 30px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.kicker{fill:#e45d32;font:700 16px ui-monospace,Consolas,monospace;letter-spacing:2px}.box{fill:#fffdf8;stroke:#c4bdb1;stroke-width:2}.box.hot{fill:#fff0e8;stroke:#e45d32}.box.cool{fill:#eaf3f7;stroke:#3178a5}.box.good{fill:#eaf4ec;stroke:#4f8b62}.label{fill:#172126;font:650 18px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.small{fill:#69777d;font:500 15px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.tiny{fill:#69777d;font:500 13px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.edge{color:#69777d;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.accent-edge{color:#e45d32;fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.axis{fill:none;stroke:#69777d;stroke-width:2}.grid{stroke:#c4bdb1;stroke-width:1;opacity:.45}.dot{stroke:#fffdf8;stroke-width:3}.area{opacity:.14}@media(prefers-color-scheme:dark){.bg{fill:#101416}.title,.label{fill:#edf2f3}.kicker{fill:#ef855d}.box{fill:#182024;stroke:#526168}.box.hot{fill:#32211c;stroke:#e17750}.box.cool{fill:#172934;stroke:#4d91bc}.box.good{fill:#192b20;stroke:#65a779}.small{fill:#a8b4b9}.tiny{fill:#a8b4b9}.grid{stroke:#3c484e}.dot{stroke:#101416}}</style>
+  <rect class="bg" width="1400" height="650" rx="24"/>
+  <text class="kicker" x="64" y="58">MINI-LLM · MECHANISM</text>
+  <text class="title" x="64" y="105">具身智能的分层结构</text>
+<rect class="box" x="90" y="250" width="200" height="96" rx="16"/>
+<text class="label" x="190.0" y="294.0" text-anchor="middle" font-size="18">传感器</text>
+<text class="small" x="190.0" y="320.0" text-anchor="middle">相机 / 激光雷达 / IMU</text>
+<path class="edge" d="M290 298 L345 298" marker-end="url(#arrow)"/>
+<rect class="box hot" x="345" y="250" width="200" height="96" rx="16"/>
+<text class="label" x="445.0" y="294.0" text-anchor="middle" font-size="18">感知</text>
+<text class="small" x="445.0" y="320.0" text-anchor="middle">检测、分割、位姿</text>
+<path class="edge" d="M545 298 L600 298" marker-end="url(#arrow)"/>
+<rect class="box" x="600" y="250" width="200" height="96" rx="16"/>
+<text class="label" x="700.0" y="294.0" text-anchor="middle" font-size="18">世界模型</text>
+<text class="small" x="700.0" y="320.0" text-anchor="middle">状态估计与预测</text>
+<path class="edge" d="M800 298 L855 298" marker-end="url(#arrow)"/>
+<rect class="box hot" x="855" y="250" width="200" height="96" rx="16"/>
+<text class="label" x="955.0" y="294.0" text-anchor="middle" font-size="18">策略</text>
+<text class="small" x="955.0" y="320.0" text-anchor="middle">规划与决策</text>
+<path class="edge" d="M1055 298 L1110 298" marker-end="url(#arrow)"/>
+<rect class="box" x="1110" y="250" width="200" height="96" rx="16"/>
+<text class="label" x="1210.0" y="294.0" text-anchor="middle" font-size="18">执行器</text>
+<text class="small" x="1210.0" y="320.0" text-anchor="middle">关节、夹爪、底盘</text>
+<path class="accent-edge" d="M1190 346 L1190 470 L190 470 L190 346" marker-end="url(#arrow)"/>
+<text class="tiny" x="690" y="500" text-anchor="middle">环境反馈：行动改变世界，世界又改变下一次观测</text>
+<text class="tiny" x="90" y="570" text-anchor="start">具身智能的“身体”不只是执行器，它同时决定了系统能感知什么、能做什么。</text>
+</svg>
