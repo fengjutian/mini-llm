@@ -15,6 +15,7 @@ pub fn run(arguments: &[String]) {
     let mut top_k = None;
     let mut top_p = None;
     let mut batch = 1usize;
+    let mut seed = 2024u64;
     let mut index = 0;
     while index < arguments.len() {
         let argument = &arguments[index];
@@ -25,6 +26,15 @@ pub fn run(arguments: &[String]) {
             index += 2;
         } else if let Some(value) = argument.strip_prefix("--top-k=") {
             top_k = value.parse().ok();
+            index += 1;
+        } else if argument == "--seed" {
+            seed = arguments
+                .get(index + 1)
+                .and_then(|value| value.parse().ok())
+                .unwrap_or(seed);
+            index += 2;
+        } else if let Some(value) = argument.strip_prefix("--seed=") {
+            seed = value.parse().unwrap_or(seed);
             index += 1;
         } else if argument == "--batch" {
             batch = arguments
@@ -93,7 +103,7 @@ pub fn run(arguments: &[String]) {
             .expect("filtered prompt encodes")
     };
 
-    let mut rng = Rng::new(2024);
+    let mut rng = Rng::new(seed);
     if batch > 1 {
         let prompts = vec![encoded.clone(); batch];
         let generated = model

@@ -15,7 +15,10 @@ const MAGIC: &[u8; 8] = b"MINILLM1";
 /// Version 1 stored only the five base dimensions. Version 2 adds the modern
 /// architecture switches, version 3 the training state, and version 4 tags the
 /// tokenizer (character-level or BPE). Older checkpoints still load.
-const VERSION: u32 = 4;
+const VERSION: u32 = 5;
+
+const DTYPE_F32: u32 = 0;
+const DTYPE_F16: u32 = 1;
 
 const TOKENIZER_CHAR: u32 = 0;
 const TOKENIZER_BPE: u32 = 1;
@@ -26,7 +29,7 @@ pub fn save_checkpoint(
     model: &TinyGpt,
     tokenizer: &Tokenizer,
 ) -> Result<(), TrainError> {
-    write_checkpoint(path, model, tokenizer, None)
+    write_checkpoint(path, model, tokenizer, None, false)
 }
 
 /// Writes `model`, its vocabulary and the run state needed to resume exactly.
@@ -36,7 +39,26 @@ pub fn save_training_checkpoint(
     tokenizer: &Tokenizer,
     state: &TrainingState,
 ) -> Result<(), TrainError> {
-    write_checkpoint(path, model, tokenizer, Some(state))
+    write_checkpoint(path, model, tokenizer, Some(state), false)
+}
+
+/// Writes `model` and its vocabulary with f16 parameter storage (no state).
+pub fn save_checkpoint_f16(
+    path: impl AsRef<Path>,
+    model: &TinyGpt,
+    tokenizer: &Tokenizer,
+) -> Result<(), TrainError> {
+    write_checkpoint(path, model, tokenizer, None, true)
+}
+
+/// Writes `model`, its vocabulary and the run state with f16 parameters.
+pub fn save_training_checkpoint_f16(
+    path: impl AsRef<Path>,
+    model: &TinyGpt,
+    tokenizer: &Tokenizer,
+    state: &TrainingState,
+) -> Result<(), TrainError> {
+    write_checkpoint(path, model, tokenizer, Some(state), true)
 }
 
 fn write_checkpoint(
@@ -44,6 +66,7 @@ fn write_checkpoint(
     model: &TinyGpt,
     tokenizer: &Tokenizer,
     state: Option<&TrainingState>,
+    f16: bool,
 ) -> Result<(), TrainError> {
     if tokenizer.vocab_size() != model.config().vocab_size {
         return Err(TrainError::InvalidVocabulary);
@@ -52,6 +75,7 @@ fn write_checkpoint(
     let mut bytes = Vec::new();
     bytes.extend_from_slice(MAGIC);
     push_u32(&mut bytes, VERSION);
+    push_u32(&mut bytes, if f16 { DTYPE_F16 } else { DTYPE_F32 });
 
     let config = model.config();
     for value in [
@@ -96,8 +120,14 @@ fn write_checkpoint(
         for &dimension in value.shape() {
             push_u32(&mut bytes, dimension as u32);
         }
-        for entry in value.data() {
-            bytes.extend_from_slice(&entry.to_le_bytes());
+        if f16 {
+            for entry in value.data() {
+                bytes.extend_from_slice(&mini_llm_tensor::f32_to_f16(*entry).to_le_bytes());
+            }
+        } else {
+            for entry in value.data() {
+                bytes.extend_from_slice(&entry.to_le_bytes());
+            }
         }
     }
 
@@ -153,6 +183,17 @@ fn load_components(
     let version = reader.u32()?;
     if version == 0 || version > VERSION {
         return Err(TrainError::UnsupportedVersion(version));
+    }
+    let dtype = if version >= 5 {
+        reader.u32()?
+    } else {
+        DTYPE_F32
+    };
+    if dtype != DTYPE_F32 && dtype != DTYPE_F16 {
+        return Err(TrainError::InvalidArchitecture {
+            field: "dtype",
+            value: dtype,
+        });
     }
 
     let vocab_size = reader.u32()? as usize;
@@ -263,8 +304,14 @@ fn load_components(
         }
         let length: usize = shape.iter().product();
         let mut data = Vec::with_capacity(length);
-        for _ in 0..length {
-            data.push(reader.f32()?);
+        if dtype == DTYPE_F16 {
+            for _ in 0..length {
+                data.push(mini_llm_tensor::f16_to_f32(reader.u16()?));
+            }
+        } else {
+            for _ in 0..length {
+                data.push(reader.f32()?);
+            }
         }
         parameter.set_value(Tensor::new(data, shape)?)?;
     }
@@ -364,6 +411,13 @@ impl<'a> Reader<'a> {
         let mut buffer = [0u8; 8];
         buffer.copy_from_slice(bytes);
         Ok(u64::from_le_bytes(buffer))
+    }
+
+    fn u16(&mut self) -> Result<u16, TrainError> {
+        let bytes = self.take(2)?;
+        let mut buffer = [0u8; 2];
+        buffer.copy_from_slice(bytes);
+        Ok(u16::from_le_bytes(buffer))
     }
 
     fn f32(&mut self) -> Result<f32, TrainError> {

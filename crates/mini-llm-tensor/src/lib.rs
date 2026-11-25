@@ -3,8 +3,10 @@
 
 mod broadcast;
 mod error;
+mod half;
 mod matrix;
 mod tensor;
 
 pub use error::TensorError;
+pub use half::{f16_to_f32, f32_to_f16};
 pub use tensor::Tensor;

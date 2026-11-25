@@ -42,7 +42,8 @@ mod checkpoint;
 mod recipes;
 
 pub use checkpoint::{
-    load_checkpoint, load_training_checkpoint, save_checkpoint, save_training_checkpoint,
+    load_checkpoint, load_training_checkpoint, save_checkpoint, save_checkpoint_f16,
+    save_training_checkpoint, save_training_checkpoint_f16,
 };
 pub use recipes::{dpo_loss, grpo_loss, sequence_log_prob};
 

@@ -1,8 +1,9 @@
-//! Character-level Tiny GPT training on the built-in corpus.
+//! Tiny GPT training with configurable shape, schedule, clipping, validation,
+//! best-checkpoint tracking and exact resumption.
 //!
-//! Splits the corpus into train/validation windows, uses warmup+cosine learning
-//! rate and gradient clipping, and saves a checkpoint that can be resumed
-//! exactly (optimizer moments, RNG and step counter included).
+//! Model dimensions come from flags (`--hidden`, `--layers`, `--heads`,
+//! `--kv-heads`, `--block`), data from `--corpus` (file, directory or several
+//! paths), and training from `--seed`, `--dropout`, `--accum`, `--early-stop`.
 
 use std::time::Instant;
 
@@ -10,22 +11,33 @@ use mini_llm_data::{BpeTokenizer, CharTokenizer, TextDataset, Tokenizer};
 use mini_llm_model::{ModelConfig, TinyGpt};
 use mini_llm_nn::Rng;
 use mini_llm_train::{
-    load_training_checkpoint, save_training_checkpoint, EarlyStopping, LrSchedule, TrainConfig,
-    Trainer,
+    load_training_checkpoint, save_training_checkpoint, save_training_checkpoint_f16,
+    EarlyStopping, LrSchedule, TrainConfig, Trainer,
 };
 
 use super::{corpus_text, parse_accumulation, CHECKPOINT_PATH};
 
-const BLOCK_SIZE: usize = 48;
 const BATCH_SIZE: usize = 2;
 const DEFAULT_STEPS: usize = 800;
 const WARMUP_STEPS: usize = 40;
 const GRAD_CLIP: f32 = 1.0;
 const VALIDATION_FRACTION: f32 = 0.1;
 
+/// Model dimensions and seed, all overridable from the command line.
+struct ModelShape {
+    hidden: usize,
+    layers: usize,
+    heads: usize,
+    kv_heads: usize,
+    block: usize,
+    seed: u64,
+}
+
 pub fn run(arguments: &[String]) {
+    let shape = parse_shape(arguments);
     let resume = arguments.iter().any(|argument| argument == "--resume");
     let use_bpe = arguments.iter().any(|argument| argument == "--bpe");
+    let f16 = arguments.iter().any(|argument| argument == "--f16");
     let vocab_size = parse_vocab_size(arguments);
     let dropout = parse_dropout(arguments);
     let accumulation = parse_accumulation(arguments);
@@ -34,8 +46,7 @@ pub fn run(arguments: &[String]) {
         .and_then(|value| value.parse::<usize>().ok())
         .unwrap_or(DEFAULT_STEPS);
 
-    let corpus = corpus_text(arguments);
-    let (text, corpus_label) = corpus;
+    let (text, corpus_label) = corpus_text(arguments);
 
     let resumed = if resume {
         match load_training_checkpoint(CHECKPOINT_PATH) {
@@ -60,7 +71,7 @@ pub fn run(arguments: &[String]) {
             } else {
                 Tokenizer::from(CharTokenizer::from_text(&text))
             };
-            let model = build_model(tokenizer.vocab_size(), dropout);
+            let model = build_model(tokenizer.vocab_size(), dropout, &shape);
             (tokenizer, model, None)
         }
     };
@@ -72,15 +83,17 @@ pub fn run(arguments: &[String]) {
             std::process::exit(2);
         }
     };
-    if tokens.len() <= BLOCK_SIZE + 1 {
-        eprintln!("`{corpus_label}` is too short: need more than {BLOCK_SIZE} tokens");
+    let block = model.config().max_seq_len;
+    let minimum = 2 * (block + 1);
+    if tokens.len() < minimum {
+        eprintln!("`{corpus_label}` is too short: need at least {minimum} tokens");
         std::process::exit(2);
     }
 
-    let (train_tokens, validation_tokens) = split_tokens(&tokens, VALIDATION_FRACTION);
-    let train_dataset = TextDataset::new(train_tokens, BLOCK_SIZE).expect("train dataset");
+    let (train_tokens, validation_tokens) = split_tokens(&tokens, VALIDATION_FRACTION, block);
+    let train_dataset = TextDataset::new(train_tokens, block).expect("train dataset");
     let validation_dataset =
-        TextDataset::new(validation_tokens, BLOCK_SIZE).expect("validation dataset");
+        TextDataset::new(validation_tokens, block).expect("validation dataset");
 
     print_model_summary(
         &model,
@@ -96,7 +109,7 @@ pub fn run(arguments: &[String]) {
         batch_size: BATCH_SIZE,
         learning_rate: 3e-3,
         weight_decay: 0.01,
-        seed: 7,
+        seed: shape.seed,
     };
     let mut trainer = Trainer::new(model, train_dataset, config)
         .with_schedule(LrSchedule::WarmupCosine {
@@ -150,13 +163,13 @@ pub fn run(arguments: &[String]) {
             if stopper.observe(validation) {
                 best_validation = validation;
                 best_step = step;
-                save_training_checkpoint(
+                save_state(
                     CHECKPOINT_PATH,
                     trainer.model(),
                     &tokenizer,
                     &trainer.state(),
-                )
-                .expect("save checkpoint");
+                    f16,
+                );
                 if early_stop > 0 {
                     println!("    new best validation loss; checkpoint updated");
                 }
@@ -182,17 +195,47 @@ pub fn run(arguments: &[String]) {
 
     print_sample(trainer.model(), &tokenizer, &text);
     if early_stop == 0 || validation < best_validation {
-        persist(trainer.model(), &tokenizer, &trainer.state());
+        persist(trainer.model(), &tokenizer, &trainer.state(), f16);
     } else {
         println!();
         println!("best checkpoint kept: step {best_step}, validation {best_validation:.4}");
     }
 }
 
-fn split_tokens(tokens: &[usize], fraction: f32) -> (Vec<usize>, Vec<usize>) {
+fn split_tokens(tokens: &[usize], fraction: f32, block: usize) -> (Vec<usize>, Vec<usize>) {
     let split = ((tokens.len() as f32) * (1.0 - fraction)) as usize;
-    let split = split.clamp(BLOCK_SIZE + 1, tokens.len().saturating_sub(BLOCK_SIZE + 1));
+    let split = split.clamp(block + 1, tokens.len().saturating_sub(block + 1));
     (tokens[..split].to_vec(), tokens[split..].to_vec())
+}
+
+/// Reads a `--name N` / `--name=N` integer flag.
+fn parse_usize(arguments: &[String], name: &str) -> Option<usize> {
+    let prefix = format!("{name}=");
+    for (index, argument) in arguments.iter().enumerate() {
+        if argument == name {
+            return arguments.get(index + 1).and_then(|next| next.parse().ok());
+        }
+        if let Some(rest) = argument.strip_prefix(&prefix) {
+            return rest.parse().ok();
+        }
+    }
+    None
+}
+
+/// Reads a `--name N` / `--name=N` integer flag as `u64`.
+fn parse_u64(arguments: &[String], name: &str) -> Option<u64> {
+    parse_usize(arguments, name).map(|value| value as u64)
+}
+
+fn parse_shape(arguments: &[String]) -> ModelShape {
+    ModelShape {
+        hidden: parse_usize(arguments, "--hidden").unwrap_or(32),
+        layers: parse_usize(arguments, "--layers").unwrap_or(2),
+        heads: parse_usize(arguments, "--heads").unwrap_or(4),
+        kv_heads: parse_usize(arguments, "--kv-heads").unwrap_or(2),
+        block: parse_usize(arguments, "--block").unwrap_or(48),
+        seed: parse_u64(arguments, "--seed").unwrap_or(7),
+    }
 }
 
 /// Reads `--early-stop N` (evaluations without improvement); 0 disables it.
@@ -234,13 +277,19 @@ fn parse_vocab_size(arguments: &[String]) -> usize {
     value.unwrap_or(512).max(257)
 }
 
-fn build_model(vocab_size: usize, dropout: f32) -> TinyGpt {
+fn build_model(vocab_size: usize, dropout: f32, shape: &ModelShape) -> TinyGpt {
     let mut config = ModelConfig::modern(vocab_size);
     config.dropout = dropout;
-    config.hidden_size = 32;
-    config.max_seq_len = BLOCK_SIZE;
-    let mut rng = Rng::new(1337);
-    TinyGpt::new(config, &mut rng).expect("model")
+    config.hidden_size = shape.hidden;
+    config.num_layers = shape.layers;
+    config.num_heads = shape.heads;
+    config.num_kv_heads = shape.kv_heads;
+    config.max_seq_len = shape.block;
+    let mut rng = Rng::new(shape.seed);
+    TinyGpt::new(config, &mut rng).unwrap_or_else(|error| {
+        eprintln!("invalid model shape: {error}");
+        std::process::exit(2);
+    })
 }
 
 fn print_model_summary(
@@ -262,7 +311,7 @@ fn print_model_summary(
         "  corpus: {corpus_label} ({} chars), vocab {}, {} training windows ({} held out)",
         text.chars().count(),
         tokenizer.vocab_size(),
-        tokens - BLOCK_SIZE,
+        tokens.saturating_sub(config.max_seq_len),
         (tokens as f32 * VALIDATION_FRACTION) as usize
     );
     println!(
@@ -301,9 +350,30 @@ fn print_sample(model: &TinyGpt, tokenizer: &Tokenizer, text: &str) {
     println!("{}", tokenizer.decode(&generated).expect("decode"));
 }
 
-fn persist(model: &TinyGpt, tokenizer: &Tokenizer, state: &mini_llm_train::TrainingState) {
+fn persist(
+    model: &TinyGpt,
+    tokenizer: &Tokenizer,
+    state: &mini_llm_train::TrainingState,
+    f16: bool,
+) {
     std::fs::create_dir_all("checkpoints").ok();
-    save_training_checkpoint(CHECKPOINT_PATH, model, tokenizer, state).expect("save checkpoint");
+    save_state(CHECKPOINT_PATH, model, tokenizer, state, f16);
     println!();
     println!("checkpoint saved to {CHECKPOINT_PATH}");
+}
+
+/// Saves with f32 or f16 parameter storage.
+fn save_state(
+    path: &str,
+    model: &TinyGpt,
+    tokenizer: &Tokenizer,
+    state: &mini_llm_train::TrainingState,
+    f16: bool,
+) {
+    let result = if f16 {
+        save_training_checkpoint_f16(path, model, tokenizer, state)
+    } else {
+        save_training_checkpoint(path, model, tokenizer, state)
+    };
+    result.expect("save checkpoint");
 }

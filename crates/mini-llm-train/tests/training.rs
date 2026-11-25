@@ -7,8 +7,8 @@ use mini_llm_model::{ModelConfig, TinyGpt};
 use mini_llm_nn::Rng;
 use mini_llm_trace::{Event, MemorySink};
 use mini_llm_train::{
-    load_checkpoint, load_training_checkpoint, save_checkpoint, save_training_checkpoint,
-    EarlyStopping, LrSchedule, TrainConfig, TrainError, Trainer,
+    load_checkpoint, load_training_checkpoint, save_checkpoint, save_checkpoint_f16,
+    save_training_checkpoint, EarlyStopping, LrSchedule, TrainConfig, TrainError, Trainer,
 };
 
 fn tokenizer() -> CharTokenizer {
@@ -319,4 +319,33 @@ fn early_stopping_tracks_best_and_patience() {
     disabled.observe(2.0);
     disabled.observe(3.0);
     assert!(!disabled.should_stop());
+}
+
+#[test]
+fn f16_checkpoint_is_smaller_and_roundtrips() {
+    let trainer = trainer(1);
+    let f32_path = temp_path("f32");
+    let f16_path = temp_path("f16");
+    save_checkpoint(&f32_path, trainer.model(), &tokenizer_enum()).unwrap();
+    save_checkpoint_f16(&f16_path, trainer.model(), &tokenizer_enum()).unwrap();
+
+    let size32 = std::fs::metadata(&f32_path).unwrap().len();
+    let size16 = std::fs::metadata(&f16_path).unwrap().len();
+    assert!(
+        size16 < size32,
+        "f16 {size16} should be smaller than f32 {size32}"
+    );
+
+    let (loaded, _) = load_checkpoint(&f16_path).unwrap();
+    for (original, restored) in trainer.model().parameters().iter().zip(loaded.parameters()) {
+        for (a, b) in original.data().iter().zip(restored.data()) {
+            assert!(
+                (a - b).abs() <= a.abs() * 1e-3 + 1e-4,
+                "{a} vs {b} after f16 roundtrip"
+            );
+        }
+    }
+
+    let _ = std::fs::remove_file(f32_path);
+    let _ = std::fs::remove_file(f16_path);
 }

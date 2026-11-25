@@ -52,6 +52,9 @@ cargo run -p mini-llm-cli -- train       # modern Tiny GPT (RMSNorm/RoPE/SwiGLU/
 cargo run -p mini-llm-cli -- train 200 --corpus examples/corpus.txt   # train on a text file
 cargo run -p mini-llm-cli -- train 200 --dropout 0.1   # residual dropout
 cargo run -p mini-llm-cli -- train 200 --early-stop 3  # keep the best checkpoint
+cargo run -p mini-llm-cli -- train 200 --hidden 64 --layers 3 --block 64
+cargo run -p mini-llm-cli -- train 200 --f16        # half-precision checkpoint
+cargo run -p mini-llm-cli -- generate "The" 20 0.8 --seed 7
 cargo run -p mini-llm-cli -- train 200 --bpe --vocab 300 --corpus examples/corpus.txt
 cargo run -p mini-llm-cli -- train 200 --resume   # continue from the saved step
 cargo run -p mini-llm-cli -- eval        # validation loss of the saved checkpoint
@@ -86,6 +89,9 @@ The training loop includes what a real run needs:
   micro-batches before one optimizer update, trading time for a larger effective
   batch (`batch_size × N`); a test checks that accumulating two identical batches
   matches a plain single-batch step.
+- **Model shape and seed flags** — `--hidden`, `--layers`, `--heads`,
+  `--kv-heads`, `--block` and `--seed` override the demo configuration; an
+  invalid shape exits with the configuration error instead of panicking.
 - **Best checkpoint and early stopping** — validation loss is evaluated every
   50 steps; with `--early-stop N` the checkpoint is rewritten on every
   improvement and training stops after `N` evaluations without one, leaving the
@@ -239,19 +245,24 @@ The training stack:
 | `mini-llm-data` | `CharTokenizer` (sorted, deterministic vocabulary), `BpeTokenizer` (byte-level merges) and `TextDataset` (random windows, targets shifted by one) |
 | `mini-llm-train` | `Trainer` (sample → forward → cross-entropy → backward → AdamW), LR schedule, gradient clipping, validation loss, checkpoint save/load with resumable state |
 
-Checkpoints are a dependency-free little-endian format (version 4 tags the
-tokenizer, version 3 appends the training state; older versions still load):
+Checkpoints are a dependency-free little-endian format (version 5 adds the
+parameter dtype, version 4 the tokenizer tag, version 3 the training state;
+older versions still load):
 
 ```text
-magic "MINILLM1" | version u32 | 10 config u32s
+magic "MINILLM1" | version u32 | dtype u32 (0 = f32, 1 = f16) | 10 config u32s
 tokenizer_kind u32 (0 = char, 1 = BPE)
   char: vocab_size u32 | vocab_size × (char as u32)
   bpe:  merge_count u32 | merge_count × (left u32, right u32)
-parameter_count u32 | parameter_count × { rank u32 | dims | f32 data }
+parameter_count u32 | parameter_count × { rank u32 | dims | data (f32 or f16) }
 has_state u32 (1 = the training state follows)
   step u32 | rng_state u64 | optimizer_step u32
   first_moments, second_moments: count u32 | count × { len u32 | f32 data }
 ```
+
+`train --f16` writes f16 parameters, which roughly halves the weight bytes;
+training and inference still compute in f32, and loading dequantizes back to
+f32 (so a resumed f16 run sees slightly rounded weights).
 
 A 420-character corpus, 31-character vocabulary, 2 layers, 4 heads (2 KV heads),
 hidden size 32 and a 48-token context give a ~34k-parameter model. After 800

@@ -121,10 +121,11 @@ fn usage() {
     println!("  train-line           fit y = 2x - 1 with manual SGD");
     println!("  xor                  train a small MLP on XOR (Linear + Tanh + AdamW)");
     println!("  classify             train a 2D two-blob classifier with softmax + cross-entropy");
-    println!("  train [steps]        train Tiny GPT (--resume, --accum N, --dropout P,");
-    println!("                       --early-stop N, --corpus PATH)");
+    println!("  train [steps]        train Tiny GPT; model: --hidden N --layers N --heads N");
+    println!("                       --kv-heads N --block N; training: --seed N --dropout P");
+    println!("                       --accum N --early-stop N --resume --corpus PATH[,PATH]");
     println!("                       `--corpus` accepts several paths or a directory");
-    println!("  generate [prompt] [tokens] [temp] [--top-k N] [--top-p P] [--batch N]");
+    println!("  generate [prompt] [tokens] [temp] [--top-k N] [--top-p P] [--batch N] [--seed N]");
     println!("                       sample text from the saved checkpoint (KV cache)");
     println!("  moe                  mixture-of-experts routing demo");
     println!("  eval [batches]       validation loss (flag: --corpus PATH)");
