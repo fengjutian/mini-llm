@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="650" viewBox="0 0 1400 650" role="img" aria-labelledby="title desc">
+  <title id="title">一次模型请求的延迟分解</title><desc id="desc">mini-llm 技术机制图</desc>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="currentColor"/></marker></defs>
+  <style>:root{color-scheme:light dark}.bg{fill:#f7f4ed}.title{fill:#172126;font:700 30px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.kicker{fill:#e45d32;font:700 16px ui-monospace,Consolas,monospace;letter-spacing:2px}.box{fill:#fffdf8;stroke:#c4bdb1;stroke-width:2}.box.hot{fill:#fff0e8;stroke:#e45d32}.box.cool{fill:#eaf3f7;stroke:#3178a5}.box.good{fill:#eaf4ec;stroke:#4f8b62}.label{fill:#172126;font:650 18px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.small{fill:#69777d;font:500 15px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.tiny{fill:#69777d;font:500 13px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.edge{color:#69777d;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.accent-edge{color:#e45d32;fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.axis{fill:none;stroke:#69777d;stroke-width:2}.grid{stroke:#c4bdb1;stroke-width:1;opacity:.45}.dot{stroke:#fffdf8;stroke-width:3}.area{opacity:.14}@media(prefers-color-scheme:dark){.bg{fill:#101416}.title,.label{fill:#edf2f3}.kicker{fill:#ef855d}.box{fill:#182024;stroke:#526168}.box.hot{fill:#32211c;stroke:#e17750}.box.cool{fill:#172934;stroke:#4d91bc}.box.good{fill:#192b20;stroke:#65a779}.small{fill:#a8b4b9}.tiny{fill:#a8b4b9}.grid{stroke:#3c484e}.dot{stroke:#101416}}</style>
+  <rect class="bg" width="1400" height="650" rx="24"/>
+  <text class="kicker" x="64" y="58">MINI-LLM · MECHANISM</text>
+  <text class="title" x="64" y="105">一次模型请求的延迟分解</text>
+<rect class="box cool" x="110" y="260" width="110" height="76" rx="8"/>
+<text class="small" x="165.0" y="300" text-anchor="middle">排队</text>
+<text class="tiny" x="165.0" y="242" text-anchor="middle">Queue Time</text>
+<rect class="box cool" x="220" y="260" width="90" height="76" rx="8"/>
+<text class="small" x="265.0" y="300" text-anchor="middle">网络</text>
+<text class="tiny" x="265.0" y="242" text-anchor="middle">Network Time</text>
+<rect class="box hot" x="310" y="260" width="300" height="76" rx="8"/>
+<text class="small" x="460.0" y="300" text-anchor="middle">首 Token</text>
+<text class="tiny" x="460.0" y="242" text-anchor="middle">Time To First Token</text>
+<rect class="box hot" x="610" y="260" width="360" height="76" rx="8"/>
+<text class="small" x="790.0" y="300" text-anchor="middle">逐 Token</text>
+<text class="tiny" x="790.0" y="242" text-anchor="middle">Token Generation</text>
+<rect class="box cool" x="970" y="260" width="140" height="76" rx="8"/>
+<text class="small" x="1040.0" y="300" text-anchor="middle">后处理</text>
+<text class="tiny" x="1040.0" y="242" text-anchor="middle">Response Processing</text>
+<line class="axis" x1="110" y1="360" x2="1110" y2="360"/>
+<text class="tiny" x="110" y="395" text-anchor="start">端到端延迟 = 各段之和；首 Token 与逐 Token 通常占大头。</text>
+<text class="tiny" x="110" y="440" text-anchor="start">只看总延迟无法优化：必须把 Queue / Network / Prefill / Decode 拆开。</text>
+</svg>

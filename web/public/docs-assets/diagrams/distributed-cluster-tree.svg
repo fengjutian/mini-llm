@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="650" viewBox="0 0 1400 650" role="img" aria-labelledby="title desc">
+  <title id="title">集群的层次结构</title><desc id="desc">mini-llm 技术机制图</desc>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="currentColor"/></marker></defs>
+  <style>:root{color-scheme:light dark}.bg{fill:#f7f4ed}.title{fill:#172126;font:700 30px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.kicker{fill:#e45d32;font:700 16px ui-monospace,Consolas,monospace;letter-spacing:2px}.box{fill:#fffdf8;stroke:#c4bdb1;stroke-width:2}.box.hot{fill:#fff0e8;stroke:#e45d32}.box.cool{fill:#eaf3f7;stroke:#3178a5}.box.good{fill:#eaf4ec;stroke:#4f8b62}.label{fill:#172126;font:650 18px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.small{fill:#69777d;font:500 15px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.tiny{fill:#69777d;font:500 13px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.edge{color:#69777d;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.accent-edge{color:#e45d32;fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.axis{fill:none;stroke:#69777d;stroke-width:2}.grid{stroke:#c4bdb1;stroke-width:1;opacity:.45}.dot{stroke:#fffdf8;stroke-width:3}.area{opacity:.14}@media(prefers-color-scheme:dark){.bg{fill:#101416}.title,.label{fill:#edf2f3}.kicker{fill:#ef855d}.box{fill:#182024;stroke:#526168}.box.hot{fill:#32211c;stroke:#e17750}.box.cool{fill:#172934;stroke:#4d91bc}.box.good{fill:#192b20;stroke:#65a779}.small{fill:#a8b4b9}.tiny{fill:#a8b4b9}.grid{stroke:#3c484e}.dot{stroke:#101416}}</style>
+  <rect class="bg" width="1400" height="650" rx="24"/>
+  <text class="kicker" x="64" y="58">MINI-LLM · MECHANISM</text>
+  <text class="title" x="64" y="105">集群的层次结构</text>
+<rect class="box hot" x="600" y="130" width="200" height="62" rx="16"/>
+<text class="label" x="700.0" y="168.0" text-anchor="middle" font-size="20">Agent Cluster</text>
+<path class="edge" d="M700 192 L210 236" marker-end="url(#arrow)"/>
+<rect class="box cool" x="60" y="236" width="300" height="58" rx="16"/>
+<text class="label" x="210.0" y="270.95" text-anchor="middle" font-size="17">Node 01</text>
+<line class="axis" x1="72" y1="294" x2="72" y2="484"/>
+<line class="axis" x1="72" y1="355" x2="94" y2="355"/>
+<rect class="box" x="94" y="330" width="270" height="50" rx="16"/>
+<text class="label" x="229.0" y="359.9" text-anchor="middle" font-size="14">Agent Worker</text>
+<line class="axis" x1="72" y1="431" x2="94" y2="431"/>
+<rect class="box" x="94" y="406" width="270" height="50" rx="16"/>
+<text class="label" x="229.0" y="435.9" text-anchor="middle" font-size="14">CPU Runtime</text>
+<line class="axis" x1="72" y1="507" x2="94" y2="507"/>
+<rect class="box" x="94" y="482" width="270" height="50" rx="16"/>
+<text class="label" x="229.0" y="511.9" text-anchor="middle" font-size="14">Tool Executor</text>
+<path class="edge" d="M700 192 L540 236" marker-end="url(#arrow)"/>
+<rect class="box cool" x="390" y="236" width="300" height="58" rx="16"/>
+<text class="label" x="540.0" y="270.95" text-anchor="middle" font-size="17">Node 02</text>
+<line class="axis" x1="402" y1="294" x2="402" y2="484"/>
+<line class="axis" x1="402" y1="355" x2="424" y2="355"/>
+<rect class="box" x="424" y="330" width="270" height="50" rx="16"/>
+<text class="label" x="559.0" y="359.9" text-anchor="middle" font-size="14">Agent Worker</text>
+<line class="axis" x1="402" y1="431" x2="424" y2="431"/>
+<rect class="box" x="424" y="406" width="270" height="50" rx="16"/>
+<text class="label" x="559.0" y="435.9" text-anchor="middle" font-size="14">GPU Runtime</text>
+<line class="axis" x1="402" y1="507" x2="424" y2="507"/>
+<rect class="box" x="424" y="482" width="270" height="50" rx="16"/>
+<text class="label" x="559.0" y="511.9" text-anchor="middle" font-size="14">Model Client</text>
+<path class="edge" d="M700 192 L870 236" marker-end="url(#arrow)"/>
+<rect class="box cool" x="720" y="236" width="300" height="58" rx="16"/>
+<text class="label" x="870.0" y="270.95" text-anchor="middle" font-size="17">Node 03</text>
+<line class="axis" x1="732" y1="294" x2="732" y2="484"/>
+<line class="axis" x1="732" y1="355" x2="754" y2="355"/>
+<rect class="box" x="754" y="330" width="270" height="50" rx="16"/>
+<text class="label" x="889.0" y="359.9" text-anchor="middle" font-size="14">Agent Worker</text>
+<line class="axis" x1="732" y1="431" x2="754" y2="431"/>
+<rect class="box" x="754" y="406" width="270" height="50" rx="16"/>
+<text class="label" x="889.0" y="435.9" text-anchor="middle" font-size="14">Browser Runtime</text>
+<line class="axis" x1="732" y1="507" x2="754" y2="507"/>
+<rect class="box" x="754" y="482" width="270" height="50" rx="16"/>
+<text class="label" x="889.0" y="511.9" text-anchor="middle" font-size="14">Sandbox</text>
+<path class="edge" d="M700 192 L1200 236" marker-end="url(#arrow)"/>
+<rect class="box cool" x="1050" y="236" width="300" height="58" rx="16"/>
+<text class="label" x="1200.0" y="270.95" text-anchor="middle" font-size="17">Node 04</text>
+<line class="axis" x1="1062" y1="294" x2="1062" y2="484"/>
+<line class="axis" x1="1062" y1="355" x2="1084" y2="355"/>
+<rect class="box" x="1084" y="330" width="270" height="50" rx="16"/>
+<text class="label" x="1219.0" y="359.9" text-anchor="middle" font-size="14">Agent Worker</text>
+<line class="axis" x1="1062" y1="431" x2="1084" y2="431"/>
+<rect class="box" x="1084" y="406" width="270" height="50" rx="16"/>
+<text class="label" x="1219.0" y="435.9" text-anchor="middle" font-size="14">Test Runtime</text>
+<line class="axis" x1="1062" y1="507" x2="1084" y2="507"/>
+<rect class="box" x="1084" y="482" width="270" height="50" rx="16"/>
+<text class="label" x="1219.0" y="511.9" text-anchor="middle" font-size="14">Code Executor</text>
+<text class="tiny" x="60" y="600" text-anchor="start">控制面负责调度与状态，数据面负责执行：节点之间的差别主要是运行时能力。</text>
+</svg>

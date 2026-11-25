@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="650" viewBox="0 0 1400 650" role="img" aria-labelledby="title desc">
+  <title id="title">Context Routing：同一份存储，不同的视图</title><desc id="desc">mini-llm 技术机制图</desc>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="currentColor"/></marker></defs>
+  <style>:root{color-scheme:light dark}.bg{fill:#f7f4ed}.title{fill:#172126;font:700 30px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.kicker{fill:#e45d32;font:700 16px ui-monospace,Consolas,monospace;letter-spacing:2px}.box{fill:#fffdf8;stroke:#c4bdb1;stroke-width:2}.box.hot{fill:#fff0e8;stroke:#e45d32}.box.cool{fill:#eaf3f7;stroke:#3178a5}.box.good{fill:#eaf4ec;stroke:#4f8b62}.label{fill:#172126;font:650 18px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.small{fill:#69777d;font:500 15px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.tiny{fill:#69777d;font:500 13px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.edge{color:#69777d;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.accent-edge{color:#e45d32;fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.axis{fill:none;stroke:#69777d;stroke-width:2}.grid{stroke:#c4bdb1;stroke-width:1;opacity:.45}.dot{stroke:#fffdf8;stroke-width:3}.area{opacity:.14}@media(prefers-color-scheme:dark){.bg{fill:#101416}.title,.label{fill:#edf2f3}.kicker{fill:#ef855d}.box{fill:#182024;stroke:#526168}.box.hot{fill:#32211c;stroke:#e17750}.box.cool{fill:#172934;stroke:#4d91bc}.box.good{fill:#192b20;stroke:#65a779}.small{fill:#a8b4b9}.tiny{fill:#a8b4b9}.grid{stroke:#3c484e}.dot{stroke:#101416}}</style>
+  <rect class="bg" width="1400" height="650" rx="24"/>
+  <text class="kicker" x="64" y="58">MINI-LLM · MECHANISM</text>
+  <text class="title" x="64" y="105">Context Routing：同一份存储，不同的视图</text>
+<rect class="box hot" x="560" y="130" width="240" height="56" rx="16"/>
+<text class="label" x="680.0" y="164.3" text-anchor="middle" font-size="18">Context Store</text>
+<path class="edge" d="M680 186 L680 220" marker-end="url(#arrow)"/>
+<rect class="box hot" x="560" y="220" width="240" height="56" rx="16"/>
+<text class="label" x="680.0" y="254.3" text-anchor="middle" font-size="18">Context Router</text>
+<line class="axis" x1="680" y1="276" x2="680" y2="300"/>
+<line class="axis" x1="200" y1="300" x2="1160" y2="300"/>
+<path class="edge" d="M200 300 L200 350" marker-end="url(#arrow)"/>
+<rect class="box cool" x="110" y="350" width="180" height="56" rx="16"/>
+<text class="label" x="200.0" y="384.3" text-anchor="middle" font-size="18">Planner</text>
+<path class="edge" d="M200 406 L200 450" marker-end="url(#arrow)"/>
+<path class="edge" d="M680 300 L680 350" marker-end="url(#arrow)"/>
+<rect class="box cool" x="590" y="350" width="180" height="56" rx="16"/>
+<text class="label" x="680.0" y="384.3" text-anchor="middle" font-size="18">Coder</text>
+<path class="edge" d="M680 406 L680 450" marker-end="url(#arrow)"/>
+<path class="edge" d="M1160 300 L1160 350" marker-end="url(#arrow)"/>
+<rect class="box cool" x="1070" y="350" width="180" height="56" rx="16"/>
+<text class="label" x="1160.0" y="384.3" text-anchor="middle" font-size="18">Tester</text>
+<path class="edge" d="M1160 406 L1160 450" marker-end="url(#arrow)"/>
+<rect class="box good" x="100" y="450" width="200" height="52" rx="16"/>
+<text class="label" x="200.0" y="481.25" text-anchor="middle" font-size="15">Plan Context</text>
+<rect class="box good" x="580" y="450" width="200" height="52" rx="16"/>
+<text class="label" x="680.0" y="481.25" text-anchor="middle" font-size="15">Code Context</text>
+<rect class="box good" x="1060" y="450" width="200" height="52" rx="16"/>
+<text class="label" x="1160.0" y="481.25" text-anchor="middle" font-size="15">Test Context</text>
+<text class="tiny" x="70" y="580" text-anchor="start">路由的依据不是“谁在问”，而是“这个 Agent 此刻需要看到什么”。</text>
+<text class="tiny" x="70" y="615" text-anchor="start">同一个仓库、同一份记忆，Planner 要摘要，Coder 要文件全文，Tester 要失败用例。</text>
+</svg>

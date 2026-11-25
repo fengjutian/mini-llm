@@ -787,7 +787,8 @@ fn check_cross_entropy_parity(device: &Device, tolerance: f32) {
     let logits = sample(4, 5, 1.5);
     let targets = [0usize, 2, 4, 1];
 
-    let host_logits = TensorValue::parameter(logits.data().to_vec(), logits.shape().to_vec()).unwrap();
+    let host_logits =
+        TensorValue::parameter(logits.data().to_vec(), logits.shape().to_vec()).unwrap();
     let host_loss = host_logits.cross_entropy(&targets).unwrap();
     host_loss.backward().unwrap();
 
@@ -806,7 +807,7 @@ fn check_cross_entropy_parity(device: &Device, tolerance: f32) {
     );
     assert_close(
         device_logits.grad().unwrap().to_host().unwrap().data(),
-        &host_logits.grad().unwrap().data(),
+        host_logits.grad().unwrap().data(),
         tolerance,
         "cross entropy gradient",
     );
@@ -825,18 +826,16 @@ fn device_cross_entropy_matches_host_autograd_on_candle() {
 
 fn check_rope_parity(device: &Device, tolerance: f32) {
     let x = sample(3, 4, 1.5);
-    let positions = [0i64, 1, 3];
+    let positions = [0usize, 1, 3];
     let (head_dim, base) = (2usize, 10_000.0f32);
 
     let host_x = TensorValue::parameter(x.data().to_vec(), x.shape().to_vec()).unwrap();
     let host_out = host_x.rope(head_dim, &positions, base).unwrap();
     host_out.mean().unwrap().backward().unwrap();
 
-    let device_x = DeviceValue::new(
-        DeviceTensor::from_host(x.clone()).to(device).unwrap(),
-        true,
-    );
-    let out = device_x.rope_rotate(head_dim, &positions, base).unwrap();
+    let device_x = DeviceValue::new(DeviceTensor::from_host(x.clone()).to(device).unwrap(), true);
+    let signed: Vec<i64> = positions.iter().map(|&position| position as i64).collect();
+    let out = device_x.rope_rotate(head_dim, &signed, base).unwrap();
     out.mean().unwrap().backward().unwrap();
 
     assert_close(
@@ -847,7 +846,7 @@ fn check_rope_parity(device: &Device, tolerance: f32) {
     );
     assert_close(
         device_x.grad().unwrap().to_host().unwrap().data(),
-        &host_x.grad().unwrap().data(),
+        host_x.grad().unwrap().data(),
         tolerance,
         "rope gradient",
     );
@@ -862,4 +861,104 @@ fn device_rope_matches_host_autograd_on_cpu() {
 #[test]
 fn device_rope_matches_host_autograd_on_candle() {
     check_rope_parity(&Device::candle_cpu(), 1e-4);
+}
+
+/// Trains a small device-resident FFN block with cross-entropy on a periodic
+/// corpus: embedding -> LayerNorm -> SwiGLU -> residual -> LayerNorm -> head.
+fn check_device_block_training(device: &Device, steps: usize, tolerance: f32) {
+    let (vocab, hidden, ffn) = (4usize, 8usize, 16usize);
+    let (batch, seq) = (4usize, 8usize);
+    let trainable = device_ffn_params(device, vocab, hidden, ffn);
+
+    let mut inputs = Vec::with_capacity(batch * seq);
+    let mut targets = Vec::with_capacity(batch * seq);
+    for position in 0..batch * seq {
+        inputs.push(position % vocab);
+        targets.push((position + 1) % vocab);
+    }
+
+    let mut parameters: Vec<DeviceTensor> = trainable;
+    let mut optimizer = DeviceAdamW::new(0.05);
+    let mut losses = Vec::with_capacity(steps);
+
+    for _ in 0..steps {
+        let nodes: Vec<DeviceValue> = parameters
+            .iter()
+            .map(|parameter| DeviceValue::new(parameter.clone(), true))
+            .collect();
+
+        let embedded = nodes[0].gather_rows(&inputs).unwrap();
+        let normed = embedded.layer_norm(&nodes[1], &nodes[2], 1e-5).unwrap();
+        let gate = normed.matmul(&nodes[3]).unwrap().add(&nodes[4]).unwrap();
+        let up = normed.matmul(&nodes[5]).unwrap().add(&nodes[6]).unwrap();
+        let activated = gate.silu().unwrap().mul(&up).unwrap();
+        let down = activated.matmul(&nodes[7]).unwrap().add(&nodes[8]).unwrap();
+        let residual = embedded.add(&down).unwrap();
+        let normed2 = residual.layer_norm(&nodes[9], &nodes[10], 1e-5).unwrap();
+        let logits = normed2.matmul(&nodes[11]).unwrap().add(&nodes[12]).unwrap();
+        let loss = logits.cross_entropy(&targets).unwrap();
+        loss.backward().unwrap();
+
+        losses.push(loss.data().to_host().unwrap().data()[0]);
+        let gradients: Vec<DeviceTensor> = nodes
+            .iter()
+            .map(|node| node.grad().expect("parameter gradient"))
+            .collect();
+        optimizer.step(&mut parameters, &gradients).unwrap();
+    }
+
+    let first = losses[0];
+    let last = *losses.last().unwrap();
+    assert!(
+        last < first * 0.8,
+        "loss should fall over {steps} steps: {first} -> {last}"
+    );
+    let expected_on_device = !matches!(device, Device::Cpu);
+    assert!(parameters
+        .iter()
+        .all(|parameter| parameter.is_on_device() == expected_on_device));
+
+    // The parameters must still produce the right shapes after training.
+    let shapes: Vec<Vec<usize>> = parameters
+        .iter()
+        .map(|param| param.shape().to_vec())
+        .collect();
+    assert_eq!(shapes[0], vec![vocab, hidden]);
+    assert_eq!(shapes[11], vec![hidden, vocab]);
+    let _ = tolerance;
+}
+
+fn device_ffn_params(
+    device: &Device,
+    vocab: usize,
+    hidden: usize,
+    ffn: usize,
+) -> Vec<DeviceTensor> {
+    let upload = |tensor: Tensor| DeviceTensor::from_host(tensor).to(device).unwrap();
+    vec![
+        upload(sample(vocab, hidden, 0.5)),
+        upload(sample(1, hidden, 0.1)),
+        upload(sample(1, hidden, 0.1)),
+        upload(sample(hidden, ffn, 0.5)),
+        upload(sample(1, ffn, 0.1)),
+        upload(sample(hidden, ffn, 0.5)),
+        upload(sample(1, ffn, 0.1)),
+        upload(sample(ffn, hidden, 0.5)),
+        upload(sample(1, hidden, 0.1)),
+        upload(sample(1, hidden, 0.1)),
+        upload(sample(1, hidden, 0.1)),
+        upload(sample(hidden, vocab, 0.5)),
+        upload(sample(1, vocab, 0.1)),
+    ]
+}
+
+#[test]
+fn device_ffn_block_trains_on_cpu() {
+    check_device_block_training(&Device::Cpu, 60, 1e-6);
+}
+
+#[cfg(feature = "candle")]
+#[test]
+fn device_ffn_block_trains_on_candle() {
+    check_device_block_training(&Device::candle_cpu(), 60, 1e-6);
 }

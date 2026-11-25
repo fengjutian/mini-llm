@@ -1023,13 +1023,9 @@ Late Fusion 是后期融合。
 
 不同模态先分别处理，再组合高层特征。
 
-```
-Image ──► Image Encoder ──► Image Feature ──┐
-                                           │
-Audio ──► Audio Encoder ──► Audio Feature ──┼──► Fusion
-                                           │
-Text ───► Text Encoder ───► Text Feature ──┘
-```
+![Late Fusion 先让每个模态独立编码，再在决策层融合](assets/diagrams/multimodal-late-fusion.svg)
+
+_图：Late Fusion 先让每个模态独立编码，再在决策层融合。_
 
 优点：
 
@@ -1050,15 +1046,9 @@ Intermediate Fusion 是中间层融合。
 
 例如：
 
-```
-Image Encoder ──► Image Features ──┐
-                                   │
-                                   ▼
-                              Cross Attention
-                                   ▲
-                                   │
-Text Encoder ───► Text Features ───┘
-```
+![Intermediate Fusion 在特征层用 Cross Attention 让图像与文本互相查询](assets/diagrams/multimodal-intermediate-fusion.svg)
+
+_图：Intermediate Fusion 在特征层用 Cross Attention 让图像与文本互相查询。_
 
 这类结构在视觉语言模型中非常常见。
 

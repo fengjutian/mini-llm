@@ -852,6 +852,7 @@ impl DeviceTensor {
     }
 
     /// One-hot rows for `targets`, uploaded to the same device.
+    #[cfg(feature = "candle")]
     fn one_hot(&self, targets: &[usize], rows: usize, cols: usize) -> Result<Self, BackendError> {
         let mut data = vec![0.0f32; rows * cols];
         for (row, &target) in targets.iter().enumerate() {
@@ -867,10 +868,7 @@ impl DeviceTensor {
     }
 
     /// Mean cross-entropy of logits against class targets, plus its gradient.
-    pub fn cross_entropy(
-        &self,
-        targets: &[usize],
-    ) -> Result<(Self, Self), BackendError> {
+    pub fn cross_entropy(&self, targets: &[usize]) -> Result<(Self, Self), BackendError> {
         let (rows, cols) = (self.shape()[0], self.shape()[1]);
         if targets.len() != rows {
             return Err(BackendError::Backend(format!(
@@ -884,7 +882,7 @@ impl DeviceTensor {
                 let data = tensor.data();
                 let mut grad = vec![0.0f32; rows * cols];
                 let mut loss = 0.0f32;
-                for row in 0..rows {
+                for (row, &target) in targets.iter().enumerate() {
                     let offset = row * cols;
                     let max = data[offset..offset + cols]
                         .iter()
@@ -894,7 +892,6 @@ impl DeviceTensor {
                     for col in 0..cols {
                         sum += (data[offset + col] - max).exp();
                     }
-                    let target = targets[row];
                     if target >= cols {
                         return Err(BackendError::Backend(format!(
                             "target {target} outside {cols} classes"
@@ -920,7 +917,10 @@ impl DeviceTensor {
                 let softmax = self.softmax_rows()?;
                 let log_prob = softmax.log()?;
                 let one_hot = self.one_hot(targets, rows, cols)?;
-                let loss = log_prob.mul(&one_hot)?.sum_all()?.scale(-1.0 / rows as f32)?;
+                let loss = log_prob
+                    .mul(&one_hot)?
+                    .sum_all()?
+                    .scale(-1.0 / rows as f32)?;
                 let grad = softmax
                     .add(&one_hot.scale(-1.0)?)?
                     .scale(1.0 / rows as f32)?;
@@ -953,18 +953,17 @@ impl DeviceTensor {
                 positions.len()
             )));
         }
-        let heads = cols / head_dim;
-        let half = head_dim / 2;
-        let frequencies: Vec<f32> = (0..half)
-            .map(|index| 1.0 / base.powf(2.0 * index as f32 / head_dim as f32))
-            .collect();
-
         match &self.storage {
-            Storage::Host(tensor) => {
-                Ok(Self::from_host(tensor.rope_rotate(head_dim, positions, base)?))
-            }
+            Storage::Host(tensor) => Ok(Self::from_host(
+                tensor.rope_rotate(head_dim, positions, base)?,
+            )),
             #[cfg(feature = "candle")]
             Storage::Candle { tensor, device } => {
+                let heads = cols / head_dim;
+                let half = head_dim / 2;
+                let frequencies: Vec<f32> = (0..half)
+                    .map(|index| 1.0 / base.powf(2.0 * index as f32 / head_dim as f32))
+                    .collect();
                 let mut cos_data = Vec::with_capacity(rows * half);
                 let mut sin_data = Vec::with_capacity(rows * half);
                 for &position in positions {
@@ -974,18 +973,10 @@ impl DeviceTensor {
                         sin_data.push(angle.sin());
                     }
                 }
-                let cos = candle_core::Tensor::from_vec(
-                    cos_data,
-                    (rows, 1, half, 1),
-                    device,
-                )
-                .map_err(|error| BackendError::Backend(error.to_string()))?;
-                let sin = candle_core::Tensor::from_vec(
-                    sin_data,
-                    (rows, 1, half, 1),
-                    device,
-                )
-                .map_err(|error| BackendError::Backend(error.to_string()))?;
+                let cos = candle_core::Tensor::from_vec(cos_data, (rows, 1, half, 1), device)
+                    .map_err(|error| BackendError::Backend(error.to_string()))?;
+                let sin = candle_core::Tensor::from_vec(sin_data, (rows, 1, half, 1), device)
+                    .map_err(|error| BackendError::Backend(error.to_string()))?;
 
                 let shaped = tensor
                     .reshape((rows, heads, half, 2))
@@ -1008,6 +999,25 @@ impl DeviceTensor {
                     .and_then(|value| value.reshape((rows, cols)))
                     .map_err(|error| BackendError::Backend(error.to_string()))?;
                 Ok(Self::from_candle(stacked))
+            }
+        }
+    }
+}
+
+impl DeviceTensor {
+    /// Element-wise exponential.
+    pub fn exp(&self) -> Result<Self, BackendError> {
+        match &self.storage {
+            Storage::Host(tensor) => {
+                let data = tensor.data().iter().map(|value| value.exp()).collect();
+                Ok(Self::from_host(Tensor::new(data, tensor.shape().to_vec())?))
+            }
+            #[cfg(feature = "candle")]
+            Storage::Candle { tensor, .. } => {
+                let result = tensor
+                    .exp()
+                    .map_err(|error| BackendError::Backend(error.to_string()))?;
+                Ok(Self::from_candle(result))
             }
         }
     }

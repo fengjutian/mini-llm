@@ -186,6 +186,12 @@ SFT 语料仅用于展示掩码机制。
   autograd 一致；
 - `DeviceAdamW`：矩、偏差校正与解耦权重衰减都在设备上，8 步合成梯度与 host
   参考公式逐参数一致；
+- 设备算子：`softmax_rows`、`layer_norm`、embedding `gather_rows`（含反向），
+  与 host autograd 在 `Cpu`/`Candle(Cpu)` 上一致；
+- 设备算子：`cross_entropy`（融合反向）与 `rope_rotate`（反向为负位置旋转），
+  与 host `TensorValue` 数值一致；
+- 设备 FFN 块训练：embedding → LayerNorm → SwiGLU → 残差 → head → CE，
+  60 步 loss 下降、参数全程驻留设备；
 - `.github/workflows/cuda.yml`（手动触发）在 GPU runner 上跑 `--features cuda`；
 - CUDA 路径与 Candle CPU 共用代码，但本环境无 GPU，未做运行验证。
 

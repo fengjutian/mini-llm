@@ -424,3 +424,25 @@ impl DeviceValue {
         ))
     }
 }
+
+impl DeviceValue {
+    /// Element-wise exponential.
+    pub fn exp(&self) -> Result<DeviceValue, BackendError> {
+        let data = self.data().exp()?;
+        if !self.requires_grad() {
+            return Ok(DeviceValue::new(data, false));
+        }
+        let output = data.clone();
+        Ok(DeviceValue::with_backward(
+            data,
+            vec![self.clone()],
+            Box::new(move |grad| Ok(vec![grad.mul(&output)?])),
+        ))
+    }
+
+    /// SiLU (a.k.a. swish): `x * sigmoid(x)`.
+    pub fn silu(&self) -> Result<DeviceValue, BackendError> {
+        let sigmoid = self.scale(-1.0)?.exp()?.add_scalar(1.0)?.powf(-1.0)?;
+        self.mul(&sigmoid)
+    }
+}

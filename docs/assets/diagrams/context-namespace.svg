@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="650" viewBox="0 0 1400 650" role="img" aria-labelledby="title desc">
+  <title id="title">Context 的命名空间</title><desc id="desc">mini-llm 技术机制图</desc>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="currentColor"/></marker></defs>
+  <style>:root{color-scheme:light dark}.bg{fill:#f7f4ed}.title{fill:#172126;font:700 30px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.kicker{fill:#e45d32;font:700 16px ui-monospace,Consolas,monospace;letter-spacing:2px}.box{fill:#fffdf8;stroke:#c4bdb1;stroke-width:2}.box.hot{fill:#fff0e8;stroke:#e45d32}.box.cool{fill:#eaf3f7;stroke:#3178a5}.box.good{fill:#eaf4ec;stroke:#4f8b62}.label{fill:#172126;font:650 18px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.small{fill:#69777d;font:500 15px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.tiny{fill:#69777d;font:500 13px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.edge{color:#69777d;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.accent-edge{color:#e45d32;fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.axis{fill:none;stroke:#69777d;stroke-width:2}.grid{stroke:#c4bdb1;stroke-width:1;opacity:.45}.dot{stroke:#fffdf8;stroke-width:3}.area{opacity:.14}@media(prefers-color-scheme:dark){.bg{fill:#101416}.title,.label{fill:#edf2f3}.kicker{fill:#ef855d}.box{fill:#182024;stroke:#526168}.box.hot{fill:#32211c;stroke:#e17750}.box.cool{fill:#172934;stroke:#4d91bc}.box.good{fill:#192b20;stroke:#65a779}.small{fill:#a8b4b9}.tiny{fill:#a8b4b9}.grid{stroke:#3c484e}.dot{stroke:#101416}}</style>
+  <rect class="bg" width="1400" height="650" rx="24"/>
+  <text class="kicker" x="64" y="58">MINI-LLM · MECHANISM</text>
+  <text class="title" x="64" y="105">Context 的命名空间</text>
+<rect class="box hot" x="60" y="300" width="160" height="58" rx="16"/>
+<text class="label" x="140.0" y="334.6" text-anchor="middle" font-size="16">context/</text>
+<rect class="box cool" x="260" y="260" width="190" height="54" rx="16"/>
+<text class="label" x="355.0" y="292.25" text-anchor="middle" font-size="15">tenant_001</text>
+<path class="edge" d="M220 329 L260 287" marker-end="url(#arrow)"/>
+<rect class="box cool" x="260" y="420" width="190" height="54" rx="16"/>
+<text class="label" x="355.0" y="452.25" text-anchor="middle" font-size="15">tenant_002</text>
+<path class="edge" d="M220 329 L260 447" marker-end="url(#arrow)"/>
+<rect class="box cool" x="490" y="250" width="180" height="50" rx="16"/>
+<text class="label" x="580.0" y="280.25" text-anchor="middle" font-size="15">user_001</text>
+<line class="axis" x1="450" y1="287" x2="470" y2="287"/>
+<line class="axis" x1="470" y1="287" x2="470" y2="275"/>
+<line class="axis" x1="470" y1="275" x2="490" y2="275"/>
+<rect class="box cool" x="490" y="320" width="180" height="50" rx="16"/>
+<text class="label" x="580.0" y="350.25" text-anchor="middle" font-size="15">user_002</text>
+<line class="axis" x1="450" y1="287" x2="470" y2="287"/>
+<line class="axis" x1="470" y1="287" x2="470" y2="345"/>
+<line class="axis" x1="470" y1="345" x2="490" y2="345"/>
+<rect class="box cool" x="710" y="170" width="180" height="50" rx="16"/>
+<text class="label" x="800.0" y="200.25" text-anchor="middle" font-size="15">project_a</text>
+<line class="axis" x1="670" y1="275" x2="690" y2="275"/>
+<line class="axis" x1="690" y1="275" x2="690" y2="195"/>
+<line class="axis" x1="690" y1="195" x2="710" y2="195"/>
+<rect class="box cool" x="710" y="240" width="180" height="50" rx="16"/>
+<text class="label" x="800.0" y="270.25" text-anchor="middle" font-size="15">project_b</text>
+<line class="axis" x1="670" y1="275" x2="690" y2="275"/>
+<line class="axis" x1="690" y1="275" x2="690" y2="265"/>
+<line class="axis" x1="690" y1="265" x2="710" y2="265"/>
+<rect class="box good" x="930" y="130" width="170" height="48" rx="16"/>
+<text class="label" x="1015.0" y="158.9" text-anchor="middle" font-size="14">task_001</text>
+<line class="axis" x1="890" y1="195" x2="910" y2="195"/>
+<line class="axis" x1="910" y1="195" x2="910" y2="154"/>
+<line class="axis" x1="910" y1="154" x2="930" y2="154"/>
+<rect class="box good" x="930" y="198" width="170" height="48" rx="16"/>
+<text class="label" x="1015.0" y="226.9" text-anchor="middle" font-size="14">task_002</text>
+<line class="axis" x1="890" y1="195" x2="910" y2="195"/>
+<line class="axis" x1="910" y1="195" x2="910" y2="222"/>
+<line class="axis" x1="910" y1="222" x2="930" y2="222"/>
+<text class="tiny" x="60" y="560" text-anchor="start">隔离的层次就是权限的层次：task 只能看到自己的 project 与 user。</text>
+</svg>

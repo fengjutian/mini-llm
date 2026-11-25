@@ -914,20 +914,9 @@ Database:
 
 ## **7.1 Context Routing 的基本过程**
 
-```
-                    Context Store
-                         │
-                         ▼
-                  Context Router
-                         │
-          ┌──────────────┼──────────────┐
-          │              │              │
-          ▼              ▼              ▼
-      Planner         Coder          Tester
-          │              │              │
-          ▼              ▼              ▼
-      Plan Context    Code Context   Test Context
-```
+![Context Routing](assets/diagrams/context-routing.svg)
+
+_图：Context Routing。同一个存储按 Agent 角色切出不同视图：Planner 拿摘要，Coder 拿文件，Tester 拿失败用例。_
 
 可以设计如下接口：
 
@@ -1015,21 +1004,9 @@ Context Isolation 是上下文隔离模块。
 
 可以使用 Namespace 组织上下文：
 
-```
-context/
-│
-├── tenant_001/
-│   ├── user_001/
-│   │   ├── project_a/
-│   │   │   ├── task_001/
-│   │   │   └── task_002/
-│   │   │
-│   │   └── project_b/
-│   │
-│   └── user_002/
-│
-└── tenant_002/
-```
+![Context 的命名空间按 tenant → user → project → task 分层，隔离边界同时也决定了权限边界](assets/diagrams/context-namespace.svg)
+
+_图：Context 的命名空间按 tenant → user → project → task 分层，隔离边界同时也决定了权限边界。_
 
 每次检索都必须携带访问范围。
 
@@ -1363,18 +1340,9 @@ interface ContextSnapshot {
 
 例如：
 
-```
-Context Events
-│
-├── ContextCreated
-├── MessageAdded
-├── MemoryRetrieved
-├── DocumentRetrieved
-├── ContextCompressed
-├── ContextItemRemoved
-├── ContextVersionCreated
-└── ContextSnapshotSaved
-```
+![Context 的事件类型](assets/diagrams/context-event-log.svg)
+
+_图：Context 的事件类型。快照负责读取快，事件日志负责还原“为什么变成现在这样”。_
 
 这样可以追踪上下文如何演化。
 

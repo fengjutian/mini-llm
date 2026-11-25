@@ -602,7 +602,13 @@ and re-exports.
   kernels now include `softmax_rows`, `mean_rows_keepdim`/`sum_rows_keepdim`,
   `powf`, `gather_rows` and `scatter_add_rows`; the tape builds `softmax_rows`,
   `layer_norm(gamma, beta, eps)` and embedding `gather_rows` from them, and all
-  three match host autograd on `Cpu` and `Candle(Cpu)`.
+  three match host autograd on `Cpu` and `Candle(Cpu)`. `cross_entropy` fuses the
+  log-softmax and the `(softmax - onehot) / rows` backward, and `rope_rotate`
+  applies the inverse rotation for its gradient; both are checked against host
+  `TensorValue` on `Cpu` and `Candle(Cpu)`. A 60-step **device FFN block**
+  (embedding → LayerNorm → SwiGLU → residual → LayerNorm → head → cross-entropy)
+  trains with `DeviceAdamW`; the test asserts the loss falls below 80% of its
+  starting value and that every parameter stays device-resident.
 - Future backends implement `Backend` and reuse the same parity harness.
 
 Autograd and the model still operate on host `Tensor` values; making the training

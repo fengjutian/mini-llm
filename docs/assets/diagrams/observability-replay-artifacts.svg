@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="650" viewBox="0 0 1400 650" role="img" aria-labelledby="title desc">
+  <title id="title">Execution Replay 需要记录什么</title><desc id="desc">mini-llm 技术机制图</desc>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="currentColor"/></marker></defs>
+  <style>:root{color-scheme:light dark}.bg{fill:#f7f4ed}.title{fill:#172126;font:700 30px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.kicker{fill:#e45d32;font:700 16px ui-monospace,Consolas,monospace;letter-spacing:2px}.box{fill:#fffdf8;stroke:#c4bdb1;stroke-width:2}.box.hot{fill:#fff0e8;stroke:#e45d32}.box.cool{fill:#eaf3f7;stroke:#3178a5}.box.good{fill:#eaf4ec;stroke:#4f8b62}.label{fill:#172126;font:650 18px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.small{fill:#69777d;font:500 15px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.tiny{fill:#69777d;font:500 13px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.edge{color:#69777d;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.accent-edge{color:#e45d32;fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.axis{fill:none;stroke:#69777d;stroke-width:2}.grid{stroke:#c4bdb1;stroke-width:1;opacity:.45}.dot{stroke:#fffdf8;stroke-width:3}.area{opacity:.14}@media(prefers-color-scheme:dark){.bg{fill:#101416}.title,.label{fill:#edf2f3}.kicker{fill:#ef855d}.box{fill:#182024;stroke:#526168}.box.hot{fill:#32211c;stroke:#e17750}.box.cool{fill:#172934;stroke:#4d91bc}.box.good{fill:#192b20;stroke:#65a779}.small{fill:#a8b4b9}.tiny{fill:#a8b4b9}.grid{stroke:#3c484e}.dot{stroke:#101416}}</style>
+  <rect class="bg" width="1400" height="650" rx="24"/>
+  <text class="kicker" x="64" y="58">MINI-LLM · MECHANISM</text>
+  <text class="title" x="64" y="105">Execution Replay 需要记录什么</text>
+<rect class="box hot" x="100" y="160" width="320" height="62" rx="16"/>
+<text class="label" x="260.0" y="196.25" text-anchor="middle" font-size="15">Git Commit Before</text>
+<path class="edge" d="M420 191 L500 191" marker-end="url(#arrow)"/>
+<rect class="box cool" x="500" y="160" width="320" height="62" rx="16"/>
+<text class="label" x="660.0" y="196.25" text-anchor="middle" font-size="15">Workspace State</text>
+<path class="edge" d="M820 191 L900 191" marker-end="url(#arrow)"/>
+<rect class="box cool" x="900" y="160" width="320" height="62" rx="16"/>
+<text class="label" x="1060.0" y="196.25" text-anchor="middle" font-size="15">Agent Plan</text>
+<line class="axis" x1="1300" y1="222" x2="1300" y2="260"/>
+<line class="axis" x1="1300" y1="260" x2="100" y2="260"/>
+<path class="edge" d="M100 260 L100 290" marker-end="url(#arrow)"/>
+<rect class="box cool" x="100" y="290" width="320" height="62" rx="16"/>
+<text class="label" x="260.0" y="326.25" text-anchor="middle" font-size="15">File Read Events</text>
+<path class="edge" d="M420 321 L500 321" marker-end="url(#arrow)"/>
+<rect class="box cool" x="500" y="290" width="320" height="62" rx="16"/>
+<text class="label" x="660.0" y="326.25" text-anchor="middle" font-size="15">Model Calls</text>
+<path class="edge" d="M820 321 L900 321" marker-end="url(#arrow)"/>
+<rect class="box cool" x="900" y="290" width="320" height="62" rx="16"/>
+<text class="label" x="1060.0" y="326.25" text-anchor="middle" font-size="15">Tool Calls</text>
+<line class="axis" x1="1300" y1="352" x2="1300" y2="390"/>
+<line class="axis" x1="1300" y1="390" x2="100" y2="390"/>
+<path class="edge" d="M100 390 L100 420" marker-end="url(#arrow)"/>
+<rect class="box cool" x="100" y="420" width="320" height="62" rx="16"/>
+<text class="label" x="260.0" y="456.25" text-anchor="middle" font-size="15">File Diffs</text>
+<path class="edge" d="M420 451 L500 451" marker-end="url(#arrow)"/>
+<rect class="box cool" x="500" y="420" width="320" height="62" rx="16"/>
+<text class="label" x="660.0" y="456.25" text-anchor="middle" font-size="15">Test Results</text>
+<path class="edge" d="M820 451 L900 451" marker-end="url(#arrow)"/>
+<rect class="box hot" x="900" y="420" width="320" height="62" rx="16"/>
+<text class="label" x="1060.0" y="456.25" text-anchor="middle" font-size="15">Git Commit After</text>
+<text class="tiny" x="70" y="585" text-anchor="start">重放的判据：换一台机器、同一份记录，能否复现同一次执行。</text>
+</svg>

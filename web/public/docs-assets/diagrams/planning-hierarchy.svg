@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="650" viewBox="0 0 1400 650" role="img" aria-labelledby="title desc">
+  <title id="title">分层规划：从目标到可执行任务</title><desc id="desc">mini-llm 技术机制图</desc>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="currentColor"/></marker></defs>
+  <style>:root{color-scheme:light dark}.bg{fill:#f7f4ed}.title{fill:#172126;font:700 30px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.kicker{fill:#e45d32;font:700 16px ui-monospace,Consolas,monospace;letter-spacing:2px}.box{fill:#fffdf8;stroke:#c4bdb1;stroke-width:2}.box.hot{fill:#fff0e8;stroke:#e45d32}.box.cool{fill:#eaf3f7;stroke:#3178a5}.box.good{fill:#eaf4ec;stroke:#4f8b62}.label{fill:#172126;font:650 18px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.small{fill:#69777d;font:500 15px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.tiny{fill:#69777d;font:500 13px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.edge{color:#69777d;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.accent-edge{color:#e45d32;fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.axis{fill:none;stroke:#69777d;stroke-width:2}.grid{stroke:#c4bdb1;stroke-width:1;opacity:.45}.dot{stroke:#fffdf8;stroke-width:3}.area{opacity:.14}@media(prefers-color-scheme:dark){.bg{fill:#101416}.title,.label{fill:#edf2f3}.kicker{fill:#ef855d}.box{fill:#182024;stroke:#526168}.box.hot{fill:#32211c;stroke:#e17750}.box.cool{fill:#172934;stroke:#4d91bc}.box.good{fill:#192b20;stroke:#65a779}.small{fill:#a8b4b9}.tiny{fill:#a8b4b9}.grid{stroke:#3c484e}.dot{stroke:#101416}}</style>
+  <rect class="bg" width="1400" height="650" rx="24"/>
+  <text class="kicker" x="64" y="58">MINI-LLM · MECHANISM</text>
+  <text class="title" x="64" y="105">分层规划：从目标到可执行任务</text>
+<rect class="box hot" x="560" y="120" width="260" height="60" rx="16"/>
+<text class="label" x="690.0" y="155.95" text-anchor="middle" font-size="17">开发用户管理模块</text>
+<path class="edge" d="M690 180 L200 240" marker-end="url(#arrow)"/>
+<rect class="box" x="70" y="240" width="260" height="58" rx="16"/>
+<text class="label" x="200.0" y="274.25" text-anchor="middle" font-size="15">创建用户表</text>
+<path class="edge" d="M690 180 L500 240" marker-end="url(#arrow)"/>
+<rect class="box cool" x="370" y="240" width="260" height="58" rx="16"/>
+<text class="label" x="500.0" y="274.25" text-anchor="middle" font-size="15">实现用户 API</text>
+<path class="edge" d="M690 180 L800 240" marker-end="url(#arrow)"/>
+<rect class="box" x="670" y="240" width="260" height="58" rx="16"/>
+<text class="label" x="800.0" y="274.25" text-anchor="middle" font-size="15">实现用户页面</text>
+<path class="edge" d="M690 180 L1100 240" marker-end="url(#arrow)"/>
+<rect class="box" x="970" y="240" width="260" height="58" rx="16"/>
+<text class="label" x="1100.0" y="274.25" text-anchor="middle" font-size="15">编写测试</text>
+<line class="axis" x1="500" y1="298" x2="500" y2="374"/>
+<line class="axis" x1="500" y1="374" x2="520" y2="374"/>
+<rect class="box good" x="520" y="350" width="220" height="48" rx="16"/>
+<text class="label" x="630.0" y="378.9" text-anchor="middle" font-size="14">创建用户</text>
+<line class="axis" x1="500" y1="298" x2="500" y2="438"/>
+<line class="axis" x1="500" y1="438" x2="520" y2="438"/>
+<rect class="box good" x="520" y="414" width="220" height="48" rx="16"/>
+<text class="label" x="630.0" y="442.9" text-anchor="middle" font-size="14">查询用户</text>
+<line class="axis" x1="500" y1="298" x2="500" y2="502"/>
+<line class="axis" x1="500" y1="502" x2="520" y2="502"/>
+<rect class="box good" x="520" y="478" width="220" height="48" rx="16"/>
+<text class="label" x="630.0" y="506.9" text-anchor="middle" font-size="14">更新用户</text>
+<line class="axis" x1="500" y1="298" x2="500" y2="566"/>
+<line class="axis" x1="500" y1="566" x2="520" y2="566"/>
+<rect class="box good" x="520" y="542" width="220" height="48" rx="16"/>
+<text class="label" x="630.0" y="570.9" text-anchor="middle" font-size="14">删除用户</text>
+<text class="tiny" x="70" y="610" text-anchor="start">HTN 的关键不是“拆”，而是每个子任务都有可检查的完成条件。</text>
+</svg>

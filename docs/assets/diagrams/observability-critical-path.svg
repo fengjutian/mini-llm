@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="650" viewBox="0 0 1400 650" role="img" aria-labelledby="title desc">
+  <title id="title">并行执行的关键路径</title><desc id="desc">mini-llm 技术机制图</desc>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="currentColor"/></marker></defs>
+  <style>:root{color-scheme:light dark}.bg{fill:#f7f4ed}.title{fill:#172126;font:700 30px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.kicker{fill:#e45d32;font:700 16px ui-monospace,Consolas,monospace;letter-spacing:2px}.box{fill:#fffdf8;stroke:#c4bdb1;stroke-width:2}.box.hot{fill:#fff0e8;stroke:#e45d32}.box.cool{fill:#eaf3f7;stroke:#3178a5}.box.good{fill:#eaf4ec;stroke:#4f8b62}.label{fill:#172126;font:650 18px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.small{fill:#69777d;font:500 15px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.tiny{fill:#69777d;font:500 13px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.edge{color:#69777d;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.accent-edge{color:#e45d32;fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.axis{fill:none;stroke:#69777d;stroke-width:2}.grid{stroke:#c4bdb1;stroke-width:1;opacity:.45}.dot{stroke:#fffdf8;stroke-width:3}.area{opacity:.14}@media(prefers-color-scheme:dark){.bg{fill:#101416}.title,.label{fill:#edf2f3}.kicker{fill:#ef855d}.box{fill:#182024;stroke:#526168}.box.hot{fill:#32211c;stroke:#e17750}.box.cool{fill:#172934;stroke:#4d91bc}.box.good{fill:#192b20;stroke:#65a779}.small{fill:#a8b4b9}.tiny{fill:#a8b4b9}.grid{stroke:#3c484e}.dot{stroke:#101416}}</style>
+  <rect class="bg" width="1400" height="650" rx="24"/>
+  <text class="kicker" x="64" y="58">MINI-LLM · MECHANISM</text>
+  <text class="title" x="64" y="105">并行执行的关键路径</text>
+<rect class="box hot" x="600" y="130" width="180" height="58" rx="16"/>
+<text class="label" x="690.0" y="165.3" text-anchor="middle" font-size="18">Agent</text>
+<path class="edge" d="M690 188 L310 260" marker-end="url(#arrow)"/>
+<rect class="box cool" x="200" y="260" width="220" height="58" rx="16"/>
+<text class="label" x="310.0" y="295.3" text-anchor="middle" font-size="18">Tool A</text>
+<text class="small" x="310" y="345" text-anchor="middle">1s</text>
+<path class="edge" d="M310 318 L310 390" marker-end="url(#arrow)"/>
+<path class="edge" d="M690 188 L630 260" marker-end="url(#arrow)"/>
+<rect class="box hot" x="520" y="260" width="220" height="58" rx="16"/>
+<text class="label" x="630.0" y="295.3" text-anchor="middle" font-size="18">Tool B</text>
+<text class="small" x="630" y="345" text-anchor="middle">3s</text>
+<path class="edge" d="M630 318 L630 390" marker-end="url(#arrow)"/>
+<path class="edge" d="M690 188 L950 260" marker-end="url(#arrow)"/>
+<rect class="box cool" x="840" y="260" width="220" height="58" rx="16"/>
+<text class="label" x="950.0" y="295.3" text-anchor="middle" font-size="18">Tool C</text>
+<text class="small" x="950" y="345" text-anchor="middle">2s</text>
+<path class="edge" d="M950 318 L950 390" marker-end="url(#arrow)"/>
+<rect class="box good" x="520" y="390" width="220" height="58" rx="16"/>
+<text class="label" x="630.0" y="425.3" text-anchor="middle" font-size="18">Continue</text>
+<path class="edge" d="M310 390 L520 419" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
+<path class="edge" d="M950 390 L740 419" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
+<text class="small" x="70" y="520" text-anchor="start">总耗时由最慢的分支决定（Tool B，3s），而不是三者之和（6s）。</text>
+<text class="tiny" x="70" y="560" text-anchor="start">优化关键路径才有效；把 1s 的分支降到 0.5s 不会让整体变快。</text>
+</svg>

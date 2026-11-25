@@ -507,26 +507,9 @@ Trace 是一个完整操作的追踪记录。
 
 例如：
 
-```
-用户请求
-   │
-   ▼
-Agent Engine
-   │
-   ▼
-Meta-Controller
-   │
-   ▼
-Runtime Engine
-   │
-   ├── Model Engine
-   │
-   ├── Memory Engine
-   │
-   ├── Tool Engine
-   │
-   └── Evaluation Engine
-```
+![一次请求穿过 Agent Engine、Meta-Controller、Runtime 与各子 Engine，整条链就是一条 Trace](assets/diagrams/observability-trace-chain.svg)
+
+_图：一次请求穿过 Agent Engine、Meta-Controller、Runtime 与各子 Engine，整条链就是一条 Trace。_
 
 整个任务属于一个 Trace。
 
@@ -538,17 +521,9 @@ Span 表示一次具体操作。
 
 例如：
 
-```
-Trace: trace_001
+![一次 Agent 请求的 span 树](assets/diagrams/observability-span-tree.svg)
 
-Span 1: agent.execute
-    ├── Span 2: agent.plan
-    ├── Span 3: memory.retrieve
-    ├── Span 4: model.generate
-    ├── Span 5: tool.github_search
-    ├── Span 6: model.analyze
-    └── Span 7: agent.evaluate
-```
+_图：一次 Agent 请求的 span 树。trace_id 把同一请求的所有 span 串起来，parent_span_id 决定层级。_
 
 每个 Span 至少应该具有：
 
@@ -914,15 +889,9 @@ if current_cost >= budget["max_cost"]:    raise BudgetExceededError()
 
 模型调用可以进一步分解：
 
-```
-Model Request
-    │
-    ├── Queue Time
-    ├── Network Time
-    ├── Time To First Token
-    ├── Token Generation Time
-    └── Response Processing
-```
+![一次模型请求的延迟分解](assets/diagrams/observability-latency-breakdown.svg)
+
+_图：一次模型请求的延迟分解。只看总延迟无法优化，必须拆到 Queue、Network、Prefill、Decode。_
 
 其中：
 
@@ -960,18 +929,9 @@ tool_metrics = {    "tool_name": "github.search",    "request_time": 1000,    "r
 
 假设 Agent 同时调用三个工具：
 
-```
-             Agent
-               │
-       ┌───────┼───────┐
-       │       │       │
-    Tool A  Tool B  Tool C
-     1s      3s      2s
-       │       │       │
-       └───────┼───────┘
-               │
-            Continue
-```
+![并行分支的关键路径](assets/diagrams/observability-critical-path.svg)
+
+_图：并行分支的关键路径。总耗时由最慢的分支决定，而不是各分支之和。_
 
 如果三个任务真正并行执行，那么这一阶段耗时约为：
 
@@ -1074,17 +1034,9 @@ Tool call success
 
 错误应该能够关联到：
 
-```
-Error
-  │
-  ├── Trace
-  ├── Span
-  ├── Task
-  ├── Agent
-  ├── Model
-  ├── Tool
-  └── Runtime
-```
+![错误关联的七个维度：只有把 trace、span、task、agent、model、tool、runtime 串起来，才定位得到根因](assets/diagrams/observability-error-correlation.svg)
+
+_图：错误关联的七个维度：只有把 trace、span、task、agent、model、tool、runtime 串起来，才定位得到根因。_
 
 这样当某个工具持续失败时，我们就能分析它是否影响了特定类型的 Agent 任务。
 
@@ -1416,19 +1368,9 @@ src/
 
 我们需要记录：
 
-```
-Task
-  │
-  ├── Git Commit Before
-  ├── Workspace State
-  ├── Agent Plan
-  ├── File Read Events
-  ├── Model Calls
-  ├── Tool Calls
-  ├── File Diffs
-  ├── Test Results
-  └── Git Commit After
-```
+![Execution Replay 需要记录的全套现场：从 Git 快照到模型调用、工具调用与测试结果](assets/diagrams/observability-replay-artifacts.svg)
+
+_图：Execution Replay 需要记录的全套现场：从 Git 快照到模型调用、工具调用与测试结果。_
 
 这样就能回答：
 
@@ -1719,26 +1661,9 @@ mini-llm 只需要在其上扩展 Agent 特有的数据模型。
 
 它们之间的关系可以表示为：
 
-```
-Task
- │
- └── Trace
-      │
-      ├── Span
-      │    ├── ModelCall
-      │    ├── ToolCall
-      │    └── AgentStep
-      │
-      ├── Event
-      │
-      ├── CostRecord
-      │
-      ├── Evaluation
-      │
-      ├── Artifact
-      │
-      └── AuditRecord
-```
+![可观测性核心数据模型](assets/diagrams/observability-data-model.svg)
+
+_图：可观测性核心数据模型。Task 是业务单位，Trace 是执行单位，Span 是计时单位，其余记录都挂在 Trace 之下。_
 
 这里需要注意：
 
