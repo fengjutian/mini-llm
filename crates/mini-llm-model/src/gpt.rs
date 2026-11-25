@@ -246,11 +246,16 @@ impl TinyGpt {
         Ok(self.lm_head.forward(&normalized)?)
     }
 
-    /// Fresh KV caches, one per block.
+    /// Fresh KV caches for a single sequence.
     pub fn empty_caches(&self) -> Vec<BlockCache> {
+        self.empty_caches_batch(1)
+    }
+
+    /// Fresh KV caches for `batch` sequences.
+    pub fn empty_caches_batch(&self, batch: usize) -> Vec<BlockCache> {
         self.blocks
             .iter()
-            .map(|_| BlockCache::new(&self.config))
+            .map(|_| BlockCache::new(&self.config, batch))
             .collect()
     }
 
@@ -261,11 +266,30 @@ impl TinyGpt {
         position: usize,
         caches: &mut [BlockCache],
     ) -> Result<TensorValue, ModelError> {
-        if token >= self.config.vocab_size {
-            return Err(ModelError::TokenOutOfRange {
-                index: token,
-                vocab_size: self.config.vocab_size,
-            });
+        self.step_tokens(&[token], &[position], &[true], caches)
+    }
+
+    /// Runs one token per batch row, each at its own absolute position.
+    ///
+    /// `real[row]` says whether the appended token is part of the sequence or
+    /// padding; padding tokens are masked out of attention.
+    pub fn step_tokens(
+        &self,
+        tokens: &[usize],
+        positions: &[usize],
+        real: &[bool],
+        caches: &mut [BlockCache],
+    ) -> Result<TensorValue, ModelError> {
+        for &token in tokens {
+            if token >= self.config.vocab_size {
+                return Err(ModelError::TokenOutOfRange {
+                    index: token,
+                    vocab_size: self.config.vocab_size,
+                });
+            }
+        }
+        if tokens.is_empty() || tokens.len() != positions.len() || tokens.len() != real.len() {
+            return Err(ModelError::EmptyPrompt);
         }
         if caches.len() != self.blocks.len() {
             return Err(ModelError::CacheDepthMismatch {
@@ -274,12 +298,13 @@ impl TinyGpt {
             });
         }
 
-        let mut hidden = self.token_embedding.lookup(&[token])?;
+        let mut hidden = self.token_embedding.lookup(tokens)?;
         if let Some(position_embedding) = &self.position_embedding {
-            hidden = hidden.add(&position_embedding.lookup(&[position])?)?;
+            hidden = hidden.add(&position_embedding.lookup(positions)?)?;
         }
         for (block, cache) in self.blocks.iter().zip(caches.iter_mut()) {
-            hidden = block.forward_step(&hidden, position, cache)?;
+            cache.attention.set_pending_real(real);
+            hidden = block.forward_step(&hidden, positions, cache)?;
         }
         let normalized = self.final_norm.forward(&hidden)?;
         Ok(self.lm_head.forward(&normalized)?)
@@ -313,6 +338,8 @@ impl TinyGpt {
         sampling: Sampling,
         rng: &mut Rng,
     ) -> Result<Vec<usize>, ModelError> {
+        let _no_grad = mini_llm_autograd::no_grad::guard();
+        let _eval = mini_llm_nn::mode::guard();
         if prompt.is_empty() {
             return Err(ModelError::EmptyPrompt);
         }
@@ -364,6 +391,8 @@ impl TinyGpt {
         sampling: Sampling,
         rng: &mut Rng,
     ) -> Result<Vec<Vec<usize>>, ModelError> {
+        let _no_grad = mini_llm_autograd::no_grad::guard();
+        let _eval = mini_llm_nn::mode::guard();
         if prompts.is_empty() {
             return Err(ModelError::EmptyPrompt);
         }
@@ -435,6 +464,107 @@ impl TinyGpt {
             .collect())
     }
 
+    /// Cached batched generation, one KV cache row per sequence.
+    ///
+    /// Prompts may have different lengths when the model uses RoPE: shorter
+    /// prompts are right-padded with token 0, the padding is masked out of the
+    /// attention scores, and each row keeps its own position. With learned
+    /// position embeddings all prompts must have the same length.
+    pub fn generate_batch_cached(
+        &self,
+        prompts: &[Vec<usize>],
+        max_new_tokens: usize,
+        sampling: Sampling,
+        rng: &mut Rng,
+    ) -> Result<Vec<Vec<usize>>, ModelError> {
+        let _no_grad = mini_llm_autograd::no_grad::guard();
+        let _eval = mini_llm_nn::mode::guard();
+        if prompts.is_empty() {
+            return Err(ModelError::EmptyPrompt);
+        }
+        for prompt in prompts {
+            if prompt.is_empty() {
+                return Err(ModelError::EmptyPrompt);
+            }
+            if let Some(&index) = prompt
+                .iter()
+                .find(|&&index| index >= self.config.vocab_size)
+            {
+                return Err(ModelError::TokenOutOfRange {
+                    index,
+                    vocab_size: self.config.vocab_size,
+                });
+            }
+        }
+
+        let width = prompts.iter().map(Vec::len).max().unwrap_or(0);
+        let unequal = prompts.iter().any(|prompt| prompt.len() != width);
+        if unequal && self.position_embedding.is_some() {
+            return Err(ModelError::SequenceLengthMismatch {
+                expected: width,
+                actual: prompts
+                    .iter()
+                    .map(Vec::len)
+                    .find(|&length| length != width)
+                    .unwrap_or(width),
+            });
+        }
+
+        let batch = prompts.len();
+        let mut caches = self.empty_caches_batch(batch);
+        let mut tokens: Vec<Vec<usize>> = prompts.to_vec();
+        let mut lengths: Vec<usize> = prompts.iter().map(Vec::len).collect();
+        let mut last_logits: Vec<Option<Vec<f32>>> = vec![None; batch];
+
+        // Prefill: short prompts are padded on the right; their padding is
+        // masked out by `valid_lengths`.
+        for position in 0..width {
+            let step: Vec<usize> = prompts
+                .iter()
+                .map(|prompt| prompt.get(position).copied().unwrap_or(0))
+                .collect();
+            let positions = vec![position; batch];
+            let real: Vec<bool> = lengths.iter().map(|&length| position < length).collect();
+            let logits = self.step_tokens(&step, &positions, &real, &mut caches)?;
+
+            let data = logits.data();
+            for row in 0..batch {
+                if position + 1 == lengths[row] {
+                    let start = row * self.config.vocab_size;
+                    last_logits[row] = Some(data[start..start + self.config.vocab_size].to_vec());
+                }
+            }
+        }
+
+        for _ in 0..max_new_tokens {
+            let mut next_tokens = Vec::with_capacity(batch);
+            for logits in &last_logits {
+                let logits = logits.as_ref().ok_or(ModelError::EmptyPrompt)?;
+                next_tokens.push(sample_from_last(logits, sampling, rng)?);
+            }
+
+            if self.position_embedding.is_some() && lengths[0] + 1 > self.config.max_seq_len {
+                break;
+            }
+
+            for (row, token) in next_tokens.iter().enumerate() {
+                tokens[row].push(*token);
+                lengths[row] += 1;
+            }
+            let positions: Vec<usize> = lengths.iter().map(|length| length - 1).collect();
+            let real = vec![true; batch];
+            let logits = self.step_tokens(&next_tokens, &positions, &real, &mut caches)?;
+
+            let data = logits.data();
+            for (row, slot) in last_logits.iter_mut().enumerate() {
+                let start = row * self.config.vocab_size;
+                *slot = Some(data[start..start + self.config.vocab_size].to_vec());
+            }
+        }
+
+        Ok(tokens)
+    }
+
     /// Reference generation without a KV cache: recomputes the whole window at
     /// every step. Kept for tests and for comparison with [`TinyGpt::generate`].
     pub fn generate_uncached(
@@ -444,6 +574,8 @@ impl TinyGpt {
         temperature: f32,
         rng: &mut Rng,
     ) -> Result<Vec<usize>, ModelError> {
+        let _no_grad = mini_llm_autograd::no_grad::guard();
+        let _eval = mini_llm_nn::mode::guard();
         if prompt.is_empty() {
             return Err(ModelError::EmptyPrompt);
         }

@@ -97,7 +97,7 @@ pub fn run(arguments: &[String]) {
     if batch > 1 {
         let prompts = vec![encoded.clone(); batch];
         let generated = model
-            .generate_batch(&prompts, count, sampling, &mut rng)
+            .generate_batch_cached(&prompts, count, sampling, &mut rng)
             .expect("generate");
         for (index, tokens) in generated.iter().enumerate() {
             println!("  [{index}] {}", tokenizer.decode(tokens).expect("decode"));

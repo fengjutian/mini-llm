@@ -26,6 +26,7 @@ pub fn run(arguments: &[String]) {
     let resume = arguments.iter().any(|argument| argument == "--resume");
     let use_bpe = arguments.iter().any(|argument| argument == "--bpe");
     let vocab_size = parse_vocab_size(arguments);
+    let dropout = parse_dropout(arguments);
     let accumulation = parse_accumulation(arguments);
     let steps = arguments
         .first()
@@ -58,7 +59,7 @@ pub fn run(arguments: &[String]) {
             } else {
                 Tokenizer::from(CharTokenizer::from_text(&text))
             };
-            let model = build_model(tokenizer.vocab_size());
+            let model = build_model(tokenizer.vocab_size(), dropout);
             (tokenizer, model, None)
         }
     };
@@ -157,6 +158,19 @@ fn split_tokens(tokens: &[usize], fraction: f32) -> (Vec<usize>, Vec<usize>) {
     (tokens[..split].to_vec(), tokens[split..].to_vec())
 }
 
+/// Reads `--dropout P`; defaults to 0.0 (disabled).
+fn parse_dropout(arguments: &[String]) -> f32 {
+    let mut value: Option<f32> = None;
+    for (index, argument) in arguments.iter().enumerate() {
+        if argument == "--dropout" {
+            value = arguments.get(index + 1).and_then(|next| next.parse().ok());
+        } else if let Some(rest) = argument.strip_prefix("--dropout=") {
+            value = rest.parse().ok();
+        }
+    }
+    value.unwrap_or(0.0).clamp(0.0, 1.0)
+}
+
 /// Reads `--vocab N` for BPE training; defaults to 512 tokens.
 fn parse_vocab_size(arguments: &[String]) -> usize {
     let mut value = None;
@@ -170,8 +184,9 @@ fn parse_vocab_size(arguments: &[String]) -> usize {
     value.unwrap_or(512).max(257)
 }
 
-fn build_model(vocab_size: usize) -> TinyGpt {
+fn build_model(vocab_size: usize, dropout: f32) -> TinyGpt {
     let mut config = ModelConfig::modern(vocab_size);
+    config.dropout = dropout;
     config.hidden_size = 32;
     config.max_seq_len = BLOCK_SIZE;
     let mut rng = Rng::new(1337);
@@ -214,7 +229,8 @@ fn print_model_summary(
         config.norm, config.position, config.feed_forward, config.num_experts
     );
     println!(
-        "  optimizer: AdamW | batch={BATCH_SIZE} | steps={steps} | warmup={WARMUP_STEPS} | clip={GRAD_CLIP}"
+        "  optimizer: AdamW | batch={BATCH_SIZE} | steps={steps} | warmup={WARMUP_STEPS} | clip={GRAD_CLIP} | dropout={:.2}",
+        config.dropout
     );
     println!();
 }

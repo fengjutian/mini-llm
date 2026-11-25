@@ -32,14 +32,17 @@
 //!   mismatches return [`NnError`] instead of panicking.
 //! - `Rng` and `xavier_uniform` live in `mini-llm-random` and are re-exported
 //!   here for convenience; the data layer depends on that crate directly.
-//! - No dropout, no multi-head reshape and no fused kernels yet.
+//! - No multi-head reshape and no fused kernels yet. Dropout is available as
+//!   [Dropout] and switches off in [mode::with_eval].
 
 pub mod activation;
+mod dropout;
 mod embedding;
 mod error;
 mod layernorm;
 mod linear;
 mod lora;
+pub mod mode;
 mod module;
 mod moe;
 mod optim;
@@ -48,6 +51,7 @@ mod sequential;
 mod swiglu;
 
 pub use activation::{Relu, Sigmoid, Tanh};
+pub use dropout::Dropout;
 pub use embedding::Embedding;
 pub use error::NnError;
 pub use layernorm::LayerNorm;

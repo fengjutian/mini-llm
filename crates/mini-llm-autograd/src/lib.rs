@@ -45,13 +45,15 @@
 //! - Binary operations broadcast NumPy-style, but broadcasting is materialized
 //!   in the forward pass rather than fused with the kernel.
 //! - Parameters can be replaced in place with `set_value`, but there is no
-//!   in-place tensor arithmetic and no `no_grad` context.
+//!   in-place tensor arithmetic. Inference can skip graph recording with
+//!   [`no_grad::with_no_grad`].
 //! - No higher-order gradients.
 //! - Graph nodes live as long as any [`TensorValue`] handle referencing them.
 
 pub mod backend;
 mod error;
 mod graph;
+pub mod no_grad;
 mod ops;
 mod value;
 

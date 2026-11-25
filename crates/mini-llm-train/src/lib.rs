@@ -339,6 +339,7 @@ impl<D: Dataset> Trainer<D> {
             return Ok(0.0);
         }
         let mut total = 0.0;
+        let _eval = mini_llm_nn::mode::guard();
         for _ in 0..batches {
             let batch = dataset.sample_batch(self.config.batch_size, &mut self.rng)?;
             total += self.loss(&batch)?.data()[0];
@@ -359,6 +360,7 @@ impl<D: Dataset> Trainer<D> {
             return Ok(0.0);
         }
         let mut total = 0.0;
+        let _eval = mini_llm_nn::mode::guard();
         for _ in 0..batches {
             let batch = self
                 .dataset

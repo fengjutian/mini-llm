@@ -2,8 +2,8 @@
 
 use mini_llm_autograd::TensorValue;
 use mini_llm_nn::{
-    AdamW, Embedding, LayerNorm, Linear, LoraLinear, Module, Moe, Optimizer, Relu, RmsNorm, Rng,
-    Sequential, Sgd, SwiGlu, Tanh,
+    AdamW, Dropout, Embedding, LayerNorm, Linear, LoraLinear, Module, Moe, Optimizer, Relu,
+    RmsNorm, Rng, Sequential, Sgd, SwiGlu, Tanh,
 };
 use mini_llm_tensor::Tensor;
 
@@ -294,15 +294,26 @@ fn moe_routes_every_row_to_top_k_experts() {
 }
 
 #[test]
-fn moe_backward_reaches_router_and_experts() {
+fn moe_backward_reaches_the_router_and_routed_experts() {
     let mut rng = Rng::new(43);
     let layer = Moe::new(4, 8, 2, 1, &mut rng).unwrap();
     let x = input(vec![0.3; 8], vec![2, 4]);
     let loss = layer.forward(&x).unwrap().mean().unwrap();
     loss.backward().unwrap();
-    for parameter in layer.parameters() {
-        assert!(parameter.grad().is_some());
-    }
+
+    let parameters = layer.parameters();
+    let with_grads = parameters
+        .iter()
+        .filter(|parameter| parameter.grad().is_some())
+        .count();
+    assert!(
+        with_grads >= 2,
+        "router and at least one routed expert should receive gradients"
+    );
+    assert!(
+        with_grads < parameters.len(),
+        "sparse dispatch should skip experts with no assigned rows"
+    );
 }
 
 #[test]
@@ -383,4 +394,55 @@ fn lora_rejects_a_zero_rank() {
     let mut rng = Rng::new(61);
     let base = Linear::new(2, 2, &mut rng).unwrap();
     assert!(LoraLinear::new(base, 0, 1.0, &mut rng).is_err());
+}
+
+#[test]
+fn sparse_moe_matches_the_dense_reference() {
+    let mut rng = Rng::new(53);
+    let layer = Moe::new(4, 8, 3, 2, &mut rng).unwrap();
+    let x = input(
+        (0..20)
+            .map(|index| (index as f32).sin())
+            .collect::<Vec<_>>(),
+        vec![5, 4],
+    );
+
+    let sparse = layer.forward(&x).unwrap().data();
+    let dense = layer.forward_dense(&x).unwrap().data();
+    assert_eq!(sparse.len(), dense.len());
+    for (sparse, dense) in sparse.iter().zip(dense.iter()) {
+        assert!(
+            (sparse - dense).abs() < 1e-6,
+            "sparse {sparse} vs dense {dense}"
+        );
+    }
+}
+
+#[test]
+fn dropout_is_the_identity_in_eval_mode() {
+    let dropout = Dropout::new(0.5, 7);
+    let x = input(vec![1.0; 8], vec![2, 4]);
+    let evaluated = mini_llm_nn::mode::with_eval(|| dropout.forward(&x).unwrap());
+    assert_eq!(evaluated.data(), x.data());
+
+    let disabled = Dropout::new(0.0, 7);
+    assert_eq!(disabled.forward(&x).unwrap().data(), x.data());
+}
+
+#[test]
+fn dropout_drops_and_scales_while_training() {
+    let dropout = Dropout::new(0.5, 7);
+    let x = input(vec![1.0; 64], vec![8, 8]);
+
+    let dropped = dropout.forward(&x).unwrap().data();
+    assert!(dropped.contains(&0.0), "some elements should be dropped");
+    assert!(
+        dropped
+            .iter()
+            .all(|value| *value == 0.0 || (*value - 2.0).abs() < 1e-6),
+        "kept elements should be scaled by 1/(1-p)"
+    );
+
+    let next = dropout.forward(&x).unwrap().data();
+    assert_ne!(dropped, next, "each call draws a fresh mask");
 }

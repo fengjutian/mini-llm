@@ -93,6 +93,24 @@ impl TensorValue {
         })
     }
 
+    /// Scatters rows of a rank-2 value into a zero `[rows, cols]` result.
+    ///
+    /// Used by sparse mixture-of-experts dispatch: each expert transforms only
+    /// its assigned rows, then writes the weighted result back to the original
+    /// positions. The gradient gathers those rows back.
+    pub fn scatter_add_rows(
+        &self,
+        indices: &[usize],
+        rows: usize,
+    ) -> Result<TensorValue, AutogradError> {
+        let values = self.value();
+        let output = Tensor::scatter_add_rows(&values, indices, rows)?;
+        let saved_indices = indices.to_vec();
+        self.unary("scatter_add_rows", output, move |g| {
+            Ok(g.gather_rows(&saved_indices)?)
+        })
+    }
+
     /// Applies rotary position embedding to `[rows, heads * head_dim]`.
     ///
     /// `positions[r]` is the absolute position of row `r`. The backward pass

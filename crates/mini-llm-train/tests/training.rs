@@ -156,6 +156,7 @@ fn checkpoint_preserves_the_modern_architecture() {
         position: PositionKind::Rope,
         feed_forward: FeedForwardKind::SwiGlu,
         num_experts: 1,
+        dropout: 0.0,
     };
     let mut rng = Rng::new(23);
     let model = TinyGpt::new(config, &mut rng).unwrap();

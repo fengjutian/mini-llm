@@ -479,4 +479,14 @@ mod tests {
         assert_eq!(tensor.data(), &[1.0, 2.0, 3.0, 4.0]);
         assert!(tensor.append_row(&[1.0]).is_err());
     }
+    #[test]
+    fn scatter_add_rows_accumulates_duplicate_indices() {
+        let values = Tensor::from_2d(2, 2, vec![1.0, 2.0, 3.0, 4.0]).unwrap();
+        let scattered = Tensor::scatter_add_rows(&values, &[1, 1], 3).unwrap();
+        assert_eq!(scattered.shape(), &[3, 2]);
+        assert_eq!(scattered.data(), &[0.0, 0.0, 4.0, 6.0, 0.0, 0.0]);
+
+        assert!(Tensor::scatter_add_rows(&values, &[0], 3).is_err());
+        assert!(Tensor::scatter_add_rows(&values, &[3, 0], 3).is_err());
+    }
 }

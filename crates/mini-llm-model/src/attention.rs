@@ -13,27 +13,56 @@ use crate::{ModelConfig, ModelError, PositionKind};
 /// Rotary base from the RoPE paper.
 const ROPE_BASE: f32 = 10_000.0;
 
-/// Key/value cache for one attention layer, one `[len, head_dim]` tensor per
-/// key/value head. Only used for inference.
+/// Key/value cache for one attention layer: one `[len, head_dim]` tensor per
+/// batch row and key/value head. Only used for inference.
 pub struct AttentionCache {
-    keys: Vec<Tensor>,
-    values: Vec<Tensor>,
+    keys: Vec<Vec<Tensor>>,
+    values: Vec<Vec<Tensor>>,
+    batch: usize,
+    /// Per row and cached position: whether the token is real or padding.
+    real: Vec<Vec<bool>>,
+    /// Flags for the token about to be appended by the next step.
+    pending: Vec<bool>,
 }
 
 impl AttentionCache {
-    pub fn new(num_kv_heads: usize, head_dim: usize) -> Self {
+    pub fn new(batch: usize, num_kv_heads: usize, head_dim: usize) -> Self {
+        let batch = batch.max(1);
         let empty = Tensor::zeros(vec![0, head_dim]).expect("valid empty cache");
         Self {
-            keys: vec![empty; num_kv_heads],
-            values: vec![
-                Tensor::zeros(vec![0, head_dim]).expect("valid empty cache");
-                num_kv_heads
-            ],
+            keys: vec![vec![empty.clone(); num_kv_heads]; batch],
+            values: vec![vec![empty; num_kv_heads]; batch],
+            batch,
+            real: vec![Vec::new(); batch],
+            pending: vec![true; batch],
         }
     }
 
+    /// Number of sequences held by this cache.
+    pub fn batch(&self) -> usize {
+        self.batch
+    }
+
+    /// Marks whether the token appended by the next step is real per row.
+    ///
+    /// Padding tokens are masked out of the attention scores.
+    pub fn set_pending_real(&mut self, real: &[bool]) {
+        for (slot, &flag) in self.pending.iter_mut().zip(real) {
+            *slot = flag;
+        }
+    }
+
+    /// Per-position real flags for `row` (true = attendable).
+    pub fn real_flags(&self, row: usize) -> &[bool] {
+        &self.real[row]
+    }
+
     pub fn len(&self) -> usize {
-        self.keys.first().map(|key| key.shape()[0]).unwrap_or(0)
+        self.keys
+            .first()
+            .and_then(|heads| heads.first())
+            .map(|key| key.shape()[0])
+            .unwrap_or(0)
     }
 
     pub fn is_empty(&self) -> bool {
@@ -183,23 +212,34 @@ impl CausalSelfAttention {
         }
     }
 
-    /// Single-token step used by cached generation (`output.len() == 1`).
+    /// One-token step used by cached generation.
+    ///
+    /// `input` is `[batch, hidden]`; `positions[row]` is the absolute position of
+    /// that row (rows may be at different positions). Padding tokens beyond each
+    /// row's valid length are masked out of the attention scores.
     pub fn forward_step(
         &self,
         input: &TensorValue,
-        position: usize,
+        positions: &[usize],
         cache: &mut AttentionCache,
     ) -> Result<TensorValue, ModelError> {
-        if input.shape() != [1, self.num_heads * self.head_dim] {
+        let batch = cache.batch();
+        if input.shape() != [batch, self.num_heads * self.head_dim] {
             return Err(ModelError::AttentionInputShape {
-                expected: vec![1, self.num_heads * self.head_dim],
+                expected: vec![batch, self.num_heads * self.head_dim],
                 actual: input.shape(),
             });
         }
-        if cache.keys.len() != self.num_kv_heads {
+        if positions.len() != batch {
+            return Err(ModelError::AttentionInputShape {
+                expected: vec![batch],
+                actual: vec![positions.len()],
+            });
+        }
+        if cache.keys.len() != batch || cache.keys[0].len() != self.num_kv_heads {
             return Err(ModelError::CacheHeadMismatch {
                 expected: self.num_kv_heads,
-                actual: cache.keys.len(),
+                actual: cache.keys[0].len(),
             });
         }
 
@@ -209,8 +249,8 @@ impl CausalSelfAttention {
 
         let (query, key) = if self.use_rope {
             (
-                query.rope(self.head_dim, &[position], ROPE_BASE)?,
-                key.rope(self.head_dim, &[position], ROPE_BASE)?,
+                query.rope(self.head_dim, positions, ROPE_BASE)?,
+                key.rope(self.head_dim, positions, ROPE_BASE)?,
             )
         } else {
             (query, key)
@@ -219,46 +259,71 @@ impl CausalSelfAttention {
         let scale = 1.0 / (self.head_dim as f32).sqrt();
         let group = self.num_heads / self.num_kv_heads;
 
-        // Append one row per *key/value* head, then reuse it for every query
-        // head in the group. (Appending inside the query-head loop would store
-        // the same token `group` times and double the cache work.)
-        let mut cached_keys = Vec::with_capacity(self.num_kv_heads);
-        let mut cached_values = Vec::with_capacity(self.num_kv_heads);
-        for kv_head in 0..self.num_kv_heads {
-            let k = key.slice_cols(kv_head * self.head_dim, self.head_dim)?;
-            let v = value.slice_cols(kv_head * self.head_dim, self.head_dim)?;
-            let k_value = k.value();
-            cache.keys[kv_head].append_row(k_value.data())?;
-            let v_value = v.value();
-            cache.values[kv_head].append_row(v_value.data())?;
-            cached_keys.push(TensorValue::new(cache.keys[kv_head].clone()));
-            cached_values.push(TensorValue::new(cache.values[kv_head].clone()));
+        // Append one row per batch row and key/value head, then reuse it for
+        // every query head in the group. The per-position flag records whether
+        // the appended token is real or padding.
+        for row in 0..batch {
+            let key_row = key.slice_rows(row, 1)?;
+            let value_row = value.slice_rows(row, 1)?;
+            for kv_head in 0..self.num_kv_heads {
+                let k = key_row.slice_cols(kv_head * self.head_dim, self.head_dim)?;
+                let v = value_row.slice_cols(kv_head * self.head_dim, self.head_dim)?;
+                let k_value = k.value();
+                cache.keys[row][kv_head].append_row(k_value.data())?;
+                let v_value = v.value();
+                cache.values[row][kv_head].append_row(v_value.data())?;
+            }
+            let flag = cache.pending[row];
+            cache.real[row].push(flag);
         }
 
-        let mut merged: Option<TensorValue> = None;
-        for head in 0..self.num_heads {
-            let kv_head = head / group;
-            let q = query.slice_cols(head * self.head_dim, self.head_dim)?;
-            let keys = &cached_keys[kv_head];
-            let values = &cached_values[kv_head];
+        let mut output: Option<TensorValue> = None;
+        let total = cache.len();
+        for row in 0..batch {
+            let mut merged: Option<TensorValue> = None;
+            for head in 0..self.num_heads {
+                let kv_head = head / group;
+                let q = query
+                    .slice_rows(row, 1)?
+                    .slice_cols(head * self.head_dim, self.head_dim)?;
+                let keys = TensorValue::new(cache.keys[row][kv_head].clone());
+                let values = TensorValue::new(cache.values[row][kv_head].clone());
 
-            // All cached positions are in the past, so no mask is needed.
-            let scores = q.matmul(&keys.transpose()?)?.scale(scale)?;
-            let weights = scores.softmax_rows()?;
-            let attended = weights.matmul(values)?;
+                // Cached positions are in the past; padding positions are
+                // masked out using the per-position real flags.
+                let mut scores = q.matmul(&keys.transpose()?)?.scale(scale)?;
+                let flags = cache.real_flags(row);
+                if flags.iter().any(|flag| !flag) {
+                    let mask: Vec<f32> = flags
+                        .iter()
+                        .map(|flag| if *flag { 0.0 } else { -1e9 })
+                        .collect();
+                    let mask = TensorValue::new(Tensor::from_2d(1, total, mask)?);
+                    scores = scores.add(&mask)?;
+                }
+                let weights = scores.softmax_rows()?;
+                let attended = weights.matmul(&values)?;
 
-            let out_weight = self
-                .output
-                .weight()
-                .slice_rows(head * self.head_dim, self.head_dim)?;
-            let projected = attended.matmul(&out_weight)?;
-            merged = Some(match merged {
-                Some(accumulated) => accumulated.add(&projected)?,
-                None => projected,
+                let out_weight = self
+                    .output
+                    .weight()
+                    .slice_rows(head * self.head_dim, self.head_dim)?;
+                let projected = attended.matmul(&out_weight)?;
+                merged = Some(match merged {
+                    Some(accumulated) => accumulated.add(&projected)?,
+                    None => projected,
+                });
+            }
+
+            let row_output = merged.ok_or(ModelError::EmptyHeadDimension)?;
+            let scattered = row_output.scatter_add_rows(&[row], batch)?;
+            output = Some(match output {
+                Some(accumulated) => accumulated.add(&scattered)?,
+                None => scattered,
             });
         }
 
-        let merged = merged.ok_or(ModelError::EmptyHeadDimension)?;
+        let merged = output.ok_or(ModelError::EmptyHeadDimension)?;
         match self.output.bias() {
             Some(bias) => Ok(merged.add(bias)?),
             None => Ok(merged),

@@ -173,6 +173,7 @@ fn load_components(
             position: PositionKind::Learned,
             feed_forward: FeedForwardKind::Relu,
             num_experts: 1,
+            dropout: 0.0,
         }
     } else {
         let num_kv_heads = reader.u32()? as usize;
@@ -192,6 +193,7 @@ fn load_components(
             position,
             feed_forward,
             num_experts,
+            dropout: 0.0,
         }
     };
 

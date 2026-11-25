@@ -260,7 +260,8 @@ impl TensorValue {
         value: Tensor,
         grads: impl Fn(&Tensor) -> Result<(Tensor, Tensor), AutogradError> + 'static,
     ) -> Result<TensorValue, AutogradError> {
-        let requires_grad = self.requires_grad() || other.requires_grad();
+        let requires_grad =
+            (self.requires_grad() || other.requires_grad()) && !crate::no_grad::is_enabled();
         let backward = requires_grad.then(|| {
             Rc::new(move |grad: &Tensor| -> Result<Vec<Tensor>, AutogradError> {
                 let (left, right) = grads(grad)?;
@@ -282,7 +283,7 @@ impl TensorValue {
         value: Tensor,
         grad_fn: impl Fn(&Tensor) -> Result<Tensor, AutogradError> + 'static,
     ) -> Result<TensorValue, AutogradError> {
-        let requires_grad = self.requires_grad();
+        let requires_grad = self.requires_grad() && !crate::no_grad::is_enabled();
         let backward = requires_grad.then(|| {
             Rc::new(move |grad: &Tensor| -> Result<Vec<Tensor>, AutogradError> {
                 Ok(vec![grad_fn(grad)?])

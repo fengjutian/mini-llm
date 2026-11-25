@@ -68,6 +68,7 @@ pub fn run() {
         benchmark_train_step(hidden, block, batch);
     }
     benchmark_generation();
+    benchmark_batch_generation();
     benchmark_bpe_encode();
     benchmark_tensor_clone();
 }
@@ -174,15 +175,16 @@ fn benchmark_generation() {
     let model = tiny_model(16, 32);
     let prompt = [1usize, 2, 3];
 
-    let (seconds, _) = measure(ITERATIONS, || {
+    let (seconds, allocated) = measure(ITERATIONS, || {
         let mut rng = Rng::new(5);
         let _ = model
             .generate(&prompt, 32, 0.8, &mut rng)
             .expect("generate");
     });
     println!(
-        "  generate 32 tokens (KV cache):                    {:>8.2} ms",
-        seconds * 1_000.0
+        "  generate 32 tokens (KV cache):                    {:>8.2} ms  {:>7.2} MB alloc",
+        seconds * 1_000.0,
+        allocated / 1e6
     );
 }
 
@@ -220,5 +222,42 @@ fn benchmark_bpe_encode() {
         text.len() / 1024,
         tokenizer.vocab_size() - 256,
         megabytes / seconds
+    );
+}
+
+/// Batched generation: cached (one forward step per token) vs window recompute.
+fn benchmark_batch_generation() {
+    let model = tiny_model(32, 32);
+    let prompts = vec![vec![1usize, 2, 3]; 8];
+
+    let (cached, _) = measure(3, || {
+        let mut rng = Rng::new(5);
+        let _ = model
+            .generate_batch_cached(
+                &prompts,
+                16,
+                mini_llm_model::Sampling::with_temperature(0.8),
+                &mut rng,
+            )
+            .expect("cached batch generate");
+    });
+    let (uncached, _) = measure(3, || {
+        let mut rng = Rng::new(5);
+        let _ = model
+            .generate_batch(
+                &prompts,
+                16,
+                mini_llm_model::Sampling::with_temperature(0.8),
+                &mut rng,
+            )
+            .expect("uncached batch generate");
+    });
+    println!(
+        "  batch generate 8x16 (cached):  {:>8.2} ms",
+        cached * 1_000.0
+    );
+    println!(
+        "  batch generate 8x16 (uncached):{:>8.2} ms",
+        uncached * 1_000.0
     );
 }

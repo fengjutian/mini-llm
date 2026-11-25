@@ -95,6 +95,8 @@ pub struct ModelConfig {
     pub feed_forward: FeedForwardKind,
     /// `1` uses one dense feed-forward per block; `>1` swaps in a top-k MoE.
     pub num_experts: usize,
+    /// Dropout probability on the residual branches (`0.0` disables it).
+    pub dropout: f32,
 }
 
 impl Default for ModelConfig {
@@ -110,6 +112,7 @@ impl Default for ModelConfig {
             position: PositionKind::Learned,
             feed_forward: FeedForwardKind::Relu,
             num_experts: 1,
+            dropout: 0.0,
         }
     }
 }
@@ -128,6 +131,7 @@ impl ModelConfig {
             position: PositionKind::Learned,
             feed_forward: FeedForwardKind::Relu,
             num_experts: 1,
+            dropout: 0.0,
         }
     }
 
@@ -145,6 +149,7 @@ impl ModelConfig {
             position: PositionKind::Rope,
             feed_forward: FeedForwardKind::SwiGlu,
             num_experts: 1,
+            dropout: 0.0,
         }
     }
 
@@ -171,6 +176,11 @@ impl ModelConfig {
                 num_kv_heads: self.num_kv_heads,
             });
         }
+        if !(0.0..=1.0).contains(&self.dropout) {
+            return Err(ConfigError::InvalidDropout {
+                value: self.dropout,
+            });
+        }
         let head_dim = self.hidden_size / self.num_heads;
         if self.position == PositionKind::Rope && !head_dim.is_multiple_of(2) {
             return Err(ConfigError::OddHeadDimensionForRope { head_dim });
@@ -192,6 +202,9 @@ pub enum ConfigError {
     },
     OddHeadDimensionForRope {
         head_dim: usize,
+    },
+    InvalidDropout {
+        value: f32,
     },
 }
 
@@ -218,6 +231,9 @@ impl Display for ConfigError {
             Self::OddHeadDimensionForRope { head_dim } => {
                 write!(f, "RoPE needs an even head dimension, got {}", head_dim)
             }
+            Self::InvalidDropout { value } => {
+                write!(f, "dropout must be in [0, 1], got {}", value)
+            }
         }
     }
 }
@@ -233,6 +249,26 @@ mod tests {
         ModelConfig::default().validate().unwrap();
         ModelConfig::tiny(32).validate().unwrap();
         ModelConfig::modern(32).validate().unwrap();
+    }
+
+    #[test]
+    fn dropout_must_be_a_probability() {
+        let valid = ModelConfig {
+            dropout: 0.5,
+            ..ModelConfig::default()
+        };
+        valid.validate().unwrap();
+
+        for invalid in [-0.1, 1.5] {
+            let config = ModelConfig {
+                dropout: invalid,
+                ..ModelConfig::default()
+            };
+            assert!(matches!(
+                config.validate(),
+                Err(ConfigError::InvalidDropout { .. })
+            ));
+        }
     }
 
     #[test]

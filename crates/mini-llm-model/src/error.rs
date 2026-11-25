@@ -34,6 +34,11 @@ pub enum ModelError {
         batch: usize,
     },
     EmptyPrompt,
+    /// Cached batched generation needs prompts of equal length.
+    SequenceLengthMismatch {
+        expected: usize,
+        actual: usize,
+    },
     /// A KV cache was built for a different number of key/value heads.
     CacheHeadMismatch {
         expected: usize,
@@ -77,6 +82,10 @@ impl Display for ModelError {
                 tokens, batch
             ),
             Self::EmptyPrompt => write!(f, "generation requires a non-empty prompt"),
+            Self::SequenceLengthMismatch { expected, actual } => write!(
+                f,
+                "cached batch generation needs equal prompt lengths, got {expected} and {actual}"
+            ),
             Self::CacheHeadMismatch { expected, actual } => write!(
                 f,
                 "attention cache has {} key/value heads, expected {}",

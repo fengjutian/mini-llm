@@ -311,3 +311,17 @@ fn update_value_mutates_a_parameter_in_place() {
         Err(AutogradError::NotAParameter)
     );
 }
+
+#[test]
+fn scatter_add_rows_backward_gathers() {
+    let values = TensorValue::parameter(vec![1.0, 2.0, 3.0, 4.0], vec![2, 2]).unwrap();
+    let scattered = values.scatter_add_rows(&[1, 1], 3).unwrap();
+    let total = scattered.sum().unwrap();
+    assert!(
+        (total.data()[0] - 10.0).abs() < 1e-6,
+        "duplicate index should accumulate"
+    );
+    total.backward().unwrap();
+
+    assert_eq!(values.grad().unwrap().data(), &[1.0, 1.0, 1.0, 1.0]);
+}

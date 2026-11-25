@@ -49,6 +49,44 @@ impl Tensor {
         Self::new(output, vec![cols, rows])
     }
 
+    /// Scatters each row of `values` into a zero `[rows, cols]` tensor at
+    /// `indices`, accumulating when an index appears more than once.
+    ///
+    /// This is the forward counterpart of [`Tensor::gather_rows`] and the
+    /// building block of sparse mixture-of-experts dispatch.
+    pub fn scatter_add_rows(
+        values: &Tensor,
+        indices: &[usize],
+        rows: usize,
+    ) -> Result<Tensor, TensorError> {
+        if values.rank() != 2 {
+            return Err(TensorError::ExpectedRank {
+                expected: 2,
+                actual: values.rank(),
+            });
+        }
+        let (count, cols) = (values.shape()[0], values.shape()[1]);
+        if indices.len() != count {
+            return Err(TensorError::ShapeMismatch {
+                left: vec![count],
+                right: vec![indices.len()],
+            });
+        }
+
+        let mut data = vec![0.0f32; rows * cols];
+        for (position, &index) in indices.iter().enumerate() {
+            if index >= rows {
+                return Err(TensorError::RowIndexOutOfBounds { index, rows });
+            }
+            let target = index * cols;
+            let source = position * cols;
+            for col in 0..cols {
+                data[target + col] += values.data()[source + col];
+            }
+        }
+        Tensor::new(data, vec![rows, cols])
+    }
+
     /// Applies rotary position embedding (RoPE) to `[rows, heads * head_dim]`.
     ///
     /// Inside every head, the pair `(2i, 2i+1)` is rotated by

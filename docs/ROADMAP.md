@@ -187,7 +187,11 @@ SFT 语料仅用于展示掩码机制。
 - [x] Temperature / top-k / top-p sampling (`Sampling`, `generate --top-k/--top-p`)
 - [x] `sft --accum N` and cached BPE merge ranks
 - [x] CI: fmt, clippy, tests, Candle parity and site build
-- [x] Batched generation (`generate --batch N`, causal-mask isolation, no batched KV cache yet)
+- [x] Batched generation (`generate --batch N`, causal-mask isolation)
+- [x] Batched KV cache (`generate_batch_cached`, padding masked per position,
+  unequal prompts supported with RoPE)
+- [x] Sparse MoE dispatch (`gather_rows` + `scatter_add_rows`, dense reference)
+- [x] Scoped `no_grad` inference mode (generation stops recording graphs)
 
 实现拆分：
 

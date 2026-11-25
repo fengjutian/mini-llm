@@ -32,8 +32,8 @@ This repository is a working learning stack, not a production framework:
 
 The tensor implementation is deliberately simple: `f32` plus an `Arc`-backed
 `Vec<f32>`, scalar loops, with large matrix products split across cores. It is an
-educational baseline, not a high-performance library. Sparse MoE dispatch, GPU
-acceleration and higher-order gradients remain future work.
+educational baseline, not a high-performance library. GPU acceleration and
+higher-order gradients remain future work.
 
 ## Quick start
 
@@ -50,6 +50,7 @@ cargo run -p mini-llm-cli -- classify    # softmax + cross-entropy on two blobs
 cargo run -p mini-llm-cli -- moe         # mixture-of-experts routing
 cargo run -p mini-llm-cli -- train       # modern Tiny GPT (RMSNorm/RoPE/SwiGLU/GQA)
 cargo run -p mini-llm-cli -- train 200 --corpus examples/corpus.txt   # train on a text file
+cargo run -p mini-llm-cli -- train 200 --dropout 0.1   # residual dropout
 cargo run -p mini-llm-cli -- train 200 --bpe --vocab 300 --corpus examples/corpus.txt
 cargo run -p mini-llm-cli -- train 200 --resume   # continue from the saved step
 cargo run -p mini-llm-cli -- eval        # validation loss of the saved checkpoint
@@ -120,13 +121,28 @@ assert!((b.grad().unwrap().data()[0] + 6.0).abs() < 1e-4);  // dL/db = -6
 
 Supported operations: `add`, `sub`, `mul`, `matmul`, `transpose`, `relu`, `tanh`,
 `sigmoid`, `softmax_rows`, `scale`, `add_scalar`, `powf`, `sum`, `mean`,
-`mean_rows_keepdim`, `gather_rows`, `mse`, and `cross_entropy`. Binary operations
-follow NumPy-style right-aligned broadcasting, and gradients are summed back to
-the original shape. Every analytic gradient is verified against central finite
-differences in `crates/mini-llm-autograd/tests/gradients.rs`.
+`mean_rows_keepdim`, `gather_rows`, `scatter_add_rows`, `mse`, and
+`cross_entropy`. Binary operations follow NumPy-style right-aligned
+broadcasting, and gradients are summed back to the original shape. Every analytic
+gradient is verified against central finite differences in
+`crates/mini-llm-autograd/tests/gradients.rs`.
 
-Known limitations: `f32` only, no `no_grad` region, no higher-order gradients,
-and only `matmul` is parallel (element-wise ops stay on the calling thread).
+Inference can skip graph construction:
+
+```rust
+use mini_llm_autograd::{no_grad, TensorValue};
+
+let x = TensorValue::constant(vec![1.0, 2.0], vec![1, 2]).unwrap();
+let y = no_grad::with_no_grad(|| x.scale(2.0)).unwrap();
+assert!(!y.requires_grad());
+```
+
+The flag is thread-local, nestable and restored on drop; `TinyGpt::generate*`
+uses it internally, so sampling no longer allocates graph nodes.
+
+Known limitations: `f32` only, no higher-order gradients, and only `matmul` is
+parallel (element-wise ops stay on the calling thread). `no_grad::with_no_grad`
+provides a scoped inference mode, which generation uses internally.
 
 ## Neural network building blocks
 
@@ -156,10 +172,11 @@ let mut optimizer = AdamW::new(0.02);
 | `Embedding` | row gather; repeated tokens accumulate gradient in the table |
 | `LayerNorm` / `RmsNorm` | composed from autograd primitives, so backprop is automatic |
 | `SwiGlu` | `W2(SiLU(W1x) ⊙ W3x)` gated feed-forward |
-| `Moe` | top-k router over SwiGLU experts (dense execution) |
+| `Moe` | top-k router over SwiGLU experts (sparse dispatch) |
 | `LoraLinear` | frozen base + trainable low-rank `A`/`B` adapters |
 | `Relu` / `Tanh` / `Sigmoid` | stateless activation modules |
 | `Sequential` | chains modules and concatenates their parameters |
+| `Dropout` | inverted dropout, disabled in `mode::with_eval` |
 | `Sgd` / `AdamW` | momentum SGD and AdamW with decoupled weight decay |
 
 `Rng` is a seeded xorshift64\* generator, so the same seed reproduces the same
@@ -167,7 +184,7 @@ initialization. Normalization, embedding lookups, SwiGLU shapes, MoE routing,
 optimizer updates and XOR convergence are covered in
 `crates/mini-llm-nn/tests/modules.rs`.
 
-Known limitations: no dropout and no fused kernels.
+Known limitations: no fused kernels.
 
 ## Tiny GPT
 
@@ -195,6 +212,7 @@ x = x + FFN(Norm(x))           # FFN: ReLU-MLP | SwiGLU | top-k MoE
 | `feed_forward` | `Relu`, `SwiGlu` | `SwiGlu` |
 | `num_kv_heads` | any divisor of `num_heads` | half the query heads (GQA) |
 | `num_experts` | `1` = dense, `>1` = MoE per block | `1` |
+| `dropout` | residual-branch dropout probability, `0.0` disables | `0.0` |
 
 Attention flattens the batch to `[batch·seq, hidden]` and applies a **block-diagonal
 causal mask** of shape `[batch·seq, batch·seq]`, so a token can attend only to
@@ -236,12 +254,15 @@ prompt: The little language model learns
 output: The little language model learns one character
 ```
 
-Known limitations: MoE execution is dense (all experts run; only the gates are
-sparse) and RoPE generation degrades past the trained context. Sampling supports
+Known limitations: MoE dispatch is sparse (only experts with assigned rows run;
+orward_dense keeps a dense reference for parity tests) and RoPE generation
+degrades past the trained context. Sampling supports
 temperature, top-k and top-p (`Sampling`, exposed as `generate --top-k/--top-p`).
-`generate_batch` runs several sequences in one batched forward pass (with
-right-padding and a causal mask so samples stay independent), but it recomputes
-the window each step; the KV-cached path still handles one sequence.
+`generate_batch_cached` keeps one KV-cache row per sequence and updates them in
+a single batched step. With RoPE it accepts unequal prompt lengths by
+right-padding and masking the padding out of attention; learned position
+embeddings require equal lengths. `generate_batch` handles unequal lengths
+without a cache.
 
 > Note: because the kernels are scalar loops, the workspace sets
 > `[profile.dev] opt-level = 2`. Without it the Tiny GPT demo is roughly an order

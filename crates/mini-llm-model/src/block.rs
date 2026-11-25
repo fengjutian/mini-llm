@@ -1,7 +1,7 @@
 //! A pre-norm Transformer decoder block with a selectable feed-forward network.
 
 use mini_llm_autograd::TensorValue;
-use mini_llm_nn::{Linear, Module, Moe, Relu, Rng, SwiGlu};
+use mini_llm_nn::{Dropout, Linear, Module, Moe, Relu, Rng, SwiGlu};
 use mini_llm_tensor::Tensor;
 
 use crate::attention::{AttentionCache, CausalSelfAttention};
@@ -85,9 +85,10 @@ pub struct BlockCache {
 }
 
 impl BlockCache {
-    pub fn new(config: &ModelConfig) -> Self {
+    pub fn new(config: &ModelConfig, batch: usize) -> Self {
         Self {
             attention: AttentionCache::new(
+                batch,
                 config.num_kv_heads,
                 config.hidden_size / config.num_heads,
             ),
@@ -101,6 +102,7 @@ pub struct TransformerBlock {
     attention: CausalSelfAttention,
     norm2: NormLayer,
     feed_forward: FeedForward,
+    dropout: Dropout,
     hidden_size: usize,
     num_heads: usize,
 }
@@ -112,6 +114,7 @@ impl TransformerBlock {
             attention: CausalSelfAttention::new(config, rng)?,
             norm2: NormLayer::new(config.norm, config.hidden_size)?,
             feed_forward: FeedForward::new(config, rng)?,
+            dropout: Dropout::new(config.dropout, rng.next_u64()),
             hidden_size: config.hidden_size,
             num_heads: config.num_heads,
         })
@@ -129,11 +132,11 @@ impl TransformerBlock {
         let attended = self
             .attention
             .forward(&normalized, batch, seq, mask, positions)?;
-        let residual = input.add(&attended)?;
+        let residual = input.add(&self.dropout.forward(&attended)?)?;
 
         let normalized = self.norm2.forward(&residual)?;
         let transformed = self.feed_forward.forward(&normalized)?;
-        Ok(residual.add(&transformed)?)
+        Ok(residual.add(&self.dropout.forward(&transformed)?)?)
     }
 
     /// Like [`TransformerBlock::forward`], also recording each attention matrix.
@@ -150,29 +153,29 @@ impl TransformerBlock {
         let attended =
             self.attention
                 .forward_traced(&normalized, batch, seq, mask, positions, capture)?;
-        let residual = input.add(&attended)?;
+        let residual = input.add(&self.dropout.forward(&attended)?)?;
 
         let normalized = self.norm2.forward(&residual)?;
         let transformed = self.feed_forward.forward(&normalized)?;
-        Ok(residual.add(&transformed)?)
+        Ok(residual.add(&self.dropout.forward(&transformed)?)?)
     }
 
     /// Single-token forward pass that appends to the KV cache.
     pub fn forward_step(
         &self,
         input: &TensorValue,
-        position: usize,
+        positions: &[usize],
         cache: &mut BlockCache,
     ) -> Result<TensorValue, ModelError> {
         let normalized = self.norm1.forward(input)?;
         let attended = self
             .attention
-            .forward_step(&normalized, position, &mut cache.attention)?;
-        let residual = input.add(&attended)?;
+            .forward_step(&normalized, positions, &mut cache.attention)?;
+        let residual = input.add(&self.dropout.forward(&attended)?)?;
 
         let normalized = self.norm2.forward(&residual)?;
         let transformed = self.feed_forward.forward(&normalized)?;
-        Ok(residual.add(&transformed)?)
+        Ok(residual.add(&self.dropout.forward(&transformed)?)?)
     }
 
     pub fn parameters(&self) -> Vec<TensorValue> {

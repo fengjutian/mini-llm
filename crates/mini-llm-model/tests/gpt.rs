@@ -30,6 +30,7 @@ fn modern_config() -> ModelConfig {
         position: PositionKind::Rope,
         feed_forward: FeedForwardKind::SwiGlu,
         num_experts: 1,
+        dropout: 0.0,
     }
 }
 
@@ -234,9 +235,19 @@ fn mixture_of_experts_configuration_trains() {
         .unwrap();
     loss.backward().unwrap();
 
-    for parameter in model.parameters() {
-        assert!(parameter.grad().is_some());
-    }
+    // Sparse dispatch only runs the experts that received rows, so count how
+    // many parameters were touched rather than assuming all of them.
+    let parameters = model.parameters();
+    let with_grads = parameters
+        .iter()
+        .filter(|parameter| parameter.grad().is_some())
+        .count();
+    assert!(with_grads > 0);
+    assert!(
+        with_grads >= parameters.len() / 2,
+        "most parameters should still be trained ({with_grads}/{})",
+        parameters.len()
+    );
 }
 
 #[test]
@@ -426,4 +437,78 @@ fn batch_generation_rejects_empty_input() {
         model.generate_batch(&[vec![]], 4, Sampling::greedy(), &mut Rng::new(1)),
         Err(ModelError::EmptyPrompt)
     ));
+}
+
+#[test]
+fn cached_batch_generation_matches_single_sequences() {
+    let model = modern_model();
+    let prompts = vec![vec![1usize, 2, 3], vec![1, 2, 3]];
+    let singles: Vec<Vec<usize>> = prompts
+        .iter()
+        .map(|prompt| model.generate(prompt, 5, 0.0, &mut Rng::new(9)).unwrap())
+        .collect();
+
+    let cached = model
+        .generate_batch_cached(&prompts, 5, Sampling::greedy(), &mut Rng::new(9))
+        .unwrap();
+    assert_eq!(singles, cached);
+
+    let uncached = model
+        .generate_batch(&prompts, 5, Sampling::greedy(), &mut Rng::new(9))
+        .unwrap();
+    assert_eq!(uncached, cached);
+}
+
+#[test]
+fn cached_batch_generation_handles_unequal_prompts_with_rope() {
+    let model = modern_model();
+    let prompts = vec![vec![1usize], vec![1, 2, 3]];
+
+    let single = model
+        .generate(&prompts[0], 4, 0.0, &mut Rng::new(2))
+        .unwrap();
+    let cached = model
+        .generate_batch_cached(&prompts, 4, Sampling::greedy(), &mut Rng::new(2))
+        .unwrap();
+
+    assert_eq!(
+        cached[0], single,
+        "padding must not change the shorter prompt"
+    );
+    assert_eq!(cached[1].len(), 3 + 4);
+}
+
+#[test]
+fn cached_batch_generation_rejects_unequal_prompts_with_learned_positions() {
+    // The classic model uses learned position embeddings, which cannot be
+    // batched at different offsets.
+    let model = model();
+    assert!(matches!(
+        model.generate_batch_cached(
+            &[vec![1], vec![1, 2]],
+            4,
+            Sampling::greedy(),
+            &mut Rng::new(1)
+        ),
+        Err(ModelError::SequenceLengthMismatch { .. })
+    ));
+    assert!(matches!(
+        model.generate_batch_cached(&[], 4, Sampling::greedy(), &mut Rng::new(1)),
+        Err(ModelError::EmptyPrompt)
+    ));
+}
+
+#[test]
+fn generation_disables_dropout() {
+    let mut config = modern_config();
+    config.dropout = 0.7;
+    let model = TinyGpt::new(config, &mut Rng::new(3)).unwrap();
+
+    let first = model
+        .generate(&[1usize, 2, 3], 5, 0.0, &mut Rng::new(4))
+        .unwrap();
+    let second = model
+        .generate(&[1usize, 2, 3], 5, 0.0, &mut Rng::new(4))
+        .unwrap();
+    assert_eq!(first, second, "generation must ignore dropout");
 }

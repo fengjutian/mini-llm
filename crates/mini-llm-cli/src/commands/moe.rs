@@ -7,7 +7,7 @@ pub fn run() {
     let mut rng = Rng::new(7);
     let layer = Moe::new(8, 16, 4, 2, &mut rng).expect("moe");
 
-    println!("mixture of experts (dense execution, top-2 gating)");
+    println!("mixture of experts (sparse dispatch, top-2 gating)");
     println!("  {}", layer.summary());
 
     let mut features = Vec::with_capacity(8 * 8);
