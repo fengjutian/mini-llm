@@ -78,6 +78,50 @@ impl Default for TrainConfig {
     }
 }
 
+/// Tracks validation loss and decides when to stop.
+#[derive(Debug, Clone)]
+pub struct EarlyStopping {
+    patience: usize,
+    best: f32,
+    stale: usize,
+}
+
+impl EarlyStopping {
+    /// `patience == 0` disables stopping; improvements are still tracked.
+    pub fn new(patience: usize) -> Self {
+        Self {
+            patience,
+            best: f32::INFINITY,
+            stale: 0,
+        }
+    }
+
+    /// Records one validation loss; returns true when it is a new best.
+    pub fn observe(&mut self, loss: f32) -> bool {
+        if loss < self.best {
+            self.best = loss;
+            self.stale = 0;
+            true
+        } else {
+            self.stale += 1;
+            false
+        }
+    }
+
+    /// True once `patience` consecutive observations failed to improve.
+    pub fn should_stop(&self) -> bool {
+        self.patience > 0 && self.stale >= self.patience
+    }
+
+    pub fn best(&self) -> f32 {
+        self.best
+    }
+
+    pub fn stale_evaluations(&self) -> usize {
+        self.stale
+    }
+}
+
 /// One training step's report.
 #[derive(Debug, Clone, Copy)]
 pub struct StepReport {

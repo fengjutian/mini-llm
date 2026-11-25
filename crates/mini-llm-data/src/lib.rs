@@ -34,8 +34,8 @@ mod instructions;
 mod tokenizer;
 
 pub use bpe::BpeTokenizer;
-pub use instructions::{parse_instructions, InstructionPair};
 pub use dataset::{Batch, Dataset, SftDataset, TextDataset};
+pub use instructions::{parse_instructions, InstructionPair};
 pub use tokenizer::{CharTokenizer, Tokenizer};
 
 use std::error::Error;

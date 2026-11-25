@@ -40,6 +40,11 @@ pub fn run(arguments: &[String]) {
             return;
         }
     };
+    let minimum = 2 * (BLOCK_SIZE + 1);
+    if tokens.len() < minimum {
+        eprintln!("corpus is too short: need at least {minimum} tokens");
+        return;
+    }
     let (_, validation_tokens) = split_tokens(&tokens, VALIDATION_FRACTION);
     let dataset = match TextDataset::new(validation_tokens, BLOCK_SIZE) {
         Ok(dataset) => dataset,

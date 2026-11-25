@@ -10,7 +10,8 @@ use mini_llm_data::{BpeTokenizer, CharTokenizer, TextDataset, Tokenizer};
 use mini_llm_model::{ModelConfig, TinyGpt};
 use mini_llm_nn::Rng;
 use mini_llm_train::{
-    load_training_checkpoint, save_training_checkpoint, LrSchedule, TrainConfig, Trainer,
+    load_training_checkpoint, save_training_checkpoint, EarlyStopping, LrSchedule, TrainConfig,
+    Trainer,
 };
 
 use super::{corpus_text, parse_accumulation, CHECKPOINT_PATH};
@@ -122,6 +123,11 @@ pub fn run(arguments: &[String]) {
     }
 
     let mut last_loss = f32::NAN;
+    let early_stop = parse_early_stop(arguments);
+    let mut stopper = EarlyStopping::new(early_stop);
+    let mut best_validation = f32::INFINITY;
+    let mut best_step = 0usize;
+
     for step in 1..=steps {
         let started = Instant::now();
         last_loss = trainer.step().expect("training step");
@@ -140,6 +146,27 @@ pub fn run(arguments: &[String]) {
                 .evaluate_on(&validation_dataset, 10)
                 .expect("validation");
             println!("    validation loss after step {step}: {validation:.4}");
+
+            if stopper.observe(validation) {
+                best_validation = validation;
+                best_step = step;
+                save_training_checkpoint(
+                    CHECKPOINT_PATH,
+                    trainer.model(),
+                    &tokenizer,
+                    &trainer.state(),
+                )
+                .expect("save checkpoint");
+                if early_stop > 0 {
+                    println!("    new best validation loss; checkpoint updated");
+                }
+            } else if stopper.should_stop() {
+                println!(
+                    "    early stopping after {} evaluations without improvement",
+                    early_stop
+                );
+                break;
+            }
         }
     }
     let validation = trainer
@@ -147,15 +174,40 @@ pub fn run(arguments: &[String]) {
         .expect("validation");
     println!("  final sampled loss: {last_loss:.4}");
     println!("  final validation loss: {validation:.4}");
+    if early_stop > 0 {
+        println!(
+            "  best validation loss: {best_validation:.4} at step {best_step} (patience {early_stop})"
+        );
+    }
 
     print_sample(trainer.model(), &tokenizer, &text);
-    persist(trainer.model(), &tokenizer, &trainer.state());
+    if early_stop == 0 || validation < best_validation {
+        persist(trainer.model(), &tokenizer, &trainer.state());
+    } else {
+        println!();
+        println!(
+            "best checkpoint kept: step {best_step}, validation {best_validation:.4}"
+        );
+    }
 }
 
 fn split_tokens(tokens: &[usize], fraction: f32) -> (Vec<usize>, Vec<usize>) {
     let split = ((tokens.len() as f32) * (1.0 - fraction)) as usize;
     let split = split.clamp(BLOCK_SIZE + 1, tokens.len().saturating_sub(BLOCK_SIZE + 1));
     (tokens[..split].to_vec(), tokens[split..].to_vec())
+}
+
+/// Reads `--early-stop N` (evaluations without improvement); 0 disables it.
+fn parse_early_stop(arguments: &[String]) -> usize {
+    let mut value = None;
+    for (index, argument) in arguments.iter().enumerate() {
+        if argument == "--early-stop" {
+            value = arguments.get(index + 1).and_then(|next| next.parse().ok());
+        } else if let Some(rest) = argument.strip_prefix("--early-stop=") {
+            value = rest.parse().ok();
+        }
+    }
+    value.unwrap_or(0)
 }
 
 /// Reads `--dropout P`; defaults to 0.0 (disabled).

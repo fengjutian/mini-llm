@@ -3,9 +3,7 @@
 //! Data can come from the built-in dialogue or from a JSONL file of
 //! `{"prompt": ..., "response": ...}` objects (`--jsonl PATH`).
 
-use mini_llm_data::{
-    parse_instructions, BpeTokenizer, CharTokenizer, SftDataset, Tokenizer,
-};
+use mini_llm_data::{parse_instructions, BpeTokenizer, CharTokenizer, SftDataset, Tokenizer};
 use mini_llm_model::{ModelConfig, TinyGpt};
 use mini_llm_nn::Rng;
 use mini_llm_train::{TrainConfig, Trainer};

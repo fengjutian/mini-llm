@@ -57,6 +57,7 @@ cargo run -p mini-llm-cli -- eval        # validation loss of the saved checkpoi
 cargo run -p mini-llm-cli -- generate "The little language model learns " 14 0.3
 cargo run -p mini-llm-cli -- generate "The " 20 0.8 --top-k 20 --top-p 0.9
 cargo run -p mini-llm-cli -- sft         # supervised fine-tuning with prompt masking
+cargo run -p mini-llm-cli -- sft 200 --jsonl examples/instructions.jsonl
 cargo run -p mini-llm-cli -- lora        # adapt a frozen classifier with low-rank adapters
 cargo run -p mini-llm-cli -- dpo         # preference optimization on a toy policy
 cargo run -p mini-llm-cli -- grpo        # group relative policy optimization bandit
@@ -87,7 +88,9 @@ The training loop includes what a real run needs:
 - **Any UTF-8 text corpus** — `--corpus PATH` builds the vocabulary from that
   file instead of the built-in paragraph; the checkpoint records the vocabulary,
   so `generate` works from it and `eval --corpus PATH` reproduces the held-out
-  number. `examples/corpus.txt` is a small pangram corpus to try.
+  number. `--corpus` can be repeated or point at a directory (its `.txt`/`.md`
+  files are concatenated in sorted order). `examples/corpus.txt` is a small
+  pangram corpus to try.
 - **Character or byte-level BPE tokenizer** — `--bpe --vocab N` learns `N` byte
   merges from the corpus (default 512) instead of one token per character. BPE
   covers every byte, so unknown characters never fail; the checkpoint tags which
@@ -301,6 +304,17 @@ trainer.train(400, |_| {})?;
 
 `Tokenizer::encode_supervised` works for both vocabularies, so SFT can run with a
 BPE checkpoint; `cargo run -p mini-llm-cli -- sft --bpe` exercises that path.
+
+SFT can train on instruction data instead of the built-in dialogue:
+
+```bash
+cargo run -p mini-llm-cli -- sft 200 --jsonl examples/instructions.jsonl
+```
+
+Each line is a flat `{"prompt": "...", "response": "..."}` object (comments and
+blank lines are skipped, unknown string fields are ignored). The parser is in
+`mini-llm-data` and has no JSON dependency; malformed lines fail with the line
+number.
 
 `LoraLinear` starts as the identity update (`B = 0`) and reports only `A` and
 `B` from `parameters()`, so an optimizer that receives `model.parameters()`

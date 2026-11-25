@@ -319,5 +319,8 @@ fn instruction_jsonl_rejects_malformed_lines() {
         parse_instructions("{\"prompt\": \"x\", \"response\": \"\"}"),
         Err(DataError::InvalidInstruction { .. })
     ));
-    assert!(matches!(parse_instructions("  \n"), Err(DataError::EmptyCorpus)));
+    assert!(matches!(
+        parse_instructions("  \n"),
+        Err(DataError::EmptyCorpus)
+    ));
 }

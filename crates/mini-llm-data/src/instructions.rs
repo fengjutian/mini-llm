@@ -93,12 +93,7 @@ fn skip_whitespace(bytes: &[u8], position: &mut usize) {
     }
 }
 
-fn expect(
-    bytes: &[u8],
-    position: &mut usize,
-    expected: u8,
-    line: usize,
-) -> Result<(), DataError> {
+fn expect(bytes: &[u8], position: &mut usize, expected: u8, line: usize) -> Result<(), DataError> {
     if peek(bytes, *position) == Some(expected) {
         *position += 1;
         Ok(())
