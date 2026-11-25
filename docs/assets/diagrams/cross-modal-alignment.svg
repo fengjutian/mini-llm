@@ -11,8 +11,6 @@
 <text class="label" x="1165.0" y="190.3" text-anchor="middle" font-size="18">Text Encoder</text>
 <text class="tiny" x="235" y="250" text-anchor="middle">f_I(image) ∈ R^d</text>
 <text class="tiny" x="1165" y="250" text-anchor="middle">f_T(text) ∈ R^d</text>
-<path class="edge" d="M235 218 L235 270" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
-<path class="edge" d="M1165 218 L1165 270" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
 <text class="small" x="620.0" y="282" text-anchor="middle">t1</text>
 <text class="small" x="740.0" y="282" text-anchor="middle">t2</text>
 <text class="small" x="860.0" y="282" text-anchor="middle">t3</text>

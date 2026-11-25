@@ -24,7 +24,7 @@
 <rect class="box cool" x="216" y="306" width="40" height="40" rx="3"/>
 <text class="tiny" x="90" y="390" text-anchor="start">切成 16×16 的 Patch</text>
 <path class="accent-edge" d="M270 260 L340 260" marker-end="url(#arrow)"/>
-<text class="tiny" x="305" y="240" text-anchor="middle">flatten + 线性投影</text>
+<text class="tiny" x="305" y="225" text-anchor="middle">flatten + 线性投影</text>
 <rect class="box hot" x="350" y="230" width="64" height="64" rx="10"/>
 <text class="small" x="382" y="268" text-anchor="middle">x1</text>
 <rect class="box" x="432" y="230" width="64" height="64" rx="10"/>

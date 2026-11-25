@@ -25,7 +25,7 @@
 <path class="edge" d="M430 338 L730 400" marker-end="url(#arrow)"/>
 <path class="edge" d="M970 338 L980 400" marker-end="url(#arrow)"/>
 <path class="edge" d="M970 338 L1150 400" marker-end="url(#arrow)"/>
-<path class="accent-edge" d="M1210 400 L860 212" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
-<text class="tiny" x="1215" y="330" text-anchor="start">升级 / 失败上报</text>
+<path class="accent-edge" d="M1210 400 L1345 400 L1345 212 L860 212" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
+<text class="tiny" x="1225" y="380" text-anchor="start">升级 / 失败上报</text>
 <text class="tiny" x="90" y="560" text-anchor="start">分层的意义不是“多一层”，而是让每层只处理自己粒度的决策。</text>
 </svg>
