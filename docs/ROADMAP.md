@@ -197,13 +197,19 @@ SFT 语料仅用于展示掩码机制。
   与 host `TensorValue` 数值一致；
 - 设备 FFN 块训练：embedding → LayerNorm → SwiGLU → 残差 → head → CE，
   60 步 loss 下降、参数全程驻留设备；
-- 融合注意力算子（host）：GQA、因果掩码、前向 + 手工反向，有限差分校验；
-  Candle 4D 版本尝试后反向未对齐，已回退为明确错误；
-- 注意力块端到端训练（host）：embedding → LN → QKV → attention → 残差 →
-  LN → head → CE，40 步 loss 下降；
-- 可运行示例：`cargo run -p mini-llm-backend --example device_attention_block`，
-  27 个窗口按 21/6 切分；train 3.30 → 0.11，held-out 在 step 20 最低
-  约 3.03 后回升到 6.65，展示过拟合；
+- 融合注意力算子：GQA、因果掩码、前向 + 手工反向，有限差分校验；
+  Candle 存储暂委托 host 数学并搬回设备（正确但有传输开销），原生 4D 仍待补；
+- fallback 开销实测（128 行）：前向 1.4×、反向 1.3×，q/k/v 上传约 0.04 ms；
+- 注意力块在 `Cpu` 与 `Candle(Cpu)` 上均可端到端训练（loss 下降、参数驻留）；
+- 可运行示例：`cargo run -p mini-llm-backend --example device_attention_block`；
+  语料为 README + 全部 crate 的 `//!`/`///` 注释（88,829 字符，vocab 118，
+  11,103 窗口，8,882/2,221 切分）；
+- 宽度/步数对照：hidden 32 时 held-out 4.80 → 3.61（1,600 步）、→ 3.50
+  （6,400 步）；hidden 64 反而 3.64–3.75，说明单块模型瓶颈在深度而非宽度；
+- 层数扫描（`--layer-sweep`，1,600 步）：1/2/3 层最终 held-out
+  3.65/3.55/3.67，最佳 3.25/3.30/3.43；2 层最终最好，3 层需要更大步数预算；
+- 正则化对照（`--sweep`）：wd 0.1 / dropout 0.3 的最佳 held-out 仍在窄带内，
+  数据与深度比正则化更关键；
 - `.github/workflows/cuda.yml`（手动触发）在 GPU runner 上跑 `--features cuda`；
 - CUDA 路径与 Candle CPU 共用代码，但本环境无 GPU，未做运行验证。
 

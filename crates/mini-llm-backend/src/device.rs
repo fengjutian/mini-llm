@@ -1048,9 +1048,15 @@ impl DeviceTensor {
                 )?))
             }
             #[cfg(feature = "candle")]
-            Storage::Candle { .. } => Err(BackendError::Backend(
-                "candle attention is not implemented yet; use the host path".to_string(),
-            )),
+            Storage::Candle { .. } => {
+                // Correctness first: run the verified host math, then move the
+                // result back to the device. A native 4D kernel is still TODO.
+                let q = self.to_host()?;
+                let k = key.to_host()?;
+                let v = value.to_host()?;
+                let output = attention_host(&q, &k, &v, batch, seq, heads, kv_heads, causal, None)?;
+                Ok(Self::from_host(output).to(&self.device())?)
+            }
         }
     }
 
@@ -1081,9 +1087,20 @@ impl DeviceTensor {
                 ))
             }
             #[cfg(feature = "candle")]
-            Storage::Candle { .. } => Err(BackendError::Backend(
-                "candle attention is not implemented yet; use the host path".to_string(),
-            )),
+            Storage::Candle { .. } => {
+                let q = self.to_host()?;
+                let k = key.to_host()?;
+                let v = value.to_host()?;
+                let g = grad_output.to_host()?;
+                let (grad_q, grad_k, grad_v) =
+                    attention_host_backward(&q, &k, &v, &g, batch, seq, heads, kv_heads, causal)?;
+                let device = self.device();
+                Ok((
+                    Self::from_host(grad_q).to(&device)?,
+                    Self::from_host(grad_k).to(&device)?,
+                    Self::from_host(grad_v).to(&device)?,
+                ))
+            }
         }
     }
 }

@@ -1127,12 +1127,10 @@ fn device_attention_gradients_match_finite_differences() {
     check(&v, &grad_v, "v");
 }
 
-#[test]
-fn device_attention_block_trains_on_host_device() {
+fn attention_block_trains(device: &Device) {
     let (vocab, hidden, heads, kv_heads, head_dim) = (4usize, 8usize, 2usize, 1usize, 4usize);
     let (batch, seq, steps) = (2usize, 6usize, 40usize);
-    let device = Device::Cpu;
-    let upload = |tensor: Tensor| DeviceTensor::from_host(tensor).to(&device).unwrap();
+    let upload = |tensor: Tensor| DeviceTensor::from_host(tensor).to(device).unwrap();
 
     let mut parameters = vec![
         upload(sample(vocab, hidden, 0.5)),               // embedding
@@ -1200,5 +1198,108 @@ fn device_attention_block_trains_on_host_device() {
     );
     assert!(parameters
         .iter()
-        .all(|parameter| parameter.device() == Device::Cpu));
+        .all(|parameter| parameter.device() == *device));
+}
+
+#[test]
+fn device_attention_block_trains_on_host_device() {
+    attention_block_trains(&Device::Cpu);
+}
+
+#[cfg(feature = "candle")]
+#[test]
+fn device_attention_block_trains_on_candle() {
+    attention_block_trains(&Device::candle_cpu());
+}
+
+#[cfg(feature = "candle")]
+#[test]
+fn candle_attention_matches_host_attention() {
+    let (batch, seq, heads, kv_heads, head_dim) = (2usize, 3usize, 4usize, 2usize, 2usize);
+    let q = sample(batch * seq, heads * head_dim, 1.0);
+    let k = sample(batch * seq, kv_heads * head_dim, 0.5);
+    let v = sample(batch * seq, kv_heads * head_dim, 0.75);
+    let device = Device::candle_cpu();
+
+    for causal in [true, false] {
+        let host_out = DeviceTensor::from_host(q.clone())
+            .attention_forward(
+                &DeviceTensor::from_host(k.clone()),
+                &DeviceTensor::from_host(v.clone()),
+                batch,
+                seq,
+                heads,
+                kv_heads,
+                causal,
+            )
+            .unwrap()
+            .to_host()
+            .unwrap();
+        let candle_out = DeviceTensor::from_host(q.clone())
+            .to(&device)
+            .unwrap()
+            .attention_forward(
+                &DeviceTensor::from_host(k.clone()).to(&device).unwrap(),
+                &DeviceTensor::from_host(v.clone()).to(&device).unwrap(),
+                batch,
+                seq,
+                heads,
+                kv_heads,
+                causal,
+            )
+            .unwrap()
+            .to_host()
+            .unwrap();
+        assert_close(
+            candle_out.data(),
+            host_out.data(),
+            1e-5,
+            "candle attention forward",
+        );
+
+        let numel = host_out.data().len() as f32;
+        let grad = Tensor::new(
+            vec![1.0 / numel; host_out.data().len()],
+            host_out.shape().to_vec(),
+        )
+        .unwrap();
+        let (host_dq, host_dk, host_dv) = DeviceTensor::from_host(q.clone())
+            .attention_backward(
+                &DeviceTensor::from_host(k.clone()),
+                &DeviceTensor::from_host(v.clone()),
+                &DeviceTensor::from_host(grad.clone()),
+                batch,
+                seq,
+                heads,
+                kv_heads,
+                causal,
+            )
+            .unwrap();
+        let (candle_dq, candle_dk, candle_dv) = DeviceTensor::from_host(q.clone())
+            .to(&device)
+            .unwrap()
+            .attention_backward(
+                &DeviceTensor::from_host(k.clone()).to(&device).unwrap(),
+                &DeviceTensor::from_host(v.clone()).to(&device).unwrap(),
+                &DeviceTensor::from_host(grad).to(&device).unwrap(),
+                batch,
+                seq,
+                heads,
+                kv_heads,
+                causal,
+            )
+            .unwrap();
+        for (candle, host, label) in [
+            (&candle_dq, &host_dq, "dq"),
+            (&candle_dk, &host_dk, "dk"),
+            (&candle_dv, &host_dv, "dv"),
+        ] {
+            assert_close(
+                candle.to_host().unwrap().data(),
+                host.to_host().unwrap().data(),
+                1e-5,
+                &format!("candle attention {label}"),
+            );
+        }
+    }
 }

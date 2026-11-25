@@ -610,15 +610,34 @@ and re-exports.
   trains with `DeviceAdamW`; the test asserts the loss falls below 80% of its
   starting value and that every parameter stays device-resident. **Fused
   attention** (`attention_forward` / `attention_backward`) supports GQA and causal
-  masking on host storage and is verified with finite differences; the Candle 4D
-  implementation is the next step (it currently returns a clear error). A 40-step
-  **attention block** (embedding → LayerNorm → QKV → attention → out-projection →
-  residual → LayerNorm → head → cross-entropy) likewise trains end-to-end on host
-  device storage and must drop its loss below 80% of the start. Run
+  masking and is verified with finite differences. On Candle storage it currently
+  delegates to the same host math and copies the result back to the device — correct,
+  with a transfer cost; a native 4D kernel is still TODO. The measured overhead for
+  128 rows (batch 8, seq 16, 4 heads, head_dim 16) is 1.4× on forward and 1.3× on
+  backward, with ~0.04 ms to upload q/k/v; reproduce it with
+  `cargo run --release -p mini-llm-backend --example attention_transfer_cost --features candle`.
+  A 40-step **attention
+  block** (embedding → LayerNorm → QKV → attention → out-projection →
+  residual → LayerNorm → head → cross-entropy) trains end-to-end on both `Cpu` and
+  `Candle(Cpu)` device storage and must drop its loss below 80% of the start. Run
   `cargo run -p mini-llm-backend --example device_attention_block` for a
-  held-out demonstration: 27 windows are split 21/6, training loss falls
-  3.30 → 0.11 while held-out loss bottoms near 3.03 at step 20 and climbs back
-  to 6.65 by step 150 — a compact overfitting example.
+  held-out demonstration. The example stacks N layers (LayerNorm → QKV → fused
+  attention → residual, then LayerNorm → SwiGLU → residual) over the repository
+  README plus every crate's `//!`/`///` doc comments (88.8k chars, vocab 118,
+  11,103 windows split 8,882/2,221). `--layer-sweep` at 1,600 steps gives:
+
+  | layers | params | train (EMA) | held-out | best held-out |
+  | --- | --- | --- | --- | --- |
+  | 1 | 17,334 | 2.88 | 3.65 | **3.25** |
+  | 2 | 26,934 | 2.88 | **3.55** | 3.30 |
+  | 3 | 36,534 | 3.03 | 3.67 | 3.43 |
+
+  Two layers give the best final held-out loss, but the best-ever checkpoint is
+  still the single layer; three layers need a larger step budget. `--hidden 64`
+  does not help either (3.64–3.75 at one layer), so this corpus is the current
+  bottleneck rather than width or depth. Training loss is printed as an
+  exponential moving average, and `--sweep` compares weight decay 0.1 with
+  dropout 0.3.
 - Future backends implement `Backend` and reuse the same parity harness.
 
 Autograd and the model still operate on host `Tensor` values; making the training
