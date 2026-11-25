@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="650" viewBox="0 0 1400 650" role="img" aria-labelledby="title desc">
+  <title id="title">KV Cache：缓存的是历史，不是结果</title><desc id="desc">mini-llm 技术机制图</desc>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="currentColor"/></marker></defs>
+  <style>:root{color-scheme:light dark}.bg{fill:#f7f4ed}.title{fill:#172126;font:700 30px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.kicker{fill:#e45d32;font:700 16px ui-monospace,Consolas,monospace;letter-spacing:2px}.box{fill:#fffdf8;stroke:#c4bdb1;stroke-width:2}.box.hot{fill:#fff0e8;stroke:#e45d32}.box.cool{fill:#eaf3f7;stroke:#3178a5}.box.good{fill:#eaf4ec;stroke:#4f8b62}.label{fill:#172126;font:650 18px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.small{fill:#69777d;font:500 15px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.tiny{fill:#69777d;font:500 13px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.edge{color:#69777d;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.accent-edge{color:#e45d32;fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.axis{fill:none;stroke:#69777d;stroke-width:2}.grid{stroke:#c4bdb1;stroke-width:1;opacity:.45}.dot{stroke:#fffdf8;stroke-width:3}.area{opacity:.14}@media(prefers-color-scheme:dark){.bg{fill:#101416}.title,.label{fill:#edf2f3}.kicker{fill:#ef855d}.box{fill:#182024;stroke:#526168}.box.hot{fill:#32211c;stroke:#e17750}.box.cool{fill:#172934;stroke:#4d91bc}.box.good{fill:#192b20;stroke:#65a779}.small{fill:#a8b4b9}.tiny{fill:#a8b4b9}.grid{stroke:#3c484e}.dot{stroke:#101416}}</style>
+  <rect class="bg" width="1400" height="650" rx="24"/>
+  <text class="kicker" x="64" y="58">MINI-LLM · MECHANISM</text>
+  <text class="title" x="64" y="105">KV Cache：缓存的是历史，不是结果</text>
+<rect class="box" x="70" y="150" width="560" height="300" rx="20"/>
+<text class="label" x="100" y="190" text-anchor="start" font-size="20">无 KV Cache</text>
+<rect class="box hot" x="110" y="230" width="300" height="40" rx="16"/>
+<text class="label" x="260.0" y="254.9" text-anchor="middle" font-size="14">重新计算 t1–t1</text>
+<rect class="box hot" x="110" y="282" width="300" height="40" rx="16"/>
+<text class="label" x="260.0" y="306.9" text-anchor="middle" font-size="14">重新计算 t1–t2</text>
+<rect class="box hot" x="110" y="334" width="300" height="40" rx="16"/>
+<text class="label" x="260.0" y="358.9" text-anchor="middle" font-size="14">重新计算 t1–t3</text>
+<rect class="box hot" x="110" y="386" width="300" height="40" rx="16"/>
+<text class="label" x="260.0" y="410.9" text-anchor="middle" font-size="14">重新计算 t1–t4</text>
+<rect class="box" x="720" y="150" width="560" height="300" rx="20"/>
+<text class="label" x="750" y="190" text-anchor="start" font-size="20">有 KV Cache</text>
+<rect class="box cool" x="760" y="230" width="220" height="40" rx="16"/>
+<text class="label" x="870.0" y="254.9" text-anchor="middle" font-size="14">历史 K/V（缓存）</text>
+<rect class="box good" x="760" y="282" width="220" height="40" rx="16"/>
+<text class="label" x="870.0" y="306.9" text-anchor="middle" font-size="14">只算 t_new</text>
+<text class="tiny" x="760" y="360" text-anchor="start">显存随上下文线性增长</text>
+<text class="tiny" x="70" y="520" text-anchor="start">代价从“重复计算”变成“重复读取”：这就是 decode 阶段的内存带宽瓶颈。</text>
+<text class="tiny" x="70" y="570" text-anchor="start">MQA / GQA / MLA 都是在减少缓存的头数与维度。</text>
+</svg>

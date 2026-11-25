@@ -557,6 +557,13 @@ impl DeviceTensor {
                             data.extend_from_slice(source);
                         }
                     }
+                    [source_rows, 1] if *source_rows == rows => {
+                        for &value in source {
+                            for _ in 0..cols {
+                                data.push(value);
+                            }
+                        }
+                    }
                     [source_rows, source_cols] if *source_rows == rows && *source_cols == cols => {
                         data.extend_from_slice(source);
                     }
@@ -711,10 +718,10 @@ impl DeviceTensor {
             Storage::Host(tensor) => {
                 let (rows, cols) = (tensor.shape()[0], tensor.shape()[1]);
                 let mut data = vec![0.0f32; rows];
-                for row in 0..rows {
+                for (row, slot) in data.iter_mut().enumerate() {
                     let start = row * cols;
                     for value in &tensor.data()[start..start + cols] {
-                        data[row] += value;
+                        *slot += value;
                     }
                 }
                 Ok(Self::from_host(Tensor::new(data, vec![rows, 1])?))
@@ -750,7 +757,10 @@ impl DeviceTensor {
             #[cfg(feature = "candle")]
             Storage::Candle { tensor, device } => {
                 let index = candle_core::Tensor::from_vec(
-                    indices.iter().map(|&index| index as u32).collect::<Vec<u32>>(),
+                    indices
+                        .iter()
+                        .map(|&index| index as u32)
+                        .collect::<Vec<u32>>(),
                     indices.len(),
                     device,
                 )
@@ -764,11 +774,7 @@ impl DeviceTensor {
     }
 
     /// Scatter-adds `self` into a zero `[rows, cols]` tensor (embedding backward).
-    pub fn scatter_add_rows(
-        &self,
-        indices: &[usize],
-        rows: usize,
-    ) -> Result<Self, BackendError> {
+    pub fn scatter_add_rows(&self, indices: &[usize], rows: usize) -> Result<Self, BackendError> {
         match &self.storage {
             Storage::Host(tensor) => Ok(Self::from_host(Tensor::scatter_add_rows(
                 tensor, indices, rows,
@@ -776,20 +782,23 @@ impl DeviceTensor {
             #[cfg(feature = "candle")]
             Storage::Candle { tensor, device } => {
                 let index = candle_core::Tensor::from_vec(
-                    indices.iter().map(|&index| index as u32).collect::<Vec<u32>>(),
+                    indices
+                        .iter()
+                        .map(|&index| index as u32)
+                        .collect::<Vec<u32>>(),
                     indices.len(),
                     device,
                 )
                 .map_err(|error| BackendError::Backend(error.to_string()))?;
                 let cols = self.shape()[1];
-                let zeros = candle_core::Tensor::zeros(
-                    (rows, cols),
-                    candle_core::DType::F32,
-                    device,
-                )
-                .map_err(|error| BackendError::Backend(error.to_string()))?;
+                let zeros =
+                    candle_core::Tensor::zeros((rows, cols), candle_core::DType::F32, device)
+                        .map_err(|error| BackendError::Backend(error.to_string()))?;
+                let values = tensor
+                    .contiguous()
+                    .map_err(|error| BackendError::Backend(error.to_string()))?;
                 let scattered = zeros
-                    .index_add(&index, tensor, 0)
+                    .index_add(&index, &values, 0)
                     .map_err(|error| BackendError::Backend(error.to_string()))?;
                 Ok(Self::from_candle(scattered))
             }

@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="650" viewBox="0 0 1400 650" role="img" aria-labelledby="title desc">
+  <title id="title">记忆的生命周期</title><desc id="desc">mini-llm 技术机制图</desc>
+  <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="currentColor"/></marker></defs>
+  <style>:root{color-scheme:light dark}.bg{fill:#f7f4ed}.title{fill:#172126;font:700 30px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.kicker{fill:#e45d32;font:700 16px ui-monospace,Consolas,monospace;letter-spacing:2px}.box{fill:#fffdf8;stroke:#c4bdb1;stroke-width:2}.box.hot{fill:#fff0e8;stroke:#e45d32}.box.cool{fill:#eaf3f7;stroke:#3178a5}.box.good{fill:#eaf4ec;stroke:#4f8b62}.label{fill:#172126;font:650 18px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.small{fill:#69777d;font:500 15px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.tiny{fill:#69777d;font:500 13px Inter,"Noto Sans SC","Microsoft YaHei",sans-serif}.edge{color:#69777d;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}.accent-edge{color:#e45d32;fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.axis{fill:none;stroke:#69777d;stroke-width:2}.grid{stroke:#c4bdb1;stroke-width:1;opacity:.45}.dot{stroke:#fffdf8;stroke-width:3}.area{opacity:.14}@media(prefers-color-scheme:dark){.bg{fill:#101416}.title,.label{fill:#edf2f3}.kicker{fill:#ef855d}.box{fill:#182024;stroke:#526168}.box.hot{fill:#32211c;stroke:#e17750}.box.cool{fill:#172934;stroke:#4d91bc}.box.good{fill:#192b20;stroke:#65a779}.small{fill:#a8b4b9}.tiny{fill:#a8b4b9}.grid{stroke:#3c484e}.dot{stroke:#101416}}</style>
+  <rect class="bg" width="1400" height="650" rx="24"/>
+  <text class="kicker" x="64" y="58">MINI-LLM · MECHANISM</text>
+  <text class="title" x="64" y="105">记忆的生命周期</text>
+<rect class="box" x="70" y="240" width="200" height="84" rx="16"/>
+<text class="label" x="170.0" y="278.0" text-anchor="middle" font-size="20">写入</text>
+<text class="small" x="170.0" y="304.0" text-anchor="middle">encode</text>
+<path class="edge" d="M270 282 L320 282" marker-end="url(#arrow)"/>
+<rect class="box hot" x="320" y="240" width="200" height="84" rx="16"/>
+<text class="label" x="420.0" y="278.0" text-anchor="middle" font-size="20">巩固</text>
+<text class="small" x="420.0" y="304.0" text-anchor="middle">consolidate</text>
+<path class="edge" d="M520 282 L570 282" marker-end="url(#arrow)"/>
+<rect class="box hot" x="570" y="240" width="200" height="84" rx="16"/>
+<text class="label" x="670.0" y="278.0" text-anchor="middle" font-size="20">检索</text>
+<text class="small" x="670.0" y="304.0" text-anchor="middle">retrieve</text>
+<path class="edge" d="M770 282 L820 282" marker-end="url(#arrow)"/>
+<rect class="box" x="820" y="240" width="200" height="84" rx="16"/>
+<text class="label" x="920.0" y="278.0" text-anchor="middle" font-size="20">衰减</text>
+<text class="small" x="920.0" y="304.0" text-anchor="middle">decay</text>
+<path class="edge" d="M1020 282 L1070 282" marker-end="url(#arrow)"/>
+<rect class="box" x="1070" y="240" width="200" height="84" rx="16"/>
+<text class="label" x="1170.0" y="278.0" text-anchor="middle" font-size="20">归档/删除</text>
+<text class="small" x="1170.0" y="304.0" text-anchor="middle">archive</text>
+<text class="tiny" x="70" y="210" text-anchor="start">Working Memory</text>
+<text class="tiny" x="320" y="210" text-anchor="start">Episodic → Semantic</text>
+<text class="tiny" x="820" y="210" text-anchor="start">长期存储</text>
+<path class="accent-edge" d="M770 324 L770 430 L570 430 L570 324" stroke-dasharray="9 7" marker-end="url(#arrow)"/>
+<text class="tiny" x="620" y="470" text-anchor="start">命中会强化：检索成功 → 重新巩固</text>
+<text class="tiny" x="70" y="560" text-anchor="start">写入很便宜，遗忘很昂贵：没有衰减机制的记忆系统，会在半年后拖垮检索质量。</text>
+</svg>

@@ -143,6 +143,11 @@ Runtime 可以抽象为：
 
 # **二、Execution Graph：如何表示复杂任务依赖？**
 
+![执行图、检查点与恢复](assets/diagrams/runtime-execution-graph.svg)
+
+_图：执行图、检查点与恢复。检查点的意义不是保存状态，而是让已完成的工作不必再做一遍。_
+
+
 这是 Runtime Engine 最核心的数据结构之一。
 
 ## **2.1 为什么需要 Execution Graph？**

@@ -633,3 +633,152 @@ fn device_adamw_rejects_gradient_mismatch() {
     let mut optimizer = DeviceAdamW::new(0.01);
     assert!(optimizer.step(&mut parameters, &[wrong]).is_err());
 }
+
+fn check_softmax_parity(device: &Device, tolerance: f32) {
+    let x = sample(3, 4, 1.5);
+    let host_x = TensorValue::parameter(x.data().to_vec(), x.shape().to_vec()).unwrap();
+    let host_out = host_x.softmax_rows().unwrap();
+    let host_loss = host_out.mean().unwrap();
+    host_loss.backward().unwrap();
+
+    let device_x = DeviceValue::new(DeviceTensor::from_host(x.clone()).to(device).unwrap(), true);
+    let out = device_x.softmax_rows().unwrap();
+    let loss = out.mean().unwrap();
+    loss.backward().unwrap();
+
+    assert_close(
+        out.data().to_host().unwrap().data(),
+        &host_out.data(),
+        tolerance,
+        "softmax values",
+    );
+    assert_close(
+        device_x.grad().unwrap().to_host().unwrap().data(),
+        host_x.grad().unwrap().data(),
+        tolerance,
+        "softmax gradient",
+    );
+}
+
+#[test]
+fn device_softmax_matches_host_autograd_on_cpu() {
+    check_softmax_parity(&Device::Cpu, 1e-5);
+}
+
+#[cfg(feature = "candle")]
+#[test]
+fn device_softmax_matches_host_autograd_on_candle() {
+    check_softmax_parity(&Device::candle_cpu(), 1e-4);
+}
+
+fn check_embedding_parity(device: &Device, tolerance: f32) {
+    let weight = sample(5, 3, 1.0);
+    let indices = [0usize, 2, 4, 2];
+
+    let host_weight =
+        TensorValue::parameter(weight.data().to_vec(), weight.shape().to_vec()).unwrap();
+    let host_rows = host_weight.gather_rows(&indices).unwrap();
+    let host_loss = host_rows.mean().unwrap();
+    host_loss.backward().unwrap();
+
+    let device_weight = DeviceValue::new(
+        DeviceTensor::from_host(weight.clone()).to(device).unwrap(),
+        true,
+    );
+    let rows = device_weight.gather_rows(&indices).unwrap();
+    let loss = rows.mean().unwrap();
+    loss.backward().unwrap();
+
+    assert_close(
+        rows.data().to_host().unwrap().data(),
+        &host_rows.data(),
+        tolerance,
+        "embedding values",
+    );
+    assert_close(
+        device_weight.grad().unwrap().to_host().unwrap().data(),
+        host_weight.grad().unwrap().data(),
+        tolerance,
+        "embedding gradient",
+    );
+}
+
+#[test]
+fn device_embedding_matches_host_autograd_on_cpu() {
+    check_embedding_parity(&Device::Cpu, 1e-5);
+}
+
+#[cfg(feature = "candle")]
+#[test]
+fn device_embedding_matches_host_autograd_on_candle() {
+    check_embedding_parity(&Device::candle_cpu(), 1e-4);
+}
+
+fn check_layer_norm_parity(device: &Device, tolerance: f32) {
+    let x = sample(3, 4, 1.5);
+    let gamma = sample(1, 4, 0.5);
+    let beta = sample(1, 4, 0.25);
+    let eps = 1e-5f32;
+
+    let host_x = TensorValue::parameter(x.data().to_vec(), x.shape().to_vec()).unwrap();
+    let host_gamma = TensorValue::parameter(gamma.data().to_vec(), gamma.shape().to_vec()).unwrap();
+    let host_beta = TensorValue::parameter(beta.data().to_vec(), beta.shape().to_vec()).unwrap();
+    let mean = host_x.mean_rows_keepdim().unwrap();
+    let centered = host_x.sub(&mean).unwrap();
+    let variance = centered.powf(2.0).unwrap().mean_rows_keepdim().unwrap();
+    let inverse_std = variance.add_scalar(eps).unwrap().powf(-0.5).unwrap();
+    let normalized = centered.mul(&inverse_std).unwrap();
+    let host_out = normalized
+        .mul(&host_gamma)
+        .unwrap()
+        .add(&host_beta)
+        .unwrap();
+    let host_loss = host_out.mean().unwrap();
+    host_loss.backward().unwrap();
+
+    let upload = |tensor: &Tensor| DeviceTensor::from_host(tensor.clone()).to(device).unwrap();
+    let device_x = DeviceValue::new(upload(&x), true);
+    let device_gamma = DeviceValue::new(upload(&gamma), true);
+    let device_beta = DeviceValue::new(upload(&beta), true);
+    let out = device_x
+        .layer_norm(&device_gamma, &device_beta, eps)
+        .unwrap();
+    let loss = out.mean().unwrap();
+    loss.backward().unwrap();
+
+    assert_close(
+        out.data().to_host().unwrap().data(),
+        &host_out.data(),
+        tolerance,
+        "layernorm values",
+    );
+    assert_close(
+        device_x.grad().unwrap().to_host().unwrap().data(),
+        host_x.grad().unwrap().data(),
+        tolerance,
+        "layernorm dx",
+    );
+    assert_close(
+        device_gamma.grad().unwrap().to_host().unwrap().data(),
+        host_gamma.grad().unwrap().data(),
+        tolerance,
+        "layernorm dgamma",
+    );
+    assert_close(
+        device_beta.grad().unwrap().to_host().unwrap().data(),
+        host_beta.grad().unwrap().data(),
+        tolerance,
+        "layernorm dbeta",
+    );
+}
+
+#[test]
+fn device_layer_norm_matches_host_autograd_on_cpu() {
+    check_layer_norm_parity(&Device::Cpu, 1e-5);
+}
+
+#[cfg(feature = "candle")]
+#[test]
+fn device_layer_norm_matches_host_autograd_on_candle() {
+    check_layer_norm_parity(&Device::candle_cpu(), 1e-4);
+}

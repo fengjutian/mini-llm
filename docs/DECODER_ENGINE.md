@@ -832,6 +832,11 @@ def generate(    model,    input_ids,    max_new_tokens=50,    temperature=1.0):
 
 # **十一、KV Cache：为什么大模型推理需要缓存？**
 
+![KV Cache 缓存的是历史 Key/Value，不是最终结果](assets/diagrams/decoder-kv-cache.svg)
+
+_图：KV Cache 缓存的是历史 Key/Value，不是最终结果。代价从“重复计算”变成“重复读取”，于是 decode 阶段受限于显存带宽。_
+
+
 这是 Decoder Engine 与 Inference Engine 之间的重要连接点。
 
 ## **11.1 不使用 KV Cache 会发生什么？**

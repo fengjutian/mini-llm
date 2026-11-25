@@ -184,6 +184,11 @@ Tool Calling 就是连接模型与外部能力的机制。
 
 ## **3.2 Tool Calling 的完整流程**
 
+![MCP 工具调用的消息时序：先协商能力，再列出工具，最后才发起调用；调用与结果都走 JSON-RPC](assets/diagrams/protocol-mcp-sequence.svg)
+
+_图：MCP 工具调用的消息时序：先协商能力，再列出工具，最后才发起调用；调用与结果都走 JSON-RPC。_
+
+
 假设用户提出：
 
 > 查询南京今天的天气。

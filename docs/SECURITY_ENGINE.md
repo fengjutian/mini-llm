@@ -695,6 +695,11 @@ Linux Kernel
 
 ## **七、Prompt Injection：如何防御间接提示注入？**
 
+![间接提示注入的攻击路径](assets/diagrams/security-injection-path.svg)
+
+_图：间接提示注入的攻击路径。防线只能加在数据进入、权限授予和出口三处，不能指望模型“别听话”。_
+
+
 这是 Agent 安全最重要的研究方向之一。
 
 ### **7.1 什么是 Prompt Injection？**

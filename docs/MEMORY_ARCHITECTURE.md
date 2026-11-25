@@ -677,6 +677,11 @@ graph = KnowledgeGraph()graph.add_relation(    "Transformer",    "uses",    "Sel
 
 # **七、Memory Consolidation：记忆巩固**
 
+![记忆的生命周期：写入 → 巩固 → 检索 → 衰减 → 归档；检索命中会重新强化记忆，而不是只读不改](assets/diagrams/memory-lifecycle.svg)
+
+_图：记忆的生命周期：写入 → 巩固 → 检索 → 衰减 → 归档；检索命中会重新强化记忆，而不是只读不改。_
+
+
 这是从短期记忆走向长期记忆的关键过程。
 
 ## **7.1 什么是记忆巩固？**

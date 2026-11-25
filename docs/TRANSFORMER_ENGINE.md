@@ -422,6 +422,11 @@ arXiv+2
 
 # **五、Self-Attention：Token 如何理解其他 Token？**
 
+![Q/K/V 与注意力计算：X 经三个投影得到 Q、K、V，QKᵀ 除以 √d 后 softmax，再加权求和得到输出](assets/diagrams/transformer-qkv.svg)
+
+_图：Q/K/V 与注意力计算：X 经三个投影得到 Q、K、V，QKᵀ 除以 √d 后 softmax，再加权求和得到输出。_
+
+
 ![注意力矩阵将每个 Query 与所有 Key 的相关性表示为权重。](assets/diagrams/transformer-attention-heatmap.svg)
 
 _图：注意力矩阵将每个 Query 与所有 Key 的相关性表示为权重。_

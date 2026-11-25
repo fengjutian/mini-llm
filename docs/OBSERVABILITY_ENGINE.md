@@ -71,6 +71,11 @@ Observability 的中文通常翻译为可观测性。
 
 ## **Observability 三大支柱**
 
+![可观测性的三大支柱不是三个系统，而是同一件事的三个视角：日志给出事件，指标给出趋势，链路给出因果顺序](assets/diagrams/observability-three-pillars.svg)
+
+_图：可观测性的三大支柱不是三个系统，而是同一件事的三个视角：日志给出事件，指标给出趋势，链路给出因果顺序。_
+
+
 **Logging**
 
 记录发生了什么
@@ -642,6 +647,11 @@ span = {    "trace_id": "trace_001",    "span_id": "span_002",    "parent_span_i
 如果只看整个任务的 12 秒，很难判断应该优化哪个模块。
 
 ## **五、Agent Trace：如何记录 Agent 的思考、行动和观察？**
+
+![一次 Agent 请求的 trace 瀑布图：span 的嵌套关系就是调用栈，span 的宽度就是耗时；重试会以兄弟 span 的形式出现](assets/diagrams/observability-trace-waterfall.svg)
+
+_图：一次 Agent 请求的 trace 瀑布图：span 的嵌套关系就是调用栈，span 的宽度就是耗时；重试会以兄弟 span 的形式出现。_
+
 
 这是 AI 系统可观测性中最重要的扩展。
 
