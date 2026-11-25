@@ -13,6 +13,7 @@ use mini_llm_tensor::Tensor;
 
 use crate::attention::causal_batch_mask;
 use crate::block::{BlockCache, TransformerBlock};
+use crate::language_model::LanguageModel;
 use crate::norm::NormLayer;
 use crate::{ModelConfig, ModelError, PositionKind};
 
@@ -593,6 +594,24 @@ impl TinyGpt {
             tokens.push(next);
         }
         Ok(tokens)
+    }
+}
+
+impl LanguageModel for TinyGpt {
+    fn forward(&self, tokens: &[usize], batch: usize) -> Result<TensorValue, ModelError> {
+        TinyGpt::forward(self, tokens, batch)
+    }
+
+    fn parameters(&self) -> Vec<TensorValue> {
+        TinyGpt::parameters(self)
+    }
+
+    fn vocab_size(&self) -> usize {
+        self.config.vocab_size
+    }
+
+    fn context_len(&self) -> usize {
+        self.config.max_seq_len
     }
 }
 

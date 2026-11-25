@@ -2,6 +2,10 @@
 //!
 //! A minimal training loop and a self-describing binary checkpoint format.
 //!
+//! [`Trainer`] is generic over [`mini_llm_model::LanguageModel`] and [`Dataset`],
+//! so the loop only depends on next-token logits and parameter handles; `TinyGpt`
+//! is the reference model. Checkpointing is specific to `TinyGpt` today.
+//!
 //! ```no_run
 //! use mini_llm_data::{CharTokenizer, TextDataset};
 //! use mini_llm_model::{ModelConfig, TinyGpt};
@@ -53,7 +57,7 @@ use std::time::Instant;
 
 use mini_llm_autograd::TensorValue;
 use mini_llm_data::{Batch, DataError, Dataset};
-use mini_llm_model::{ModelError, TinyGpt};
+use mini_llm_model::{LanguageModel, ModelError};
 use mini_llm_nn::{AdamW, NnError, Optimizer, Rng};
 use mini_llm_trace::{Event, EventSink};
 
@@ -176,8 +180,12 @@ pub struct TrainingState {
 }
 
 /// Owns a model, an optimizer and a dataset, and runs next-token training.
-pub struct Trainer<D: Dataset> {
-    model: TinyGpt,
+///
+/// Generic over [`LanguageModel`]: `TinyGpt` is the reference implementation,
+/// and any other architecture that produces next-token logits trains with the
+/// same loop.
+pub struct Trainer<M: LanguageModel, D: Dataset> {
+    model: M,
     optimizer: AdamW,
     dataset: D,
     rng: Rng,
@@ -191,8 +199,8 @@ pub struct Trainer<D: Dataset> {
     last_grad_norm: f32,
 }
 
-impl<D: Dataset> Trainer<D> {
-    pub fn new(model: TinyGpt, dataset: D, config: TrainConfig) -> Self {
+impl<M: LanguageModel, D: Dataset> Trainer<M, D> {
+    pub fn new(model: M, dataset: D, config: TrainConfig) -> Self {
         let optimizer = AdamW::new(config.learning_rate).with_weight_decay(config.weight_decay);
         let rng = Rng::new(config.seed);
         let parameters = model.parameters();
@@ -231,7 +239,7 @@ impl<D: Dataset> Trainer<D> {
         self
     }
 
-    pub fn model(&self) -> &TinyGpt {
+    pub fn model(&self) -> &M {
         &self.model
     }
 

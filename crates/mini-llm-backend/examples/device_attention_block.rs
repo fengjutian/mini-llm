@@ -60,6 +60,9 @@ struct Config {
     hidden: usize,
     layers: usize,
     seq: usize,
+    batch: usize,
+    min_ratio: f32,
+    warmup: usize,
     constant_lr: bool,
 }
 
@@ -89,6 +92,9 @@ fn main() {
         hidden: parse_count(&arguments, "--hidden").unwrap_or(32),
         layers: parse_count(&arguments, "--layers").unwrap_or(1).max(1),
         seq: parse_count(&arguments, "--seq").unwrap_or(8),
+        batch: parse_count(&arguments, "--batch").unwrap_or(4),
+        min_ratio: parse_flag(&arguments, "--min-ratio").unwrap_or(0.1),
+        warmup: parse_count(&arguments, "--warmup").unwrap_or(0),
         constant_lr: arguments.iter().any(|argument| argument == "--constant-lr"),
     };
     let (train_loss, held_out_loss, best_held_out) = train_with_best(&config, true);
@@ -112,6 +118,9 @@ fn sweep_regularization() {
                 hidden: 32,
                 layers: 1,
                 seq: 8,
+                batch: 4,
+                min_ratio: 0.1,
+                warmup: 0,
                 constant_lr: false,
             };
             let (train_loss, held_out_loss, best_held_out) = train_with_best(&config, false);
@@ -129,9 +138,7 @@ fn sweep_regularization() {
 fn sweep_layers(arguments: &[String]) {
     let steps = parse_count(arguments, "--steps").unwrap_or(STEPS);
     let hidden = parse_count(arguments, "--hidden").unwrap_or(32);
-    println!(
-        "layer sweep ({steps} steps, hidden {hidden}, README + doc-comment corpus)"
-    );
+    println!("layer sweep ({steps} steps, hidden {hidden}, README + doc-comment corpus)");
     println!(
         "{:>8}  {:>10}  {:>10}  {:>12}  {:>14}",
         "layers", "params", "train", "held-out", "best held-out"
@@ -144,6 +151,9 @@ fn sweep_layers(arguments: &[String]) {
             hidden,
             layers,
             seq: parse_count(arguments, "--seq").unwrap_or(8),
+            batch: parse_count(arguments, "--batch").unwrap_or(4),
+            min_ratio: parse_flag(arguments, "--min-ratio").unwrap_or(0.1),
+            warmup: parse_count(arguments, "--warmup").unwrap_or(0),
             constant_lr: arguments.iter().any(|argument| argument == "--constant-lr"),
         };
         let (train_loss, held_out_loss, best_held_out, parameters) =
@@ -164,12 +174,16 @@ fn learning_rate(step: usize, config: &Config) -> f32 {
     if config.constant_lr {
         return LEARNING_RATE;
     }
-    let warmup = (config.steps / 10).clamp(1, 200);
+    let warmup = if config.warmup > 0 {
+        config.warmup
+    } else {
+        (config.steps / 10).clamp(1, 200)
+    };
     if step <= warmup {
         return LEARNING_RATE * step as f32 / warmup as f32;
     }
     let progress = (step - warmup) as f32 / (config.steps.saturating_sub(warmup)).max(1) as f32;
-    let minimum = LEARNING_RATE * 0.1;
+    let minimum = LEARNING_RATE * config.min_ratio;
     minimum + 0.5 * (LEARNING_RATE - minimum) * (1.0 + (std::f32::consts::PI * progress).cos())
 }
 
@@ -198,10 +212,7 @@ fn train_with_best(config: &Config, verbose: bool) -> (f32, f32, f32) {
     (train_loss, held_out_loss, best_held_out)
 }
 
-fn train_with_parameters(
-    config: &Config,
-    verbose: bool,
-) -> (f32, f32, f32, Vec<DeviceTensor>) {
+fn train_with_parameters(config: &Config, verbose: bool) -> (f32, f32, f32, Vec<DeviceTensor>) {
     let mut vocabulary: Vec<char> = corpus().chars().collect();
     vocabulary.sort_unstable();
     vocabulary.dedup();
@@ -218,7 +229,7 @@ fn train_with_parameters(
     let hidden = (config.hidden / heads).max(1) * heads;
     let head_dim = hidden / heads;
     let ffn = hidden * 2;
-    let batch = 4usize;
+    let batch = config.batch.max(1);
     let seq = config.seq.max(2);
 
     let windows = (stream.len() - 1) / seq;
@@ -262,8 +273,7 @@ fn train_with_parameters(
         (inputs, targets)
     };
 
-    let mut optimizer =
-        DeviceAdamW::new(LEARNING_RATE).with_weight_decay(config.weight_decay);
+    let mut optimizer = DeviceAdamW::new(LEARNING_RATE).with_weight_decay(config.weight_decay);
     let mut rng = Rng::new(7);
     let mut train_loss = 0.0f32;
     let mut train_ema: Option<f32> = None;
@@ -279,15 +289,7 @@ fn train_with_parameters(
         let (inputs, targets) = batch_tokens(train_cursor, batch);
         train_cursor = (train_cursor + batch) % train_windows;
         let loss = forward(
-            &nodes,
-            &inputs,
-            &targets,
-            batch,
-            seq,
-            heads,
-            kv_heads,
-            config,
-            &mut rng,
+            &nodes, &inputs, &targets, batch, seq, heads, kv_heads, config, &mut rng,
         );
         loss.backward().expect("backward");
         train_loss = loss.data().to_host().expect("loss").data()[0];
@@ -399,12 +401,7 @@ fn build_parameters(
     parameters
 }
 
-fn dropout(
-    value: DeviceValue,
-    probability: f32,
-    rng: &mut Rng,
-    rows: usize,
-) -> DeviceValue {
+fn dropout(value: DeviceValue, probability: f32, rng: &mut Rng, rows: usize) -> DeviceValue {
     if probability <= 0.0 {
         return value;
     }
@@ -534,6 +531,9 @@ fn evaluate(
         hidden: config.hidden,
         layers: config.layers,
         seq: config.seq,
+        batch: config.batch,
+        min_ratio: config.min_ratio,
+        warmup: config.warmup,
         constant_lr: config.constant_lr,
     };
     let mut total = 0.0f32;
@@ -574,6 +574,16 @@ fn corpus() -> String {
     files.sort();
     for file in files {
         if let Ok(contents) = std::fs::read_to_string(&file) {
+            // Test sources are prose-heavy and add real code tokens, so the
+            // corpus includes them verbatim instead of only their comments.
+            let is_test = file
+                .components()
+                .any(|component| component.as_os_str() == "tests");
+            if is_test {
+                text.push_str(&contents);
+                text.push('\n');
+                continue;
+            }
             for line in contents.lines() {
                 let trimmed = line.trim_start();
                 if let Some(comment) = trimmed
@@ -586,7 +596,7 @@ fn corpus() -> String {
             }
         }
     }
-    if let Some((index, _)) = text.char_indices().nth(300_000) {
+    if let Some((index, _)) = text.char_indices().nth(600_000) {
         text.truncate(index);
     }
     text

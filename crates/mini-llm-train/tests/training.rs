@@ -47,7 +47,7 @@ fn tokenizer_enum() -> Tokenizer {
     Tokenizer::from(tokenizer())
 }
 
-fn trainer(seed: u64) -> Trainer<TextDataset> {
+fn trainer(seed: u64) -> Trainer<TinyGpt, TextDataset> {
     let model = TinyGpt::new(config(5), &mut Rng::new(seed)).unwrap();
     Trainer::new(model, dataset(), train_config())
 }

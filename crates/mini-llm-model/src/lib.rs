@@ -6,12 +6,15 @@
 //!   feed-forward, grouped-query attention, MoE).
 //! - [`scaled_dot_product_attention`]: the original transparent single-head
 //!   primitive used by the CLI demo and the concept lessons on the web site.
+//! - [`LanguageModel`]: the trait `mini-llm-train` depends on, so the training
+//!   loop is not tied to [`TinyGpt`].
 
 mod attention;
 mod block;
 mod config;
 mod error;
 mod gpt;
+mod language_model;
 mod norm;
 
 pub use attention::{
@@ -22,3 +25,4 @@ pub use block::{BlockCache, Mlp, TransformerBlock};
 pub use config::{ConfigError, FeedForwardKind, ModelConfig, NormKind, PositionKind};
 pub use error::ModelError;
 pub use gpt::{AttentionRecord, Sampling, TinyGpt};
+pub use language_model::LanguageModel;

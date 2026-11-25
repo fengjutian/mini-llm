@@ -23,7 +23,7 @@ This repository is a working learning stack, not a production framework:
 - `mini-llm-random`: seeded xorshift64\* RNG and Xavier/normal initialization
 - `mini-llm-model`: causal multi-head / grouped-query attention with optional RoPE, a configurable pre-norm block, KV-cache generation, and `TinyGpt`
 - `mini-llm-data`: character and byte-level BPE tokenizers, plus next-token window sampling
-- `mini-llm-train`: training loop and a self-describing binary checkpoint format
+- `mini-llm-train`: training loop generic over `LanguageModel` and `Dataset`, plus a self-describing binary checkpoint format
 - `mini-llm-trace`: structured training events (JSONL) and tensor capture
 - `mini-llm-backend`: `Backend` seam with a CPU reference and an optional Candle implementation
 - CLI demos: hand-checked gradients, linear regression, XOR, a 2D classifier, MoE routing, and Tiny GPT training plus text generation
@@ -244,7 +244,7 @@ The training stack:
 | Crate | Role |
 | --- | --- |
 | `mini-llm-data` | `CharTokenizer` (sorted, deterministic vocabulary), `BpeTokenizer` (byte-level merges) and `TextDataset` (random windows, targets shifted by one) |
-| `mini-llm-train` | `Trainer` (sample → forward → cross-entropy → backward → AdamW), LR schedule, gradient clipping, validation loss, checkpoint save/load with resumable state |
+| `mini-llm-train` | `Trainer<M: LanguageModel, D: Dataset>` (sample → forward → cross-entropy → backward → AdamW), LR schedule, gradient clipping, validation loss, checkpoint save/load with resumable state |
 
 Checkpoints are a dependency-free little-endian format (version 5 adds the
 parameter dtype, version 4 the tokenizer tag, version 3 the training state;
@@ -625,19 +625,23 @@ and re-exports.
   attention → residual, then LayerNorm → SwiGLU → residual) over the repository
   README plus every crate's `//!`/`///` doc comments (89.3k chars, vocab 118,
   11.1k windows, 80/20 split), with warmup + cosine by default
-  (`--constant-lr` opt-out). Best results after 4,000 steps:
+  (`--constant-lr` opt-out, `--batch`, `--seq`, `--min-ratio`, `--warmup` tunable).
+  Best results after 4,000 steps:
 
   | configuration | final held-out | best held-out |
   | --- | --- | --- |
-  | 2 layers, seq 8 | 3.11 | 2.98 |
   | 2 layers, seq 16 | 2.93 | 2.83 |
-  | 2 layers, seq 32 | **2.79** | **2.79** |
+  | 2 layers, seq 32 | 2.79 | 2.79 |
+  | 2 layers, seq 64 | 2.76 | 2.74 |
+  | **2 layers, seq 64, batch 8** | **2.67** | **2.67** |
   | 3 layers, seq 16 | 3.25 | 3.18 |
   | 2 layers, seq 16, constant lr | 3.40 | 3.17 |
+  | seq 32, min-ratio 0.0 / 0.2 | 2.84 / 2.81 | 2.83 / 2.81 |
+  | seq 32, warmup 400 | 2.82 | 2.82 |
 
   Warmup + cosine beats a constant rate by a wide margin (2.93 vs 3.40 at
-  seq 16), longer context helps monotonically, and two layers beat three at this
-  budget. Pushing seq 32 to 8,000 steps does not improve on 4,000 (2.83/2.78).
+  seq 16); longer context and a larger batch both help, while the default
+  `min-ratio 0.1` and automatic warmup beat 0.0/0.2 and a 400-step warmup.
   Training loss is printed as an exponential moving average; `--sweep` compares
   weight decay 0.1 with dropout 0.3.
 - Future backends implement `Backend` and reuse the same parity harness.

@@ -46,8 +46,8 @@ CLI / Future Research Studio
 | mini-llm-autograd | 计算图、反向传播、梯度累积 | 优化器状态、模型结构 |
 | mini-llm-nn | Linear / Embedding / Norm / SwiGlu / MoE / 优化器 | 具体任务与数据加载 |
 | mini-llm-data | 字符 tokenizer、窗口批采样 | 模型结构与训练 |
-| mini-llm-train | 训练循环、checkpoint 序列化、DPO/GRPO 配方 | 模型定义、UI |
-| mini-llm-model | 模型配置、Attention / Block / TinyGpt、注意力捕获 | 文件持久化、UI |
+| mini-llm-train | 训练循环（泛型于 `LanguageModel`）、checkpoint 序列化、DPO/GRPO 配方 | 模型定义、UI |
+| mini-llm-model | 模型配置、Attention / Block / TinyGpt、`LanguageModel` 抽象、注意力捕获 | 文件持久化、UI |
 | mini-llm-trace | 训练事件协议、JSONL sink、张量记录 | 训练逻辑、模型结构 |
 | mini-llm-backend | `Backend` 抽象、CPU 参考实现、可选 Candle | 实验业务规则 |
 | mini-llm-cli | 命令行应用（每个命令一个模块） | 核心算法实现 |
