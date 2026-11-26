@@ -824,6 +824,7 @@ dependencies = [
  "candle-core",
  "mini-llm-autograd",
  "mini-llm-tensor",
+ "rayon",
 ]
 
 [[package]]
