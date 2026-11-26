@@ -118,7 +118,7 @@ corpus_hash=09a13f86ca35b65c seed=7
 
 - 目前只在 `Device::Cpu` 上运行；`Candle(Cpu)` 存储上的 attention 走 host fallback（正确但有
   一次 host↔device 往返，实测前向 1.4×、反向 2.2×（host 注意力已按 batch 并行）），原生 4D kernel 仍未实现；
-- 注意力是 O(seq²) 的 host 循环（按 batch 并行），seq 64 / batch 16 / 3000 步约 162 s；
+- 注意力是 O(seq²) 的 host 循环（按 batch 并行），seq 64 / batch 16 / 3000 步约 162 s、batch 32 约 266 s；
 - 语料是仓库自身文本，指标只用于相对比较，不具通用性。
 
 ## 相关代码
