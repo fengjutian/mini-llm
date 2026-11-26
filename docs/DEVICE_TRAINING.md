@@ -32,6 +32,14 @@ cargo run -p mini-llm-backend --example device_attention_block -- \
   --layers 2 --seq 64 --batch 16 --steps 6000 --resume target/run.bin
 ```
 
+CLI 入口（同一套训练逻辑）：
+
+```bash
+cargo run -p mini-llm-cli -- device-train --layers 2 --seq 64 --batch 16 --steps 3000
+cargo run -p mini-llm-cli --features candle -- device-train \
+  --device cuda --layers 1 --seq 32 --batch 8 --steps 40
+```
+
 常用子命令：
 
 | 参数 | 作用 |
@@ -43,6 +51,7 @@ cargo run -p mini-llm-backend --example device_attention_block -- \
 | `--resume PATH` | 从 checkpoint 继续训练（含 Adam 矩与 step） |
 | `--checkpoint PATH` | 最佳 checkpoint 输出位置（默认临时目录） |
 | `--patience N` | 连续 N 次评估无改善则早停（0 关闭） |
+| `--device cpu\|cuda[:N]` | 训练设备（CUDA 需 `candle` 特性） |
 
 ## 结构
 

@@ -24,7 +24,7 @@ pub fn save_device_tensors(
     bytes.extend_from_slice(MAGIC);
     bytes.extend_from_slice(&VERSION_TENSORS.to_le_bytes());
     push_tensors(&mut bytes, tensors)?;
-    std::fs::write(path, bytes).map_err(|error| BackendError::Backend(error.to_string()))
+    write_bytes(path, &bytes)
 }
 
 /// Writes `tensors` plus a metadata blob (version 2).
@@ -39,7 +39,7 @@ pub fn save_device_checkpoint(
     bytes.extend_from_slice(&(metadata.len() as u32).to_le_bytes());
     bytes.extend_from_slice(metadata.as_bytes());
     push_tensors(&mut bytes, tensors)?;
-    std::fs::write(path, bytes).map_err(|error| BackendError::Backend(error.to_string()))
+    write_bytes(path, &bytes)
 }
 
 /// Loads tensors from `path`, ignoring any metadata.
@@ -98,6 +98,16 @@ pub fn load_device_checkpoint(
         tensors.push(DeviceTensor::from_host(host).to(device)?);
     }
     Ok((tensors, metadata))
+}
+
+fn write_bytes(path: impl AsRef<Path>, bytes: &[u8]) -> Result<(), BackendError> {
+    if let Some(parent) = path.as_ref().parent() {
+        if !parent.as_os_str().is_empty() {
+            std::fs::create_dir_all(parent)
+                .map_err(|error| BackendError::Backend(error.to_string()))?;
+        }
+    }
+    std::fs::write(path, bytes).map_err(|error| BackendError::Backend(error.to_string()))
 }
 
 fn push_tensors(bytes: &mut Vec<u8>, tensors: &[DeviceTensor]) -> Result<(), BackendError> {

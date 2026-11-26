@@ -680,12 +680,19 @@ trains a 1–3 layer attention + SwiGLU model end to end on device tensors:
 ```bash
 cargo run -p mini-llm-backend --example device_attention_block -- \
   --layers 2 --seq 64 --batch 16 --steps 3000
+
+# same training through the CLI, optionally on CUDA
+cargo run -p mini-llm-cli -- device-train --layers 2 --seq 64 --batch 16 --steps 3000
+cargo run -p mini-llm-cli --features candle -- device-train \
+  --device cuda --layers 1 --seq 32 --batch 8 --steps 40
 ```
 
 Parameters, gradients and Adam moments stay in `DeviceTensor`; only the corpus,
 dropout masks and logging are plain Rust. Checkpoints are self-describing
 (hyperparameters, corpus fingerprint, seed) and support `--load` and `--resume`.
-The full walkthrough — corpus construction, block split, checkpoint format,
+`--device` accepts `cpu` (default), `cuda`, or `cuda:<index>`; the CUDA path
+needs a build with the `candle` feature and a working driver. The full
+walkthrough — corpus construction, block split, checkpoint format,
 measured results and limitations — is in
 [`docs/DEVICE_TRAINING.md`](docs/DEVICE_TRAINING.md).
 

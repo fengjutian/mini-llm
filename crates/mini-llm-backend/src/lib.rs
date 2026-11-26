@@ -28,6 +28,7 @@ use mini_llm_tensor::{Tensor, TensorError};
 
 mod device;
 mod device_io;
+pub mod device_training;
 mod optim;
 mod tape;
 

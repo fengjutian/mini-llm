@@ -40,6 +40,44 @@ impl Device {
     }
 }
 
+impl Device {
+    /// Parses a device specification: `cpu`, `cuda`, or `cuda:<index>`.
+    ///
+    /// Without the `candle` feature only `cpu` is accepted.
+    pub fn from_spec(spec: &str) -> Result<Self, BackendError> {
+        match spec {
+            "cpu" => Ok(Self::Cpu),
+            #[cfg(feature = "candle")]
+            "cuda" => Self::candle_cuda(0),
+            #[cfg(feature = "candle")]
+            other if other.starts_with("cuda:") => {
+                let index = other
+                    .trim_start_matches("cuda:")
+                    .parse::<usize>()
+                    .map_err(|_| {
+                        BackendError::Backend(format!("invalid CUDA device index in `{other}`"))
+                    })?;
+                Self::candle_cuda(index)
+            }
+            other => Err(BackendError::Backend(format!(
+                "unsupported device `{other}` (expected `cpu`, `cuda`, or `cuda:<index>`; \
+                 CUDA requires the `candle` feature)"
+            ))),
+        }
+    }
+}
+
+impl Device {
+    /// Short name used in logs (cpu or candle).
+    pub fn label(&self) -> &'static str {
+        match self {
+            Self::Cpu => "cpu",
+            #[cfg(feature = "candle")]
+            Self::Candle(_) => "candle",
+        }
+    }
+}
+
 impl PartialEq for Device {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {

@@ -100,6 +100,7 @@ fn dispatch(arguments: &[String]) {
         "dpo" => dpo::run(),
         "grpo" => grpo::run(),
         "trace" => trace::run(rest),
+        "device-train" => mini_llm_backend::device_training::run(rest.to_vec()),
         "lora" => lora::run(),
         "help" | "--help" | "-h" => usage(),
         other => {
@@ -137,6 +138,11 @@ fn usage() {
     println!("  dpo                   preference optimization on a toy policy");
     println!("  grpo                  group relative policy optimization on a bandit");
     println!("  trace                 emit training events + capture attention to traces/");
+    println!(
+        "  device-train [flags]  device-resident attention block (--layers/--seq/--batch/--steps)"
+    );
+    println!("                       [--checkpoint PATH] [--load PATH] [--resume PATH] [--seed N]");
+    println!("                       [--patience N] [--sweep|--layer-sweep|--lr-sweep]");
     println!("  help                 show this message");
     println!();
     println!("Options:");

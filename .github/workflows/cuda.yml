@@ -19,3 +19,12 @@ jobs:
           nvcc --version
       - name: Device tensor and tape tests on CUDA
         run: cargo test -p mini-llm-backend --features cuda -- --nocapture
+      - name: End-to-end device training on CUDA
+        run: |
+          cargo run --release -p mini-llm-cli --features candle -- device-train \
+            --device cuda --layers 1 --seq 32 --batch 8 --steps 40 \
+            --checkpoint cuda-device-train.bin
+      - name: Reload the GPU checkpoint and report held-out loss
+        run: |
+          cargo run --release -p mini-llm-cli --features candle -- device-train \
+            --device cuda --load cuda-device-train.bin
