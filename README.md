@@ -610,13 +610,14 @@ and re-exports.
   trains with `DeviceAdamW`; the test asserts the loss falls below 80% of its
   starting value and that every parameter stays device-resident. **Fused
   attention** (`attention_forward` / `attention_backward`) supports GQA and causal
-  masking and is verified with finite differences. On Candle storage it currently
-  delegates to the same host math and copies the result back to the device — correct,
-  with a transfer cost; a native 4D kernel is still TODO. Host attention is now
-  parallelized over the batch with rayon, so the measured fallback overhead for
-  128 rows (batch 8, seq 16, 4 heads, head_dim 16) is 1.4× on forward and 2.2× on
-  backward (host forward/backward improved to 0.17/0.20 ms), with ~0.01 ms to
-  upload q/k/v; reproduce it with
+  masking and is verified with finite differences. Host attention is parallelized
+  over the batch with rayon. Candle storage has a native per-head 2D
+  implementation (no host round-trip), but on a Candle **CPU** device the kernel
+  dispatches to the parallel host path instead (≈1.1–1.2× host, transfer only);
+  the native path runs on GPU devices and can be forced with
+  `MINI_LLM_NATIVE_ATTN=1` (tests cover it). The batched-vs-separate test also
+  guards the host backward (it caught a batch-offset bug). Reproduce the
+  comparison with
   `cargo run --release -p mini-llm-backend --example attention_transfer_cost --features candle`.
   A 40-step **attention
   block** (embedding → LayerNorm → QKV → attention → out-projection →

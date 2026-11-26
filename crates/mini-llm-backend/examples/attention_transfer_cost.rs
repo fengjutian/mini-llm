@@ -117,7 +117,7 @@ fn main() {
         );
         println!("upload q/k/v  {:>7.3} ms", transfer_ms);
         println!(
-            "fallback overhead: forward {:.1}x, backward {:.1}x",
+            "candle overhead vs host: forward {:.1}x, backward {:.1}x",
             candle_forward_ms / host_forward,
             candle_backward_ms / host_backward
         );

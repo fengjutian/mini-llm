@@ -1049,14 +1049,33 @@ impl DeviceTensor {
                 )?))
             }
             #[cfg(feature = "candle")]
-            Storage::Candle { .. } => {
-                // Correctness first: run the verified host math, then move the
-                // result back to the device. A native 4D kernel is still TODO.
-                let q = self.to_host()?;
-                let k = key.to_host()?;
-                let v = value.to_host()?;
-                let output = attention_host(&q, &k, &v, batch, seq, heads, kv_heads, causal)?;
-                Ok(Self::from_host(output).to(&self.device())?)
+            Storage::Candle { tensor: q, device } => {
+                let (k, v) = match (&key.storage, &value.storage) {
+                    (
+                        Storage::Candle {
+                            tensor: k,
+                            device: k_device,
+                        },
+                        Storage::Candle {
+                            tensor: v,
+                            device: v_device,
+                        },
+                    ) if device.same_device(k_device) && device.same_device(v_device) => (k, v),
+                    _ => return Err(mixed_device_error()),
+                };
+                if device.same_device(&candle_core::Device::Cpu)
+                    && std::env::var_os("MINI_LLM_NATIVE_ATTN").is_none()
+                {
+                    // On CPU the parallel host kernel beats many small Candle ops.
+                    let q = self.to_host()?;
+                    let k = key.to_host()?;
+                    let v = value.to_host()?;
+                    let output = attention_host(&q, &k, &v, batch, seq, heads, kv_heads, causal)?;
+                    return Self::from_host(output).to(&self.device());
+                }
+                let output =
+                    candle_attention_forward(q, k, v, batch, seq, heads, kv_heads, causal)?;
+                Ok(Self::from_candle(output))
             }
         }
     }
@@ -1088,18 +1107,52 @@ impl DeviceTensor {
                 ))
             }
             #[cfg(feature = "candle")]
-            Storage::Candle { .. } => {
-                let q = self.to_host()?;
-                let k = key.to_host()?;
-                let v = value.to_host()?;
-                let g = grad_output.to_host()?;
+            Storage::Candle { tensor: q, device } => {
+                let (k, v, g) = match (&key.storage, &value.storage, &grad_output.storage) {
+                    (
+                        Storage::Candle {
+                            tensor: k,
+                            device: k_device,
+                        },
+                        Storage::Candle {
+                            tensor: v,
+                            device: v_device,
+                        },
+                        Storage::Candle {
+                            tensor: g,
+                            device: g_device,
+                        },
+                    ) if device.same_device(k_device)
+                        && device.same_device(v_device)
+                        && device.same_device(g_device) =>
+                    {
+                        (k, v, g)
+                    }
+                    _ => return Err(mixed_device_error()),
+                };
+                if device.same_device(&candle_core::Device::Cpu)
+                    && std::env::var_os("MINI_LLM_NATIVE_ATTN").is_none()
+                {
+                    let q = self.to_host()?;
+                    let k = key.to_host()?;
+                    let v = value.to_host()?;
+                    let g = grad_output.to_host()?;
+                    let (grad_q, grad_k, grad_v) = attention_host_backward(
+                        &q, &k, &v, &g, batch, seq, heads, kv_heads, causal,
+                    )?;
+                    let target = self.device();
+                    return Ok((
+                        Self::from_host(grad_q).to(&target)?,
+                        Self::from_host(grad_k).to(&target)?,
+                        Self::from_host(grad_v).to(&target)?,
+                    ));
+                }
                 let (grad_q, grad_k, grad_v) =
-                    attention_host_backward(&q, &k, &v, &g, batch, seq, heads, kv_heads, causal)?;
-                let device = self.device();
+                    candle_attention_backward(q, k, v, g, batch, seq, heads, kv_heads, causal)?;
                 Ok((
-                    Self::from_host(grad_q).to(&device)?,
-                    Self::from_host(grad_k).to(&device)?,
-                    Self::from_host(grad_v).to(&device)?,
+                    Self::from_candle(grad_q),
+                    Self::from_candle(grad_k),
+                    Self::from_candle(grad_v),
                 ))
             }
         }
@@ -1345,9 +1398,11 @@ fn attention_batch_backward(
                     continue;
                 }
                 let key_row = other * kv_heads * head_dim + kv_head * head_dim;
+                let key_offset =
+                    (batch_index * seq + other) * kv_heads * head_dim + kv_head * head_dim;
                 let grad_score = probabilities[other] * (grad_probabilities[other] - weighted);
                 for dim in 0..head_dim {
-                    grad_q[local_row + dim] += grad_score * k_data[key_row + dim] * scale;
+                    grad_q[local_row + dim] += grad_score * k_data[key_offset + dim] * scale;
                     grad_k[key_row + dim] += grad_score * q_data[q_offset + dim] * scale;
                     grad_v[key_row + dim] += probabilities[other] * g_data[q_offset + dim];
                 }
@@ -1376,4 +1431,247 @@ fn softmax_host(scores: &[f32]) -> Vec<f32> {
         }
     }
     result
+}
+
+#[cfg(feature = "candle")]
+fn candle_causal_mask(
+    seq: usize,
+    device: &candle_core::Device,
+) -> Result<candle_core::Tensor, BackendError> {
+    let mut data = vec![0.0f32; seq * seq];
+    for row in 0..seq {
+        for column in (row + 1)..seq {
+            data[row * seq + column] = -1e9;
+        }
+    }
+    candle_core::Tensor::from_vec(data, (seq, seq), device)
+        .map_err(|error| BackendError::Backend(error.to_string()))
+}
+
+#[cfg(feature = "candle")]
+fn candle_softmax_last(tensor: &candle_core::Tensor) -> Result<candle_core::Tensor, BackendError> {
+    let map = |error: candle_core::Error| BackendError::Backend(error.to_string());
+    let max = tensor.max_keepdim(1).map_err(map)?;
+    let shifted = tensor.broadcast_sub(&max).map_err(map)?;
+    let exponents = shifted.exp().map_err(map)?;
+    let denominator = exponents.sum_keepdim(1).map_err(map)?;
+    exponents.broadcast_div(&denominator).map_err(map)
+}
+
+/// Per-head 2D attention on Candle tensors.
+#[cfg(feature = "candle")]
+#[allow(clippy::too_many_arguments)]
+fn candle_attention_forward(
+    q: &candle_core::Tensor,
+    k: &candle_core::Tensor,
+    v: &candle_core::Tensor,
+    batch: usize,
+    seq: usize,
+    heads: usize,
+    kv_heads: usize,
+    causal: bool,
+) -> Result<candle_core::Tensor, BackendError> {
+    let map = |error: candle_core::Error| BackendError::Backend(error.to_string());
+    let head_dim = q.dims()[1] / heads;
+    let group = heads / kv_heads;
+    let scale = 1.0 / (head_dim as f64).sqrt();
+    let mask = if causal {
+        Some(candle_causal_mask(seq, q.device())?)
+    } else {
+        None
+    };
+
+    let mut batches = Vec::with_capacity(batch);
+    for batch_index in 0..batch {
+        let q_batch = q.narrow(0, batch_index * seq, seq).map_err(map)?;
+        let k_batch = k.narrow(0, batch_index * seq, seq).map_err(map)?;
+        let v_batch = v.narrow(0, batch_index * seq, seq).map_err(map)?;
+        let mut head_outputs = Vec::with_capacity(heads);
+        for head in 0..heads {
+            let kv_head = head / group;
+            let q_head = q_batch
+                .narrow(1, head * head_dim, head_dim)
+                .and_then(|tensor| tensor.contiguous())
+                .map_err(map)?;
+            let k_head = k_batch
+                .narrow(1, kv_head * head_dim, head_dim)
+                .and_then(|tensor| tensor.contiguous())
+                .map_err(map)?;
+            let v_head = v_batch
+                .narrow(1, kv_head * head_dim, head_dim)
+                .and_then(|tensor| tensor.contiguous())
+                .map_err(map)?;
+            let mut scores = q_head
+                .matmul(
+                    &k_head
+                        .transpose(0, 1)
+                        .and_then(|t| t.contiguous())
+                        .map_err(map)?,
+                )
+                .map_err(map)?
+                .affine(scale, 0.0)
+                .map_err(map)?;
+            if let Some(mask) = &mask {
+                scores = scores.broadcast_add(mask).map_err(map)?;
+            }
+            let probabilities = candle_softmax_last(&scores)?;
+            head_outputs.push(probabilities.matmul(&v_head).map_err(map)?);
+        }
+        let references: Vec<&candle_core::Tensor> = head_outputs.iter().collect();
+        batches.push(candle_core::Tensor::cat(&references, 1).map_err(map)?);
+    }
+    let references: Vec<&candle_core::Tensor> = batches.iter().collect();
+    candle_core::Tensor::cat(&references, 0).map_err(map)
+}
+
+/// Manual backward for [`candle_attention_forward`].
+#[cfg(feature = "candle")]
+#[allow(clippy::too_many_arguments)]
+fn candle_attention_backward(
+    q: &candle_core::Tensor,
+    k: &candle_core::Tensor,
+    v: &candle_core::Tensor,
+    grad_output: &candle_core::Tensor,
+    batch: usize,
+    seq: usize,
+    heads: usize,
+    kv_heads: usize,
+    causal: bool,
+) -> Result<
+    (
+        candle_core::Tensor,
+        candle_core::Tensor,
+        candle_core::Tensor,
+    ),
+    BackendError,
+> {
+    let map = |error: candle_core::Error| BackendError::Backend(error.to_string());
+    let head_dim = q.dims()[1] / heads;
+    let group = heads / kv_heads;
+    let scale = 1.0 / (head_dim as f64).sqrt();
+    let mask = if causal {
+        Some(candle_causal_mask(seq, q.device())?)
+    } else {
+        None
+    };
+
+    let mut batch_grad_q = Vec::with_capacity(batch);
+    let mut batch_grad_k = Vec::with_capacity(batch);
+    let mut batch_grad_v = Vec::with_capacity(batch);
+
+    for batch_index in 0..batch {
+        let offset = batch_index * seq;
+        let q_batch = q.narrow(0, offset, seq).map_err(map)?;
+        let k_batch = k.narrow(0, offset, seq).map_err(map)?;
+        let v_batch = v.narrow(0, offset, seq).map_err(map)?;
+        let g_batch = grad_output.narrow(0, offset, seq).map_err(map)?;
+
+        let mut head_grad_q = Vec::with_capacity(heads);
+        let mut grad_k: Vec<Option<candle_core::Tensor>> = (0..kv_heads).map(|_| None).collect();
+        let mut grad_v: Vec<Option<candle_core::Tensor>> = (0..kv_heads).map(|_| None).collect();
+
+        for head in 0..heads {
+            let kv_head = head / group;
+            let q_head = q_batch
+                .narrow(1, head * head_dim, head_dim)
+                .and_then(|tensor| tensor.contiguous())
+                .map_err(map)?;
+            let k_head = k_batch
+                .narrow(1, kv_head * head_dim, head_dim)
+                .and_then(|tensor| tensor.contiguous())
+                .map_err(map)?;
+            let v_head = v_batch
+                .narrow(1, kv_head * head_dim, head_dim)
+                .and_then(|tensor| tensor.contiguous())
+                .map_err(map)?;
+            let g_head = g_batch
+                .narrow(1, head * head_dim, head_dim)
+                .and_then(|tensor| tensor.contiguous())
+                .map_err(map)?;
+
+            let mut scores = q_head
+                .matmul(
+                    &k_head
+                        .transpose(0, 1)
+                        .and_then(|t| t.contiguous())
+                        .map_err(map)?,
+                )
+                .map_err(map)?
+                .affine(scale, 0.0)
+                .map_err(map)?;
+            if let Some(mask) = &mask {
+                scores = scores.broadcast_add(mask).map_err(map)?;
+            }
+            let probabilities = candle_softmax_last(&scores)?;
+
+            let grad_probabilities = g_head
+                .matmul(
+                    &v_head
+                        .transpose(0, 1)
+                        .and_then(|t| t.contiguous())
+                        .map_err(map)?,
+                )
+                .map_err(map)?;
+            let weighted = grad_probabilities
+                .broadcast_mul(&probabilities)
+                .and_then(|tensor| tensor.sum_keepdim(1))
+                .map_err(map)?;
+            let grad_scores = probabilities
+                .broadcast_mul(&grad_probabilities.broadcast_sub(&weighted).map_err(map)?)
+                .map_err(map)?;
+
+            head_grad_q.push(
+                grad_scores
+                    .matmul(&k_head)
+                    .map_err(map)?
+                    .affine(scale, 0.0)
+                    .map_err(map)?,
+            );
+            let delta_k = grad_scores
+                .transpose(0, 1)
+                .and_then(|tensor| tensor.contiguous())
+                .and_then(|tensor| tensor.matmul(&q_head))
+                .map_err(map)?
+                .affine(scale, 0.0)
+                .map_err(map)?;
+            let delta_v = probabilities
+                .transpose(0, 1)
+                .and_then(|tensor| tensor.contiguous())
+                .and_then(|tensor| tensor.matmul(&g_head))
+                .map_err(map)?;
+
+            grad_k[kv_head] = Some(match grad_k[kv_head].take() {
+                Some(previous) => previous.add(&delta_k).map_err(map)?,
+                None => delta_k,
+            });
+            grad_v[kv_head] = Some(match grad_v[kv_head].take() {
+                Some(previous) => previous.add(&delta_v).map_err(map)?,
+                None => delta_v,
+            });
+        }
+
+        let q_references: Vec<&candle_core::Tensor> = head_grad_q.iter().collect();
+        batch_grad_q.push(candle_core::Tensor::cat(&q_references, 1).map_err(map)?);
+        let k_values: Vec<candle_core::Tensor> = grad_k
+            .into_iter()
+            .map(|value| value.expect("k gradient"))
+            .collect();
+        let v_values: Vec<candle_core::Tensor> = grad_v
+            .into_iter()
+            .map(|value| value.expect("v gradient"))
+            .collect();
+        let k_references: Vec<&candle_core::Tensor> = k_values.iter().collect();
+        let v_references: Vec<&candle_core::Tensor> = v_values.iter().collect();
+        batch_grad_k.push(candle_core::Tensor::cat(&k_references, 1).map_err(map)?);
+        batch_grad_v.push(candle_core::Tensor::cat(&v_references, 1).map_err(map)?);
+    }
+
+    let q_references: Vec<&candle_core::Tensor> = batch_grad_q.iter().collect();
+    let k_references: Vec<&candle_core::Tensor> = batch_grad_k.iter().collect();
+    let v_references: Vec<&candle_core::Tensor> = batch_grad_v.iter().collect();
+    Ok((
+        candle_core::Tensor::cat(&q_references, 0).map_err(map)?,
+        candle_core::Tensor::cat(&k_references, 0).map_err(map)?,
+        candle_core::Tensor::cat(&v_references, 0).map_err(map)?,
+    ))
 }

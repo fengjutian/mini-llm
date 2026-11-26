@@ -1303,3 +1303,330 @@ fn candle_attention_matches_host_attention() {
         }
     }
 }
+
+#[cfg(feature = "candle")]
+#[test]
+fn candle_attention_single_token_is_identity() {
+    // With one token, causal attention copies v and sends all gradient to v.
+    let device = Device::candle_cpu();
+    let q = sample(1, 2, 1.0);
+    let k = sample(1, 2, 0.5);
+    let v = sample(1, 2, 0.75);
+    let grad = sample(1, 2, 1.0);
+
+    let out = DeviceTensor::from_host(q.clone())
+        .to(&device)
+        .unwrap()
+        .attention_forward(
+            &DeviceTensor::from_host(k.clone()).to(&device).unwrap(),
+            &DeviceTensor::from_host(v.clone()).to(&device).unwrap(),
+            1,
+            1,
+            1,
+            1,
+            true,
+        )
+        .unwrap()
+        .to_host()
+        .unwrap();
+    for (expected, actual) in v.data().iter().zip(out.data()) {
+        assert!(
+            (expected - actual).abs() < 1e-6,
+            "out {actual} vs v {expected}"
+        );
+    }
+
+    let (dq, dk, dv) = DeviceTensor::from_host(q)
+        .to(&device)
+        .unwrap()
+        .attention_backward(
+            &DeviceTensor::from_host(k).to(&device).unwrap(),
+            &DeviceTensor::from_host(v).to(&device).unwrap(),
+            &DeviceTensor::from_host(grad.clone()).to(&device).unwrap(),
+            1,
+            1,
+            1,
+            1,
+            true,
+        )
+        .unwrap();
+    for value in dq.to_host().unwrap().data() {
+        assert!(value.abs() < 1e-6, "dq {value}");
+    }
+    for value in dk.to_host().unwrap().data() {
+        assert!(value.abs() < 1e-6, "dk {value}");
+    }
+    for (expected, actual) in grad.data().iter().zip(dv.to_host().unwrap().data()) {
+        assert!(
+            (expected - actual).abs() < 1e-6,
+            "dv {actual} vs g {expected}"
+        );
+    }
+}
+#[cfg(feature = "candle")]
+#[test]
+fn candle_attention_matches_host_for_small_cases() {
+    let device = Device::candle_cpu();
+    for (batch, seq, heads, kv_heads, head_dim) in [
+        (1usize, 2usize, 1usize, 1usize, 2usize),
+        (1, 3, 1, 1, 2),
+        (2, 1, 1, 1, 2),
+        (2, 2, 1, 1, 2),
+    ] {
+        let q = sample(batch * seq, heads * head_dim, 1.0);
+        let k = sample(batch * seq, kv_heads * head_dim, 0.5);
+        let v = sample(batch * seq, kv_heads * head_dim, 0.75);
+        let grad = Tensor::from_2d(
+            batch * seq,
+            heads * head_dim,
+            vec![1.0 / (batch * seq * heads * head_dim) as f32; batch * seq * heads * head_dim],
+        )
+        .unwrap();
+
+        let host_out = DeviceTensor::from_host(q.clone())
+            .attention_forward(
+                &DeviceTensor::from_host(k.clone()),
+                &DeviceTensor::from_host(v.clone()),
+                batch,
+                seq,
+                heads,
+                kv_heads,
+                true,
+            )
+            .unwrap()
+            .to_host()
+            .unwrap();
+        let candle_out = DeviceTensor::from_host(q.clone())
+            .to(&device)
+            .unwrap()
+            .attention_forward(
+                &DeviceTensor::from_host(k.clone()).to(&device).unwrap(),
+                &DeviceTensor::from_host(v.clone()).to(&device).unwrap(),
+                batch,
+                seq,
+                heads,
+                kv_heads,
+                true,
+            )
+            .unwrap()
+            .to_host()
+            .unwrap();
+        assert_close(
+            candle_out.data(),
+            host_out.data(),
+            1e-5,
+            &format!("forward b{batch} s{seq} h{heads} kv{kv_heads}"),
+        );
+
+        let (host_dq, host_dk, host_dv) = DeviceTensor::from_host(q.clone())
+            .attention_backward(
+                &DeviceTensor::from_host(k.clone()),
+                &DeviceTensor::from_host(v.clone()),
+                &DeviceTensor::from_host(grad.clone()),
+                batch,
+                seq,
+                heads,
+                kv_heads,
+                true,
+            )
+            .unwrap();
+        let (candle_dq, candle_dk, candle_dv) = DeviceTensor::from_host(q.clone())
+            .to(&device)
+            .unwrap()
+            .attention_backward(
+                &DeviceTensor::from_host(k.clone()).to(&device).unwrap(),
+                &DeviceTensor::from_host(v.clone()).to(&device).unwrap(),
+                &DeviceTensor::from_host(grad.clone()).to(&device).unwrap(),
+                batch,
+                seq,
+                heads,
+                kv_heads,
+                true,
+            )
+            .unwrap();
+        for (candle, host, label) in [
+            (candle_dq, host_dq, "dq"),
+            (candle_dk, host_dk, "dk"),
+            (candle_dv, host_dv, "dv"),
+        ] {
+            assert_close(
+                candle.to_host().unwrap().data(),
+                host.to_host().unwrap().data(),
+                1e-5,
+                &format!("{label} b{batch} s{seq} h{heads} kv{kv_heads}"),
+            );
+        }
+    }
+}
+#[test]
+fn host_attention_batched_matches_separate_batches() {
+    let (batch, seq, heads, kv_heads, head_dim) = (2usize, 2usize, 2usize, 1usize, 2usize);
+    let q = sample(batch * seq, heads * head_dim, 1.0);
+    let k = sample(batch * seq, kv_heads * head_dim, 0.5);
+    let v = sample(batch * seq, kv_heads * head_dim, 0.75);
+    let grad = Tensor::from_2d(
+        batch * seq,
+        heads * head_dim,
+        vec![0.1; batch * seq * heads * head_dim],
+    )
+    .unwrap();
+
+    let (dq, dk, dv) = DeviceTensor::from_host(q.clone())
+        .attention_backward(
+            &DeviceTensor::from_host(k.clone()),
+            &DeviceTensor::from_host(v.clone()),
+            &DeviceTensor::from_host(grad.clone()),
+            batch,
+            seq,
+            heads,
+            kv_heads,
+            true,
+        )
+        .unwrap();
+    let (dq, dk, dv) = (
+        dq.to_host().unwrap(),
+        dk.to_host().unwrap(),
+        dv.to_host().unwrap(),
+    );
+
+    for b in 0..batch {
+        let rows = seq;
+        let q_b = Tensor::new(
+            q.data()[b * rows * heads * head_dim..(b + 1) * rows * heads * head_dim].to_vec(),
+            vec![rows, heads * head_dim],
+        )
+        .unwrap();
+        let k_b = Tensor::new(
+            k.data()[b * rows * kv_heads * head_dim..(b + 1) * rows * kv_heads * head_dim].to_vec(),
+            vec![rows, kv_heads * head_dim],
+        )
+        .unwrap();
+        let v_b = Tensor::new(
+            v.data()[b * rows * kv_heads * head_dim..(b + 1) * rows * kv_heads * head_dim].to_vec(),
+            vec![rows, kv_heads * head_dim],
+        )
+        .unwrap();
+        let g_b = Tensor::new(
+            grad.data()[b * rows * heads * head_dim..(b + 1) * rows * heads * head_dim].to_vec(),
+            vec![rows, heads * head_dim],
+        )
+        .unwrap();
+        let (dq_b, dk_b, dv_b) = DeviceTensor::from_host(q_b)
+            .attention_backward(
+                &DeviceTensor::from_host(k_b),
+                &DeviceTensor::from_host(v_b),
+                &DeviceTensor::from_host(g_b),
+                1,
+                rows,
+                heads,
+                kv_heads,
+                true,
+            )
+            .unwrap();
+        assert_close(
+            &dq.data()[b * rows * heads * head_dim..(b + 1) * rows * heads * head_dim],
+            dq_b.to_host().unwrap().data(),
+            1e-6,
+            "dq batch",
+        );
+        assert_close(
+            &dk.data()[b * rows * kv_heads * head_dim..(b + 1) * rows * kv_heads * head_dim],
+            dk_b.to_host().unwrap().data(),
+            1e-6,
+            "dk batch",
+        );
+        assert_close(
+            &dv.data()[b * rows * kv_heads * head_dim..(b + 1) * rows * kv_heads * head_dim],
+            dv_b.to_host().unwrap().data(),
+            1e-6,
+            "dv batch",
+        );
+    }
+}
+
+#[cfg(feature = "candle")]
+#[test]
+fn candle_attention_native_matches_host_when_forced() {
+    std::env::set_var("MINI_LLM_NATIVE_ATTN", "1");
+    let device = Device::candle_cpu();
+    let (batch, seq, heads, kv_heads, head_dim) = (2usize, 3usize, 2usize, 1usize, 2usize);
+    let q = sample(batch * seq, heads * head_dim, 1.0);
+    let k = sample(batch * seq, kv_heads * head_dim, 0.5);
+    let v = sample(batch * seq, kv_heads * head_dim, 0.75);
+    let grad = Tensor::from_2d(
+        batch * seq,
+        heads * head_dim,
+        vec![1.0 / (batch * seq * heads * head_dim) as f32; batch * seq * heads * head_dim],
+    )
+    .unwrap();
+
+    let host_out = DeviceTensor::from_host(q.clone())
+        .attention_forward(
+            &DeviceTensor::from_host(k.clone()),
+            &DeviceTensor::from_host(v.clone()),
+            batch,
+            seq,
+            heads,
+            kv_heads,
+            true,
+        )
+        .unwrap()
+        .to_host()
+        .unwrap();
+    let native_out = DeviceTensor::from_host(q.clone())
+        .to(&device)
+        .unwrap()
+        .attention_forward(
+            &DeviceTensor::from_host(k.clone()).to(&device).unwrap(),
+            &DeviceTensor::from_host(v.clone()).to(&device).unwrap(),
+            batch,
+            seq,
+            heads,
+            kv_heads,
+            true,
+        )
+        .unwrap()
+        .to_host()
+        .unwrap();
+    assert_close(native_out.data(), host_out.data(), 1e-5, "native forward");
+
+    let (host_dq, host_dk, host_dv) = DeviceTensor::from_host(q.clone())
+        .attention_backward(
+            &DeviceTensor::from_host(k.clone()),
+            &DeviceTensor::from_host(v.clone()),
+            &DeviceTensor::from_host(grad.clone()),
+            batch,
+            seq,
+            heads,
+            kv_heads,
+            true,
+        )
+        .unwrap();
+    let (native_dq, native_dk, native_dv) = DeviceTensor::from_host(q)
+        .to(&device)
+        .unwrap()
+        .attention_backward(
+            &DeviceTensor::from_host(k).to(&device).unwrap(),
+            &DeviceTensor::from_host(v).to(&device).unwrap(),
+            &DeviceTensor::from_host(grad).to(&device).unwrap(),
+            batch,
+            seq,
+            heads,
+            kv_heads,
+            true,
+        )
+        .unwrap();
+    for (native, host, label) in [
+        (native_dq, host_dq, "dq"),
+        (native_dk, host_dk, "dk"),
+        (native_dv, host_dv, "dv"),
+    ] {
+        assert_close(
+            native.to_host().unwrap().data(),
+            host.to_host().unwrap().data(),
+            1e-5,
+            &format!("native {label}"),
+        );
+    }
+    std::env::remove_var("MINI_LLM_NATIVE_ATTN");
+}

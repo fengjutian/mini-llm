@@ -3,7 +3,7 @@
 //! A thin seam between the educational tensor engine and accelerated kernels.
 //!
 //! [`CpuBackend`] is always available and delegates to
-//! [`mini_llm_tensor::Tensor`]. [`CandleBackend`] is compiled with the `candle`
+//! [`mini_llm_tensor::Tensor`]. `CandleBackend` is compiled with the `candle`
 //! feature and implements the same [`Backend`] trait, so CPU/GPU parity is a
 //! matter of running both backends on the same inputs.
 //!

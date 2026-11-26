@@ -155,7 +155,7 @@ impl MemorySink {
 /// Writes newline-delimited JSON to any [`Write`] sink.
 ///
 /// Writes are batched: the underlying writer is flushed every
-/// [`JsonlSink::flush_every`] events (and on [`JsonlSink::flush`] or drop), which
+/// [`JsonlSink::with_flush_every`] interval (and on [`JsonlSink::flush`] or drop), which
 /// keeps a training loop from issuing one syscall per event while still making
 /// the file tail-able.
 pub struct JsonlSink<W: Write> {

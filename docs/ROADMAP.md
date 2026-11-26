@@ -198,8 +198,10 @@ SFT 语料仅用于展示掩码机制。
 - 设备 FFN 块训练：embedding → LayerNorm → SwiGLU → 残差 → head → CE，
   60 步 loss 下降、参数全程驻留设备；
 - 融合注意力算子：GQA、因果掩码、前向 + 手工反向，有限差分校验；
-  Candle 存储暂委托 host 数学并搬回设备（正确但有传输开销），原生 4D 仍待补；
-- fallback 开销实测（128 行）：前向 1.4×、反向 1.3×，q/k/v 上传约 0.04 ms；
+  Candle 存储已实现原生 per-head 2D attention（无 host 往返），与 host 梯度一致；
+  修复了并行 host 反向在 batch>1 时的 K 偏移 bug（由 batched-vs-separate 测试捕获）；
+- Candle attention：CPU 设备分派到并行 host（约 1.1–1.2×，只差传输），GPU 设备走
+  原生 per-head 2D；MINI_LLM_NATIVE_ATTN=1 可强制原生并有测试覆盖；
 - 注意力块在 `Cpu` 与 `Candle(Cpu)` 上均可端到端训练（loss 下降、参数驻留）；
 - 可运行示例：`cargo run -p mini-llm-backend --example device_attention_block`；
   语料为 README + 全部 crate 的 `//!`/`///` 注释（88,829 字符，vocab 118，
