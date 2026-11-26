@@ -67,6 +67,8 @@ cargo run -p mini-llm-cli -- lora        # adapt a frozen classifier with low-ra
 cargo run -p mini-llm-cli -- dpo         # preference optimization on a toy policy
 cargo run -p mini-llm-cli -- grpo        # group relative policy optimization bandit
 cargo run -p mini-llm-cli -- trace       # training events + attention capture (JSONL)
+cargo run -p mini-llm-cli -- device-train --layers 1 --seq 16 --batch 4 --steps 100
+cargo run -p mini-llm-cli --features candle -- device-train --device cuda --steps 40
 cargo run --release -p mini-llm-cli -- bench  # kernel + training micro-benchmarks
 ```
 

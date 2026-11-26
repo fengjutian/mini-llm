@@ -1630,3 +1630,17 @@ fn candle_attention_native_matches_host_when_forced() {
     }
     std::env::remove_var("MINI_LLM_NATIVE_ATTN");
 }
+
+#[test]
+fn device_spec_parses_cpu_and_rejects_unknown() {
+    assert_eq!(Device::from_spec("cpu").unwrap(), Device::Cpu);
+    assert!(Device::from_spec("tpu").is_err());
+    assert!(Device::from_spec("cuda:abc").is_err());
+}
+
+#[cfg(not(feature = "candle"))]
+#[test]
+fn device_spec_rejects_cuda_without_the_candle_feature() {
+    let error = Device::from_spec("cuda").unwrap_err().to_string();
+    assert!(error.contains("candle"), "unexpected error: {error}");
+}

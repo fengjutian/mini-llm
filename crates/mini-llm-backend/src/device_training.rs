@@ -13,6 +13,9 @@
 //! Layer sweep (1/2/3 blocks):
 //! `cargo run -p mini-llm-backend --example device_attention_block -- --layer-sweep`
 //!
+//! CLI entry point (same flags): cargo run -p mini-llm-cli -- device-train --layers 2 --seq 64;
+//! --device cuda runs on a CUDA device when the candle feature is enabled.
+//!
 //! Regularization sweep:
 //! `cargo run -p mini-llm-backend --example device_attention_block -- --sweep`
 
