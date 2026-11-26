@@ -210,7 +210,18 @@ SFT 语料仅用于展示掩码机制。
   corpus 452.9k 字符、vocab 126、56,609 窗口；
 - 大 batch / 步数（2 层，seq64，warmup+cosine）：batch16 3,000 步
   2.65/2.26；batch16 + lr0.01 2.56/2.25；batch32 3,000 步 2.18/2.18；
-  batch16 6,000 步 2.10/2.10（仍在下降）；
+  batch16 6,000 步 2.10/2.10；batch32 6,000 步 2.04/2.03 为最佳；
+- lr 扫描（600 步、batch16）最佳 lr=0.01（2.61），优于 0.02/0.005/0.04；
+  batch32 下 lr 0.01 与 0.02 结果相同（3,000 步均 2.18），说明不是 lr 限制；
+- hidden 48（batch16，3,000 步）最佳 2.39，差于 hidden 32 的 2.26，加宽不划算；
+- 设备参数序列化：`save_device_checkpoint` / `load_device_checkpoint`（DEVT v2）；
+  checkpoint 含参数 + Adam 一/二阶矩 + step + 超参元数据 + 语料指纹（FNV-1a），
+  支持 `--resume` 续训与 `--load` 直接评估；加载时自动恢复 shapes，语料变化时警告；
+- `--seed` 控制初始化与 dropout：同 seed 重复运行 loss 完全一致，且 seed 写入
+  checkpoint 元数据、加载时自动恢复；
+- 教程文档 `docs/DEVICE_TRAINING.md` 整理完整流程，并已接入文档站；
+- held-out 改为按文本块切分（末尾 20%），避免随机窗口的上下文泄漏；
+  2 层/seq64/batch16/3,000 步最佳 2.26，与随机窗口一致；
 - 早期对照（旧语料）：warmup+cosine 优于常数 lr（seq16 2.93 vs 3.40），
   2 层优于 3 层，默认 min-ratio 0.1 / 自动 warmup 优于 0.0/0.2 与 400 步；
 - 另有 `--layer-sweep`（1,600 步、无调度）作为早期基线；

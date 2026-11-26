@@ -627,23 +627,63 @@ and re-exports.
   11.1k windows, 80/20 split), with warmup + cosine by default
   (`--constant-lr` opt-out, `--batch`, `--seq`, `--lr`, `--min-ratio`, `--warmup`
   tunable). Test sources and the site's TS/Astro sources are appended (ASCII only,
-  to keep the vocabulary small), which grows the corpus to 452.9k chars, vocab 126
-  and 56,609 windows. Results with 2 layers, seq 64, warmup + cosine:
+  to keep the vocabulary small): 453.8k chars, vocab 127. The held-out set is now
+  a **disjoint suffix block** (20% of the text) instead of random windows, so
+  neighbouring context cannot leak across the split; at 2 layers, seq 64,
+  batch 16 and 3,000 steps it reproduces the random-window result (best 2.26),
+  so the earlier comparisons hold. Results with 2 layers, seq 64, warmup + cosine:
 
   | configuration | final held-out | best held-out |
   | --- | --- | --- |
   | batch 16, 3,000 steps | 2.65 | 2.26 |
   | batch 16, 3,000 steps, lr 0.01 | 2.56 | 2.25 |
   | batch 32, 3,000 steps | 2.18 | 2.18 |
-  | **batch 16, 6,000 steps** | **2.10** | **2.10** |
+  | batch 16, 6,000 steps | 2.10 | 2.10 |
+  | **batch 32, 6,000 steps** | **2.04** | **2.03** |
+
+  The best checkpoint is serialized with `save_device_tensors`, reloaded and
+  re-evaluated (the example prints both values).
 
   Larger batches reach a lower loss in the same number of steps, and 6,000 steps
-  is still improving at the end; halving the learning rate for the bigger batch
-  only helps marginally. Earlier sweeps (smaller corpora) also showed warmup +
-  cosine beating a constant rate and two layers beating three. Training loss is
-  printed as an exponential moving average; `--sweep` compares weight decay 0.1
-  with dropout 0.3.
+  is still improving but nearly flat at batch 32. A `--lr-sweep` (600 steps,
+  batch 16) puts the best held-out at lr 0.01 (2.61), ahead of 0.02 (2.63),
+  0.005 (2.67) and 0.04 (2.68); at batch 32, lr 0.01 and 0.02 are identical
+  (2.18 at 3,000 steps), so the batch-32 result is not lr-limited.
+  `--hidden 48` at batch 16 is worse than hidden 32 (2.39 vs 2.26 best), so
+  width does not pay off at this budget. Earlier sweeps (smaller corpora) showed
+  warmup + cosine beating a constant rate and two layers beating three. Training
+  loss is printed as an exponential moving average; `--sweep` compares weight
+  decay 0.1 with dropout 0.3. The best checkpoint is written with
+  `--checkpoint PATH` (default: the temp directory) and stores the parameters,
+  Adam first/second moments and the step, so `--resume PATH` continues the run
+  with the optimizer state intact (the schedule resumes at the saved step).
+  `--load PATH` skips training and reports that checkpoint's held-out loss; the
+  example prints the best step alongside it and reloads the file to verify the
+  saved and reloaded losses agree. Checkpoints also carry their hyperparameters
+  (layers/hidden/seq/batch/seed) and an FNV-1a fingerprint of the corpus, so
+  `--load` and `--resume` restore the shapes even when the command line disagrees
+  and warn when the current corpus no longer matches the one the checkpoint was
+  trained on (held-out losses are then not comparable). `--seed` drives both the
+  initialization and dropout masks: rerunning with the same seed reproduces the
+  same losses exactly.
 - Future backends implement `Backend` and reuse the same parity harness.
+
+### Device-resident training example
+
+[`crates/mini-llm-backend/examples/device_attention_block.rs`](crates/mini-llm-backend/examples/device_attention_block.rs)
+trains a 1–3 layer attention + SwiGLU model end to end on device tensors:
+
+```bash
+cargo run -p mini-llm-backend --example device_attention_block -- \
+  --layers 2 --seq 64 --batch 16 --steps 3000
+```
+
+Parameters, gradients and Adam moments stay in `DeviceTensor`; only the corpus,
+dropout masks and logging are plain Rust. Checkpoints are self-describing
+(hyperparameters, corpus fingerprint, seed) and support `--load` and `--resume`.
+The full walkthrough — corpus construction, block split, checkpoint format,
+measured results and limitations — is in
+[`docs/DEVICE_TRAINING.md`](docs/DEVICE_TRAINING.md).
 
 Autograd and the model still operate on host `Tensor` values; making the training
 graph device-aware is the next architectural step (device-resident parameters,

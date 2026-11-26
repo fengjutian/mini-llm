@@ -27,10 +27,14 @@ use std::fmt::{Display, Formatter};
 use mini_llm_tensor::{Tensor, TensorError};
 
 mod device;
+mod device_io;
 mod optim;
 mod tape;
 
 pub use device::{Device, DeviceLinear, DeviceMlp, DeviceTensor, LayerGradients, MlpGradients};
+pub use device_io::{
+    load_device_checkpoint, load_device_tensors, save_device_checkpoint, save_device_tensors,
+};
 pub use optim::DeviceAdamW;
 pub use tape::DeviceValue;
 

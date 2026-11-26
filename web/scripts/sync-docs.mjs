@@ -146,6 +146,18 @@ const KNOWN = [
     part: 9,
     order: 90,
   },
+  {
+    file: 'DEVICE_TRAINING.md',
+    slug: 'device-training',
+    title: '设备驻留训练示例',
+    short: '设备训练',
+    description:
+      'DeviceTensor、DeviceValue 反向图、DeviceAdamW 与 DEVT checkpoint：一个可复现的设备端小型训练循环。',
+    section: TRACKS.implementation,
+    series: TRACKS.implementation,
+    part: 10,
+    order: 100,
+  },
 
   // 02 · 认知与知识 ---------------------------------------------------------
   {

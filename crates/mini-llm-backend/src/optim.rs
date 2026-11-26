@@ -59,6 +59,17 @@ impl DeviceAdamW {
         self.learning_rate
     }
 
+    /// Current Adam moments, one entry per parameter (lazily None until used).
+    pub fn moments(&self) -> &[Option<(DeviceTensor, DeviceTensor)>] {
+        &self.moments
+    }
+
+    /// Restores moments and step count from a checkpoint.
+    pub fn restore(&mut self, step_count: u32, moments: Vec<Option<(DeviceTensor, DeviceTensor)>>) {
+        self.step_count = step_count;
+        self.moments = moments;
+    }
+
     /// Applies one update; `gradients` must match the parameters in count and shape.
     pub fn step(
         &mut self,
