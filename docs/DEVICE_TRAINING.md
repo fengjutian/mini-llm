@@ -42,6 +42,7 @@ cargo run -p mini-llm-backend --example device_attention_block -- \
 | `--load PATH` | 加载 checkpoint 直接评估（自动恢复超参） |
 | `--resume PATH` | 从 checkpoint 继续训练（含 Adam 矩与 step） |
 | `--checkpoint PATH` | 最佳 checkpoint 输出位置（默认临时目录） |
+| `--patience N` | 连续 N 次评估无改善则早停（0 关闭） |
 
 ## 结构
 
@@ -73,7 +74,8 @@ ids → embedding(gather_rows)
   cosine 降到 0.1×lr）；
 - 梯度：无裁剪（示例规模下未出现不稳定）；
 - dropout：加在 attention 与 FFN 的残差分支，评估时关闭；
-- 日志：训练 loss 用 EMA（0.98/0.02）平滑，每 25 步评估 held-out，并记录最佳点。
+- 日志：训练 loss 用 EMA（0.98/0.02）平滑，每 25 步评估 held-out，并记录最佳点；
+- 早停：`--patience N` 连续 N 次评估无改善即停止（默认 0=关闭）。
 
 ## 结果（2 层，seq 64，warmup + cosine）
 

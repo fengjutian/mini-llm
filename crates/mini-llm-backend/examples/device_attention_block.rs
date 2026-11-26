@@ -69,6 +69,7 @@ struct Config {
     min_ratio: f32,
     warmup: usize,
     constant_lr: bool,
+    patience: usize,
     load: Option<String>,
     checkpoint: Option<String>,
     resume: Option<String>,
@@ -110,6 +111,7 @@ fn main() {
         min_ratio: parse_flag(&arguments, "--min-ratio").unwrap_or(0.1),
         warmup: parse_count(&arguments, "--warmup").unwrap_or(0),
         constant_lr: arguments.iter().any(|argument| argument == "--constant-lr"),
+        patience: parse_count(&arguments, "--patience").unwrap_or(0),
         load: parse_path(&arguments, "--load"),
         checkpoint: parse_path(&arguments, "--checkpoint"),
         resume: parse_path(&arguments, "--resume"),
@@ -153,6 +155,7 @@ fn sweep_regularization() {
                 min_ratio: 0.1,
                 warmup: 0,
                 constant_lr: false,
+                patience: 0,
                 load: None,
                 checkpoint: None,
                 resume: None,
@@ -193,6 +196,7 @@ fn sweep_learning_rates(arguments: &[String]) {
             min_ratio: 0.1,
             warmup: 0,
             constant_lr: false,
+            patience: 0,
             load: None,
             checkpoint: None,
             resume: None,
@@ -227,6 +231,7 @@ fn sweep_layers(arguments: &[String]) {
             min_ratio: parse_flag(arguments, "--min-ratio").unwrap_or(0.1),
             warmup: parse_count(arguments, "--warmup").unwrap_or(0),
             constant_lr: arguments.iter().any(|argument| argument == "--constant-lr"),
+            patience: parse_count(arguments, "--patience").unwrap_or(0),
             load: None,
             checkpoint: None,
             resume: None,
@@ -484,6 +489,7 @@ fn train_with_parameters(config: &Config, verbose: bool) -> (f32, f32, f32, Vec<
     let mut best_parameters: Option<Vec<DeviceTensor>> = None;
     let mut best_moments: Option<Vec<Option<(DeviceTensor, DeviceTensor)>>> = None;
     let mut best_step = 0usize;
+    let mut stale_evaluations = 0usize;
     let mut train_cursor = 0usize;
     let mut start_step = 0usize;
 
@@ -560,6 +566,18 @@ fn train_with_parameters(config: &Config, verbose: bool) -> (f32, f32, f32, Vec<
                 best_parameters = Some(parameters.clone());
                 best_moments = Some(optimizer.moments().to_vec());
                 best_step = step;
+                stale_evaluations = 0;
+            } else {
+                stale_evaluations += 1;
+                if config.patience > 0 && stale_evaluations >= config.patience {
+                    if verbose {
+                        println!(
+                            "  early stopping at step {step} after {} evaluations without improvement",
+                            config.patience
+                        );
+                    }
+                    break;
+                }
             }
             if verbose {
                 println!(
@@ -833,6 +851,7 @@ fn evaluate(
         min_ratio: config.min_ratio,
         warmup: config.warmup,
         constant_lr: config.constant_lr,
+        patience: 0,
         load: None,
         checkpoint: None,
         resume: None,

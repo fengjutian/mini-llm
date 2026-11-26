@@ -625,7 +625,8 @@ and re-exports.
   attention → residual, then LayerNorm → SwiGLU → residual) over the repository
   README plus every crate's `//!`/`///` doc comments (89.3k chars, vocab 118,
   11.1k windows, 80/20 split), with warmup + cosine by default
-  (`--constant-lr` opt-out, `--batch`, `--seq`, `--lr`, `--min-ratio`, `--warmup`
+  (`--constant-lr` opt-out, `--batch`, `--seq`, `--lr`, `--min-ratio`, `--warmup`,
+  `--patience`
   tunable). Test sources and the site's TS/Astro sources are appended (ASCII only,
   to keep the vocabulary small): 453.8k chars, vocab 127. The held-out set is now
   a **disjoint suffix block** (20% of the text) instead of random windows, so
