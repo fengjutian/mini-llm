@@ -34,5 +34,29 @@ fn softmax(c: &mut Criterion) {
     });
 }
 
-criterion_group!(kernels, matmul, softmax);
+fn affine(c: &mut Criterion) {
+    let input = Tensor::new(vec![0.25; 128 * 256], vec![128, 256]).unwrap();
+    let weight = Tensor::new(vec![0.01; 256 * 256], vec![256, 256]).unwrap();
+    let bias = Tensor::new(vec![0.1; 256], vec![256]).unwrap();
+    let mut group = c.benchmark_group("affine_f32/128x256");
+    group.bench_function("separate", |b| {
+        b.iter(|| {
+            black_box(&input)
+                .matmul(black_box(&weight))
+                .unwrap()
+                .add(black_box(&bias))
+                .unwrap()
+        })
+    });
+    group.bench_function("fused", |b| {
+        b.iter(|| {
+            black_box(&input)
+                .matmul_add_bias(black_box(&weight), black_box(&bias))
+                .unwrap()
+        })
+    });
+    group.finish();
+}
+
+criterion_group!(kernels, matmul, softmax, affine);
 criterion_main!(kernels);

@@ -45,6 +45,27 @@ impl TensorValue {
         })
     }
 
+    /// Fused dense affine transform `self @ weight + bias`.
+    ///
+    /// This records one graph node and reuses the matmul output buffer for the
+    /// broadcast bias while keeping the same analytic gradients as the two-op
+    /// expression.
+    pub fn linear(
+        &self,
+        weight: &TensorValue,
+        bias: &TensorValue,
+    ) -> Result<TensorValue, AutogradError> {
+        let (input_value, weight_value, bias_value) = (self.value(), weight.value(), bias.value());
+        let value = crate::backend::matmul_add_bias(&input_value, &weight_value, &bias_value)?;
+        let bias_shape = bias.shape();
+        self.ternary(weight, bias, "linear", value, move |g| {
+            let grad_input = crate::backend::matmul(g, &weight_value.transpose_2d()?)?;
+            let grad_weight = crate::backend::matmul(&input_value.transpose_2d()?, g)?;
+            let grad_bias = g.sum_to(&bias_shape)?;
+            Ok((grad_input, grad_weight, grad_bias))
+        })
+    }
+
     /// Multiplies every element by a constant.
     pub fn scale(&self, factor: f32) -> Result<TensorValue, AutogradError> {
         let value = self.value().scale(factor)?;

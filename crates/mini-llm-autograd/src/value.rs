@@ -277,6 +277,32 @@ impl TensorValue {
         ))
     }
 
+    pub(crate) fn ternary(
+        &self,
+        second: &TensorValue,
+        third: &TensorValue,
+        op: &'static str,
+        value: Tensor,
+        grads: impl Fn(&Tensor) -> Result<(Tensor, Tensor, Tensor), AutogradError> + 'static,
+    ) -> Result<TensorValue, AutogradError> {
+        let requires_grad =
+            (self.requires_grad() || second.requires_grad() || third.requires_grad())
+                && !crate::no_grad::is_enabled();
+        let backward = requires_grad.then(|| {
+            Rc::new(move |grad: &Tensor| -> Result<Vec<Tensor>, AutogradError> {
+                let (first, second, third) = grads(grad)?;
+                Ok(vec![first, second, third])
+            }) as Rc<BackwardFn>
+        });
+        Ok(TensorValue::from_parts(
+            value,
+            requires_grad,
+            op,
+            vec![self.clone(), second.clone(), third.clone()],
+            backward,
+        ))
+    }
+
     pub(crate) fn unary(
         &self,
         op: &'static str,

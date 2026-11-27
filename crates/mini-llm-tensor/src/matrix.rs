@@ -233,6 +233,27 @@ impl Tensor {
         }
         Self::new(output, vec![m, n])
     }
+
+    /// Computes `self @ other + bias` with a rank-1 row bias.
+    ///
+    /// The product buffer is updated in place, avoiding the second full-size
+    /// allocation that a separate broadcast `add` would require.
+    pub fn matmul_add_bias(&self, other: &Self, bias: &Self) -> Result<Self, TensorError> {
+        let mut output = self.matmul(other)?;
+        if bias.rank() != 1 || bias.shape()[0] != output.shape()[1] {
+            return Err(TensorError::ShapeMismatch {
+                left: output.shape().to_vec(),
+                right: bias.shape().to_vec(),
+            });
+        }
+        let cols = output.shape()[1];
+        for row in output.data_mut().chunks_mut(cols) {
+            for (value, offset) in row.iter_mut().zip(bias.data()) {
+                *value += offset;
+            }
+        }
+        Ok(output)
+    }
 }
 
 /// Multiply-adds below this count stay on the calling thread.

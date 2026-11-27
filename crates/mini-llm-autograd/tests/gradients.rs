@@ -325,3 +325,33 @@ fn scatter_add_rows_backward_gathers() {
 
     assert_eq!(values.grad().unwrap().data(), &[1.0, 1.0, 1.0, 1.0]);
 }
+
+#[test]
+fn fused_linear_matches_separate_forward_and_backward() {
+    fn run(fused: bool) -> (Vec<f32>, Vec<f32>, Vec<f32>, Vec<f32>) {
+        let input = TensorValue::parameter(vec![1.0, -2.0, 0.5, 3.0], vec![2, 2]).unwrap();
+        let weight =
+            TensorValue::parameter(vec![0.2, -0.4, 0.7, 0.3, -0.1, 0.8], vec![2, 3]).unwrap();
+        let bias = TensorValue::parameter(vec![0.1, -0.2, 0.3], vec![3]).unwrap();
+        let output = if fused {
+            input.linear(&weight, &bias).unwrap()
+        } else {
+            input.matmul(&weight).unwrap().add(&bias).unwrap()
+        };
+        let values = output.data();
+        output.powf(2.0).unwrap().sum().unwrap().backward().unwrap();
+        (
+            values,
+            input.grad().unwrap().data().to_vec(),
+            weight.grad().unwrap().data().to_vec(),
+            bias.grad().unwrap().data().to_vec(),
+        )
+    }
+
+    let fused = run(true);
+    let separate = run(false);
+    assert_close(&fused.0, &separate.0, "linear output");
+    assert_close(&fused.1, &separate.1, "linear input gradient");
+    assert_close(&fused.2, &separate.2, "linear weight gradient");
+    assert_close(&fused.3, &separate.3, "linear bias gradient");
+}

@@ -74,3 +74,13 @@ pub fn matmul(left: &Tensor, right: &Tensor) -> Result<Tensor, AutogradError> {
         .matmul(left, right)
         .map_err(|error| AutogradError::Backend(error.to_string()))
 }
+
+pub fn matmul_add_bias(
+    left: &Tensor,
+    right: &Tensor,
+    bias: &Tensor,
+) -> Result<Tensor, AutogradError> {
+    current()
+        .matmul_add_bias(left, right, bias)
+        .map_err(|error| AutogradError::Backend(error.to_string()))
+}

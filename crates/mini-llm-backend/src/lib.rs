@@ -31,6 +31,30 @@ pub trait Backend {
     /// `[m, k] x [k, n] -> [m, n]`.
     fn matmul(&self, left: &Tensor, right: &Tensor) -> Result<Tensor, BackendError>;
 
+    /// Dense affine kernel. Backends may override it; the default still
+    /// reuses the matmul output buffer instead of allocating for bias add.
+    fn matmul_add_bias(
+        &self,
+        left: &Tensor,
+        right: &Tensor,
+        bias: &Tensor,
+    ) -> Result<Tensor, BackendError> {
+        let mut output = self.matmul(left, right)?;
+        if bias.rank() != 1 || bias.shape()[0] != output.shape()[1] {
+            return Err(BackendError::Tensor(TensorError::ShapeMismatch {
+                left: output.shape().to_vec(),
+                right: bias.shape().to_vec(),
+            }));
+        }
+        let cols = output.shape()[1];
+        for row in output.data_mut().chunks_mut(cols) {
+            for (value, offset) in row.iter_mut().zip(bias.data()) {
+                *value += offset;
+            }
+        }
+        Ok(output)
+    }
+
     /// Row-wise stable softmax.
     ///
     /// Backends that do not override this use the CPU reference implementation.
@@ -56,6 +80,15 @@ pub struct CpuBackend;
 impl Backend for CpuBackend {
     fn matmul(&self, left: &Tensor, right: &Tensor) -> Result<Tensor, BackendError> {
         Ok(left.matmul(right)?)
+    }
+
+    fn matmul_add_bias(
+        &self,
+        left: &Tensor,
+        right: &Tensor,
+        bias: &Tensor,
+    ) -> Result<Tensor, BackendError> {
+        Ok(left.matmul_add_bias(right, bias)?)
     }
 }
 

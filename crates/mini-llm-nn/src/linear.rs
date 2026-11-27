@@ -81,10 +81,9 @@ impl Linear {
 impl Module for Linear {
     fn forward(&self, input: &TensorValue) -> Result<TensorValue, NnError> {
         expect_matrix(input, self.in_features)?;
-        let output = input.matmul(&self.weight)?;
         match &self.bias {
-            Some(bias) => Ok(output.add(bias)?),
-            None => Ok(output),
+            Some(bias) => Ok(input.linear(&self.weight, bias)?),
+            None => Ok(input.matmul(&self.weight)?),
         }
     }
 
