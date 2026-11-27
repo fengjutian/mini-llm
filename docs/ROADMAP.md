@@ -267,6 +267,8 @@ SFT 语料仅用于展示掩码机制。
 - [x] Dependency-free HTTP inference server (`serve --addr`, `GET /health`,
   `POST /generate`, SSE streaming via `"stream": true`, one connection at a time
   because the model is not `Send`)
+- [x] SafeTensors weight exchange (`export-safetensors` / `import-safetensors`):
+  Hugging Face-style tensor names, architecture metadata, legacy name fallback
 
 实现拆分：
 

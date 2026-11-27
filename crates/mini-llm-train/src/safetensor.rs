@@ -19,8 +19,10 @@ const MAX_FILE_BYTES: u64 = 1 << 30;
 
 /// Writes model weights to the standard SafeTensors container.
 ///
-/// Names are stable by parameter order (`model.parameter.00000`, ...). The
-/// order is part of mini-llm's checkpoint contract and is verified on import.
+/// Tensor names follow the Hugging Face convention
+/// (`model.embed_tokens.weight`, `model.layers.0.self_attn.q_proj.weight`, ...)
+/// so the file is readable by external tooling; the order still matches
+/// [`TinyGpt::parameters`] and the count is recorded in the metadata.
 pub fn save_safetensors(path: impl AsRef<Path>, model: &TinyGpt) -> Result<(), TrainError> {
     let values: Vec<Tensor> = model
         .parameters()
@@ -38,14 +40,35 @@ pub fn save_safetensors(path: impl AsRef<Path>, model: &TinyGpt) -> Result<(), T
         })
         .collect();
     let mut views = Vec::with_capacity(values.len());
-    for (index, (tensor, bytes)) in values.iter().zip(&buffers).enumerate() {
+    for ((name, tensor), bytes) in model
+        .parameter_names()
+        .into_iter()
+        .zip(&values)
+        .zip(&buffers)
+    {
         let view = TensorView::new(Dtype::F32, tensor.shape().to_vec(), bytes)
             .map_err(|error| TrainError::SafeTensors(error.to_string()))?;
-        views.push((format!("model.parameter.{index:05}"), view));
+        views.push((name, view));
     }
     let metadata = HashMap::from([
         ("format".to_string(), FORMAT.to_string()),
         ("parameter_count".to_string(), values.len().to_string()),
+        (
+            "vocab_size".to_string(),
+            model.config().vocab_size.to_string(),
+        ),
+        (
+            "num_layers".to_string(),
+            model.config().num_layers.to_string(),
+        ),
+        (
+            "hidden_size".to_string(),
+            model.config().hidden_size.to_string(),
+        ),
+        (
+            "max_seq_len".to_string(),
+            model.config().max_seq_len.to_string(),
+        ),
     ]);
     serialize_to_file(views, Some(metadata), path.as_ref())
         .map_err(|error| TrainError::SafeTensors(error.to_string()))
@@ -68,10 +91,16 @@ pub fn load_safetensors(path: impl AsRef<Path>, model: &TinyGpt) -> Result<(), T
     let tensors = SafeTensors::deserialize(&bytes)
         .map_err(|error| TrainError::SafeTensors(error.to_string()))?;
     let parameters = model.parameters();
-    for (index, parameter) in parameters.iter().enumerate() {
-        let name = format!("model.parameter.{index:05}");
+    for (index, (name, parameter)) in model
+        .parameter_names()
+        .into_iter()
+        .zip(&parameters)
+        .enumerate()
+    {
+        let legacy = format!("model.parameter.{index:05}");
         let view = tensors
             .tensor(&name)
+            .or_else(|_| tensors.tensor(&legacy))
             .map_err(|error| TrainError::SafeTensors(error.to_string()))?;
         if view.dtype() != Dtype::F32 {
             return Err(TrainError::SafeTensors(format!(
@@ -108,4 +137,32 @@ pub fn load_safetensors(path: impl AsRef<Path>, model: &TinyGpt) -> Result<(), T
         )));
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use mini_llm_model::ModelConfig;
+    use mini_llm_nn::Rng;
+
+    #[test]
+    fn export_records_architecture_metadata() {
+        let model = TinyGpt::new(ModelConfig::modern(32), &mut Rng::new(2)).expect("model");
+        let path = std::env::temp_dir().join("mini_llm_safetensors_meta.safetensors");
+        save_safetensors(&path, &model).expect("save");
+        let bytes = fs::read(&path).expect("read");
+        let header_len = u64::from_le_bytes(bytes[..8].try_into().expect("header length")) as usize;
+        let header = std::str::from_utf8(&bytes[8..8 + header_len]).expect("utf-8 header");
+        assert!(header.contains("mini-llm-tiny-gpt-v1"), "{header}");
+        assert!(header.contains("\"vocab_size\":\"32\""), "{header}");
+        assert!(header.contains("\"num_layers\":\"2\""), "{header}");
+        assert!(
+            header.contains(&format!(
+                "\"parameter_count\":\"{}\"",
+                model.parameters().len()
+            )),
+            "{header}"
+        );
+        let _ = fs::remove_file(path);
+    }
 }

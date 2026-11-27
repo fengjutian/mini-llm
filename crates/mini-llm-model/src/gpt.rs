@@ -15,7 +15,7 @@ use crate::attention::causal_batch_mask;
 use crate::block::{BlockCache, TransformerBlock};
 use crate::language_model::LanguageModel;
 use crate::norm::NormLayer;
-use crate::{ModelConfig, ModelError, PositionKind};
+use crate::{FeedForwardKind, ModelConfig, ModelError, NormKind, PositionKind};
 
 /// One captured attention matrix, for inspection and visualization.
 #[derive(Debug, Clone)]
@@ -138,6 +138,66 @@ impl TinyGpt {
         parameters.extend(self.final_norm.parameters());
         parameters.extend(self.lm_head.parameters());
         parameters
+    }
+
+    /// Stable Hugging Face-style names aligned with [`TinyGpt::parameters`].
+    pub fn parameter_names(&self) -> Vec<String> {
+        fn norm(names: &mut Vec<String>, prefix: &str, kind: NormKind) {
+            names.push(format!("{prefix}.weight"));
+            if kind == NormKind::LayerNorm {
+                names.push(format!("{prefix}.bias"));
+            }
+        }
+        fn linear(names: &mut Vec<String>, prefix: &str, bias: bool) {
+            names.push(format!("{prefix}.weight"));
+            if bias {
+                names.push(format!("{prefix}.bias"));
+            }
+        }
+
+        let mut names = vec!["model.embed_tokens.weight".to_string()];
+        if self.config.position == PositionKind::Learned {
+            names.push("model.embed_positions.weight".to_string());
+        }
+        for layer in 0..self.config.num_layers {
+            let root = format!("model.layers.{layer}");
+            norm(
+                &mut names,
+                &format!("{root}.input_layernorm"),
+                self.config.norm,
+            );
+            for projection in ["q_proj", "k_proj", "v_proj", "o_proj"] {
+                linear(&mut names, &format!("{root}.self_attn.{projection}"), true);
+            }
+            norm(
+                &mut names,
+                &format!("{root}.post_attention_layernorm"),
+                self.config.norm,
+            );
+            if self.config.num_experts > 1 {
+                linear(&mut names, &format!("{root}.block_sparse_moe.gate"), false);
+                for expert in 0..self.config.num_experts {
+                    for hf_name in ["w1", "w3", "w2"] {
+                        linear(
+                            &mut names,
+                            &format!("{root}.block_sparse_moe.experts.{expert}.{hf_name}"),
+                            true,
+                        );
+                    }
+                }
+            } else if self.config.feed_forward == FeedForwardKind::SwiGlu {
+                for projection in ["gate_proj", "up_proj", "down_proj"] {
+                    linear(&mut names, &format!("{root}.mlp.{projection}"), true);
+                }
+            } else {
+                linear(&mut names, &format!("{root}.mlp.up_proj"), true);
+                linear(&mut names, &format!("{root}.mlp.down_proj"), true);
+            }
+        }
+        norm(&mut names, "model.norm", self.config.norm);
+        linear(&mut names, "lm_head", false);
+        debug_assert_eq!(names.len(), self.parameters().len());
+        names
     }
 
     pub fn num_parameters(&self) -> usize {

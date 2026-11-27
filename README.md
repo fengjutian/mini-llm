@@ -68,6 +68,8 @@ cargo run -p mini-llm-cli -- dpo         # preference optimization on a toy poli
 cargo run -p mini-llm-cli -- grpo        # group relative policy optimization bandit
 cargo run -p mini-llm-cli -- trace       # training events + attention capture (JSONL)
 cargo run -p mini-llm-cli -- serve      # HTTP inference on 127.0.0.1:8080
+cargo run -p mini-llm-cli -- export-safetensors --output checkpoints/tiny-gpt.safetensors
+cargo run -p mini-llm-cli -- import-safetensors --input checkpoints/tiny-gpt.safetensors
 cargo run --release -p mini-llm-cli -- bench  # kernel + training micro-benchmarks
 ```
 
@@ -99,6 +101,16 @@ curl -s -N -X POST http://127.0.0.1:8080/generate \
 # data: {"token":"a"}
 # data: [DONE]
 ```
+
+### SafeTensors exchange
+
+`export-safetensors` writes weights-only SafeTensors with Hugging Face-style
+names (`model.embed_tokens.weight`, `model.layers.0.self_attn.q_proj.weight`, ...)
+and records `format`, `parameter_count`, `vocab_size`, `num_layers`,
+`hidden_size` and `max_seq_len` in the file metadata. `import-safetensors` loads
+those weights into the architecture and tokenizer of an existing native
+checkpoint (`--checkpoint` acts as the template). Legacy
+`model.parameter.NNNNN` names still load, so older exports import unchanged.
 
 The training loop includes what a real run needs:
 

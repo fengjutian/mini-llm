@@ -9,6 +9,7 @@ pub mod eval;
 pub mod export;
 pub mod generate;
 pub mod grpo;
+pub mod import;
 pub mod lora;
 pub mod moe;
 pub mod regression;
