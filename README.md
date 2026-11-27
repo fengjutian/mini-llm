@@ -102,6 +102,23 @@ curl -s -N -X POST http://127.0.0.1:8080/generate \
 # data: [DONE]
 ```
 
+### Async server (`mini-llm-server`)
+
+The `mini-llm-server` crate is the tokio/axum variant: a bounded job queue, SSE
+events (`event: token` / `event: done`) and counters.
+
+```bash
+cargo run -p mini-llm-server -- --addr 127.0.0.1:8080 \
+  --checkpoint checkpoints/tiny-gpt.bin --queue 32
+curl -s http://127.0.0.1:8080/metrics
+# {"uptime_seconds":13,"ready":true,"queue_capacity":32,"generate_requests":1,
+#  "tokens_generated":6,"errors":0,"rejected":0}
+```
+
+`GET /health` reports `ready`/`loading`, `GET /metrics` the counters above, and
+`POST /generate` streams `event: token` frames until `event: done`. The CLI
+`serve` command stays as the dependency-free single-connection version.
+
 ### SafeTensors exchange
 
 `export-safetensors` writes weights-only SafeTensors with Hugging Face-style

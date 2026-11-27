@@ -8,6 +8,7 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 
+use mini_llm_data::Tokenizer;
 use mini_llm_model::TinyGpt;
 use mini_llm_tensor::Tensor;
 use safetensors::tensor::{serialize_to_file, Dtype, SafeTensors, TensorView};
@@ -74,6 +75,93 @@ pub fn save_safetensors(path: impl AsRef<Path>, model: &TinyGpt) -> Result<(), T
         .map_err(|error| TrainError::SafeTensors(error.to_string()))
 }
 
+
+/// Writes the architecture sidecar (`config.json`-style) for the exported weights.
+///
+/// This is intentionally a small, documented subset of the Hugging Face config
+/// schema: enough for a human or tool to rebuild [`mini_llm_model::ModelConfig`].
+pub fn save_config_json(path: impl AsRef<Path>, model: &TinyGpt) -> Result<(), TrainError> {
+    let config = model.config();
+    let json = format!(
+        concat!(
+            "{{\n",
+            "  \"architectures\": [\"MiniLlmForCausalLM\"],\n",
+            "  \"model_type\": \"mini-llm-tiny-gpt\",\n",
+            "  \"vocab_size\": {},\n",
+            "  \"hidden_size\": {},\n",
+            "  \"num_layers\": {},\n",
+            "  \"num_heads\": {},\n",
+            "  \"num_kv_heads\": {},\n",
+            "  \"max_seq_len\": {},\n",
+            "  \"norm\": \"{:?}\",\n",
+            "  \"position\": \"{:?}\",\n",
+            "  \"feed_forward\": \"{:?}\",\n",
+            "  \"num_experts\": {},\n",
+            "  \"dropout\": {}\n",
+            "}}\n"
+        ),
+        config.vocab_size,
+        config.hidden_size,
+        config.num_layers,
+        config.num_heads,
+        config.num_kv_heads,
+        config.max_seq_len,
+        config.norm,
+        config.position,
+        config.feed_forward,
+        config.num_experts,
+        config.dropout,
+    );
+    fs::write(path, json)?;
+    Ok(())
+}
+
+/// Writes the tokenizer sidecar: characters for a char vocabulary, merges for BPE.
+pub fn save_tokenizer_json(
+    path: impl AsRef<Path>,
+    tokenizer: &Tokenizer,
+) -> Result<(), TrainError> {
+    let json = match tokenizer {
+        Tokenizer::Char(char_tokenizer) => {
+            let characters: String = char_tokenizer.characters().iter().collect();
+            format!(
+                "{{\"kind\":\"char\",\"vocab_size\":{},\"characters\":\"{}\"}}\n",
+                tokenizer.vocab_size(),
+                escape_json(&characters)
+            )
+        }
+        Tokenizer::Bpe(bpe) => {
+            let merges: Vec<String> = bpe
+                .merges()
+                .iter()
+                .map(|(left, right)| format!("[{left},{right}]"))
+                .collect();
+            format!(
+                "{{\"kind\":\"bpe\",\"vocab_size\":{},\"merges\":[{}]}}\n",
+                bpe.vocab_size(),
+                merges.join(",")
+            )
+        }
+    };
+    fs::write(path, json)?;
+    Ok(())
+}
+
+fn escape_json(text: &str) -> String {
+    let mut escaped = String::with_capacity(text.len());
+    for character in text.chars() {
+        match character {
+            '"' => escaped.push_str("\\\""),
+            '\\' => escaped.push_str("\\\\"),
+            '\n' => escaped.push_str("\\n"),
+            '\r' => escaped.push_str("\\r"),
+            '\t' => escaped.push_str("\\t"),
+            control if control < ' ' => escaped.push(' '),
+            other => escaped.push(other),
+        }
+    }
+    escaped
+}
 /// Loads SafeTensors weights into an already configured model.
 ///
 /// Supplying the model separately makes architecture mismatches explicit and

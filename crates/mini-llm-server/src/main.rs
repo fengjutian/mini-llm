@@ -1,8 +1,9 @@
 use std::convert::Infallible;
 use std::net::SocketAddr;
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
+use std::time::Instant;
 
 use axum::extract::State;
 use axum::http::StatusCode;
@@ -23,6 +24,52 @@ const MAX_TOKENS: usize = 512;
 struct AppState {
     jobs: mpsc::Sender<Job>,
     ready: Arc<AtomicBool>,
+    metrics: Arc<Metrics>,
+    queue_capacity: usize,
+}
+
+#[derive(Default)]
+struct Metrics {
+    started: Option<Instant>,
+    generate_requests: AtomicU64,
+    tokens_generated: AtomicU64,
+    errors: AtomicU64,
+    rejected: AtomicU64,
+}
+
+impl Metrics {
+    fn new() -> Self {
+        Self {
+            started: Some(Instant::now()),
+            ..Self::default()
+        }
+    }
+
+    fn snapshot(&self, ready: bool, queue_capacity: usize) -> MetricsSnapshot {
+        MetricsSnapshot {
+            uptime_seconds: self
+                .started
+                .map(|started| started.elapsed().as_secs())
+                .unwrap_or(0),
+            ready,
+            queue_capacity,
+            generate_requests: self.generate_requests.load(Ordering::Relaxed),
+            tokens_generated: self.tokens_generated.load(Ordering::Relaxed),
+            errors: self.errors.load(Ordering::Relaxed),
+            rejected: self.rejected.load(Ordering::Relaxed),
+        }
+    }
+}
+
+#[derive(Serialize)]
+struct MetricsSnapshot {
+    uptime_seconds: u64,
+    ready: bool,
+    queue_capacity: usize,
+    generate_requests: u64,
+    tokens_generated: u64,
+    errors: u64,
+    rejected: u64,
 }
 
 struct Job {
@@ -62,12 +109,19 @@ fn default_seed() -> u64 {
 async fn main() {
     let (address, checkpoint, queue) = arguments();
     let ready = Arc::new(AtomicBool::new(false));
+    let metrics = Arc::new(Metrics::new());
     let (jobs, receiver) = mpsc::channel(queue);
-    start_model_worker(checkpoint, receiver, ready.clone());
+    start_model_worker(checkpoint, receiver, ready.clone(), metrics.clone());
 
-    let state = AppState { jobs, ready };
+    let state = AppState {
+        jobs,
+        ready,
+        metrics,
+        queue_capacity: queue,
+    };
     let app = Router::new()
         .route("/health", get(health))
+        .route("/metrics", get(metrics_view))
         .route("/generate", post(generate))
         .with_state(state);
     let listener = tokio::net::TcpListener::bind(address)
@@ -91,11 +145,20 @@ async fn health(State(state): State<AppState>) -> (StatusCode, Json<Health<'stat
     }
 }
 
+async fn metrics_view(State(state): State<AppState>) -> Json<MetricsSnapshot> {
+    Json(
+        state
+            .metrics
+            .snapshot(state.ready.load(Ordering::Acquire), state.queue_capacity),
+    )
+}
+
 async fn generate(
     State(state): State<AppState>,
     Json(mut request): Json<GenerateRequest>,
 ) -> Result<impl IntoResponse, StatusCode> {
     if !state.ready.load(Ordering::Acquire) {
+        state.metrics.rejected.fetch_add(1, Ordering::Relaxed);
         return Err(StatusCode::SERVICE_UNAVAILABLE);
     }
     request.tokens = request.tokens.clamp(1, MAX_TOKENS);
@@ -104,13 +167,22 @@ async fn generate(
     request.top_k = request.top_k.map(|value| value.max(1));
     let (events, stream) = mpsc::channel(16);
     state
-        .jobs
-        .try_send(Job { request, events })
-        .map_err(|_| StatusCode::TOO_MANY_REQUESTS)?;
+        .metrics
+        .generate_requests
+        .fetch_add(1, Ordering::Relaxed);
+    state.jobs.try_send(Job { request, events }).map_err(|_| {
+        state.metrics.rejected.fetch_add(1, Ordering::Relaxed);
+        StatusCode::TOO_MANY_REQUESTS
+    })?;
     Ok(Sse::new(ReceiverStream::new(stream)).keep_alive(KeepAlive::default()))
 }
 
-fn start_model_worker(checkpoint: PathBuf, mut jobs: mpsc::Receiver<Job>, ready: Arc<AtomicBool>) {
+fn start_model_worker(
+    checkpoint: PathBuf,
+    mut jobs: mpsc::Receiver<Job>,
+    ready: Arc<AtomicBool>,
+    metrics: Arc<Metrics>,
+) {
     std::thread::Builder::new()
         .name("mini-llm-model".into())
         .spawn(move || {
@@ -127,6 +199,7 @@ fn start_model_worker(checkpoint: PathBuf, mut jobs: mpsc::Receiver<Job>, ready:
                     Ok(tokens) if !tokens.is_empty() => tokens,
                     Ok(_) => vec![0],
                     Err(error) => {
+                        metrics.errors.fetch_add(1, Ordering::Relaxed);
                         let _ = job.events.blocking_send(Ok(Event::default()
                             .event("error")
                             .data(error.to_string())));
@@ -141,6 +214,9 @@ fn start_model_worker(checkpoint: PathBuf, mut jobs: mpsc::Receiver<Job>, ready:
                 let mut rng = Rng::new(job.request.seed);
                 match model.generate_with(&encoded, job.request.tokens, sampling, &mut rng) {
                     Ok(tokens) => {
+                        metrics
+                            .tokens_generated
+                            .fetch_add((tokens.len() - encoded.len()) as u64, Ordering::Relaxed);
                         for token in &tokens[encoded.len()..] {
                             let text = tokenizer.decode(&[*token]).unwrap_or_default();
                             if job
@@ -156,6 +232,7 @@ fn start_model_worker(checkpoint: PathBuf, mut jobs: mpsc::Receiver<Job>, ready:
                             .blocking_send(Ok(Event::default().event("done").data("{}")));
                     }
                     Err(error) => {
+                        metrics.errors.fetch_add(1, Ordering::Relaxed);
                         let _ = job.events.blocking_send(Ok(Event::default()
                             .event("error")
                             .data(error.to_string())));
@@ -199,4 +276,25 @@ fn arguments() -> (SocketAddr, PathBuf, usize) {
         index += 2;
     }
     (address, checkpoint, queue)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn snapshot_reports_counters_and_uptime() {
+        let metrics = Metrics::new();
+        metrics.generate_requests.fetch_add(3, Ordering::Relaxed);
+        metrics.tokens_generated.fetch_add(42, Ordering::Relaxed);
+        metrics.errors.fetch_add(1, Ordering::Relaxed);
+        metrics.rejected.fetch_add(2, Ordering::Relaxed);
+        let snapshot = metrics.snapshot(true, 8);
+        assert_eq!(snapshot.generate_requests, 3);
+        assert_eq!(snapshot.tokens_generated, 42);
+        assert_eq!(snapshot.errors, 1);
+        assert_eq!(snapshot.rejected, 2);
+        assert!(snapshot.ready);
+        assert_eq!(snapshot.queue_capacity, 8);
+    }
 }
