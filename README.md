@@ -88,6 +88,18 @@ It handles one connection at a time (the model owns `Rc`-based tensors and is no
 `Send`), parses the small JSON body by hand, and returns `{"text": "..."}`. Use it
 for local demos, not as a production server.
 
+Set `"stream": true` to receive server-sent events instead of one JSON blob; the
+server generates token by token through the KV cache:
+
+```bash
+printf '%s' '{"prompt":"The ","tokens":12,"stream":true}' > /tmp/req.json
+curl -s -N -X POST http://127.0.0.1:8080/generate \
+  -H 'Content-Type: application/json' --data-binary @/tmp/req.json
+# data: {"token":"s"}
+# data: {"token":"a"}
+# data: [DONE]
+```
+
 The training loop includes what a real run needs:
 
 - **Warmup + cosine schedule** (`LrSchedule::WarmupCosine`), printed per step

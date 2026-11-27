@@ -105,7 +105,15 @@ fn handle(mut stream: TcpStream, model: &TinyGpt, tokenizer: &Tokenizer, rng: &m
                 }
             };
             if request.stream {
-                stream_generate(&mut stream, model, tokenizer, rng, &encoded, &request, sampling);
+                stream_generate(
+                    &mut stream,
+                    model,
+                    tokenizer,
+                    rng,
+                    &encoded,
+                    &request,
+                    sampling,
+                );
                 return;
             }
             match model.generate_with(&encoded, request.tokens, sampling, rng) {
@@ -123,7 +131,6 @@ fn handle(mut stream: TcpStream, model: &TinyGpt, tokenizer: &Tokenizer, rng: &m
         _ => respond(&mut stream, 404, &error_json("not found")),
     }
 }
-
 
 fn stream_generate(
     stream: &mut TcpStream,
