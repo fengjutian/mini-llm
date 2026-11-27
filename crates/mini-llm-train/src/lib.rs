@@ -553,7 +553,7 @@ impl Display for TrainError {
                 "checkpoint {field} is {value}, exceeding the limit {limit}"
             ),
             Self::SafeTensors(message) => write!(f, "SafeTensors error: {message}"),
-        Self::Package(message) => write!(f, "package error: {message}"),
+            Self::Package(message) => write!(f, "package error: {message}"),
             Self::ShapeMismatch { expected, actual } => write!(
                 f,
                 "checkpoint parameter shape {:?} does not match model shape {:?}",

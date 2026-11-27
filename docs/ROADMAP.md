@@ -274,7 +274,8 @@ SFT 语料仅用于展示掩码机制。
   because the model is not `Send`)
 - [x] SafeTensors weight exchange (`export-safetensors` / `import-safetensors`):
   Hugging Face-style tensor names, architecture metadata, legacy name fallback,
-  config/tokenizer sidecars plus a self-contained bundle save/load API
+  config/tokenizer sidecars, and a self-contained `--bundle DIR` directory that
+  imports without a template checkpoint
 - [x] Async `mini-llm-server` (axum/tokio): bounded queue, SSE tokens, `/metrics`
 
 实现拆分：

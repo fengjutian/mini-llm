@@ -27,7 +27,9 @@ pub fn run(arguments: &[String]) {
     } else {
         let input = super::value(arguments, "--input").map(PathBuf::from);
         let Some(input) = input else {
-            eprintln!("usage: import-safetensors --input PATH [--checkpoint TEMPLATE] [--output PATH]");
+            eprintln!(
+                "usage: import-safetensors --input PATH [--checkpoint TEMPLATE] [--output PATH]"
+            );
             eprintln!("       import-safetensors --bundle DIR [--output PATH]");
             std::process::exit(2);
         };
