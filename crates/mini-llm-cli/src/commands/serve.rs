@@ -95,6 +95,7 @@ fn handle(mut stream: TcpStream, model: &TinyGpt, tokenizer: &Tokenizer, rng: &m
                 temperature: request.temperature,
                 top_k: request.top_k,
                 top_p: request.top_p,
+                repetition_penalty: 1.0,
             };
             let encoded = match tokenizer.encode(&request.prompt) {
                 Ok(tokens) if !tokens.is_empty() => tokens,

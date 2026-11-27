@@ -86,6 +86,8 @@ struct GenerateRequest {
     temperature: f32,
     top_k: Option<usize>,
     top_p: Option<f32>,
+    #[serde(default = "default_repetition_penalty")]
+    repetition_penalty: f32,
     #[serde(default = "default_seed")]
     seed: u64,
 }
@@ -101,6 +103,10 @@ fn default_tokens() -> usize {
 fn default_temperature() -> f32 {
     0.8
 }
+fn default_repetition_penalty() -> f32 {
+    1.0
+}
+
 fn default_seed() -> u64 {
     2024
 }
@@ -210,6 +216,7 @@ fn start_model_worker(
                     temperature: job.request.temperature,
                     top_k: job.request.top_k,
                     top_p: job.request.top_p,
+                    repetition_penalty: job.request.repetition_penalty,
                 };
                 let mut rng = Rng::new(job.request.seed);
                 match model.generate_with(&encoded, job.request.tokens, sampling, &mut rng) {
