@@ -1,13 +1,11 @@
-//! Converts a native checkpoint into a weights-only SafeTensors package:
-//! weights plus `config.json` and `tokenizer.json` sidecars.
+//! Exports a native checkpoint as SafeTensors: a flat weights file (plus
+//! `config.json` / `tokenizer.json` sidecars), or a self-contained HF-style
+//! directory with `--bundle DIR`.
 
 use std::path::PathBuf;
 
 pub fn run(arguments: &[String]) {
     let input = super::checkpoint_path(arguments);
-    let output = super::value(arguments, "--output")
-        .map(PathBuf::from)
-        .unwrap_or_else(|| PathBuf::from("checkpoints/tiny-gpt.safetensors"));
     let (model, tokenizer) = match mini_llm_train::load_checkpoint(&input) {
         Ok(loaded) => loaded,
         Err(error) => {
@@ -15,14 +13,20 @@ pub fn run(arguments: &[String]) {
             std::process::exit(1);
         }
     };
-    if let Some(directory) = super::value(arguments, "--bundle").map(PathBuf::from) {
-        if let Err(error) = mini_llm_train::save_hf_bundle(&directory, &model, &tokenizer) {
-            eprintln!("cannot write bundle {}: {error}", directory.display());
+    if let Some(bundle) = super::value(arguments, "--bundle").map(PathBuf::from) {
+        if let Err(error) = mini_llm_train::save_hf_bundle(&bundle, &model, &tokenizer) {
+            eprintln!("cannot write bundle {}: {error}", bundle.display());
             std::process::exit(1);
         }
-        println!("exported {input} -> {}", directory.display());
+        println!(
+            "exported {input} -> {} (config.json, tokenizer.json, model.safetensors)",
+            bundle.display()
+        );
         return;
     }
+    let output = super::value(arguments, "--output")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from("checkpoints/tiny-gpt.safetensors"));
     if let Some(parent) = output.parent() {
         if let Err(error) = std::fs::create_dir_all(parent) {
             eprintln!("cannot create {}: {error}", parent.display());

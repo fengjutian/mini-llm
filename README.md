@@ -140,7 +140,9 @@ self-contained directory with conventional names:
 native checkpoint template.
 
 `import-safetensors` loads the weights into the architecture and tokenizer of an
-existing native checkpoint (`--checkpoint` acts as the template). Legacy
+existing native checkpoint (`--checkpoint` acts as the template). With
+`--bundle DIR` it instead reconstructs both from the directory written by
+`export-safetensors --bundle DIR`, so no template is needed. Legacy
 `model.parameter.NNNNN` names still load, so older exports import unchanged.
 
 The training loop includes what a real run needs:
