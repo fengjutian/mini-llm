@@ -64,6 +64,7 @@ cargo run -p mini-llm-cli --features candle -- device-train \
 | `--corpus-chars N` | 读入字符上限（默认 600,000） |
 | `--bpe` | 字节级 BPE（基础词表 256） |
 | `--bpe-vocab N` | BPE 目标词表（默认 512，实际 ≥ 257） |
+| `--checkpoint-format f32\|f16\|q8` | checkpoint 存储精度（默认 f32） |
 
 
 ## 公开语料
@@ -144,24 +145,43 @@ ids → embedding(gather_rows)
 - `--hidden 48` 反而更差（2.39 vs 2.26），加宽不如加 batch/步数；
 - 3 层在该预算下劣于 2 层；warmup+cosine 显著优于常数学习率。
 
-## Checkpoint（DEVT v2）
+## Checkpoint（DEVT v3）
 
 ```text
-magic "DEVT" | version 2 | metadata 长度 + UTF-8 元数据
+magic "DEVT" | version 3 | metadata 长度 + UTF-8 元数据
+              | 每个张量: 存储格式(u8) + rank/dims + 数据
               | 参数(N) | Adam 一阶矩(N) | 二阶矩(N) | step(1)
 ```
+
+存储格式（`--checkpoint-format`）：
+
+| 格式 | 每值字节 | 说明 |
+| --- | --- | --- |
+| `f32` | 4 | 默认，与训练一致 |
+| `f16` | 2 | IEEE 754 半精度 |
+| `q8` | 1 + 4（每张量一个 f32 scale） | 对称 int8，`x ≈ q·scale` |
+
+加载时统一反量化为 f32，**训练/推理仍用 f32 计算**，所以只是存储压缩，
+不是 f16 计算 kernel。实测（60k Shakespeare，1 层，80 步）：
+
+| 格式 | 文件大小 | reload 后 held-out |
+| --- | --- | --- |
+| f32 | 163,080 B | 2.9578 |
+| f16 | 82,084 B（50%） | 2.9578 |
+| q8 | 41,866 B（26%） | 2.9580 |
 
 元数据示例：
 
 ```text
 layers=2 hidden=32 seq=64 batch=16 steps=6000 lr=0.02 wd=0.01
 dropout=0 min_ratio=0.1 warmup=0 corpus_chars=455406
-corpus_hash=09a13f86ca35b65c seed=7
+corpus_hash=09a13f86ca35b65c seed=7 bpe=0 bpe_vocab=512
 ```
 
 加载行为：
 
-- `--load` / `--resume` 会恢复 `layers/hidden/seq/batch/seed`，命令行不一致时以 checkpoint 为准；
+- `--load` / `--resume` 会恢复 `layers/hidden/seq/batch/seed/bpe/bpe_vocab`，
+  命令行不一致时以 checkpoint 为准；
 - 语料哈希与当前语料不一致时打印警告（此时 held-out loss 不可跨语料比较）；
 - `--resume` 从保存的 step 继续，学习率调度按绝对步数恢复。
 

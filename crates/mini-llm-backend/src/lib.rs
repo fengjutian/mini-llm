@@ -34,7 +34,8 @@ mod tape;
 
 pub use device::{Device, DeviceLinear, DeviceMlp, DeviceTensor, LayerGradients, MlpGradients};
 pub use device_io::{
-    load_device_checkpoint, load_device_tensors, save_device_checkpoint, save_device_tensors,
+    load_device_checkpoint, load_device_tensors, save_device_checkpoint,
+    save_device_checkpoint_with_format, save_device_tensors, TensorFormat,
 };
 pub use optim::DeviceAdamW;
 pub use tape::DeviceValue;

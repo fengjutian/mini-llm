@@ -299,9 +299,7 @@ impl Reader<'_> {
     fn take(&mut self, length: usize) -> Result<&[u8], BackendError> {
         let end = self.position + length;
         if end > self.bytes.len() {
-            return Err(BackendError::Backend(
-                "truncated device tensor file".into(),
-            ));
+            return Err(BackendError::Backend("truncated device tensor file".into()));
         }
         let slice = &self.bytes[self.position..end];
         self.position = end;

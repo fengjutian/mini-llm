@@ -240,6 +240,9 @@ SFT 语料仅用于展示掩码机制。
 - 设备路径支持 `--corpus PATH...`、`--corpus-chars N` 与字节级 BPE
   （`--bpe` / `--bpe-vocab`，基础词表 256）；`scripts/fetch-corpora.*`
   下载 TinyShakespeare / TinyStories 等公开语料（Gutenberg/WikiText 失败仅告警）；
+- checkpoint 量化存储（DEVT v3）：`--checkpoint-format f32|f16|q8`，加载时反量化为
+  f32；实测 80 步 checkpoint f32 163 KB → f16 82 KB（50%）/ q8 42 KB（26%），
+  q8 的 held-out 仅 +0.0002；
 
 
 ## Milestone 7 — Training Loop Hardening（已完成）

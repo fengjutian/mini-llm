@@ -20,8 +20,8 @@
 //! `cargo run -p mini-llm-backend --example device_attention_block -- --sweep`
 
 use crate::{
-    load_device_checkpoint, load_device_tensors, save_device_checkpoint, Device, DeviceAdamW,
-    DeviceTensor, DeviceValue,
+    load_device_checkpoint, load_device_tensors, save_device_checkpoint_with_format, Device,
+    DeviceAdamW, DeviceTensor, DeviceValue, TensorFormat,
 };
 use mini_llm_data::{BpeTokenizer, CharTokenizer, Tokenizer};
 use mini_llm_tensor::Tensor;
@@ -83,6 +83,7 @@ struct Config {
     corpus_chars: usize,
     bpe: bool,
     bpe_vocab: usize,
+    checkpoint_format: TensorFormat,
 }
 
 impl Config {
@@ -138,11 +139,17 @@ pub fn run(arguments: Vec<String>) {
         corpus_chars: parse_count(&arguments, "--corpus-chars").unwrap_or(600_000),
         bpe: arguments.iter().any(|argument| argument == "--bpe"),
         bpe_vocab: parse_count(&arguments, "--bpe-vocab").unwrap_or(512),
+        checkpoint_format: parse_path(&arguments, "--checkpoint-format")
+            .and_then(|name| TensorFormat::parse(&name))
+            .unwrap_or(TensorFormat::F32),
     };
     // A checkpoint carries its hyperparameters: restore them before building
     // the dataset or the parameter shapes.
     if let Some(path) = config.load.clone().or_else(|| config.resume.clone()) {
-        if let Ok((_, Some(metadata))) = load_device_checkpoint(&path, &Device::Cpu) {
+        if let Ok((_, Some(metadata), format)) = load_device_checkpoint(&path, &Device::Cpu) {
+            if format != TensorFormat::F32 {
+                println!("checkpoint storage format: {}", format.label());
+            }
             apply_metadata(&mut config, &metadata);
             verify_corpus_fingerprint(&metadata, &config.corpus, config.corpus_chars);
         }
@@ -211,6 +218,7 @@ fn sweep_regularization() {
                 corpus_chars: 600_000,
                 bpe: false,
                 bpe_vocab: 512,
+                checkpoint_format: TensorFormat::F32,
             };
             let (train_loss, held_out_loss, best_held_out) = train_with_best(&config, false);
             println!(
@@ -257,6 +265,7 @@ fn sweep_learning_rates(arguments: &[String]) {
             corpus_chars: 600_000,
             bpe: false,
             bpe_vocab: 512,
+            checkpoint_format: TensorFormat::F32,
         };
         let (train_loss, held_out_loss, best_held_out) = train_with_best(&config, false);
         println!(
@@ -297,6 +306,7 @@ fn sweep_layers(arguments: &[String]) {
             corpus_chars: 600_000,
             bpe: false,
             bpe_vocab: 512,
+            checkpoint_format: TensorFormat::F32,
         };
         let (train_loss, held_out_loss, best_held_out, parameters) =
             train_with_parameters(&config, false);
@@ -732,7 +742,7 @@ fn train_with_parameters(config: &Config, verbose: bool) -> (f32, f32, f32, Vec<
                 .to(&device)
                 .expect("upload step"),
         );
-        save_device_checkpoint(
+        save_device_checkpoint_with_format(
             &path,
             &tensors,
             &checkpoint_metadata(
@@ -740,9 +750,14 @@ fn train_with_parameters(config: &Config, verbose: bool) -> (f32, f32, f32, Vec<
                 train_stream.len() + held_stream.len(),
                 corpus_fingerprint(&corpus(&config.corpus, config.corpus_chars)),
             ),
+            config.checkpoint_format,
         )
         .expect("save best checkpoint");
-        let reloaded = load_device_tensors(&path, &device).expect("load best checkpoint");
+        let (reloaded, _, reloaded_format) =
+            load_device_checkpoint(&path, &device).expect("load best checkpoint");
+        if verbose && reloaded_format != TensorFormat::F32 {
+            println!("checkpoint storage format: {}", reloaded_format.label());
+        }
         let reloaded_parameters = reloaded[..best_parameters.len()].to_vec();
         let reloaded_loss = evaluate(
             &reloaded_parameters,
@@ -976,6 +991,7 @@ fn evaluate(
         corpus_chars: config.corpus_chars,
         bpe: config.bpe,
         bpe_vocab: config.bpe_vocab,
+        checkpoint_format: config.checkpoint_format,
     };
     let mut total = 0.0f32;
     for index in 0..batches {
@@ -1108,7 +1124,7 @@ fn evaluate_saved(config: &Config, path: &str) {
     let hidden = (config.hidden / heads).max(1) * heads;
     let _head_dim = hidden / heads;
     let device = config.device.clone();
-    let all = load_device_tensors(path, &device).expect("load checkpoint");
+    let (all, _, _stored_format) = load_device_checkpoint(path, &device).expect("load checkpoint");
     let expected = 1 + config.layers * LAYER_PARAMETERS + 4;
     assert!(
         all.len() >= expected,

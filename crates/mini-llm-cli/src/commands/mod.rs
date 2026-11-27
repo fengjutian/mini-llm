@@ -11,6 +11,7 @@ pub mod grpo;
 pub mod lora;
 pub mod moe;
 pub mod regression;
+pub mod serve;
 pub mod sft;
 pub mod trace;
 pub mod train;
@@ -105,6 +106,17 @@ pub(crate) fn corpus_text(arguments: &[String]) -> (String, String) {
 }
 
 /// Reads `--checkpoint PATH` / `--checkpoint=PATH`, defaulting to the trainer's.
+pub(crate) fn value(arguments: &[String], name: &str) -> Option<String> {
+    let mut result = None;
+    for (index, argument) in arguments.iter().enumerate() {
+        if argument == name {
+            result = arguments.get(index + 1).cloned();
+        } else if let Some(rest) = argument.strip_prefix(&format!("{name}=")) {
+            result = Some(rest.to_string());
+        }
+    }
+    result
+}
 pub(crate) fn checkpoint_path(arguments: &[String]) -> String {
     let mut value = None;
     for (index, argument) in arguments.iter().enumerate() {
