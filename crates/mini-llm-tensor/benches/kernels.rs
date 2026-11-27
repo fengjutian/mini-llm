@@ -58,5 +58,39 @@ fn affine(c: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(kernels, matmul, softmax, affine);
+fn elementwise(c: &mut Criterion) {
+    let mut group = c.benchmark_group("elementwise_add");
+    for elements in [4096usize, 1 << 20] {
+        let side = (elements as f64).sqrt() as usize;
+        let left = Tensor::new(vec![0.5; side * side], vec![side, side]).unwrap();
+        let right = Tensor::new(vec![0.25; side * side], vec![side, side]).unwrap();
+        group.throughput(Throughput::Elements((side * side) as u64));
+        group.bench_with_input(BenchmarkId::from_parameter(side * side), &side, |b, _| {
+            b.iter(|| black_box(&left).add(black_box(&right)).unwrap())
+        });
+    }
+    group.finish();
+}
+
+fn softmax_large(c: &mut Criterion) {
+    let input = Tensor::new(
+        (0..512 * 512)
+            .map(|index| (index as f32 * 0.01).sin())
+            .collect(),
+        vec![512, 512],
+    )
+    .unwrap();
+    c.bench_function("softmax_rows/512x512", |b| {
+        b.iter(|| black_box(&input).softmax_rows().unwrap())
+    });
+}
+
+criterion_group!(
+    kernels,
+    matmul,
+    softmax,
+    softmax_large,
+    elementwise,
+    affine
+);
 criterion_main!(kernels);

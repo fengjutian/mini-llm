@@ -5,8 +5,15 @@
 
 use std::sync::Arc;
 
+use rayon::prelude::*;
+
 use crate::broadcast::{advance_index, broadcast_offsets, broadcast_shape, contiguous_strides};
 use crate::error::TensorError;
+
+/// Element-wise buffers at least this large are split across the rayon pool.
+const PARALLEL_ELEMENTS: usize = 8192;
+/// Softmax splits rows across the pool once there are enough of them.
+const PARALLEL_ROWS: usize = 32;
 
 /// A dense, row-major tensor with `f32` storage.
 ///
@@ -109,15 +116,26 @@ impl Tensor {
         self.zip_map(other, |a, b| a * b)
     }
 
-    fn zip_map(&self, other: &Self, f: impl Fn(f32, f32) -> f32) -> Result<Self, TensorError> {
+    fn zip_map(
+        &self,
+        other: &Self,
+        f: impl Fn(f32, f32) -> f32 + Sync + Send,
+    ) -> Result<Self, TensorError> {
         let out_shape = broadcast_shape(&self.shape, &other.shape)?;
         if self.shape == other.shape {
-            let data = self
-                .data
-                .iter()
-                .zip(other.data.iter())
-                .map(|(a, b)| f(*a, *b))
-                .collect();
+            let data = if self.data.len() >= PARALLEL_ELEMENTS {
+                self.data
+                    .par_iter()
+                    .zip(other.data.par_iter())
+                    .map(|(a, b)| f(*a, *b))
+                    .collect()
+            } else {
+                self.data
+                    .iter()
+                    .zip(other.data.iter())
+                    .map(|(a, b)| f(*a, *b))
+                    .collect()
+            };
             return Self::new(data, out_shape);
         }
 
@@ -143,36 +161,29 @@ impl Tensor {
     }
 
     pub fn neg(&self) -> Result<Self, TensorError> {
-        Self::new(self.data.iter().map(|x| -x).collect(), self.shape.clone())
+        self.map(|x| -x)
     }
 
     pub fn scale(&self, factor: f32) -> Result<Self, TensorError> {
-        Self::new(
-            self.data.iter().map(|x| x * factor).collect(),
-            self.shape.clone(),
-        )
+        self.map(|x| x * factor)
     }
 
     pub fn add_scalar(&self, value: f32) -> Result<Self, TensorError> {
-        Self::new(
-            self.data.iter().map(|x| x + value).collect(),
-            self.shape.clone(),
-        )
+        self.map(|x| x + value)
     }
 
     pub fn powf(&self, exponent: f32) -> Result<Self, TensorError> {
-        Self::new(
-            self.data.iter().map(|x| x.powf(exponent)).collect(),
-            self.shape.clone(),
-        )
+        self.map(|x| x.powf(exponent))
     }
 
     /// Applies `f` element-wise, keeping the shape unchanged.
-    pub fn map(&self, f: impl Fn(f32) -> f32) -> Result<Self, TensorError> {
-        Self::new(
-            self.data.iter().copied().map(f).collect(),
-            self.shape.clone(),
-        )
+    pub fn map(&self, f: impl Fn(f32) -> f32 + Sync + Send) -> Result<Self, TensorError> {
+        let data: Vec<f32> = if self.data.len() >= PARALLEL_ELEMENTS {
+            self.data.par_iter().map(|value| f(*value)).collect()
+        } else {
+            self.data.iter().copied().map(f).collect()
+        };
+        Self::new(data, self.shape.clone())
     }
 
     /// Collapses every element into a rank-1 tensor of length one.
@@ -286,25 +297,30 @@ impl Tensor {
             return Err(TensorError::EmptySoftmaxDimension);
         }
 
-        let mut output = vec![0.0; self.data.len()];
-        // A reusable scratch row benchmarks faster than writing and then
-        // normalizing output in place (~19% on 128x512).
-        let mut exps = vec![0.0f32; cols];
-        for row in 0..rows {
-            let start = row * cols;
-            let slice = &self.data[start..start + cols];
-            let max_value = slice.iter().copied().fold(f32::NEG_INFINITY, f32::max);
-            let mut sum = 0.0f32;
-            for col in 0..cols {
-                let value = (slice[col] - max_value).exp();
-                exps[col] = value;
-                sum += value;
-            }
-            for col in 0..cols {
-                output[start + col] = exps[col] / sum;
+        let mut output = self.data.as_ref().clone();
+        if rows >= PARALLEL_ROWS {
+            output
+                .par_chunks_mut(cols)
+                .for_each(|row| softmax_row_in_place(row));
+        } else {
+            for row in output.chunks_mut(cols) {
+                softmax_row_in_place(row);
             }
         }
         Self::new(output, self.shape.clone())
+    }
+}
+
+/// Normalizes one row to a probability distribution in place.
+fn softmax_row_in_place(row: &mut [f32]) {
+    let max_value = row.iter().copied().fold(f32::NEG_INFINITY, f32::max);
+    let mut sum = 0.0f32;
+    for value in row.iter_mut() {
+        *value = (*value - max_value).exp();
+        sum += *value;
+    }
+    for value in row.iter_mut() {
+        *value /= sum;
     }
 }
 

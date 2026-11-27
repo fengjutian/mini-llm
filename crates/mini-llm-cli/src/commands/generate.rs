@@ -14,6 +14,7 @@ pub fn run(arguments: &[String]) {
     let mut positional = Vec::new();
     let mut top_k = None;
     let mut top_p = None;
+    let mut repetition_penalty = 1.0f32;
     let mut batch = 1usize;
     let mut seed = 2024u64;
     let mut index = 0;
@@ -53,9 +54,17 @@ pub fn run(arguments: &[String]) {
         } else if let Some(value) = argument.strip_prefix("--top-p=") {
             top_p = value.parse().ok();
             index += 1;
-        } else if argument == "--checkpoint" {
+        } else if argument == "--repetition-penalty" {
+            repetition_penalty = arguments
+                .get(index + 1)
+                .and_then(|value| value.parse().ok())
+                .unwrap_or(repetition_penalty);
             index += 2;
-        } else if argument.starts_with("--checkpoint=") {
+        } else if let Some(value) = argument.strip_prefix("--repetition-penalty=") {
+            repetition_penalty = value.parse().unwrap_or(repetition_penalty);
+            index += 1;
+        } else if argument == "--checkpoint" {
+            index += 2;        } else if argument.starts_with("--checkpoint=") {
             index += 1;
         } else {
             positional.push(argument.clone());
@@ -79,6 +88,7 @@ pub fn run(arguments: &[String]) {
         temperature,
         top_k,
         top_p,
+        repetition_penalty,
     };
 
     let checkpoint = checkpoint_path(arguments);

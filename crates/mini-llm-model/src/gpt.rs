@@ -47,6 +47,8 @@ pub struct Sampling {
     pub top_k: Option<usize>,
     /// Keep the smallest prefix of tokens whose probability mass reaches `p`.
     pub top_p: Option<f32>,
+    /// Divides the logits of tokens already generated (`1.0` disables it).
+    pub repetition_penalty: f32,
 }
 
 impl Sampling {
@@ -55,6 +57,7 @@ impl Sampling {
             temperature: 0.0,
             top_k: None,
             top_p: None,
+            repetition_penalty: 1.0,
         }
     }
 
@@ -72,6 +75,12 @@ impl Sampling {
 
     pub fn top_p(mut self, p: f32) -> Self {
         self.top_p = Some(p.clamp(0.0, 1.0));
+        self
+    }
+
+    /// Penalizes tokens already generated: `> 1.0` discourages repeats.
+    pub fn with_repetition_penalty(mut self, penalty: f32) -> Self {
+        self.repetition_penalty = penalty.max(0.0);
         self
     }
 }
@@ -426,7 +435,17 @@ impl TinyGpt {
 
         let mut tokens = prompt.to_vec();
         for _ in 0..max_new_tokens {
-            let next = sample_next(&logits, self.config.vocab_size, sampling, rng)?;
+            let adjusted = if sampling.repetition_penalty != 1.0 {
+                penalize_repeats(
+                    &logits,
+                    &tokens,
+                    self.config.vocab_size,
+                    sampling.repetition_penalty,
+                )
+            } else {
+                logits.clone()
+            };
+            let next = sample_next(&adjusted, self.config.vocab_size, sampling, rng)?;
             tokens.push(next);
 
             if self.position_embedding.is_some() && tokens.len() >= self.config.max_seq_len {
@@ -672,6 +691,36 @@ impl LanguageModel for TinyGpt {
 
     fn context_len(&self) -> usize {
         self.config.max_seq_len
+    }
+}
+
+/// Divides the last-row logits of tokens already in `history` by `penalty`.
+///
+/// The conventional rule divides positive logits and multiplies negative ones,
+/// so a repeated token always becomes less likely. `1.0` is a no-op.
+fn penalize_repeats(
+    logits: &TensorValue,
+    history: &[usize],
+    vocab: usize,
+    penalty: f32,
+) -> TensorValue {
+    let values = logits.value();
+    let mut data = values.data().to_vec();
+    let offset = data.len().saturating_sub(vocab);
+    for &token in history {
+        if token >= vocab {
+            continue;
+        }
+        let slot = offset + token;
+        if data[slot] >= 0.0 {
+            data[slot] /= penalty;
+        } else {
+            data[slot] *= penalty;
+        }
+    }
+    match Tensor::new(data, values.shape().to_vec()) {
+        Ok(tensor) => TensorValue::new(tensor),
+        Err(_) => logits.clone(),
     }
 }
 
