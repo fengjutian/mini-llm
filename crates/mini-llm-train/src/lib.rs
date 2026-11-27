@@ -505,7 +505,7 @@ pub enum TrainError {
         limit: u64,
     },
     SafeTensors(String),
-    /// A config.json / 	okenizer.json sidecar is missing or malformed.
+    /// A `config.json` / `tokenizer.json` sidecar is missing or malformed.
     Package(String),
     ShapeMismatch {
         expected: Vec<usize>,
