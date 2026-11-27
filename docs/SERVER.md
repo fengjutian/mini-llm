@@ -36,9 +36,10 @@ Export weights for inspection with Hugging Face-compatible SafeTensors tooling:
 ```bash
 cargo run -p mini-llm-cli -- export-safetensors \
   --checkpoint checkpoints/tiny-gpt.bin \
-  --output checkpoints/tiny-gpt.safetensors
+  --bundle checkpoints/tiny-gpt-hf
 ```
 
-The public `mini_llm_train::load_safetensors` API imports those weights into an
-already configured `TinyGpt`. Tokenizer and optimizer state remain in the native
-checkpoint and are intentionally not duplicated in the weights-only file.
+The bundle contains `config.json`, `tokenizer.json`, and `model.safetensors`.
+`mini_llm_train::load_hf_bundle` reconstructs both the model and tokenizer from
+that directory. The lower-level `save_safetensors`/`load_safetensors` APIs remain
+available for weights-only exchange. Optimizer state stays in native checkpoints.

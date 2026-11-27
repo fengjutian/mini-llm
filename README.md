@@ -67,6 +67,7 @@ cargo run -p mini-llm-cli -- lora        # adapt a frozen classifier with low-ra
 cargo run -p mini-llm-cli -- dpo         # preference optimization on a toy policy
 cargo run -p mini-llm-cli -- grpo        # group relative policy optimization bandit
 cargo run -p mini-llm-cli -- trace       # training events + attention capture (JSONL)
+cargo run -p mini-llm-cli -- watch-trace # stream the newest trace as SSE (127.0.0.1:8090)
 cargo run -p mini-llm-cli -- serve      # HTTP inference on 127.0.0.1:8080
 cargo run -p mini-llm-cli -- export-safetensors --output checkpoints/tiny-gpt.safetensors
 cargo run -p mini-llm-cli -- import-safetensors --input checkpoints/tiny-gpt.safetensors
@@ -121,12 +122,25 @@ curl -s http://127.0.0.1:8080/metrics
 
 ### SafeTensors exchange
 
-`export-safetensors` writes weights-only SafeTensors with Hugging Face-style
+`export-safetensors --output PATH` writes weights-only SafeTensors with Hugging Face-style
 names (`model.embed_tokens.weight`, `model.layers.0.self_attn.q_proj.weight`, ...)
 and records `format`, `parameter_count`, `vocab_size`, `num_layers`,
-`hidden_size` and `max_seq_len` in the file metadata. `import-safetensors` loads
-those weights into the architecture and tokenizer of an existing native
-checkpoint (`--checkpoint` acts as the template). Legacy
+`hidden_size` and `max_seq_len` in the file metadata. It also writes two
+sidecars next to the weights. Alternatively, `--bundle DIR` writes a
+self-contained directory with conventional names:
+
+- `config.json`: architecture fields (`vocab_size`, `hidden_size`,
+  `num_layers`, `num_heads`, `num_kv_heads`, `max_seq_len`, `norm`, `position`,
+  `feed_forward`, `num_experts`, `dropout`);
+- `tokenizer.json`: `{"kind":"char","characters":...}` or
+  `{"kind":"bpe","merges":[[a,b],...]}`.
+- `model.safetensors`: the named model weights.
+
+`mini_llm_train::load_hf_bundle` reconstructs the model and tokenizer without a
+native checkpoint template.
+
+`import-safetensors` loads the weights into the architecture and tokenizer of an
+existing native checkpoint (`--checkpoint` acts as the template). Legacy
 `model.parameter.NNNNN` names still load, so older exports import unchanged.
 
 The training loop includes what a real run needs:
@@ -576,8 +590,15 @@ those documents. New documents appear automatically.
 
 The Research Studio is a React island (`client:load`) that consumes the trace
 protocol. It ships with `web/src/data/sample-trace.json` (produced by
-`cargo run -p mini-llm-cli -- trace`) and accepts any `.jsonl` written by the
-same command via the file picker.
+`cargo run -p mini-llm-cli -- trace`; `pnpm build` re-bundles the newest
+`traces/*.jsonl` and silently keeps the committed sample when there is none) and
+accepts any `.jsonl` written by the same command via the file picker.
+
+For a run that is still training, `cargo run -p mini-llm-cli -- watch-trace`
+tails the newest trace and exposes it as `GET /trace` (`text/event-stream`,
+CORS-open, default `127.0.0.1:8090`). Click “连接实时” on `/studio`, or open
+`/studio?live=http://127.0.0.1:8090/trace`; the loss curve, attention chips and
+logits refresh as the JSONL grows.
 
 Requirements: Node.js 22+ and pnpm.
 

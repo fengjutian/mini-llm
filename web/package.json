@@ -11,8 +11,9 @@
   "scripts": {
     "sync": "node scripts/sync-docs.mjs",
     "sample": "node scripts/bundle-trace.mjs",
-    "dev": "pnpm run sync && astro dev",
-    "build": "pnpm run sync && astro build",
+    "sample:auto": "node scripts/bundle-trace.mjs --optional",
+    "dev": "pnpm run sync && pnpm run sample:auto && astro dev",
+    "build": "pnpm run sync && pnpm run sample:auto && astro build",
     "preview": "astro preview",
     "astro": "astro"
   },

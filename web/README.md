@@ -19,27 +19,60 @@ rendered as static pages.
 `/studio` loads the JSONL trace produced by
 `cargo run -p mini-llm-cli -- trace` and renders the loss curve, every attention
 matrix (layer × head) and the final-position logits. The bundled sample lives at
-`src/data/sample-trace.json`; regenerate it from the newest trace with:
+`src/data/sample-trace.json`; `pnpm dev` and `pnpm build` regenerate it from the
+newest trace automatically:
 
 ```bash
-cargo run -p mini-llm-cli -- trace
-node web/scripts/bundle-trace.mjs
+cargo run -p mini-llm-cli -- trace   # writes traces/run-<millis>.jsonl
+pnpm build                           # bundles the newest trace, then builds
 ```
+
+`traces/` is git-ignored, so a fresh clone or a CI build has nothing to bundle:
+`bundle-trace.mjs --optional` (what the scripts run) prints a warning and keeps
+the committed sample instead of failing. Run `pnpm run sample` for the strict
+version that exits non-zero when no trace exists.
 
 The page also accepts any `.jsonl` through its file picker, so a new run can be
 inspected without rebuilding the site.
+
+### Live trace (SSE)
+
+To watch a run while it is being written, start the watcher in one terminal and
+train in another:
+
+```bash
+cargo run -p mini-llm-cli -- watch-trace            # tail newest traces/*.jsonl
+cargo run -p mini-llm-cli -- trace                  # the run it streams
+```
+
+`watch-trace` serves `GET /trace` as `text/event-stream` on
+`127.0.0.1:8090`: every JSONL line becomes one `data:` frame, and a subscriber
+that joins mid-run first receives everything already on disk. The server sends
+`Access-Control-Allow-Origin: *`, so the static site can subscribe from another
+port. In the browser, click “连接实时”, or open
+`/studio?live=http://127.0.0.1:8090/trace` to connect on load (an empty
+`?live=` means the default URL). The browser reconnects on its own and the
+server replays from the start, so a dropped connection never duplicates events:
+a `run_started` frame always resets the view.
+
+Useful flags: `--addr 127.0.0.1:PORT`, `--file traces/<run>.jsonl` (default: the
+newest file by name). `GET /health` reports the watched file plus frame and
+subscriber counters.
 
 ## Scripts
 
 ```bash
 pnpm install
-pnpm dev       # sync docs, then http://localhost:4321
-pnpm build     # sync docs, then static output in dist/
+pnpm dev       # sync docs + bundle newest trace, then http://localhost:4321
+pnpm build     # sync docs + bundle newest trace, then static output in dist/
 pnpm preview   # serve dist/
 pnpm sync      # only regenerate src/content/docs
+pnpm sample    # only bundle traces/*.jsonl into the studio sample
 ```
 
-`sync` / `dev` / `build` run `scripts/sync-docs.mjs` first.
+`dev` / `build` run `scripts/sync-docs.mjs` and `scripts/bundle-trace.mjs
+--optional` first. The bundling step is best-effort: with no `traces/` directory
+it keeps the committed sample and the build still succeeds.
 
 ## How the docs are synced
 

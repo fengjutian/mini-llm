@@ -165,9 +165,12 @@ SFT 语料仅用于展示掩码机制。
   Candle 的矩阵乘法（容差 1e-4）；
 - CLI：`trace` 命令训练 30 步并把事件、注意力矩阵与 logits 写入
   `traces/<run_id>.jsonl`；
+- CLI：`watch-trace` 跟随最新的轨迹文件，把每一行作为 SSE `data:` 帧推给
+  订阅者（`GET /trace`，默认 8090，允许跨域），训练还在写就能看；
 - Research Studio：`web/src/pages/studio.astro` + React 岛
   `ResearchStudio.tsx`，读取轨迹后渲染损失曲线、每个 layer/head 的注意力
-  热力图与最后一个位置的 logits，支持拖入自己的 `.jsonl`。
+  热力图与最后一个位置的 logits，支持拖入自己的 `.jsonl`，也支持订阅
+  `watch-trace` 的 SSE 流（`?live=<url>` 或页面按钮）。
 
 说明：
 
@@ -175,8 +178,10 @@ SFT 语料仅用于展示掩码机制。
   数值一致性；Candle 的 `Device::Cuda` 可用同一接口接入，但需要 GPU 环境。
 - Candle 依赖较重，默认不编译：
   `cargo test -p mini-llm-backend --features candle`。
-- Studio 是纯静态页面（`pnpm build` 时把示例轨迹内联），不训练模型；拖入
-  新的轨迹即可查看自己的 run。
+- Studio 是纯静态页面，不训练模型：`pnpm build` / `pnpm dev` 前会执行
+  `bundle-trace.mjs`，把 `traces/` 里最新的 run 打包成示例（`traces/` 被
+  git 忽略时自动跳过，保留已提交的样例）。想看正在进行的 run，另起
+  `watch-trace` 并点“连接实时”；静态快照与实时流是两条独立通路。
 
 设备抽象（Milestone 8）：
 
@@ -268,7 +273,8 @@ SFT 语料仅用于展示掩码机制。
   `POST /generate`, SSE streaming via `"stream": true`, one connection at a time
   because the model is not `Send`)
 - [x] SafeTensors weight exchange (`export-safetensors` / `import-safetensors`):
-  Hugging Face-style tensor names, architecture metadata, legacy name fallback
+  Hugging Face-style tensor names, architecture metadata, legacy name fallback,
+  config/tokenizer sidecars plus a self-contained bundle save/load API
 - [x] Async `mini-llm-server` (axum/tokio): bounded queue, SSE tokens, `/metrics`
 
 实现拆分：

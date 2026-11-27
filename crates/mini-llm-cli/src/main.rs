@@ -7,7 +7,7 @@ mod commands;
 
 use commands::{
     autograd, basics, bench, classify, dpo, eval, export, generate, grpo, import, lora, moe,
-    regression, serve, sft, trace, train, xor,
+    regression, serve, sft, trace, train, watch, xor,
 };
 
 /// Which kernel backend the process should use.
@@ -102,6 +102,7 @@ fn dispatch(arguments: &[String]) {
         "dpo" => dpo::run(),
         "grpo" => grpo::run(),
         "trace" => trace::run(rest),
+        "watch-trace" => watch::run(rest),
         "serve" => serve::run(rest),
         "lora" => lora::run(),
         "help" | "--help" | "-h" => usage(),
@@ -133,7 +134,7 @@ fn usage() {
     println!("                       sample text from the saved checkpoint (KV cache)");
     println!("  moe                  mixture-of-experts routing demo");
     println!("  eval [batches]       validation loss (flags: --corpus PATH, --checkpoint PATH)");
-    println!("  export-safetensors   export native checkpoint weights (--output PATH)");
+    println!("  export-safetensors   export checkpoint (--bundle DIR or --output PATH)");
     println!("  import-safetensors   import weights (--input PATH, --output PATH)");
     println!(
         "  sft [steps]          supervised fine-tuning (--bpe, --accum N, --early-stop N, --jsonl PATH)"
@@ -142,6 +143,8 @@ fn usage() {
     println!("  dpo                   preference optimization on a toy policy");
     println!("  grpo                  group relative policy optimization on a bandit");
     println!("  trace                 emit training events + capture attention to traces/");
+    println!("  watch-trace [--addr H:P] [--file PATH]");
+    println!("                       stream the newest trace as SSE (GET /trace)");
     println!("  serve [--addr H:P]    HTTP inference server (GET /health, POST /generate)");
     println!("  --backend candle      run the same educational stack with Candle kernels");
     println!("  help                 show this message");

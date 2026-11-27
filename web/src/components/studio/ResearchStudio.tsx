@@ -39,6 +39,11 @@ type OtherEvent = {
 
 export type TraceEvent = StartEvent | StepEvent | TensorEvent | OtherEvent;
 
+/** `watch-trace` listens here unless `?live=<url>` overrides it. */
+const DEFAULT_LIVE_URL = 'http://127.0.0.1:8090/trace';
+
+type LiveStatus = 'connecting' | 'open' | 'retrying';
+
 type Props = {
   /** Events parsed at build time, so the page renders without a network call. */
   initialEvents?: TraceEvent[];
@@ -54,6 +59,8 @@ export default function ResearchStudio({
   const [error, setError] = useState<string | null>(null);
   const [label, setLabel] = useState('sample-trace.jsonl');
   const [selected, setSelected] = useState<string | null>(null);
+  const [liveUrl, setLiveUrl] = useState<string | null>(null);
+  const [liveStatus, setLiveStatus] = useState<LiveStatus>('connecting');
   const fileInput = useRef<HTMLInputElement>(null);
   const hasInitial = initialEvents.length > 0;
 
@@ -78,6 +85,37 @@ export default function ResearchStudio({
       cancelled = true;
     };
   }, [hasInitial, source]);
+
+  // `?live=<url>` connects on load; the button below toggles the same state.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const requested = new URLSearchParams(window.location.search).get('live');
+    if (requested !== null) setLiveUrl(requested || DEFAULT_LIVE_URL);
+  }, []);
+
+  useEffect(() => {
+    if (!liveUrl) return;
+    setLiveStatus('connecting');
+    const stream = new EventSource(liveUrl);
+    stream.onopen = () => {
+      setLiveStatus('open');
+      setLabel('live');
+      setError(null);
+    };
+    // EventSource reconnects on its own and the server replays from byte 0,
+    // so every reconnect starts over at `run_started`.
+    stream.onerror = () => setLiveStatus('retrying');
+    stream.onmessage = (message) => {
+      let event: TraceEvent;
+      try {
+        event = JSON.parse(message.data) as TraceEvent;
+      } catch {
+        return;
+      }
+      setEvents((previous) => mergeEvent(previous, event));
+    };
+    return () => stream.close();
+  }, [liveUrl]);
 
   const steps = useMemo(
     () => events.filter((event): event is StepEvent => event.event === 'step'),
@@ -107,6 +145,7 @@ export default function ResearchStudio({
   }, [attention, selected]);
 
   function loadFile(file: File) {
+    setLiveUrl(null);
     file
       .text()
       .then((text) => {
@@ -133,6 +172,17 @@ export default function ResearchStudio({
           </p>
         </div>
         <div className="studio__actions">
+          {liveUrl && (
+            <span
+              className={
+                liveStatus === 'open' ? 'studio__live studio__live--on' : 'studio__live'
+              }
+              title={liveUrl}
+            >
+              <span className="studio__live-dot" aria-hidden="true" />
+              {liveStatus === 'open' ? 'live' : liveStatus === 'connecting' ? '连接中' : '重连中'}
+            </span>
+          )}
           <input
             ref={fileInput}
             type="file"
@@ -143,6 +193,14 @@ export default function ResearchStudio({
               if (file) loadFile(file);
             }}
           />
+          <button
+            type="button"
+            aria-pressed={liveUrl !== null}
+            className={liveUrl ? 'studio__btn studio__btn--ghost' : 'studio__btn'}
+            onClick={() => setLiveUrl(liveUrl ? null : DEFAULT_LIVE_URL)}
+          >
+            {liveUrl ? '停止实时' : '连接实时'}
+          </button>
           <button type="button" className="studio__btn" onClick={() => fileInput.current?.click()}>
             打开轨迹文件
           </button>
@@ -150,6 +208,7 @@ export default function ResearchStudio({
             type="button"
             className="studio__btn studio__btn--ghost"
             onClick={() => {
+              setLiveUrl(null);
               if (hasInitial) {
                 setEvents(initialEvents);
                 setLabel('sample-trace.jsonl');
@@ -226,7 +285,10 @@ export default function ResearchStudio({
 
       <p className="studio__note">
         轨迹来自 <code>mini-llm-trace</code>；Studio 只读这些事件，不训练模型。token 以 id
-        显示，字符表保存在 checkpoint 里。
+        显示，字符表保存在 checkpoint 里。“连接实时”订阅{' '}
+        <code>cargo run -p mini-llm-cli -- watch-trace</code> 的 SSE 流（默认{' '}
+        <code>127.0.0.1:8090/trace</code>），也可以用 <code>?live=&lt;url&gt;</code> 指定地址；
+        断线后浏览器会自动重连，服务器从头重放整份轨迹。
       </p>
     </div>
   );
@@ -238,6 +300,15 @@ function parseTrace(text: string): TraceEvent[] {
     .map((line) => line.trim())
     .filter((line) => line.length > 0)
     .map((line) => JSON.parse(line) as TraceEvent);
+}
+
+/// Applies one streamed event. A `run_started` always restarts the view, which
+/// also makes an EventSource reconnect idempotent: the server replays from byte 0.
+function mergeEvent(events: TraceEvent[], event: TraceEvent): TraceEvent[] {
+  if (event.event === 'run_started') return [event];
+  const last = events[events.length - 1];
+  if (!last || last.run !== event.run) return [event];
+  return [...events, event];
 }
 
 function Stat({ label, value, mono }: { label: string; value: string; mono?: boolean }) {

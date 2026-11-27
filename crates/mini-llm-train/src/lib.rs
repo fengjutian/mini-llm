@@ -51,7 +51,10 @@ pub use checkpoint::{
     save_training_checkpoint, save_training_checkpoint_f16,
 };
 pub use recipes::{dpo_loss, grpo_loss, sequence_log_prob};
-pub use safetensor::{load_safetensors, save_safetensors};
+pub use safetensor::{
+    load_hf_bundle, load_safetensors, save_config_json, save_hf_bundle, save_safetensors,
+    save_tokenizer_json,
+};
 
 use std::error::Error;
 use std::fmt::{Display, Formatter};
@@ -502,6 +505,8 @@ pub enum TrainError {
         limit: u64,
     },
     SafeTensors(String),
+    /// A config.json / 	okenizer.json sidecar is missing or malformed.
+    Package(String),
     ShapeMismatch {
         expected: Vec<usize>,
         actual: Vec<usize>,
@@ -548,6 +553,7 @@ impl Display for TrainError {
                 "checkpoint {field} is {value}, exceeding the limit {limit}"
             ),
             Self::SafeTensors(message) => write!(f, "SafeTensors error: {message}"),
+        Self::Package(message) => write!(f, "package error: {message}"),
             Self::ShapeMismatch { expected, actual } => write!(
                 f,
                 "checkpoint parameter shape {:?} does not match model shape {:?}",

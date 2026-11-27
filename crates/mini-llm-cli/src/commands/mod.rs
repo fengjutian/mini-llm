@@ -17,6 +17,7 @@ pub mod serve;
 pub mod sft;
 pub mod trace;
 pub mod train;
+pub mod watch;
 pub mod xor;
 
 /// Where `train` writes and `generate` reads the Tiny GPT checkpoint.
