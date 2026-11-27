@@ -161,10 +161,7 @@ fn read_request(stream: &mut TcpStream) -> Result<(String, String, String), ()> 
 }
 
 fn header_end(buffer: &[u8]) -> Option<(usize, usize)> {
-    if let Some(index) = buffer
-        .windows(4)
-        .position(|window| window == b"\r\n\r\n")
-    {
+    if let Some(index) = buffer.windows(4).position(|window| window == b"\r\n\r\n") {
         return Some((index, 4));
     }
     buffer

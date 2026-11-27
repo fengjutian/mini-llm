@@ -264,6 +264,8 @@ SFT 语料仅用于展示掩码机制。
   unequal prompts supported with RoPE)
 - [x] Sparse MoE dispatch (`gather_rows` + `scatter_add_rows`, dense reference)
 - [x] Scoped `no_grad` inference mode (generation stops recording graphs)
+- [x] Dependency-free HTTP inference server (`serve --addr`, `GET /health`,
+  `POST /generate`, one connection at a time because the model is not `Send`)
 
 实现拆分：
 

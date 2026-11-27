@@ -6,8 +6,8 @@
 mod commands;
 
 use commands::{
-    autograd, basics, bench, classify, dpo, eval, generate, grpo, lora, moe, regression, serve, sft,
-    trace, train, xor,
+    autograd, basics, bench, classify, dpo, eval, generate, grpo, lora, moe, regression, serve,
+    sft, trace, train, xor,
 };
 
 /// Which kernel backend the process should use.

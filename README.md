@@ -69,11 +69,26 @@ cargo run -p mini-llm-cli -- grpo        # group relative policy optimization ba
 cargo run -p mini-llm-cli -- trace       # training events + attention capture (JSONL)
 cargo run -p mini-llm-cli -- device-train --layers 1 --seq 16 --batch 4 --steps 100
 cargo run -p mini-llm-cli --features candle -- device-train --device cuda --steps 40
+cargo run -p mini-llm-cli -- serve      # HTTP inference on 127.0.0.1:8080
 cargo run --release -p mini-llm-cli -- bench  # kernel + training micro-benchmarks
 ```
 
 `train` writes `checkpoints/tiny-gpt.bin`; `generate` loads it and samples with
 the KV cache. A full 800-step run takes roughly 20 seconds on a laptop CPU.
+
+`serve` is a dependency-free blocking HTTP server:
+
+```bash
+cargo run -p mini-llm-cli -- serve --addr 127.0.0.1:8080
+curl -s http://127.0.0.1:8080/health
+curl -s -X POST http://127.0.0.1:8080/generate \
+  -H 'Content-Type: application/json' \
+  -d '{"prompt":"The ","tokens":16,"temperature":0.7,"top_k":20}'
+```
+
+It handles one connection at a time (the model owns `Rc`-based tensors and is not
+`Send`), parses the small JSON body by hand, and returns `{"text": "..."}`. Use it
+for local demos, not as a production server.
 
 The training loop includes what a real run needs:
 
