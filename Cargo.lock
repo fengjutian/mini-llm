@@ -1294,6 +1294,8 @@ dependencies = [
  "mini-llm-nn",
  "mini-llm-tensor",
  "mini-llm-trace",
+ "safetensors",
+ "tempfile",
 ]
 
 [[package]]

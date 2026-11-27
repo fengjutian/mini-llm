@@ -6,6 +6,7 @@ pub mod bench;
 pub mod classify;
 pub mod dpo;
 pub mod eval;
+pub mod export;
 pub mod generate;
 pub mod grpo;
 pub mod lora;

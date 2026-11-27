@@ -28,3 +28,17 @@ curl -N -X POST http://127.0.0.1:8080/generate \
 The HTTP side accepts concurrent clients, the queue applies backpressure, and a
 full queue returns HTTP 429. Generation remains serialized intentionally because
 the teaching autograd graph uses `Rc<RefCell<_>>`.
+
+## SafeTensors exchange
+
+Export weights for inspection with Hugging Face-compatible SafeTensors tooling:
+
+```bash
+cargo run -p mini-llm-cli -- export-safetensors \
+  --checkpoint checkpoints/tiny-gpt.bin \
+  --output checkpoints/tiny-gpt.safetensors
+```
+
+The public `mini_llm_train::load_safetensors` API imports those weights into an
+already configured `TinyGpt`. Tokenizer and optimizer state remain in the native
+checkpoint and are intentionally not duplicated in the weights-only file.

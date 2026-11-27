@@ -6,8 +6,8 @@
 mod commands;
 
 use commands::{
-    autograd, basics, bench, classify, dpo, eval, generate, grpo, lora, moe, regression, serve,
-    sft, trace, train, xor,
+    autograd, basics, bench, classify, dpo, eval, export, generate, grpo, lora, moe, regression,
+    serve, sft, trace, train, xor,
 };
 
 /// Which kernel backend the process should use.
@@ -96,6 +96,7 @@ fn dispatch(arguments: &[String]) {
         "generate" => generate::run(rest),
         "moe" => moe::run(),
         "eval" => eval::run(rest),
+        "export-safetensors" => export::run(rest),
         "sft" => sft::run(rest),
         "dpo" => dpo::run(),
         "grpo" => grpo::run(),
@@ -131,6 +132,7 @@ fn usage() {
     println!("                       sample text from the saved checkpoint (KV cache)");
     println!("  moe                  mixture-of-experts routing demo");
     println!("  eval [batches]       validation loss (flags: --corpus PATH, --checkpoint PATH)");
+    println!("  export-safetensors   export native checkpoint weights (--output PATH)");
     println!(
         "  sft [steps]          supervised fine-tuning (--bpe, --accum N, --early-stop N, --jsonl PATH)"
     );

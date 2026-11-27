@@ -44,12 +44,14 @@
 
 mod checkpoint;
 mod recipes;
+mod safetensor;
 
 pub use checkpoint::{
     load_checkpoint, load_training_checkpoint, save_checkpoint, save_checkpoint_f16,
     save_training_checkpoint, save_training_checkpoint_f16,
 };
 pub use recipes::{dpo_loss, grpo_loss, sequence_log_prob};
+pub use safetensor::{load_safetensors, save_safetensors};
 
 use std::error::Error;
 use std::fmt::{Display, Formatter};
@@ -499,6 +501,7 @@ pub enum TrainError {
         value: u64,
         limit: u64,
     },
+    SafeTensors(String),
     ShapeMismatch {
         expected: Vec<usize>,
         actual: Vec<usize>,
@@ -544,6 +547,7 @@ impl Display for TrainError {
                 f,
                 "checkpoint {field} is {value}, exceeding the limit {limit}"
             ),
+            Self::SafeTensors(message) => write!(f, "SafeTensors error: {message}"),
             Self::ShapeMismatch { expected, actual } => write!(
                 f,
                 "checkpoint parameter shape {:?} does not match model shape {:?}",
