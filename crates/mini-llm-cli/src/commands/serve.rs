@@ -1,8 +1,8 @@
 //! Minimal blocking HTTP inference server for the saved Tiny GPT checkpoint.
 //!
-//! No async runtime and no external dependencies: a `TcpListener` accepts
-//! connections, one worker thread owns the model (it is not required to be
-//! `Sync`), and requests are serialized through channels.
+//! No async runtime and no external dependencies: a `TcpListener` accepts one
+//! connection at a time, which keeps the model (which owns `Rc`-based tensor
+//! values and is therefore not `Send`) on the main thread.
 //!
 //! Routes:
 //! - `GET /health` -> `{"status":"ok"}`
@@ -13,7 +13,6 @@
 
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
-use std::sync::mpsc::{self, Receiver, Sender};
 use std::time::Duration;
 
 use mini_llm_data::Tokenizer;
@@ -35,11 +34,6 @@ struct GenerateRequest {
     top_p: Option<f32>,
 }
 
-struct Reply {
-    status: u16,
-    body: String,
-}
-
 pub fn run(arguments: &[String]) {
     let address = super::value(arguments, "--addr").unwrap_or_else(|| "127.0.0.1:8080".into());
     let checkpoint = checkpoint_path(arguments);
@@ -53,9 +47,6 @@ pub fn run(arguments: &[String]) {
         }
     };
 
-    let (requests, receiver) = mpsc::channel::<(GenerateRequest, Sender<Reply>)>();
-    std::thread::spawn(move || worker(receiver, model, tokenizer));
-
     let listener = match TcpListener::bind(&address) {
         Ok(listener) => listener,
         Err(error) => {
@@ -64,57 +55,18 @@ pub fn run(arguments: &[String]) {
         }
     };
     println!("serving on http://{address} (checkpoint {checkpoint})");
-    println!("routes: GET /health, POST /generate");
+    println!("routes: GET /health, POST /generate (one connection at a time)");
 
+    let mut rng = Rng::new(2024);
     for stream in listener.incoming() {
         match stream {
-            Ok(stream) => {
-                let requests = requests.clone();
-                std::thread::spawn(move || handle(stream, requests));
-            }
+            Ok(stream) => handle(stream, &model, &tokenizer, &mut rng),
             Err(error) => eprintln!("connection error: {error}"),
         }
     }
 }
 
-fn worker(receiver: Receiver<(GenerateRequest, Sender<Reply>)>, model: TinyGpt, tokenizer: Tokenizer) {
-    let mut rng = Rng::new(2024);
-    while let Ok((request, reply)) = receiver.recv() {
-        let sampling = Sampling {
-            temperature: request.temperature,
-            top_k: request.top_k,
-            top_p: request.top_p,
-        };
-        let encoded = match tokenizer.encode(&request.prompt) {
-            Ok(tokens) if !tokens.is_empty() => tokens,
-            Ok(_) => vec![0],
-            Err(error) => {
-                let _ = reply.send(Reply {
-                    status: 400,
-                    body: error_json(&error.to_string()),
-                });
-                continue;
-            }
-        };
-        match model.generate_with(&encoded, request.tokens, sampling, &mut rng) {
-            Ok(tokens) => {
-                let text = tokenizer.decode(&tokens).unwrap_or_default();
-                let _ = reply.send(Reply {
-                    status: 200,
-                    body: format!("{{\"text\":\"{}\"}}", escape_json(&text)),
-                });
-            }
-            Err(error) => {
-                let _ = reply.send(Reply {
-                    status: 500,
-                    body: error_json(&error.to_string()),
-                });
-            }
-        }
-    }
-}
-
-fn handle(mut stream: TcpStream, requests: Sender<(GenerateRequest, Sender<Reply>)>) {
+fn handle(mut stream: TcpStream, model: &TinyGpt, tokenizer: &Tokenizer, rng: &mut Rng) {
     let _ = stream.set_read_timeout(Some(READ_TIMEOUT));
     let (method, path, body) = match read_request(&mut stream) {
         Ok(request) => request,
@@ -138,14 +90,29 @@ fn handle(mut stream: TcpStream, requests: Sender<(GenerateRequest, Sender<Reply
                     return;
                 }
             };
-            let (reply_sender, reply_receiver) = mpsc::channel();
-            if requests.send((request, reply_sender)).is_err() {
-                respond(&mut stream, 503, &error_json("worker stopped"));
-                return;
-            }
-            match reply_receiver.recv() {
-                Ok(reply) => respond(&mut stream, reply.status, &reply.body),
-                Err(_) => respond(&mut stream, 503, &error_json("worker stopped")),
+            let sampling = Sampling {
+                temperature: request.temperature,
+                top_k: request.top_k,
+                top_p: request.top_p,
+            };
+            let encoded = match tokenizer.encode(&request.prompt) {
+                Ok(tokens) if !tokens.is_empty() => tokens,
+                Ok(_) => vec![0],
+                Err(error) => {
+                    respond(&mut stream, 400, &error_json(&error.to_string()));
+                    return;
+                }
+            };
+            match model.generate_with(&encoded, request.tokens, sampling, rng) {
+                Ok(tokens) => {
+                    let text = tokenizer.decode(&tokens).unwrap_or_default();
+                    respond(
+                        &mut stream,
+                        200,
+                        &format!("{{\"text\":\"{}\"}}", escape_json(&text)),
+                    );
+                }
+                Err(error) => respond(&mut stream, 500, &error_json(&error.to_string())),
             }
         }
         _ => respond(&mut stream, 404, &error_json("not found")),
@@ -155,7 +122,7 @@ fn handle(mut stream: TcpStream, requests: Sender<(GenerateRequest, Sender<Reply
 fn read_request(stream: &mut TcpStream) -> Result<(String, String, String), ()> {
     let mut buffer = Vec::new();
     let mut chunk = [0u8; 2048];
-    let mut head: Option<(usize, usize, String, String, usize)> = None;
+    let mut head: Option<(usize, usize, String, String)> = None;
 
     loop {
         if head.is_none() {
@@ -165,10 +132,10 @@ fn read_request(stream: &mut TcpStream) -> Result<(String, String, String), ()> 
                 if content_length > MAX_BODY {
                     return Err(());
                 }
-                head = Some((index + separator, content_length, method, path, index));
+                head = Some((index + separator, content_length, method, path));
             }
         }
-        if let Some((body_start, content_length, ref method, ref path, _)) = head {
+        if let Some((body_start, content_length, ref method, ref path)) = head {
             if buffer.len() >= body_start + content_length {
                 let body =
                     String::from_utf8_lossy(&buffer[body_start..body_start + content_length])
@@ -179,7 +146,7 @@ fn read_request(stream: &mut TcpStream) -> Result<(String, String, String), ()> 
         let read = stream.read(&mut chunk).map_err(|_| ())?;
         if read == 0 {
             // EOF: accept a bodyless request if headers were complete.
-            if let Some((body_start, content_length, method, path, _)) = head {
+            if let Some((body_start, content_length, method, path)) = head {
                 if content_length == 0 && buffer.len() >= body_start {
                     return Ok((method, path, String::new()));
                 }
@@ -194,7 +161,10 @@ fn read_request(stream: &mut TcpStream) -> Result<(String, String, String), ()> 
 }
 
 fn header_end(buffer: &[u8]) -> Option<(usize, usize)> {
-    if let Some(index) = buffer.windows(4).position(|window| window == b"\r\n\r\n") {
+    if let Some(index) = buffer
+        .windows(4)
+        .position(|window| window == b"\r\n\r\n")
+    {
         return Some((index, 4));
     }
     buffer
@@ -219,8 +189,12 @@ fn parse_head(head: &str) -> Option<(String, String, usize)> {
 
 fn parse_generate(body: &str) -> Result<GenerateRequest, String> {
     let prompt = json_string(body, "prompt").unwrap_or_default();
-    let tokens = json_number::<usize>(body, "tokens").unwrap_or(32).clamp(1, MAX_TOKENS);
-    let temperature = json_number::<f32>(body, "temperature").unwrap_or(0.8).clamp(0.0, 2.0);
+    let tokens = json_number::<usize>(body, "tokens")
+        .unwrap_or(32)
+        .clamp(1, MAX_TOKENS);
+    let temperature = json_number::<f32>(body, "temperature")
+        .unwrap_or(0.8)
+        .clamp(0.0, 2.0);
     let top_k = json_number::<usize>(body, "top_k").map(|value| value.max(1));
     let top_p = json_number::<f32>(body, "top_p").map(|value| value.clamp(0.0, 1.0));
     Ok(GenerateRequest {
@@ -293,8 +267,8 @@ fn respond(stream: &mut TcpStream, status: u16, body: &str) {
         200 => "OK",
         400 => "Bad Request",
         404 => "Not Found",
-        503 => "Service Unavailable",
-        _ => "Internal Server Error",
+        500 => "Internal Server Error",
+        _ => "Service Unavailable",
     };
     let response = format!(
         "HTTP/1.1 {status} {reason}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n{body}",
@@ -319,7 +293,8 @@ mod tests {
 
     #[test]
     fn parses_generate_fields() {
-        let body = r#"{"prompt":"The little ","tokens":8,"temperature":0.5,"top_k":10,"top_p":0.9}"#;
+        let body =
+            r#"{"prompt":"The little ","tokens":8,"temperature":0.5,"top_k":10,"top_p":0.9}"#;
         let request = parse_generate(body).unwrap();
         assert_eq!(request.prompt, "The little ");
         assert_eq!(request.tokens, 8);

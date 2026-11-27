@@ -6,7 +6,7 @@
 mod commands;
 
 use commands::{
-    autograd, basics, bench, classify, dpo, eval, generate, grpo, lora, moe, regression, sft,
+    autograd, basics, bench, classify, dpo, eval, generate, grpo, lora, moe, regression, serve, sft,
     trace, train, xor,
 };
 
