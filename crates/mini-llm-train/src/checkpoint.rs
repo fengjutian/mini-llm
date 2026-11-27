@@ -23,6 +23,14 @@ const DTYPE_F16: u32 = 1;
 const TOKENIZER_CHAR: u32 = 0;
 const TOKENIZER_BPE: u32 = 1;
 
+const MAX_CHECKPOINT_BYTES: u64 = 1 << 30;
+const MAX_VOCAB_SIZE: usize = 1_000_000;
+const MAX_HIDDEN_SIZE: usize = 16_384;
+const MAX_LAYERS: usize = 256;
+const MAX_SEQUENCE_LENGTH: usize = 1_000_000;
+const MAX_PARAMETER_RANK: usize = 8;
+const MAX_PARAMETER_VALUES: usize = 1 << 30;
+
 /// Writes `model` and its vocabulary to `path` (no training state).
 pub fn save_checkpoint(
     path: impl AsRef<Path>,
@@ -174,6 +182,8 @@ pub fn load_training_checkpoint(
 fn load_components(
     path: impl AsRef<Path>,
 ) -> Result<(TinyGpt, Tokenizer, Option<TrainingState>), TrainError> {
+    let file_size = fs::metadata(path.as_ref())?.len();
+    ensure_limit("file bytes", file_size, MAX_CHECKPOINT_BYTES)?;
     let bytes = fs::read(path)?;
     let mut reader = Reader::new(&bytes);
 
@@ -201,6 +211,14 @@ fn load_components(
     let num_layers = reader.u32()? as usize;
     let num_heads = reader.u32()? as usize;
     let max_seq_len = reader.u32()? as usize;
+    ensure_limit("vocabulary size", vocab_size as u64, MAX_VOCAB_SIZE as u64)?;
+    ensure_limit("hidden size", hidden_size as u64, MAX_HIDDEN_SIZE as u64)?;
+    ensure_limit("layer count", num_layers as u64, MAX_LAYERS as u64)?;
+    ensure_limit(
+        "sequence length",
+        max_seq_len as u64,
+        MAX_SEQUENCE_LENGTH as u64,
+    )?;
 
     let config = if version == 1 {
         ModelConfig {
@@ -258,6 +276,7 @@ fn load_components(
         }
         TOKENIZER_BPE => {
             let merge_count = reader.u32()? as usize;
+            ensure_limit("BPE merge count", merge_count as u64, MAX_VOCAB_SIZE as u64)?;
             let mut merges = Vec::with_capacity(merge_count);
             for _ in 0..merge_count {
                 let left = reader.u32()?;
@@ -291,6 +310,7 @@ fn load_components(
 
     for parameter in &parameters {
         let rank = reader.u32()? as usize;
+        ensure_limit("parameter rank", rank as u64, MAX_PARAMETER_RANK as u64)?;
         let mut shape = Vec::with_capacity(rank);
         for _ in 0..rank {
             shape.push(reader.u32()? as usize);
@@ -302,7 +322,7 @@ fn load_components(
                 actual: shape,
             });
         }
-        let length: usize = shape.iter().product();
+        let length = checked_product(&shape)?;
         let mut data = Vec::with_capacity(length);
         if dtype == DTYPE_F16 {
             for _ in 0..length {
@@ -339,6 +359,11 @@ fn load_components(
             let mut values = Vec::with_capacity(count);
             for _ in 0..count {
                 let length = reader.u32()? as usize;
+                ensure_limit(
+                    "optimizer moment length",
+                    length as u64,
+                    MAX_PARAMETER_VALUES as u64,
+                )?;
                 let mut data = Vec::with_capacity(length);
                 for _ in 0..length {
                     data.push(reader.f32()?);
@@ -361,6 +386,34 @@ fn load_components(
     };
 
     Ok((model, tokenizer, state))
+}
+
+fn ensure_limit(field: &'static str, value: u64, limit: u64) -> Result<(), TrainError> {
+    if value > limit {
+        return Err(TrainError::CheckpointLimit {
+            field,
+            value,
+            limit,
+        });
+    }
+    Ok(())
+}
+
+fn checked_product(shape: &[usize]) -> Result<usize, TrainError> {
+    let length = shape
+        .iter()
+        .try_fold(1usize, |product, &dimension| product.checked_mul(dimension));
+    let length = length.ok_or(TrainError::CheckpointLimit {
+        field: "parameter values",
+        value: u64::MAX,
+        limit: MAX_PARAMETER_VALUES as u64,
+    })?;
+    ensure_limit(
+        "parameter values",
+        length as u64,
+        MAX_PARAMETER_VALUES as u64,
+    )?;
+    Ok(length)
 }
 
 fn push_u32(bytes: &mut Vec<u8>, value: u32) {
@@ -391,11 +444,15 @@ impl<'a> Reader<'a> {
     }
 
     fn take(&mut self, length: usize) -> Result<&'a [u8], TrainError> {
-        if self.position + length > self.data.len() {
+        let end = self
+            .position
+            .checked_add(length)
+            .ok_or(TrainError::Truncated)?;
+        if end > self.data.len() {
             return Err(TrainError::Truncated);
         }
-        let slice = &self.data[self.position..self.position + length];
-        self.position += length;
+        let slice = &self.data[self.position..end];
+        self.position = end;
         Ok(slice)
     }
 

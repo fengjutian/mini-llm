@@ -1,0 +1,19 @@
+[package]
+name = "mini-llm-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+mini-llm-data = { path = "../crates/mini-llm-data" }
+
+[[bin]]
+name = "bpe"
+path = "fuzz_targets/bpe.rs"
+test = false
+doc = false
+bench = false

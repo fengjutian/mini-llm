@@ -493,6 +493,12 @@ pub enum TrainError {
     BadMagic,
     UnsupportedVersion(u32),
     Truncated,
+    /// A checkpoint asks for resources outside the educational runtime limits.
+    CheckpointLimit {
+        field: &'static str,
+        value: u64,
+        limit: u64,
+    },
     ShapeMismatch {
         expected: Vec<usize>,
         actual: Vec<usize>,
@@ -530,6 +536,14 @@ impl Display for TrainError {
                 write!(f, "unsupported checkpoint version {}", version)
             }
             Self::Truncated => write!(f, "checkpoint ended unexpectedly"),
+            Self::CheckpointLimit {
+                field,
+                value,
+                limit,
+            } => write!(
+                f,
+                "checkpoint {field} is {value}, exceeding the limit {limit}"
+            ),
             Self::ShapeMismatch { expected, actual } => write!(
                 f,
                 "checkpoint parameter shape {:?} does not match model shape {:?}",

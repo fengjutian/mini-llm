@@ -2,6 +2,7 @@
 name = "mini-llm-backend"
 version.workspace = true
 edition.workspace = true
+rust-version.workspace = true
 license.workspace = true
 
 [features]
@@ -11,12 +12,7 @@ cuda = ["candle", "candle-core/cuda"]
 
 [dependencies]
 mini-llm-tensor.workspace = true
-mini-llm-data.workspace = true
-half.workspace = true
-rayon.workspace = true
 candle-core = { version = "0.11", optional = true }
 
 [dev-dependencies]
 mini-llm-autograd.workspace = true
-mini-llm-data.workspace = true
-half.workspace = true

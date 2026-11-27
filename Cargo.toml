@@ -11,11 +11,14 @@ members = [
     "crates/mini-llm-backend",
     "crates/mini-llm-model",
     "crates/mini-llm-cli",
+    "crates/mini-llm-server",
 ]
+exclude = ["fuzz"]
 
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.85"
 license = "Apache-2.0"
 authors = ["mini-llm contributors"]
 
@@ -38,6 +41,12 @@ opt-level = 1
 mini-llm-tensor = { path = "crates/mini-llm-tensor" }
 rayon = "1"
 half = "2"
+criterion = { version = "0.5", features = ["html_reports"] }
+proptest = "1"
+axum = "0.8"
+serde = { version = "1", features = ["derive"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "net", "signal", "sync"] }
+tokio-stream = "0.1"
 mini-llm-random = { path = "crates/mini-llm-random" }
 mini-llm-autograd = { path = "crates/mini-llm-autograd" }
 mini-llm-nn = { path = "crates/mini-llm-nn" }

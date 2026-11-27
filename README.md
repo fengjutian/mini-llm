@@ -67,8 +67,6 @@ cargo run -p mini-llm-cli -- lora        # adapt a frozen classifier with low-ra
 cargo run -p mini-llm-cli -- dpo         # preference optimization on a toy policy
 cargo run -p mini-llm-cli -- grpo        # group relative policy optimization bandit
 cargo run -p mini-llm-cli -- trace       # training events + attention capture (JSONL)
-cargo run -p mini-llm-cli -- device-train --layers 1 --seq 16 --batch 4 --steps 100
-cargo run -p mini-llm-cli --features candle -- device-train --device cuda --steps 40
 cargo run -p mini-llm-cli -- serve      # HTTP inference on 127.0.0.1:8080
 cargo run --release -p mini-llm-cli -- bench  # kernel + training micro-benchmarks
 ```
@@ -601,6 +599,10 @@ standalone parity seam. Every crate's `lib.rs` is limited to module declarations
 and re-exports.
 
 ## Compute backends
+
+> The former parallel `DeviceTensor` training stack has been retired. There is
+> now one educational `Tensor -> TensorValue -> TinyGpt -> Trainer` path;
+> Candle is a kernel backend for that same path, not a second training system.
 
 - `cpu-edu`: first-principles CPU implementation for learning and correctness.
 - `candle` (feature-gated): the accelerated seam in `mini-llm-backend`; parity

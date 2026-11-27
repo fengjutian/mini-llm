@@ -100,7 +100,6 @@ fn dispatch(arguments: &[String]) {
         "dpo" => dpo::run(),
         "grpo" => grpo::run(),
         "trace" => trace::run(rest),
-        "device-train" => mini_llm_backend::device_training::run(rest.to_vec()),
         "serve" => serve::run(rest),
         "lora" => lora::run(),
         "help" | "--help" | "-h" => usage(),
@@ -140,15 +139,7 @@ fn usage() {
     println!("  grpo                  group relative policy optimization on a bandit");
     println!("  trace                 emit training events + capture attention to traces/");
     println!("  serve [--addr H:P]    HTTP inference server (GET /health, POST /generate)");
-    println!(
-        "  device-train [flags]  device-resident attention block (--layers/--seq/--batch/--steps)"
-    );
-    println!("                       [--checkpoint PATH] [--load PATH] [--resume PATH] [--seed N]");
-    println!("                       [--patience N] [--sample N] [--temperature T] [--top-k K]");
-    println!("                       [--prompt TEXT] [--device cpu|cuda] [--corpus PATH]...");
-    println!("                       [--corpus-chars N] [--bpe] [--bpe-vocab N]");
-    println!("                       [--checkpoint-format f32|f16|q8]");
-    println!("                       [--sweep|--layer-sweep|--lr-sweep]");
+    println!("  --backend candle      run the same educational stack with Candle kernels");
     println!("  help                 show this message");
     println!();
     println!("Options:");

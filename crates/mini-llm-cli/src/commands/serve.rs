@@ -16,7 +16,7 @@ use std::net::{TcpListener, TcpStream};
 use std::time::Duration;
 
 use mini_llm_data::Tokenizer;
-use mini_llm_model::{Sampling, TinyGpt};
+use mini_llm_model::{sample_next, Sampling, TinyGpt};
 use mini_llm_nn::Rng;
 use mini_llm_train::load_checkpoint;
 
@@ -32,6 +32,7 @@ struct GenerateRequest {
     temperature: f32,
     top_k: Option<usize>,
     top_p: Option<f32>,
+    stream: bool,
 }
 
 pub fn run(arguments: &[String]) {
@@ -103,6 +104,10 @@ fn handle(mut stream: TcpStream, model: &TinyGpt, tokenizer: &Tokenizer, rng: &m
                     return;
                 }
             };
+            if request.stream {
+                stream_generate(&mut stream, model, tokenizer, rng, &encoded, &request, sampling);
+                return;
+            }
             match model.generate_with(&encoded, request.tokens, sampling, rng) {
                 Ok(tokens) => {
                     let text = tokenizer.decode(&tokens).unwrap_or_default();
@@ -119,6 +124,69 @@ fn handle(mut stream: TcpStream, model: &TinyGpt, tokenizer: &Tokenizer, rng: &m
     }
 }
 
+
+fn stream_generate(
+    stream: &mut TcpStream,
+    model: &TinyGpt,
+    tokenizer: &Tokenizer,
+    rng: &mut Rng,
+    prompt: &[usize],
+    request: &GenerateRequest,
+    sampling: Sampling,
+) {
+    let _ = stream.write_all(
+        b"HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nCache-Control: no-cache\r\nConnection: close\r\nAccess-Control-Allow-Origin: *\r\n\r\n",
+    );
+    let mut tokens = prompt.to_vec();
+    let mut caches = model.empty_caches();
+    let mut logits = None;
+    for (offset, &token) in tokens.iter().enumerate() {
+        match model.step_token(token, offset, &mut caches) {
+            Ok(value) => logits = Some(value),
+            Err(error) => {
+                let frame = format!("data: {}\n\n", error_json(&error.to_string()));
+                let _ = stream.write_all(frame.as_bytes());
+                return;
+            }
+        }
+    }
+    let Some(mut logits) = logits else {
+        return;
+    };
+    let mut generated = Vec::new();
+    let mut emitted = 0usize;
+    for _ in 0..request.tokens {
+        let next = match sample_next(&logits, model.config().vocab_size, sampling, rng) {
+            Ok(token) => token,
+            Err(error) => {
+                let frame = format!("data: {}\n\n", error_json(&error.to_string()));
+                let _ = stream.write_all(frame.as_bytes());
+                return;
+            }
+        };
+        generated.push(next);
+        let text = tokenizer.decode(&generated).unwrap_or_default();
+        let chunk: String = text.chars().skip(emitted).collect();
+        if !chunk.is_empty() {
+            emitted = text.chars().count();
+            let frame = format!("data: {{\"token\":\"{}\"}}\n\n", escape_json(&chunk));
+            if stream.write_all(frame.as_bytes()).is_err() {
+                return;
+            }
+            let _ = stream.flush();
+        }
+        tokens.push(next);
+        if tokens.len() >= model.config().max_seq_len {
+            break;
+        }
+        logits = match model.step_token(next, tokens.len() - 1, &mut caches) {
+            Ok(value) => value,
+            Err(_) => break,
+        };
+    }
+    let _ = stream.write_all(b"data: [DONE]\n\n");
+    let _ = stream.flush();
+}
 fn read_request(stream: &mut TcpStream) -> Result<(String, String, String), ()> {
     let mut buffer = Vec::new();
     let mut chunk = [0u8; 2048];
@@ -194,13 +262,26 @@ fn parse_generate(body: &str) -> Result<GenerateRequest, String> {
         .clamp(0.0, 2.0);
     let top_k = json_number::<usize>(body, "top_k").map(|value| value.max(1));
     let top_p = json_number::<f32>(body, "top_p").map(|value| value.clamp(0.0, 1.0));
+    let stream = json_bool(body, "stream").unwrap_or(false);
     Ok(GenerateRequest {
         prompt,
         tokens,
         temperature,
         top_k,
         top_p,
+        stream,
     })
+}
+
+fn json_bool(body: &str, key: &str) -> Option<bool> {
+    let rest = json_value(body, key)?;
+    if rest.starts_with("true") {
+        Some(true)
+    } else if rest.starts_with("false") {
+        Some(false)
+    } else {
+        None
+    }
 }
 
 fn json_value<'a>(body: &'a str, key: &str) -> Option<&'a str> {
@@ -298,6 +379,13 @@ mod tests {
         assert!((request.temperature - 0.5).abs() < 1e-6);
         assert_eq!(request.top_k, Some(10));
         assert_eq!(request.top_p, Some(0.9));
+        assert!(!request.stream);
+    }
+
+    #[test]
+    fn parses_stream_flag() {
+        let request = parse_generate(r#"{"prompt":"The","stream":true}"#).unwrap();
+        assert!(request.stream);
     }
 
     #[test]

@@ -99,7 +99,7 @@ impl Tensor {
         positions: &[i64],
         base: f32,
     ) -> Result<Self, TensorError> {
-        if head_dim == 0 || !head_dim.is_multiple_of(2) {
+        if head_dim == 0 || head_dim % 2 != 0 {
             return Err(TensorError::InvalidRopeDimension { head_dim });
         }
         if self.rank() != 2 {
@@ -109,7 +109,7 @@ impl Tensor {
             });
         }
         let (rows, cols) = (self.shape[0], self.shape[1]);
-        if !cols.is_multiple_of(head_dim) {
+        if cols % head_dim != 0 {
             return Err(TensorError::ShapeMismatch {
                 left: self.shape.clone(),
                 right: vec![rows, head_dim],

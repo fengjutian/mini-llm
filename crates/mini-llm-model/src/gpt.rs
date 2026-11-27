@@ -180,7 +180,7 @@ impl TinyGpt {
                 batch,
             });
         }
-        if !tokens.len().is_multiple_of(batch) {
+        if tokens.len() % batch != 0 {
             return Err(ModelError::BatchMismatch {
                 tokens: tokens.len(),
                 batch,
@@ -615,7 +615,7 @@ impl LanguageModel for TinyGpt {
     }
 }
 
-fn sample_next(
+pub fn sample_next(
     logits: &TensorValue,
     vocab: usize,
     sampling: Sampling,

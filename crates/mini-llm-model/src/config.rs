@@ -164,13 +164,13 @@ impl ModelConfig {
         {
             return Err(ConfigError::ZeroDimension);
         }
-        if !self.hidden_size.is_multiple_of(self.num_heads) {
+        if self.hidden_size % self.num_heads != 0 {
             return Err(ConfigError::HiddenSizeNotDivisible {
                 hidden_size: self.hidden_size,
                 num_heads: self.num_heads,
             });
         }
-        if !self.num_heads.is_multiple_of(self.num_kv_heads) {
+        if self.num_heads % self.num_kv_heads != 0 {
             return Err(ConfigError::HeadsNotDivisible {
                 num_heads: self.num_heads,
                 num_kv_heads: self.num_kv_heads,
@@ -182,7 +182,7 @@ impl ModelConfig {
             });
         }
         let head_dim = self.hidden_size / self.num_heads;
-        if self.position == PositionKind::Rope && !head_dim.is_multiple_of(2) {
+        if self.position == PositionKind::Rope && head_dim % 2 != 0 {
             return Err(ConfigError::OddHeadDimensionForRope { head_dim });
         }
         Ok(())
