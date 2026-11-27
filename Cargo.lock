@@ -823,6 +823,7 @@ version = "0.1.0"
 dependencies = [
  "candle-core",
  "mini-llm-autograd",
+ "mini-llm-data",
  "mini-llm-tensor",
  "rayon",
 ]

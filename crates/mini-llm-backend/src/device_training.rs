@@ -23,6 +23,7 @@ use crate::{
     load_device_checkpoint, load_device_tensors, save_device_checkpoint, Device, DeviceAdamW,
     DeviceTensor, DeviceValue,
 };
+use mini_llm_data::{BpeTokenizer, CharTokenizer, Tokenizer};
 use mini_llm_tensor::Tensor;
 
 const STEPS: usize = 1600;
@@ -78,6 +79,10 @@ struct Config {
     resume: Option<String>,
     seed: u64,
     device: Device,
+    corpus: Vec<String>,
+    corpus_chars: usize,
+    bpe: bool,
+    bpe_vocab: usize,
 }
 
 impl Config {
@@ -129,23 +134,51 @@ pub fn run(arguments: Vec<String>) {
         resume: parse_path(&arguments, "--resume"),
         seed: parse_count(&arguments, "--seed").unwrap_or(7) as u64,
         device,
+        corpus: parse_paths(&arguments, "--corpus"),
+        corpus_chars: parse_count(&arguments, "--corpus-chars").unwrap_or(600_000),
+        bpe: arguments.iter().any(|argument| argument == "--bpe"),
+        bpe_vocab: parse_count(&arguments, "--bpe-vocab").unwrap_or(512),
     };
     // A checkpoint carries its hyperparameters: restore them before building
     // the dataset or the parameter shapes.
     if let Some(path) = config.load.clone().or_else(|| config.resume.clone()) {
         if let Ok((_, Some(metadata))) = load_device_checkpoint(&path, &Device::Cpu) {
             apply_metadata(&mut config, &metadata);
-            verify_corpus_fingerprint(&metadata);
+            verify_corpus_fingerprint(&metadata, &config.corpus, config.corpus_chars);
         }
     }
     if let Some(path) = &config.load {
         evaluate_saved(&config, path);
         return;
     }
-    let (train_loss, held_out_loss, best_held_out) = train_with_best(&config, true);
+    let sample_count = parse_count(&arguments, "--sample").unwrap_or(0);
+    let temperature = parse_flag(&arguments, "--temperature").unwrap_or(0.8);
+    let top_k = parse_count(&arguments, "--top-k").unwrap_or(0);
+    let prompt = parse_path(&arguments, "--prompt").unwrap_or_default();
+    let (train_loss, held_out_loss, best_held_out, parameters) =
+        train_with_parameters(&config, true);
     println!("final train loss: {train_loss:.4}");
     println!("final held-out loss: {held_out_loss:.4}");
     println!("best held-out loss: {best_held_out:.4}");
+    if sample_count > 0 {
+        let dataset = dataset(
+            config.seq.max(2),
+            &config.corpus,
+            config.corpus_chars,
+            config.bpe,
+            config.bpe_vocab,
+        );
+        let text = generate_text(
+            &parameters,
+            &dataset.tokenizer,
+            &config,
+            &prompt,
+            sample_count,
+            temperature,
+            top_k,
+        );
+        println!("sample: {text}");
+    }
 }
 
 fn sweep_regularization() {
@@ -174,6 +207,10 @@ fn sweep_regularization() {
                 resume: None,
                 seed: 7,
                 device: Device::Cpu,
+                corpus: Vec::new(),
+                corpus_chars: 600_000,
+                bpe: false,
+                bpe_vocab: 512,
             };
             let (train_loss, held_out_loss, best_held_out) = train_with_best(&config, false);
             println!(
@@ -216,6 +253,10 @@ fn sweep_learning_rates(arguments: &[String]) {
             resume: None,
             seed: 7,
             device: Device::Cpu,
+            corpus: Vec::new(),
+            corpus_chars: 600_000,
+            bpe: false,
+            bpe_vocab: 512,
         };
         let (train_loss, held_out_loss, best_held_out) = train_with_best(&config, false);
         println!(
@@ -252,6 +293,10 @@ fn sweep_layers(arguments: &[String]) {
             resume: None,
             seed: 7,
             device: Device::Cpu,
+            corpus: Vec::new(),
+            corpus_chars: 600_000,
+            bpe: false,
+            bpe_vocab: 512,
         };
         let (train_loss, held_out_loss, best_held_out, parameters) =
             train_with_parameters(&config, false);
@@ -303,14 +348,14 @@ fn corpus_fingerprint(text: &str) -> u64 {
     hash
 }
 
-fn verify_corpus_fingerprint(metadata: &str) {
+fn verify_corpus_fingerprint(metadata: &str, paths: &[String], limit: usize) {
     let saved = metadata
         .split_whitespace()
         .find_map(|pair| pair.strip_prefix("corpus_hash="));
     let Some(saved) = saved else {
         return;
     };
-    let current = format!("{:016x}", corpus_fingerprint(&corpus()));
+    let current = format!("{:016x}", corpus_fingerprint(&corpus(paths, limit)));
     if saved == current {
         println!("corpus fingerprint matches ({current})");
     } else {
@@ -323,7 +368,7 @@ fn verify_corpus_fingerprint(metadata: &str) {
 /// Serializes the hyperparameters a checkpoint needs to rebuild its shapes.
 fn checkpoint_metadata(config: &Config, corpus_chars: usize, corpus_hash: u64) -> String {
     format!(
-        "layers={} hidden={} seq={} batch={} steps={} lr={} wd={} dropout={} min_ratio={} warmup={} corpus_chars={corpus_chars} corpus_hash={corpus_hash:016x} seed={}",
+        "layers={} hidden={} seq={} batch={} steps={} lr={} wd={} dropout={} min_ratio={} warmup={} corpus_chars={corpus_chars} corpus_hash={corpus_hash:016x} seed={} bpe={} bpe_vocab={}",
         config.layers,
         config.hidden,
         config.seq,
@@ -335,6 +380,8 @@ fn checkpoint_metadata(config: &Config, corpus_chars: usize, corpus_hash: u64) -
         config.min_ratio,
         config.warmup,
         config.seed,
+        config.bpe as u8,
+        config.bpe_vocab,
     )
 }
 
@@ -369,12 +416,37 @@ fn apply_metadata(config: &mut Config, metadata: &str) {
                 config.seed = parsed as u64;
                 restored.push(key);
             }
+            "bpe" => {
+                config.bpe = parsed != 0;
+                restored.push(key);
+            }
+            "bpe_vocab" => {
+                config.bpe_vocab = parsed.max(2);
+                restored.push(key);
+            }
             _ => {}
         }
     }
     if !restored.is_empty() {
         println!("restored from checkpoint: {restored:?} ({metadata})");
     }
+}
+fn parse_paths(arguments: &[String], name: &str) -> Vec<String> {
+    let mut values = Vec::new();
+    let prefix = format!("{name}=");
+    let mut index = 0;
+    while index < arguments.len() {
+        if arguments[index] == name {
+            if let Some(value) = arguments.get(index + 1) {
+                values.push(value.clone());
+                index += 1;
+            }
+        } else if let Some(value) = arguments[index].strip_prefix(&prefix) {
+            values.push(value.to_string());
+        }
+        index += 1;
+    }
+    values
 }
 fn parse_path(arguments: &[String], name: &str) -> Option<String> {
     arguments
@@ -406,33 +478,37 @@ fn parameter_len(parameter: &DeviceTensor) -> usize {
 
 struct Dataset {
     vocab: usize,
+    tokenizer: Tokenizer,
     train: Vec<usize>,
     held: Vec<usize>,
     train_windows: usize,
     held_windows: usize,
 }
 
-fn dataset(seq: usize) -> Dataset {
-    let corpus_text = corpus();
-    let mut vocabulary: Vec<char> = corpus_text.chars().collect();
-    vocabulary.sort_unstable();
-    vocabulary.dedup();
-    let vocab = vocabulary.len();
-    let encode = |character: char| {
-        vocabulary
-            .binary_search(&character)
-            .expect("character is in the vocabulary")
-    };
+fn dataset(seq: usize, paths: &[String], limit: usize, bpe: bool, bpe_vocab: usize) -> Dataset {
+    let corpus_text = corpus(paths, limit);
     // Block split: the held-out text is a disjoint suffix of the corpus, so
     // neighbouring windows cannot leak across the boundary.
     let split_index = char_split_index(&corpus_text, 1.0 - VALIDATION_FRACTION);
     let (train_text, held_text) = corpus_text.split_at(split_index);
-    let train: Vec<usize> = train_text.chars().map(encode).collect();
-    let held: Vec<usize> = held_text.chars().map(encode).collect();
+    let tokenizer = if bpe {
+        Tokenizer::Bpe(BpeTokenizer::train(&corpus_text, bpe_vocab))
+    } else {
+        let mut characters: Vec<char> = corpus_text.chars().collect();
+        characters.sort_unstable();
+        characters.dedup();
+        Tokenizer::Char(
+            CharTokenizer::from_characters(characters).expect("non-empty character vocabulary"),
+        )
+    };
+    let vocab = tokenizer.vocab_size();
+    let train = tokenizer.encode(train_text).expect("encode train split");
+    let held = tokenizer.encode(held_text).expect("encode held-out split");
     let train_windows = ((train.len().saturating_sub(1)) / seq).max(1);
     let held_windows = ((held.len().saturating_sub(1)) / seq).max(1);
     Dataset {
         vocab,
+        tokenizer,
         train,
         held,
         train_windows,
@@ -450,11 +526,18 @@ fn train_with_parameters(config: &Config, verbose: bool) -> (f32, f32, f32, Vec<
     let seq = config.seq.max(2);
     let Dataset {
         vocab,
+        tokenizer: _,
         train: train_stream,
         held: held_stream,
         train_windows,
         held_windows,
-    } = dataset(seq);
+    } = dataset(
+        seq,
+        &config.corpus,
+        config.corpus_chars,
+        config.bpe,
+        config.bpe_vocab,
+    );
 
     let heads = 4usize;
     let kv_heads = 2usize;
@@ -655,7 +738,7 @@ fn train_with_parameters(config: &Config, verbose: bool) -> (f32, f32, f32, Vec<
             &checkpoint_metadata(
                 config,
                 train_stream.len() + held_stream.len(),
-                corpus_fingerprint(&corpus()),
+                corpus_fingerprint(&corpus(&config.corpus, config.corpus_chars)),
             ),
         )
         .expect("save best checkpoint");
@@ -758,10 +841,9 @@ fn dropout(value: DeviceValue, probability: f32, rng: &mut Rng, rows: usize) -> 
 }
 
 #[allow(clippy::too_many_arguments)]
-fn forward(
+fn forward_logits(
     nodes: &[DeviceValue],
     inputs: &[usize],
-    targets: &[usize],
     batch: usize,
     seq: usize,
     heads: usize,
@@ -830,12 +912,28 @@ fn forward(
     let normed = hidden
         .layer_norm(&nodes[base], &nodes[base + 1], 1e-5)
         .expect("final ln");
-    let logits = normed
+    normed
         .matmul(&nodes[base + 2])
         .expect("head")
         .add(&nodes[base + 3])
-        .expect("head bias");
-    logits.cross_entropy(targets).expect("cross entropy")
+        .expect("head bias")
+}
+
+#[allow(clippy::too_many_arguments)]
+fn forward(
+    nodes: &[DeviceValue],
+    inputs: &[usize],
+    targets: &[usize],
+    batch: usize,
+    seq: usize,
+    heads: usize,
+    kv_heads: usize,
+    config: &Config,
+    rng: &mut Rng,
+) -> DeviceValue {
+    forward_logits(nodes, inputs, batch, seq, heads, kv_heads, config, rng)
+        .cross_entropy(targets)
+        .expect("cross entropy")
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -874,6 +972,10 @@ fn evaluate(
         resume: None,
         seed: 7,
         device: config.device.clone(),
+        corpus: config.corpus.clone(),
+        corpus_chars: config.corpus_chars,
+        bpe: config.bpe,
+        bpe_vocab: config.bpe_vocab,
     };
     let mut total = 0.0f32;
     for index in 0..batches {
@@ -903,10 +1005,104 @@ fn evaluate(
     total / (batches * batch) as f32
 }
 
+fn sample_token(logits: &[f32], temperature: f32, top_k: usize, rng: &mut Rng) -> usize {
+    if temperature <= 0.0 {
+        return logits
+            .iter()
+            .enumerate()
+            .max_by(|left, right| left.1.partial_cmp(right.1).expect("finite logits"))
+            .map(|(index, _)| index)
+            .unwrap_or(0);
+    }
+    let mut candidates: Vec<(usize, f32)> = logits
+        .iter()
+        .enumerate()
+        .map(|(index, value)| (index, value / temperature))
+        .collect();
+    if top_k > 0 && top_k < candidates.len() {
+        candidates.sort_by(|left, right| right.1.partial_cmp(&left.1).expect("finite logits"));
+        candidates.truncate(top_k);
+    }
+    let max = candidates
+        .iter()
+        .map(|(_, value)| *value)
+        .fold(f32::NEG_INFINITY, f32::max);
+    let mut total = 0.0f32;
+    let weights: Vec<f32> = candidates
+        .iter()
+        .map(|(_, value)| {
+            let weight = (value - max).exp();
+            total += weight;
+            weight
+        })
+        .collect();
+    let mut pick = rng.next_f32() * total;
+    for (position, weight) in weights.iter().enumerate() {
+        pick -= weight;
+        if pick <= 0.0 {
+            return candidates[position].0;
+        }
+    }
+    candidates.last().map(|(index, _)| *index).unwrap_or(0)
+}
+
+#[allow(clippy::too_many_arguments)]
+fn generate_text(
+    parameters: &[DeviceTensor],
+    tokenizer: &Tokenizer,
+    config: &Config,
+    prompt: &str,
+    count: usize,
+    temperature: f32,
+    top_k: usize,
+) -> String {
+    let mut context: Vec<usize> = tokenizer.encode(prompt).unwrap_or_default();
+    if context.is_empty() {
+        context.push(0);
+    }
+    let nodes: Vec<DeviceValue> = parameters
+        .iter()
+        .map(|parameter| DeviceValue::new(parameter.clone(), false))
+        .collect();
+    let mut generation_config = config.clone();
+    generation_config.dropout = 0.0;
+    let mut rng = Rng::new(config.seed.max(1) ^ 0x9e37_79b9);
+    let heads = 4usize;
+    let kv_heads = 2usize;
+    let seq = config.seq.max(2);
+    let vocab = tokenizer.vocab_size();
+    let mut generated = Vec::with_capacity(count);
+    for _ in 0..count {
+        let window_len = context.len().min(seq).max(1);
+        let window = &context[context.len() - window_len..];
+        let logits = forward_logits(
+            &nodes,
+            window,
+            1,
+            window_len,
+            heads,
+            kv_heads,
+            &generation_config,
+            &mut rng,
+        );
+        let host = logits.data().to_host().expect("logits");
+        let row = &host.data()[(window_len - 1) * vocab..window_len * vocab];
+        let token = sample_token(row, temperature, top_k, &mut rng);
+        generated.push(token);
+        context.push(token);
+    }
+    tokenizer.decode(&generated).unwrap_or_default()
+}
 /// Loads a saved checkpoint and reports its held-out loss (no training).
 fn evaluate_saved(config: &Config, path: &str) {
     let seq = config.seq.max(2);
-    let dataset = dataset(seq);
+    let dataset = dataset(
+        seq,
+        &config.corpus,
+        config.corpus_chars,
+        config.bpe,
+        config.bpe_vocab,
+    );
     let heads = 4usize;
     let kv_heads = 2usize;
     let hidden = (config.hidden / heads).max(1) * heads;
@@ -943,7 +1139,28 @@ fn evaluate_saved(config: &Config, path: &str) {
 
 /// README plus every crate's `//!` / `///` doc comment (English prose).
 /// Sorted traversal keeps the corpus deterministic across runs.
-fn corpus() -> String {
+fn corpus(paths: &[String], limit: usize) -> String {
+    let limit = limit.max(1024);
+    if !paths.is_empty() {
+        let mut text = String::new();
+        for path in paths {
+            match std::fs::read_to_string(path) {
+                Ok(contents) => {
+                    text.extend(contents.chars().filter(char::is_ascii));
+                    text.push('\n');
+                }
+                Err(error) => eprintln!("warning: cannot read corpus file {path}: {error}"),
+            }
+            if text.chars().count() >= limit {
+                break;
+            }
+        }
+        if let Some((index, _)) = text.char_indices().nth(limit) {
+            text.truncate(index);
+        }
+        return text;
+    }
+
     let mut text = String::from(include_str!("../../../README.md"));
     let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
     let mut files = Vec::new();
@@ -985,7 +1202,7 @@ fn corpus() -> String {
             text.push('\n');
         }
     }
-    if let Some((index, _)) = text.char_indices().nth(600_000) {
+    if let Some((index, _)) = text.char_indices().nth(limit) {
         text.truncate(index);
     }
     text
@@ -1022,5 +1239,69 @@ fn collect_rust_files(directory: &std::path::Path, files: &mut Vec<std::path::Pa
         } else if path.extension().and_then(|extension| extension.to_str()) == Some("rs") {
             files.push(path);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn greedy_sampling_picks_the_largest_logit() {
+        let logits = [0.1f32, 2.0, -1.0, 1.5];
+        let mut rng = Rng::new(1);
+        assert_eq!(sample_token(&logits, 0.0, 0, &mut rng), 1);
+        assert_eq!(sample_token(&logits, 1.0, 1, &mut rng), 1);
+    }
+
+    #[test]
+    fn sampled_tokens_stay_inside_the_candidate_set() {
+        let logits = [0.0f32, 1.0, 2.0, 3.0];
+        let mut rng = Rng::new(7);
+        for _ in 0..64 {
+            let token = sample_token(&logits, 1.0, 2, &mut rng);
+            assert!(token == 3 || token == 2, "token {token}");
+        }
+    }
+}
+
+#[cfg(test)]
+mod corpus_tests {
+    use super::*;
+
+    #[test]
+    fn bpe_dataset_tokenizes_and_decodes() {
+        let path = std::env::temp_dir().join("mini_llm_bpe_corpus.txt");
+        std::fs::write(
+            &path,
+            "hello world, the quick brown fox jumps.\n".repeat(200),
+        )
+        .unwrap();
+        let dataset = dataset(8, &[path.to_string_lossy().into_owned()], 4096, true, 64);
+        // Byte-level BPE always keeps the 256 byte tokens, so the effective
+        // vocabulary is at least 257 even for a tiny `--bpe-vocab`.
+        assert!(dataset.vocab >= 256, "vocab {}", dataset.vocab);
+        assert!(dataset.vocab < 400, "vocab {}", dataset.vocab);
+        assert!(dataset.train.len() > 8);
+        let decoded = dataset
+            .tokenizer
+            .decode(&dataset.train[..8])
+            .expect("decode");
+        assert!(!decoded.is_empty());
+        std::fs::remove_file(path).unwrap();
+    }
+
+    #[test]
+    fn character_dataset_roundtrips() {
+        let path = std::env::temp_dir().join("mini_llm_char_corpus.txt");
+        std::fs::write(&path, "abcabcabcabcabcabc\n".repeat(100)).unwrap();
+        let dataset = dataset(4, &[path.to_string_lossy().into_owned()], 2048, false, 0);
+        assert!(dataset.vocab >= 3);
+        let decoded = dataset
+            .tokenizer
+            .decode(&dataset.train[..4])
+            .expect("decode");
+        assert_eq!(decoded.chars().count(), 4);
+        std::fs::remove_file(path).unwrap();
     }
 }

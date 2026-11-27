@@ -1,8 +1,9 @@
-//! Measures the cost of the Candle attention fallback.
+//! Compares host and Candle attention kernels.
 //!
-//! `DeviceTensor::attention_*` is native on host storage and delegates to the
-//! same math (plus two transfers) on Candle storage. This example times both so
-//! the fallback overhead is visible instead of guessed.
+//! `DeviceTensor::attention_*` is native on both storages; on a Candle CPU
+//! device it dispatches to the parallel host kernel, while GPU devices use the
+//! native per-head implementation. This example times both so the ratio is
+//! measured instead of guessed.
 //!
 //! Run with:
 //! `cargo run --release -p mini-llm-backend --example attention_transfer_cost --features candle`
@@ -124,7 +125,7 @@ fn main() {
     }
     #[cfg(not(feature = "candle"))]
     {
-        println!("rebuild with `--features candle` to measure the Candle fallback");
+        println!("rebuild with `--features candle` to measure the Candle implementation");
     }
 }
 

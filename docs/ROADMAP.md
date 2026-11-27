@@ -234,6 +234,13 @@ SFT 语料仅用于展示掩码机制。
   数据与深度比正则化更关键；
 - `.github/workflows/cuda.yml`（手动触发）在 GPU runner 上跑 `--features cuda`；
 - CUDA 路径与 Candle CPU 共用代码，但本环境无 GPU，未做运行验证。
+- 设备训练接入 CLI：`mini-llm-cli device-train`（与示例共用实现），
+  `--device cpu|cuda[:N]`；CUDA CI 增加端到端训练 + 重载 checkpoint；
+- 设备模型采样闭环：`--sample/--prompt/--temperature/--top-k`，在设备上前向采样；
+- 设备路径支持 `--corpus PATH...`、`--corpus-chars N` 与字节级 BPE
+  （`--bpe` / `--bpe-vocab`，基础词表 256）；`scripts/fetch-corpora.*`
+  下载 TinyShakespeare / TinyStories 等公开语料（Gutenberg/WikiText 失败仅告警）；
+
 
 ## Milestone 7 — Training Loop Hardening（已完成）
 

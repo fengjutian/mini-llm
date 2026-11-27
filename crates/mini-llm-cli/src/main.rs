@@ -142,7 +142,10 @@ fn usage() {
         "  device-train [flags]  device-resident attention block (--layers/--seq/--batch/--steps)"
     );
     println!("                       [--checkpoint PATH] [--load PATH] [--resume PATH] [--seed N]");
-    println!("                       [--patience N] [--sweep|--layer-sweep|--lr-sweep]");
+    println!("                       [--patience N] [--sample N] [--temperature T] [--top-k K]");
+    println!("                       [--prompt TEXT] [--device cpu|cuda] [--corpus PATH]...");
+    println!("                       [--corpus-chars N] [--bpe] [--bpe-vocab N]");
+    println!("                       [--sweep|--layer-sweep|--lr-sweep]");
     println!("  help                 show this message");
     println!();
     println!("Options:");

@@ -158,7 +158,8 @@ The flag is thread-local, nestable and restored on drop; `TinyGpt::generate*`
 uses it internally, so sampling no longer allocates graph nodes.
 
 Known limitations: `f32` only, no higher-order gradients, and only `matmul` is
-parallel (element-wise ops stay on the calling thread). `no_grad::with_no_grad`
+parallel (element-wise ops stay on the calling thread). 
+o_grad::with_no_grad`
 provides a scoped inference mode, which generation uses internally.
 
 ## Neural network building blocks
@@ -224,11 +225,15 @@ x = x + FFN(Norm(x))           # FFN: ReLU-MLP | SwiGLU | top-k MoE
 
 | Switch | Options | Default in `ModelConfig::modern()` |
 | --- | --- | --- |
-| `norm` | `LayerNorm`, `RmsNorm` | `RmsNorm` |
+| 
+orm` | `LayerNorm`, `RmsNorm` | `RmsNorm` |
 | `position` | `Learned`, `Rope` | `Rope` |
 | `feed_forward` | `Relu`, `SwiGlu` | `SwiGlu` |
-| `num_kv_heads` | any divisor of `num_heads` | half the query heads (GQA) |
-| `num_experts` | `1` = dense, `>1` = MoE per block | `1` |
+| 
+um_kv_heads` | any divisor of 
+um_heads` | half the query heads (GQA) |
+| 
+um_experts` | `1` = dense, `>1` = MoE per block | `1` |
 | `dropout` | residual-branch dropout probability, `0.0` disables | `0.0` |
 
 Attention flattens the batch to `[batch·seq, hidden]` and applies a **block-diagonal
@@ -277,7 +282,7 @@ output: The little language model learns one character
 ```
 
 Known limitations: MoE dispatch is sparse (only experts with assigned rows run;
-orward_dense keeps a dense reference for parity tests) and RoPE generation
+`forward_dense` keeps a dense reference for parity tests) and RoPE generation
 degrades past the trained context. Sampling supports
 temperature, top-k and top-p (`Sampling`, exposed as `generate --top-k/--top-p`).
 `generate_batch_cached` keeps one KV-cache row per sequence and updates them in
@@ -531,7 +536,8 @@ pnpm build    # static output in web/dist
 
 ### Deploying to Netlify
 
-The repository ships a [`netlify.toml`](netlify.toml) that points Netlify at the
+The repository ships a [
+etlify.toml`](netlify.toml) that points Netlify at the
 `web/` base directory, runs `pnpm run build`, and publishes `web/dist` with
 `NODE_VERSION=22`. Netlify's file configuration overrides the UI build settings,
 so connect the repository and leave the build fields empty (or set Base directory
@@ -573,7 +579,8 @@ mini-llm/
 ```
 
 Dependencies point upwards only: `cli -> train -> model -> nn -> autograd -> tensor`,
-while `data` depends on `random` (not on `nn`), and `random` only needs `tensor`.
+while `data` depends on `random` (not on 
+n`), and `random` only needs `tensor`.
 `trace` is dependency-free, `train` emits events into it, and `backend` is a
 standalone parity seam. Every crate's `lib.rs` is limited to module declarations
 and re-exports.
@@ -687,11 +694,25 @@ cargo run -p mini-llm-backend --example device_attention_block -- \
 cargo run -p mini-llm-cli -- device-train --layers 2 --seq 64 --batch 16 --steps 3000
 cargo run -p mini-llm-cli --features candle -- device-train \
   --device cuda --layers 1 --seq 32 --batch 8 --steps 40
+
+# byte-level BPE on a downloaded corpus (256 byte tokens + merges)
+cargo run -p mini-llm-cli -- device-train --corpus datasets/tinyshakespeare.txt \
+  --corpus-chars 120000 --bpe --bpe-vocab 256 --steps 400 --sample 80
+
+# train on a downloaded public corpus (scripts/fetch-corpora.*)
+cargo run -p mini-llm-cli -- device-train --corpus datasets/tinystories-valid.txt \
+  --corpus-chars 300000 --layers 1 --seq 32 --batch 8 --steps 400 --sample 120
+
+# train then sample from the best parameters (device forward, no host model)
+cargo run -p mini-llm-cli -- device-train --layers 1 --seq 32 --batch 8 --steps 600 \
+  --sample 120 --prompt "The " --temperature 0.8 --top-k 20
 ```
 
 Parameters, gradients and Adam moments stay in `DeviceTensor`; only the corpus,
 dropout masks and logging are plain Rust. Checkpoints are self-describing
 (hyperparameters, corpus fingerprint, seed) and support `--load` and `--resume`.
+`--sample N` runs the trained head on the device, samples N characters
+(`--temperature`, `--top-k`, `--prompt`), and prints the text.
 `--device` accepts `cpu` (default), `cuda`, or `cuda:<index>`; the CUDA path
 needs a build with the `candle` feature and a working driver. The full
 walkthrough — corpus construction, block split, checkpoint format,

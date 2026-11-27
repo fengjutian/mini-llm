@@ -36,6 +36,10 @@ CLI 入口（同一套训练逻辑）：
 
 ```bash
 cargo run -p mini-llm-cli -- device-train --layers 2 --seq 64 --batch 16 --steps 3000
+
+# 训练后采样
+cargo run -p mini-llm-cli -- device-train --layers 1 --seq 32 --batch 8 --steps 600 \
+  --sample 120 --prompt "The " --temperature 0.8 --top-k 20
 cargo run -p mini-llm-cli --features candle -- device-train \
   --device cuda --layers 1 --seq 32 --batch 8 --steps 40
 ```
@@ -52,7 +56,45 @@ cargo run -p mini-llm-cli --features candle -- device-train \
 | `--checkpoint PATH` | 最佳 checkpoint 输出位置（默认临时目录） |
 | `--patience N` | 连续 N 次评估无改善则早停（0 关闭） |
 | `--device cpu\|cuda[:N]` | 训练设备（CUDA 需 `candle` 特性） |
+| `--sample N` | 训练后用最佳参数生成 N 个字符 |
+| `--prompt TEXT` | 生成前缀 |
+| `--temperature T` | 采样温度（0 = argmax） |
+| `--top-k K` | 只从 top-k 采样（0 = 全部） |
+| `--corpus PATH...` | 外部语料（可重复，ASCII 过滤） |
+| `--corpus-chars N` | 读入字符上限（默认 600,000） |
+| `--bpe` | 字节级 BPE（基础词表 256） |
+| `--bpe-vocab N` | BPE 目标词表（默认 512，实际 ≥ 257） |
 
+
+## 公开语料
+
+仓库不内置大数据集；`scripts/fetch-corpora.ps1`（Windows / PowerShell）与
+`scripts/fetch-corpora.sh`（Linux / macOS）会把公开语料下载到 `datasets/`
+（已在 `.gitignore` 中忽略）：
+
+- TinyShakespeare（约 1 MB，GitHub raw）
+- TinyStories valid split（约 22 MB，HuggingFace）
+- Project Gutenberg / WikiText-2 也列在脚本里，但源站可能维护或重定向失败，
+  脚本只打印警告。
+
+```bash
+./scripts/fetch-corpora.sh            # 或 powershell -File scripts/fetch-corpora.ps1
+cargo run -p mini-llm-cli -- device-train \
+  --corpus datasets/tinystories-valid.txt --corpus-chars 300000 \
+  --layers 1 --seq 32 --batch 8 --steps 400 --sample 120
+```
+
+`--corpus` 可重复传入多个文件；`--corpus-chars N` 限制读入的字符数
+（默认 600,000），避免大文件把训练拖慢。语料会被转成 ASCII 并做块切分，
+checkpoint 里记录的 `corpus_hash` 也基于同样的内容。
+
+实测（CPU，200 步）：
+
+| 语料 | 字符 | vocab | held-out |
+| --- | --- | --- | --- |
+| TinyShakespeare | 200k | 62 | 2.61 |
+| TinyStories valid | 300k | 66 | 2.39 |
+| Shakespeare + BPE（117k 字符） | 117k | 257 | 2.65 |
 ## 结构
 
 ```text
